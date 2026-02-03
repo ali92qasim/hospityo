@@ -6,23 +6,6 @@
         </div>
         
         <div class="flex items-center space-x-4">
-            <div class="relative" id="notification-dropdown">
-                <button onclick="toggleNotifications()" class="relative p-2 text-gray-600 hover:text-medical-blue">
-                    <i class="fas fa-bell text-lg"></i>
-                    <span id="notification-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
-                </button>
-                
-                <div id="notification-panel" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible transition-all duration-200 z-50">
-                    <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-                        <h3 class="font-medium text-gray-800">Notifications</h3>
-                        <button onclick="markAllAsRead()" class="text-xs text-medical-blue hover:underline">Mark all read</button>
-                    </div>
-                    <div id="notification-list" class="max-h-64 overflow-y-auto">
-                        <div class="p-4 text-center text-gray-500">No notifications</div>
-                    </div>
-                </div>
-            </div>
-            
             <div class="relative group">
                 <button class="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-2">
                     <div class="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center">

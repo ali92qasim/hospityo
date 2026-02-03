@@ -27,10 +27,8 @@ use App\Models\Ward;
 use App\Models\Bed;
 use App\Models\Admission;
 use App\Models\Triage;
-use App\Models\Notification;
 use App\Models\Medicine;
 use App\Models\Prescription;
-use App\Events\PatientAssigned;
 use Illuminate\Http\Request;
 
 class VisitController extends Controller
@@ -165,31 +163,6 @@ class VisitController extends Controller
             'status' => 'with_doctor'
         ]);
 
-        // Create notification for doctor
-        if ($doctor->user) {
-            Notification::create([
-                'user_id' => $doctor->user->id,
-                'title' => 'New Patient Assignment',
-                'message' => "Patient {$visit->patient->name} has been assigned to you for {$visit->visit_type} visit.",
-                'type' => 'patient_assignment',
-                'data' => [
-                    'visit_id' => $visit->id,
-                    'patient_name' => $visit->patient->name,
-                    'visit_type' => $visit->visit_type
-                ]
-            ]);
-
-            // Broadcast live notification
-            broadcast(new PatientAssigned($visit, $doctor->user->id));
-
-            // Debug: Log the broadcast
-            \Log::info('Broadcasting PatientAssigned event', [
-                'visit_id' => $visit->id,
-                'doctor_user_id' => $doctor->user->id,
-                'patient_name' => $visit->patient->name
-            ]);
-        }
-
         return back()->with('success', 'Doctor assigned successfully.');
     }
 
@@ -243,6 +216,22 @@ class VisitController extends Controller
         }
 
         return back()->with('success', 'Test result updated successfully.');
+    }
+
+    public function checkPatient(Visit $visit)
+    {
+        // Only allow doctors to check their assigned patients
+        if (!auth()->user()->hasRole('Doctor')) {
+            abort(403);
+        }
+        
+        $doctor = Doctor::where('user_id', auth()->id())->first();
+        if (!$doctor || $visit->doctor_id !== $doctor->id) {
+            abort(403);
+        }
+        
+        $visit->update(['status' => 'completed']);
+        return redirect()->back()->with('success', 'Patient checked successfully.');
     }
 
     public function completeVisit(Visit $visit)
@@ -300,32 +289,36 @@ class VisitController extends Controller
 
     public function createPrescription(CreatePrescriptionRequest $request, Visit $visit)
     {
-        $prescription = $visit->prescriptions()->create([
-            'patient_id' => $visit->patient_id,
-            'doctor_id' => $visit->doctor_id,
-            'notes' => $request->notes,
-            'status' => 'pending'
-        ]);
+        try {
+            $prescription = $visit->prescriptions()->create([
+                'patient_id' => $visit->patient_id,
+                'doctor_id' => $visit->doctor_id,
+                'notes' => $request->notes,
+                'status' => 'pending'
+            ]);
 
-        foreach ($request->medicines as $medicineData) {
-            $medicine = Medicine::find($medicineData['medicine_id']);
+            foreach ($request->medicines as $medicineData) {
+                $medicine = Medicine::find($medicineData['medicine_id']);
 
-            // Check stock availability
-            if ($medicine->stock_quantity < $medicineData['quantity']) {
-                return back()->withErrors([
-                    'stock' => "Insufficient stock for {$medicine->name}. Available: {$medicine->stock_quantity}"
+                // Check stock availability
+                if ($medicine->stock_quantity < $medicineData['quantity']) {
+                    return back()->withErrors([
+                        'stock' => "Insufficient stock for {$medicine->name}. Available: {$medicine->stock_quantity}"
+                    ]);
+                }
+
+                $prescription->items()->create([
+                    'medicine_id' => $medicineData['medicine_id'],
+                    'quantity' => $medicineData['quantity'],
+                    'dosage' => $medicineData['dosage'],
+                    'instructions' => $medicineData['instructions'] ?? null
                 ]);
             }
 
-            $prescription->items()->create([
-                'medicine_id' => $medicineData['medicine_id'],
-                'quantity' => $medicineData['quantity'],
-                'dosage' => $medicineData['dosage'],
-                'instructions' => $medicineData['instructions'] ?? null
-            ]);
+            return back()->with('success', 'Prescription created successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to create prescription. Please try again.']);
         }
-
-        return back()->with('success', 'Prescription created successfully.');
     }
 
     public function orderLabTest(OrderLabTestRequest $request, Visit $visit)

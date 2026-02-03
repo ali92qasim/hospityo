@@ -12,7 +12,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\WardController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\MedicineController;
@@ -27,16 +26,56 @@ use App\Http\Controllers\UnitController;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Broadcast;
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () {
+        $user = auth()->user();
+        
+        // Check if user is a doctor
+        if ($user->hasRole('Doctor')) {
+            $doctor = \App\Models\Doctor::where('user_id', $user->id)->first();
+            if ($doctor) {
+                $assignedPatients = $doctor->assignedPatients()->limit(5)->get();
+                $totalAssigned = $doctor->assignedPatients()->count();
+                return view('admin.dashboard', compact('assignedPatients', 'totalAssigned'));
+            }
+        }
+        
         return view('admin.dashboard');
     });
     
     Route::get('/dashboard', function () {
+        $user = auth()->user();
+        
+        // Check if user is a doctor
+        if ($user->hasRole('Doctor')) {
+            $doctor = \App\Models\Doctor::where('user_id', $user->id)->first();
+            if ($doctor) {
+                $assignedPatients = $doctor->assignedPatients()->limit(5)->get();
+                $totalAssigned = $doctor->assignedPatients()->count();
+                return view('admin.dashboard', compact('assignedPatients', 'totalAssigned'));
+            }
+        }
+        
         return view('admin.dashboard');
     })->name('dashboard');
+    
+    // Doctor assignments route
+    Route::get('/doctor/assignments', function () {
+        $user = auth()->user();
+        
+        if (!$user->hasRole('Doctor')) {
+            abort(403);
+        }
+        
+        $doctor = \App\Models\Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) {
+            abort(404);
+        }
+        
+        $assignedPatients = $doctor->assignedPatients()->paginate(8);
+        return view('admin.doctor.assignments', compact('assignedPatients'));
+    })->name('doctor.assignments');
     
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -61,6 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('test-orders/{testOrder}', [VisitController::class, 'removeTestOrder'])->name('test-orders.remove')->middleware('permission:edit visits');
     Route::post('test-orders/{testOrder}/result', [VisitController::class, 'updateTestResult'])->name('test-orders.result')->middleware('permission:edit visits');
     Route::get('visits/{visit}/complete', [VisitController::class, 'completeVisit'])->name('visits.complete')->middleware('permission:edit visits');
+    Route::post('visits/{visit}/check-patient', [VisitController::class, 'checkPatient'])->name('visits.check-patient')->middleware('permission:edit visits');
     Route::post('visits/{visit}/admit', [VisitController::class, 'admitPatient'])->name('visits.admit')->middleware('permission:edit visits');
     Route::post('visits/{visit}/discharge', [VisitController::class, 'dischargePatient'])->name('visits.discharge')->middleware('permission:edit visits');
     Route::post('visits/{visit}/triage', [VisitController::class, 'triagePatient'])->name('visits.triage')->middleware('permission:edit visits');
@@ -121,12 +161,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('roles', RoleController::class)->middleware('permission:view roles|create roles|edit roles|delete roles');
     Route::resource('permissions', PermissionController::class)->middleware('permission:view permissions|create permissions|edit permissions|delete permissions');
     
-    // Notification Routes
-    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('notifications/unread', [NotificationController::class, 'unread'])->name('notifications.unread');
-    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
-    
     // Patient Search API
     Route::get('api/patients/search', function (Request $request) {
         $phone = $request->query('phone');
@@ -151,11 +185,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         return response()->json(['found' => false]);
     })->name('api.patients.search');
-    
-    // Broadcasting auth
-    Route::post('/broadcasting/auth', function (Request $request) {
-        return Broadcast::auth($request);
-    });
 });
 
 require __DIR__.'/auth.php';

@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Diagnosis extends Model
 {
     protected $fillable = [
-        'medical_record_id',
         'icd_10_code',
         'diagnosis_name',
         'description',
@@ -23,8 +22,5 @@ class Diagnosis extends Model
         'resolved_date' => 'date',
     ];
 
-    public function medicalRecord()
-    {
-        return $this->belongsTo(MedicalRecord::class);
-    }
+
 }

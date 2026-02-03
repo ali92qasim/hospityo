@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Patient extends Model
 {
@@ -23,7 +25,7 @@ class Patient extends Model
         'emergency_relation',
     ];
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
         
@@ -37,22 +39,22 @@ class Patient extends Model
         });
     }
 
-    public function visits()
+    public function visits(): HasMany
     {
         return $this->hasMany(Visit::class);
     }
 
-    public function prescriptions()
+    public function prescriptions(): HasManyThrough
     {
         return $this->hasManyThrough(Prescription::class, Visit::class);
     }
 
-    public function labOrders()
+    public function labOrders(): HasMany
     {
         return $this->hasMany(LabOrder::class);
     }
 
-    public function admissions()
+    public function admissions(): HasManyThrough
     {
         return $this->hasManyThrough(Admission::class, Visit::class);
     }

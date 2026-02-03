@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Builder;
 
 class LabOrder extends Model
 {
@@ -18,7 +22,7 @@ class LabOrder extends Model
         'completed_at' => 'datetime'
     ];
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
         
@@ -32,47 +36,47 @@ class LabOrder extends Model
         });
     }
 
-    public function patient()
+    public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
-    public function visit()
+    public function visit(): BelongsTo
     {
         return $this->belongsTo(Visit::class);
     }
 
-    public function doctor()
+    public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
     }
 
-    public function labTest()
+    public function labTest(): BelongsTo
     {
         return $this->belongsTo(LabTest::class);
     }
 
-    public function sample()
+    public function sample(): HasOne
     {
         return $this->hasOne(LabSample::class);
     }
 
-    public function result()
+    public function result(): HasOne
     {
         return $this->hasOne(LabResult::class);
     }
 
-    public function resultItems()
+    public function resultItems(): HasMany
     {
         return $this->hasMany(LabResultItem::class);
     }
 
-    public function scopeByStatus($query, $status)
+    public function scopeByStatus(Builder $query, string $status): Builder
     {
         return $query->where('status', $status);
     }
 
-    public function scopeByPriority($query, $priority)
+    public function scopeByPriority(Builder $query, string $priority): Builder
     {
         return $query->where('priority', $priority);
     }

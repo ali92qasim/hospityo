@@ -7,11 +7,14 @@ use App\Http\Requests\UpdateAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Doctor;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class AppointmentController extends Controller
 {
-    public function index()
+    public function index(): View
     {
         $appointments = Appointment::with(['patient', 'doctor'])
             ->latest()
@@ -19,14 +22,14 @@ class AppointmentController extends Controller
         return view('admin.appointments.index', compact('appointments'));
     }
 
-    public function create()
+    public function create(): View
     {
         $patients = Patient::all();
         $doctors = Doctor::where('status', 'active')->get();
         return view('admin.appointments.create', compact('patients', 'doctors'));
     }
 
-    public function store(StoreAppointmentRequest $request)
+    public function store(StoreAppointmentRequest $request): JsonResponse|RedirectResponse
     {
         Appointment::create($request->validated());
 
@@ -38,20 +41,20 @@ class AppointmentController extends Controller
             ->with('success', 'Appointment created successfully.');
     }
 
-    public function show(Appointment $appointment)
+    public function show(Appointment $appointment): View
     {
         $appointment->load(['patient', 'doctor']);
         return view('admin.appointments.show', compact('appointment'));
     }
 
-    public function edit(Appointment $appointment)
+    public function edit(Appointment $appointment): View
     {
         $patients = Patient::all();
         $doctors = Doctor::where('status', 'active')->get();
         return view('admin.appointments.edit', compact('appointment', 'patients', 'doctors'));
     }
 
-    public function update(UpdateAppointmentRequest $request, Appointment $appointment)
+    public function update(UpdateAppointmentRequest $request, Appointment $appointment): JsonResponse|RedirectResponse
     {
         $appointment->update($request->validated());
 
@@ -63,7 +66,7 @@ class AppointmentController extends Controller
             ->with('success', 'Appointment updated successfully.');
     }
 
-    public function destroy(Appointment $appointment)
+    public function destroy(Appointment $appointment): RedirectResponse
     {
         $appointment->delete();
 
@@ -71,7 +74,7 @@ class AppointmentController extends Controller
             ->with('success', 'Appointment deleted successfully.');
     }
 
-    public function getCalendarEvents(Request $request)
+    public function getCalendarEvents(Request $request): JsonResponse
     {
         $appointments = Appointment::with(['patient', 'doctor'])
             ->when($request->doctor_id, function($query, $doctorId) {
@@ -98,7 +101,7 @@ class AppointmentController extends Controller
         return response()->json($appointments);
     }
 
-    private function getStatusColor($status)
+    private function getStatusColor(string $status): string
     {
         return match($status) {
             'scheduled' => '#3B82F6',

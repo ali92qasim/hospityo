@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Admission extends Model
 {
@@ -25,12 +26,12 @@ class Admission extends Model
         'discharge_date' => 'datetime'
     ];
 
-    public function visit()
+    public function visit(): BelongsTo
     {
         return $this->belongsTo(Visit::class);
     }
 
-    public function bed()
+    public function bed(): BelongsTo
     {
         return $this->belongsTo(Bed::class);
     }

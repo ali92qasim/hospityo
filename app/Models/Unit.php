@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Unit extends Model
 {
@@ -23,37 +26,37 @@ class Unit extends Model
         'is_active' => 'boolean'
     ];
 
-    public function baseUnit()
+    public function baseUnit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'base_unit_id');
     }
 
-    public function derivedUnits()
+    public function derivedUnits(): HasMany
     {
         return $this->hasMany(Unit::class, 'base_unit_id');
     }
 
-    public function medicines()
+    public function medicines(): HasMany
     {
         return $this->hasMany(Medicine::class, 'base_unit_id');
     }
 
-    public function convertToBaseUnit($quantity)
+    public function convertToBaseUnit(float $quantity): float
     {
         return $quantity * $this->conversion_factor;
     }
 
-    public function convertFromBaseUnit($baseQuantity)
+    public function convertFromBaseUnit(float $baseQuantity): float
     {
         return $baseQuantity / $this->conversion_factor;
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeBaseUnits($query)
+    public function scopeBaseUnits(Builder $query): Builder
     {
         return $query->whereNull('base_unit_id');
     }

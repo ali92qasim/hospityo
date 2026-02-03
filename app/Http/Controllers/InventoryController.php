@@ -15,7 +15,7 @@ class InventoryController extends Controller
         $query = InventoryTransaction::with(['medicine', 'user']);
 
         if ($request->type) {
-            $query->byType($request->type);
+            $query->where('type', $request->type);
         }
 
         if ($request->medicine_id) {

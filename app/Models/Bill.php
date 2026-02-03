@@ -61,7 +61,7 @@ class Bill extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function calculateTotals()
+    public function calculateTotals(): void
     {
         $subtotal = $this->billItems->sum(function ($item) {
             return $item->quantity * $item->unit_price;
@@ -73,7 +73,7 @@ class Bill extends Model
         $this->save();
     }
 
-    public function getStatusColorAttribute()
+    public function getStatusColorAttribute(): string
     {
         return match($this->status) {
             'paid' => 'green',

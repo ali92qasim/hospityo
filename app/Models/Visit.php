@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Visit extends Model
 {
@@ -22,7 +25,7 @@ class Visit extends Model
         'visit_datetime' => 'datetime',
     ];
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
         
@@ -42,52 +45,52 @@ class Visit extends Model
         });
     }
 
-    public function patient()
+    public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
-    public function doctor()
+    public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
     }
 
-    public function vitalSigns()
+    public function vitalSigns(): HasOne
     {
         return $this->hasOne(VitalSign::class);
     }
 
-    public function allVitalSigns()
+    public function allVitalSigns(): HasMany
     {
         return $this->hasMany(VitalSign::class)->latest();
     }
 
-    public function consultation()
+    public function consultation(): HasOne
     {
         return $this->hasOne(Consultation::class);
     }
 
-    public function testOrders()
+    public function testOrders(): HasMany
     {
         return $this->hasMany(TestOrder::class);
     }
 
-    public function admission()
+    public function admission(): HasOne
     {
         return $this->hasOne(Admission::class);
     }
 
-    public function triage()
+    public function triage(): HasOne
     {
         return $this->hasOne(Triage::class);
     }
 
-    public function prescriptions()
+    public function prescriptions(): HasMany
     {
         return $this->hasMany(Prescription::class);
     }
 
-    public function labOrders()
+    public function labOrders(): HasMany
     {
         return $this->hasMany(LabOrder::class);
     }

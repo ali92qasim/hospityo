@@ -5,6 +5,83 @@
 @section('page-description', 'Hospityo Overview')
 
 @section('content')
+@if(auth()->user()->hasRole('Doctor') && isset($assignedPatients))
+<!-- Doctor Dashboard -->
+<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Assigned Patients</h3>
+        @if($totalAssigned > 5)
+            <a href="{{ route('doctor.assignments') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                View All ({{ $totalAssigned }})
+            </a>
+        @endif
+    </div>
+    
+    @if($assignedPatients->count() > 0)
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visit Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visit Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($assignedPatients as $visit)
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ $visit->patient->name }}</div>
+                                <div class="text-sm text-gray-500">{{ $visit->patient->patient_no }}</div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                @if($visit->visit_type === 'opd') bg-blue-100 text-blue-800
+                                @elseif($visit->visit_type === 'ipd') bg-purple-100 text-purple-800
+                                @else bg-red-100 text-red-800 @endif">
+                                {{ strtoupper($visit->visit_type) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ ucfirst(str_replace('_', ' ', $visit->status)) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $visit->visit_datetime->format('M d, Y H:i') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a href="{{ route('visits.workflow', $visit) }}" class="text-medical-blue hover:text-blue-700">
+                                    <i class="fas fa-stethoscope"></i> Consult
+                                </a>
+                                <form action="{{ route('visits.check-patient', $visit) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-green-600 hover:text-green-700 ml-2" 
+                                            onclick="return confirm('Mark this patient as checked?')">
+                                        <i class="fas fa-check"></i> Check
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @else
+        <div class="text-center py-8">
+            <i class="fas fa-user-friends text-gray-400 text-4xl mb-4"></i>
+            <p class="text-gray-500">No patients assigned yet</p>
+        </div>
+    @endif
+</div>
+@endif
+
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow-sm p-6">
         <div class="flex items-center">
@@ -79,6 +156,7 @@
     </div>
 </div>
 
+@if(!auth()->user()->hasRole('Doctor'))
 <div class="bg-white rounded-lg shadow-sm p-6">
     <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
     
@@ -116,6 +194,9 @@
                     </a>
                     <a href="#" id="schedule-appointment-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
                         <i class="fas fa-calendar-plus mr-2"></i>Schedule Appointment
+                    </a>
+                    <a href="#" id="view-history-btn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm">
+                        <i class="fas fa-history mr-2"></i>View History
                     </a>
                 </div>
             </div>
@@ -165,8 +246,10 @@
         </a>
     </div>
 </div>
+@endif
 @endsection
 
+@if(!auth()->user()->hasRole('Doctor'))
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('patient-search');
@@ -233,12 +316,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update action links with proper URLs
         const addVisitBtn = document.getElementById('add-visit-btn');
         const scheduleAppointmentBtn = document.getElementById('schedule-appointment-btn');
+        const viewHistoryBtn = document.getElementById('view-history-btn');
         
         if (addVisitBtn) {
             addVisitBtn.href = `{{ route('visits.create') }}?patient_id=${patient.id}`;
         }
         if (scheduleAppointmentBtn) {
             scheduleAppointmentBtn.href = `{{ route('appointments.create') }}?patient_id=${patient.id}`;
+        }
+        if (viewHistoryBtn) {
+            viewHistoryBtn.href = `/patients/${patient.id}/history`;
         }
         
         patientFound.classList.remove('hidden');
@@ -265,3 +352,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+@endif

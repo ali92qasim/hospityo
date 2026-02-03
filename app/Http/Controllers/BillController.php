@@ -28,32 +28,36 @@ class BillController extends Controller
 
     public function store(StoreBillRequest $request)
     {
-        $bill = Bill::create([
-            'patient_id' => $request->patient_id,
-            'visit_id' => $request->visit_id,
-            'bill_number' => 'BILL-' . date('Y') . '-' . str_pad(Bill::count() + 1, 6, '0', STR_PAD_LEFT),
-            'bill_date' => $request->bill_date,
-            'bill_type' => $request->bill_type,
-            'tax_amount' => $request->tax_amount ?? 0,
-            'discount_amount' => $request->discount_amount ?? 0,
-            'total_amount' => 0,
-            'due_amount' => 0,
-            'notes' => $request->notes,
-            'created_by' => auth()->id()
-        ]);
-
-        foreach ($request->items as $item) {
-            $bill->billItems()->create([
-                'service_id' => $item['service_id'],
-                'description' => $item['description'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price']
+        try {
+            $bill = Bill::create([
+                'patient_id' => $request->patient_id,
+                'visit_id' => $request->visit_id,
+                'bill_number' => 'BILL-' . date('Y') . '-' . str_pad(Bill::count() + 1, 6, '0', STR_PAD_LEFT),
+                'bill_date' => $request->bill_date,
+                'bill_type' => $request->bill_type,
+                'tax_amount' => $request->tax_amount ?? 0,
+                'discount_amount' => $request->discount_amount ?? 0,
+                'total_amount' => 0,
+                'due_amount' => 0,
+                'notes' => $request->notes,
+                'created_by' => auth()->id()
             ]);
+
+            foreach ($request->items as $item) {
+                $bill->billItems()->create([
+                    'service_id' => $item['service_id'],
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price']
+                ]);
+            }
+
+            $bill->calculateTotals();
+
+            return redirect()->route('bills.show', $bill)->with('success', 'Bill created successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to create bill. Please try again.']);
         }
-
-        $bill->calculateTotals();
-
-        return redirect()->route('bills.show', $bill)->with('success', 'Bill created successfully');
     }
 
     public function show(Bill $bill)

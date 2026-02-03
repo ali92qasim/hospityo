@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryTransaction extends Model
 {
@@ -29,28 +30,13 @@ class InventoryTransaction extends Model
         'total_cost' => 'decimal:2'
     ];
 
-    public function medicine()
+    public function medicine(): BelongsTo
     {
         return $this->belongsTo(Medicine::class);
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function scopeByType($query, $type)
-    {
-        return $query->where('type', $type);
-    }
-
-    public function scopeStockIn($query)
-    {
-        return $query->where('type', 'stock_in');
-    }
-
-    public function scopeStockOut($query)
-    {
-        return $query->where('type', 'stock_out');
     }
 }

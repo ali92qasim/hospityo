@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
 {
@@ -20,10 +21,10 @@ class Department extends Model
         'status',
     ];
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
-        
+
         static::creating(function ($department) {
             $department->code = 'DEPT' . str_pad(
                 (Department::max('id') ?? 0) + 1,
@@ -34,7 +35,7 @@ class Department extends Model
         });
     }
 
-    public function doctors()
+    public function doctors(): HasMany
     {
         return $this->hasMany(Doctor::class);
     }

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class LabTest extends Model
 {
@@ -17,22 +19,22 @@ class LabTest extends Model
         'is_active' => 'boolean'
     ];
 
-    public function orders()
+    public function orders(): HasMany
     {
         return $this->hasMany(LabOrder::class);
     }
 
-    public function parameters()
+    public function parameters(): HasMany
     {
         return $this->hasMany(LabTestParameter::class)->orderBy('display_order');
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeByCategory($query, $category)
+    public function scopeByCategory(Builder $query, string $category): Builder
     {
         return $query->where('category', $category);
     }

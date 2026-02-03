@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Supplier extends Model
 {
@@ -23,12 +25,12 @@ class Supplier extends Model
         'notes'
     ];
 
-    public function inventoryTransactions()
+    public function inventoryTransactions(): HasMany
     {
         return $this->hasMany(InventoryTransaction::class, 'supplier', 'name');
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
     }

@@ -32,7 +32,7 @@ class BillItem extends Model
         return $this->belongsTo(Service::class);
     }
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 
