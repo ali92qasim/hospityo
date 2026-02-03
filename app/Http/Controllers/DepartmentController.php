@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreDepartmentRequest;
+use App\Http\Requests\UpdateDepartmentRequest;
 use App\Models\Department;
-use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
@@ -18,19 +19,9 @@ class DepartmentController extends Controller
         return view('admin.departments.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreDepartmentRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'head_of_department' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email',
-            'location' => 'nullable|string',
-            'status' => 'required|in:active,inactive',
-        ]);
-
-        Department::create($validated);
+        Department::create($request->validated());
 
         return redirect()->route('departments.index')
             ->with('success', 'Department created successfully.');
@@ -46,19 +37,9 @@ class DepartmentController extends Controller
         return view('admin.departments.edit', compact('department'));
     }
 
-    public function update(Request $request, Department $department)
+    public function update(UpdateDepartmentRequest $request, Department $department)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'head_of_department' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email',
-            'location' => 'nullable|string',
-            'status' => 'required|in:active,inactive',
-        ]);
-
-        $department->update($validated);
+        $department->update($request->validated());
 
         return redirect()->route('departments.index')
             ->with('success', 'Department updated successfully.');

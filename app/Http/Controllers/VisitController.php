@@ -2,6 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreVisitRequest;
+use App\Http\Requests\UpdateVisitRequest;
+use App\Http\Requests\UpdateVitalsRequest;
+use App\Http\Requests\AssignDoctorRequest;
+use App\Http\Requests\UpdateConsultationRequest;
+use App\Http\Requests\AddTestOrdersRequest;
+use App\Http\Requests\UpdateTestResultRequest;
+use App\Http\Requests\AdmitPatientRequest;
+use App\Http\Requests\DischargePatientRequest;
+use App\Http\Requests\TriagePatientRequest;
+use App\Http\Requests\CreatePrescriptionRequest;
+use App\Http\Requests\OrderLabTestRequest;
 use App\Models\Visit;
 use App\Models\Patient;
 use App\Models\Doctor;
@@ -71,15 +83,9 @@ class VisitController extends Controller
         return view('admin.visits.create', compact('patients'));
     }
 
-    public function store(Request $request)
+    public function store(StoreVisitRequest $request)
     {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'visit_type' => 'required|in:opd,ipd,emergency',
-            'visit_datetime' => 'required|date',
-        ]);
-
-        $visit = Visit::create($validated);
+        $visit = Visit::create($request->validated());
 
         return redirect()->route('visits.workflow', $visit)
             ->with('success', 'Visit registered successfully. Please record vital signs.');
@@ -98,26 +104,9 @@ class VisitController extends Controller
         return view('admin.visits.edit', compact('visit', 'patients', 'doctors'));
     }
 
-    public function update(Request $request, Visit $visit)
+    public function update(UpdateVisitRequest $request, Visit $visit)
     {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
-            'visit_type' => 'required|in:opd,ipd,emergency',
-            'visit_datetime' => 'required|date',
-            'status' => 'required|string',
-            'priority' => 'required|in:low,medium,high,critical',
-            'room_no' => 'nullable|string',
-            'bed_no' => 'nullable|string',
-            'total_charges' => 'nullable|numeric|min:0',
-            'chief_complaint' => 'nullable|string',
-            'diagnosis' => 'nullable|string',
-            'treatment' => 'nullable|string',
-            'notes' => 'nullable|string',
-            'discharge_datetime' => 'nullable|date',
-        ]);
-
-        $visit->update($validated);
+        $visit->update($request->validated());
 
         return redirect()->route('visits.index')
             ->with('success', 'Visit updated successfully.');
@@ -144,17 +133,9 @@ class VisitController extends Controller
         return view('admin.visits.workflow', $data);
     }
 
-    public function updateVitals(Request $request, Visit $visit)
+    public function updateVitals(UpdateVitalsRequest $request, Visit $visit)
     {
-        $validated = $request->validate([
-            'blood_pressure' => 'nullable|string',
-            'temperature' => 'nullable|numeric',
-            'pulse_rate' => 'nullable|integer',
-            'respiratory_rate' => 'nullable|integer',
-            'weight' => 'nullable|numeric',
-            'height' => 'nullable|numeric',
-            'notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         // For IPD patients, create new vital signs record each time
         if ($visit->visit_type === 'ipd') {
@@ -175,10 +156,8 @@ class VisitController extends Controller
         return back()->with('success', 'Vital signs recorded successfully.');
     }
 
-    public function assignDoctor(Request $request, Visit $visit)
+    public function assignDoctor(AssignDoctorRequest $request, Visit $visit)
     {
-        $request->validate(['doctor_id' => 'required|exists:doctors,id']);
-
         $doctor = Doctor::findOrFail($request->doctor_id);
 
         $visit->update([
@@ -214,34 +193,19 @@ class VisitController extends Controller
         return back()->with('success', 'Doctor assigned successfully.');
     }
 
-    public function updateConsultation(Request $request, Visit $visit)
+    public function updateConsultation(UpdateConsultationRequest $request, Visit $visit)
     {
-        $validated = $request->validate([
-            'presenting_complaints' => 'nullable|string',
-            'history' => 'nullable|string',
-            'examination' => 'nullable|string',
-            'provisional_diagnosis' => 'nullable|string',
-            'treatment' => 'nullable|string',
-            'notes' => 'nullable|string',
-        ]);
-
         $visit->consultation()->updateOrCreate(
             ['visit_id' => $visit->id],
-            $validated
+            $request->validated()
         );
 
         return back()->with('success', 'Consultation updated successfully.');
     }
 
-    public function addTestOrders(Request $request, Visit $visit)
+    public function addTestOrders(AddTestOrdersRequest $request, Visit $visit)
     {
-        $validated = $request->validate([
-            'tests' => 'required|array|min:1',
-            'tests.*.test_name' => 'required|string',
-            'tests.*.quantity' => 'required|integer|min:1',
-            'tests.*.priority' => 'required|in:routine,urgent,stat',
-            'tests.*.clinical_notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         foreach ($validated['tests'] as $testData) {
             $visit->testOrders()->create([
@@ -262,14 +226,10 @@ class VisitController extends Controller
         return back()->with('success', 'Test removed successfully.');
     }
 
-    public function updateTestResult(Request $request, TestOrder $testOrder)
+    public function updateTestResult(UpdateTestResultRequest $request, TestOrder $testOrder)
     {
-        $validated = $request->validate([
-            'results' => 'required|string',
-        ]);
-
         $testOrder->update([
-            'results' => $validated['results'],
+            'results' => $request->results,
             'status' => 'completed',
             'completed_at' => now(),
         ]);
@@ -292,13 +252,8 @@ class VisitController extends Controller
     }
 
     // IPD Methods
-    public function admitPatient(Request $request, Visit $visit)
+    public function admitPatient(AdmitPatientRequest $request, Visit $visit)
     {
-        $request->validate([
-            'bed_id' => 'required|exists:beds,id',
-            'admission_notes' => 'nullable|string'
-        ]);
-
         $bed = Bed::findOrFail($request->bed_id);
         $bed->update(['status' => 'occupied']);
 
@@ -313,13 +268,8 @@ class VisitController extends Controller
         return back()->with('success', 'Patient admitted successfully.');
     }
 
-    public function dischargePatient(Request $request, Visit $visit)
+    public function dischargePatient(DischargePatientRequest $request, Visit $visit)
     {
-        $request->validate([
-            'discharge_notes' => 'nullable|string',
-            'discharge_summary' => 'required|string'
-        ]);
-
         $admission = $visit->admission;
         $admission->update([
             'discharge_date' => now(),
@@ -335,15 +285,8 @@ class VisitController extends Controller
     }
 
     // Emergency Methods
-    public function triagePatient(Request $request, Visit $visit)
+    public function triagePatient(TriagePatientRequest $request, Visit $visit)
     {
-        $request->validate([
-            'priority_level' => 'required|in:critical,urgent,less_urgent,non_urgent',
-            'chief_complaint' => 'required|string',
-            'pain_scale' => 'nullable|integer|min:0|max:10',
-            'triage_notes' => 'nullable|string'
-        ]);
-
         $visit->triage()->create([
             ...$request->only(['priority_level', 'chief_complaint', 'pain_scale', 'triage_notes']),
             'triaged_by' => auth()->id(),
@@ -355,17 +298,8 @@ class VisitController extends Controller
         return back()->with('success', 'Patient triaged successfully.');
     }
 
-    public function createPrescription(Request $request, Visit $visit)
+    public function createPrescription(CreatePrescriptionRequest $request, Visit $visit)
     {
-        $request->validate([
-            'medicines' => 'required|array|min:1',
-            'medicines.*.medicine_id' => 'required|exists:medicines,id',
-            'medicines.*.quantity' => 'required|integer|min:1',
-            'medicines.*.dosage' => 'required|string',
-            'medicines.*.instructions' => 'nullable|string',
-            'notes' => 'nullable|string'
-        ]);
-
         $prescription = $visit->prescriptions()->create([
             'patient_id' => $visit->patient_id,
             'doctor_id' => $visit->doctor_id,
@@ -394,14 +328,9 @@ class VisitController extends Controller
         return back()->with('success', 'Prescription created successfully.');
     }
 
-    public function orderLabTest(Request $request, Visit $visit)
+    public function orderLabTest(OrderLabTestRequest $request, Visit $visit)
     {
-        $validated = $request->validate([
-            'lab_test_id' => 'required|exists:lab_tests,id',
-            'test_location' => 'required|in:indoor,outdoor',
-            'priority' => 'required|in:routine,urgent,stat',
-            'clinical_notes' => 'nullable|string'
-        ]);
+        $validated = $request->validated();
 
         $visit->labOrders()->create([
             'patient_id' => $visit->patient_id,

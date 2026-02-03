@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreLabOrderRequest;
+use App\Http\Requests\UpdateLabOrderRequest;
+use App\Http\Requests\CollectSampleRequest;
 use App\Models\LabOrder;
 use App\Models\LabTest;
 use App\Models\LabSample;
@@ -35,17 +38,9 @@ class LabOrderController extends Controller
         return view('admin.lab.orders.create', compact('patients', 'doctors', 'labTests'));
     }
 
-    public function store(Request $request)
+    public function store(StoreLabOrderRequest $request)
     {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
-            'lab_test_id' => 'required|exists:lab_tests,id',
-            'priority' => 'required|in:routine,urgent,stat',
-            'clinical_notes' => 'nullable|string',
-            'special_instructions' => 'nullable|string'
-        ]);
-
+        $validated = $request->validated();
         $validated['ordered_at'] = now();
         $validated['status'] = 'ordered';
 
@@ -59,11 +54,9 @@ class LabOrderController extends Controller
         return view('admin.lab.orders.show', compact('labOrder'));
     }
 
-    public function collectSample(Request $request, LabOrder $labOrder)
+    public function collectSample(CollectSampleRequest $request, LabOrder $labOrder)
     {
-        $validated = $request->validate([
-            'collection_notes' => 'nullable|string'
-        ]);
+        $validated = $request->validated();
 
         LabSample::create([
             'lab_order_id' => $labOrder->id,
@@ -90,18 +83,9 @@ class LabOrderController extends Controller
         return view('admin.lab.orders.edit', compact('labOrder', 'patients', 'doctors', 'labTests'));
     }
 
-    public function update(Request $request, LabOrder $labOrder)
+    public function update(UpdateLabOrderRequest $request, LabOrder $labOrder)
     {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
-            'lab_test_id' => 'required|exists:lab_tests,id',
-            'priority' => 'required|in:routine,urgent,stat',
-            'clinical_notes' => 'nullable|string',
-            'special_instructions' => 'nullable|string'
-        ]);
-
-        $labOrder->update($validated);
+        $labOrder->update($request->validated());
         return redirect()->route('lab-orders.show', $labOrder)->with('success', 'Lab order updated successfully.');
     }
 

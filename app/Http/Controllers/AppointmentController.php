@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreAppointmentRequest;
+use App\Http\Requests\UpdateAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Doctor;
-use App\Models\Department;
 use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
@@ -25,17 +26,9 @@ class AppointmentController extends Controller
         return view('admin.appointments.create', compact('patients', 'doctors'));
     }
 
-    public function store(Request $request)
+    public function store(StoreAppointmentRequest $request)
     {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
-            'appointment_datetime' => 'required|date',
-            'reason' => 'nullable|string',
-            'notes' => 'nullable|string',
-        ]);
-
-        Appointment::create($validated);
+        Appointment::create($request->validated());
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Appointment created successfully.']);
@@ -58,18 +51,9 @@ class AppointmentController extends Controller
         return view('admin.appointments.edit', compact('appointment', 'patients', 'doctors'));
     }
 
-    public function update(Request $request, Appointment $appointment)
+    public function update(UpdateAppointmentRequest $request, Appointment $appointment)
     {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
-            'appointment_datetime' => 'required|date',
-            'status' => 'required|in:scheduled,completed,cancelled,no_show',
-            'reason' => 'nullable|string',
-            'notes' => 'nullable|string',
-        ]);
-
-        $appointment->update($validated);
+        $appointment->update($request->validated());
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Appointment updated successfully.']);

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreDoctorRequest;
+use App\Http\Requests\UpdateDoctorRequest;
 use App\Models\Doctor;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
@@ -21,24 +22,9 @@ class DoctorController extends Controller
         return view('admin.doctors.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreDoctorRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'specialization' => 'required|string|max:255',
-            'qualification' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'required|email|unique:doctors,email|unique:users,email',
-            'gender' => 'required|in:male,female,other',
-            'experience_years' => 'required|integer|min:0|max:50',
-            'address' => 'nullable|string',
-            'consultation_fee' => 'required|numeric|min:0',
-            'department_id' => 'required|exists:departments,id',
-            'available_days' => 'nullable|array',
-            'shift_start' => 'required|date_format:H:i',
-            'shift_end' => 'required|date_format:H:i|after:shift_start',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
         // Create user account for doctor
         $user = User::create([
@@ -70,24 +56,9 @@ class DoctorController extends Controller
         return view('admin.doctors.edit', compact('doctor'));
     }
 
-    public function update(Request $request, Doctor $doctor)
+    public function update(UpdateDoctorRequest $request, Doctor $doctor)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'specialization' => 'required|string|max:255',
-            'qualification' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'required|email|unique:doctors,email,' . $doctor->id . '|unique:users,email,' . ($doctor->user_id ?? 'NULL'),
-            'gender' => 'required|in:male,female,other',
-            'experience_years' => 'required|integer|min:0|max:50',
-            'address' => 'nullable|string',
-            'consultation_fee' => 'required|numeric|min:0',
-            'department_id' => 'required|exists:departments,id',
-            'available_days' => 'nullable|array',
-            'shift_start' => 'required|date_format:H:i',
-            'shift_end' => 'required|date_format:H:i|after:shift_start',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
         // Update associated user if exists
         if ($doctor->user) {

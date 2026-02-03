@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreLabResultRequest;
+use App\Http\Requests\UpdateLabResultRequest;
 use App\Models\LabResult;
 use App\Models\LabOrder;
 use Illuminate\Http\Request;
@@ -40,13 +42,9 @@ class LabResultController extends Controller
         return view('admin.lab.results.create', compact('labOrder'));
     }
 
-    public function store(Request $request, LabOrder $labOrder)
+    public function store(StoreLabResultRequest $request, LabOrder $labOrder)
     {
-        $validated = $request->validate([
-            'results' => 'required|array',
-            'interpretation' => 'nullable|string',
-            'comments' => 'nullable|string'
-        ]);
+        $validated = $request->validated();
 
         $result = LabResult::create([
             'lab_order_id' => $labOrder->id,
@@ -74,15 +72,9 @@ class LabResultController extends Controller
         return view('admin.lab.results.edit', compact('labResult'));
     }
 
-    public function update(Request $request, LabResult $labResult)
+    public function update(UpdateLabResultRequest $request, LabResult $labResult)
     {
-        $validated = $request->validate([
-            'results' => 'required|array',
-            'interpretation' => 'nullable|string',
-            'comments' => 'nullable|string'
-        ]);
-
-        $labResult->update($validated);
+        $labResult->update($request->validated());
         return redirect()->route('lab-results.show', $labResult)->with('success', 'Results updated successfully.');
     }
 

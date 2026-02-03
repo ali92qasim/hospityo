@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StockInRequest;
+use App\Http\Requests\StockOutRequest;
 use App\Models\Medicine;
 use App\Models\InventoryTransaction;
 use Illuminate\Http\Request;
@@ -34,19 +36,9 @@ class InventoryController extends Controller
         return view('admin.inventory.stock-in', compact('medicines', 'suppliers', 'units'));
     }
 
-    public function processStockIn(Request $request)
+    public function processStockIn(StockInRequest $request)
     {
-        $validated = $request->validate([
-            'medicine_id' => 'required|exists:medicines,id',
-            'quantity' => 'required|integer|min:1',
-            'unit_id' => 'required|exists:units,id',
-            'unit_cost' => 'required|numeric|min:0',
-            'supplier' => 'required|string|max:255',
-            'batch_no' => 'nullable|string|max:100',
-            'expiry_date' => 'nullable|date|after:today',
-            'reference_no' => 'nullable|string|max:100',
-            'notes' => 'nullable|string'
-        ]);
+        $validated = $request->validated();
 
         $medicine = Medicine::findOrFail($validated['medicine_id']);
         $unit = Unit::findOrFail($validated['unit_id']);
@@ -84,15 +76,9 @@ class InventoryController extends Controller
         return view('admin.inventory.stock-out', compact('medicines'));
     }
 
-    public function processStockOut(Request $request)
+    public function processStockOut(StockOutRequest $request)
     {
-        $validated = $request->validate([
-            'medicine_id' => 'required|exists:medicines,id',
-            'quantity' => 'required|integer|min:1',
-            'reason' => 'required|in:expired,damaged,dispensed,adjustment',
-            'reference_no' => 'nullable|string|max:100',
-            'notes' => 'nullable|string'
-        ]);
+        $validated = $request->validated();
 
         $medicine = Medicine::findOrFail($validated['medicine_id']);
         $currentStock = $medicine->getCurrentStock();

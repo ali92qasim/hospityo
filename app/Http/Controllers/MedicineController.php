@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreMedicineRequest;
+use App\Http\Requests\UpdateMedicineRequest;
 use App\Models\Medicine;
 use Illuminate\Http\Request;
 
@@ -34,25 +36,9 @@ class MedicineController extends Controller
         return view('admin.medicines.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreMedicineRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'generic_name' => 'nullable|string|max:255',
-            'brand' => 'nullable|string|max:255',
-            'category' => 'required|string|max:255',
-            'dosage_form' => 'required|string|max:255',
-            'strength' => 'required|string|max:255',
-            'unit_price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
-            'reorder_level' => 'required|integer|min:0',
-            'expiry_date' => 'required|date|after:today',
-            'batch_number' => 'required|string|max:255',
-            'manufacturer' => 'required|string|max:255',
-            'status' => 'required|in:active,inactive'
-        ]);
-
-        Medicine::create($validated);
+        Medicine::create($request->validated());
 
         return redirect()->route('medicines.index')->with('success', 'Medicine added successfully.');
     }
@@ -62,25 +48,9 @@ class MedicineController extends Controller
         return view('admin.medicines.edit', compact('medicine'));
     }
 
-    public function update(Request $request, Medicine $medicine)
+    public function update(UpdateMedicineRequest $request, Medicine $medicine)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'generic_name' => 'nullable|string|max:255',
-            'brand' => 'nullable|string|max:255',
-            'category' => 'required|string|max:255',
-            'dosage_form' => 'required|string|max:255',
-            'strength' => 'required|string|max:255',
-            'unit_price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
-            'reorder_level' => 'required|integer|min:0',
-            'expiry_date' => 'required|date',
-            'batch_number' => 'required|string|max:255',
-            'manufacturer' => 'required|string|max:255',
-            'status' => 'required|in:active,inactive'
-        ]);
-
-        $medicine->update($validated);
+        $medicine->update($request->validated());
 
         return redirect()->route('medicines.index')->with('success', 'Medicine updated successfully.');
     }

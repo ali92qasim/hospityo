@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBillRequest;
+use App\Http\Requests\UpdateBillRequest;
+use App\Http\Requests\AddBillPaymentRequest;
 use App\Models\Bill;
 use App\Models\Patient;
 use App\Models\Service;
 use App\Models\Visit;
-use Illuminate\Http\Request;
 
 class BillController extends Controller
 {
@@ -24,19 +26,8 @@ class BillController extends Controller
         return view('admin.bills.create', compact('patients', 'services', 'visits'));
     }
 
-    public function store(Request $request)
+    public function store(StoreBillRequest $request)
     {
-        $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'bill_date' => 'required|date',
-            'bill_type' => 'required|in:opd,ipd,emergency,lab,pharmacy',
-            'items' => 'required|array|min:1',
-            'items.*.service_id' => 'nullable|exists:services,id',
-            'items.*.description' => 'required|string',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0'
-        ]);
-
         $bill = Bill::create([
             'patient_id' => $request->patient_id,
             'visit_id' => $request->visit_id,
@@ -80,15 +71,8 @@ class BillController extends Controller
         return view('admin.bills.edit', compact('bill', 'patients', 'services', 'visits'));
     }
 
-    public function update(Request $request, Bill $bill)
+    public function update(UpdateBillRequest $request, Bill $bill)
     {
-        $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'bill_date' => 'required|date',
-            'bill_type' => 'required|in:opd,ipd,emergency,lab,pharmacy',
-            'items' => 'required|array|min:1'
-        ]);
-
         $bill->update([
             'patient_id' => $request->patient_id,
             'visit_id' => $request->visit_id,
@@ -121,14 +105,8 @@ class BillController extends Controller
         return redirect()->route('bills.index')->with('success', 'Bill deleted successfully');
     }
 
-    public function addPayment(Request $request, Bill $bill)
+    public function addPayment(AddBillPaymentRequest $request, Bill $bill)
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:0.01|max:' . $bill->due_amount,
-            'payment_method' => 'required|in:cash,card,upi,bank_transfer,cheque,insurance',
-            'payment_date' => 'required|date'
-        ]);
-
         $bill->payments()->create([
             'payment_date' => $request->payment_date,
             'amount' => $request->amount,

@@ -22,3 +22,40 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Database
+/database/database.sqlite
+*.sqlite
+*.sqlite3
+
+# Logs
+/storage/logs/*.log
+
+# Cache
+/bootstrap/cache/*.php
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# Uploads
+/storage/app/public/*
+!/storage/app/public/.gitkeep
+
+# IDE
+.phpstorm.meta.php
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# OS
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.swp
+*.swo
+*~

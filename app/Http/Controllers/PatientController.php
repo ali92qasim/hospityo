@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePatientRequest;
+use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
-use Illuminate\Http\Request;
 
 class PatientController extends Controller
 {
@@ -18,22 +19,9 @@ class PatientController extends Controller
         return view('admin.patients.create');
     }
 
-    public function store(Request $request)
+    public function store(StorePatientRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'gender' => 'required|in:male,female,other',
-            'age' => 'required|integer|min:1|max:150',
-            'phone' => 'required|string|max:20',
-            'marital_status' => 'nullable|in:single,married,divorced,widowed',
-            'present_address' => 'nullable|string',
-            'permanent_address' => 'nullable|string',
-            'emergency_name' => 'required|string|max:255',
-            'emergency_phone' => 'required|string|max:20',
-            'emergency_relation' => 'required|string|max:100',
-        ]);
-
-        Patient::create($validated);
+        Patient::create($request->validated());
 
         return redirect()->route('patients.index')
             ->with('success', 'Patient created successfully.');
@@ -49,22 +37,9 @@ class PatientController extends Controller
         return view('admin.patients.edit', compact('patient'));
     }
 
-    public function update(Request $request, Patient $patient)
+    public function update(UpdatePatientRequest $request, Patient $patient)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'gender' => 'required|in:male,female,other',
-            'age' => 'required|integer|min:1|max:150',
-            'phone' => 'required|string|max:20',
-            'marital_status' => 'nullable|in:single,married,divorced,widowed',
-            'present_address' => 'nullable|string',
-            'permanent_address' => 'nullable|string',
-            'emergency_name' => 'required|string|max:255',
-            'emergency_phone' => 'required|string|max:20',
-            'emergency_relation' => 'required|string|max:100',
-        ]);
-
-        $patient->update($validated);
+        $patient->update($request->validated());
 
         return redirect()->route('patients.index')
             ->with('success', 'Patient updated successfully.');

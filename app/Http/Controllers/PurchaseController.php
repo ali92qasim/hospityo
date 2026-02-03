@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
@@ -37,18 +38,9 @@ class PurchaseController extends Controller
         return view('admin.purchases.create', compact('suppliers', 'medicines'));
     }
 
-    public function store(Request $request)
+    public function store(StorePurchaseOrderRequest $request)
     {
-        $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'order_date' => 'required|date',
-            'expected_delivery' => 'nullable|date|after:order_date',
-            'notes' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.medicine_id' => 'required|exists:medicines,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0'
-        ]);
+        $validated = $request->validated();
 
         DB::transaction(function () use ($validated) {
             $subtotal = 0;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Prescription;
 use App\Models\Medicine;
 use App\Models\Visit;
@@ -32,19 +33,9 @@ class PrescriptionController extends Controller
         return view('admin.prescriptions.create', compact('visit', 'medicines'));
     }
 
-    public function store(Request $request)
+    public function store(StorePrescriptionRequest $request)
     {
-        $validated = $request->validate([
-            'visit_id' => 'required|exists:visits,id',
-            'notes' => 'nullable|string',
-            'medicines' => 'required|array|min:1',
-            'medicines.*.medicine_id' => 'required|exists:medicines,id',
-            'medicines.*.quantity' => 'required|integer|min:1',
-            'medicines.*.dosage' => 'required|string',
-            'medicines.*.frequency' => 'required|string',
-            'medicines.*.duration' => 'required|string',
-            'medicines.*.instructions' => 'nullable|string'
-        ]);
+        $validated = $request->validated();
 
         $visit = Visit::findOrFail($validated['visit_id']);
         

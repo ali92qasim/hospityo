@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreWardRequest;
+use App\Http\Requests\UpdateWardRequest;
 use App\Models\Ward;
 use App\Models\Department;
-use Illuminate\Http\Request;
 
 class WardController extends Controller
 {
@@ -20,17 +21,9 @@ class WardController extends Controller
         return view('admin.wards.create', compact('departments'));
     }
 
-    public function store(Request $request)
+    public function store(StoreWardRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'department_id' => 'required|exists:departments,id',
-            'capacity' => 'required|integer|min:1',
-            'ward_type' => 'required|in:general,private,icu,emergency',
-            'status' => 'required|in:active,inactive'
-        ]);
-
-        Ward::create($validated);
+        Ward::create($request->validated());
 
         return redirect()->route('wards.index')->with('success', 'Ward created successfully.');
     }
@@ -41,17 +34,9 @@ class WardController extends Controller
         return view('admin.wards.edit', compact('ward', 'departments'));
     }
 
-    public function update(Request $request, Ward $ward)
+    public function update(UpdateWardRequest $request, Ward $ward)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'department_id' => 'required|exists:departments,id',
-            'capacity' => 'required|integer|min:1',
-            'ward_type' => 'required|in:general,private,icu,emergency',
-            'status' => 'required|in:active,inactive'
-        ]);
-
-        $ward->update($validated);
+        $ward->update($request->validated());
 
         return redirect()->route('wards.index')->with('success', 'Ward updated successfully.');
     }

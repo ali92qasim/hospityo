@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBedRequest;
+use App\Http\Requests\UpdateBedRequest;
 use App\Models\Bed;
 use App\Models\Ward;
-use Illuminate\Http\Request;
 
 class BedController extends Controller
 {
@@ -20,17 +21,9 @@ class BedController extends Controller
         return view('admin.beds.create', compact('wards'));
     }
 
-    public function store(Request $request)
+    public function store(StoreBedRequest $request)
     {
-        $validated = $request->validate([
-            'bed_number' => 'required|string|max:255',
-            'ward_id' => 'required|exists:wards,id',
-            'bed_type' => 'required|in:general,private,icu,emergency',
-            'daily_rate' => 'required|numeric|min:0',
-            'status' => 'required|in:available,occupied,maintenance'
-        ]);
-
-        Bed::create($validated);
+        Bed::create($request->validated());
 
         return redirect()->route('beds.index')->with('success', 'Bed created successfully.');
     }
@@ -41,17 +34,9 @@ class BedController extends Controller
         return view('admin.beds.edit', compact('bed', 'wards'));
     }
 
-    public function update(Request $request, Bed $bed)
+    public function update(UpdateBedRequest $request, Bed $bed)
     {
-        $validated = $request->validate([
-            'bed_number' => 'required|string|max:255',
-            'ward_id' => 'required|exists:wards,id',
-            'bed_type' => 'required|in:general,private,icu,emergency',
-            'daily_rate' => 'required|numeric|min:0',
-            'status' => 'required|in:available,occupied,maintenance'
-        ]);
-
-        $bed->update($validated);
+        $bed->update($request->validated());
 
         return redirect()->route('beds.index')->with('success', 'Bed updated successfully.');
     }

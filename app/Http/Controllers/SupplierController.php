@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreSupplierRequest;
+use App\Http\Requests\UpdateSupplierRequest;
 use App\Models\Supplier;
 use App\Models\InventoryTransaction;
 use Illuminate\Http\Request;
@@ -35,23 +37,9 @@ class SupplierController extends Controller
         return view('admin.suppliers.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreSupplierRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:suppliers',
-            'contact_person' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'city' => 'required|string|max:100',
-            'country' => 'required|string|max:100',
-            'tax_number' => 'nullable|string|max:50',
-            'payment_terms' => 'nullable|string|max:100',
-            'status' => 'required|in:active,inactive',
-            'notes' => 'nullable|string'
-        ]);
-
-        Supplier::create($validated);
+        Supplier::create($request->validated());
 
         return redirect()->route('suppliers.index')
             ->with('success', 'Supplier created successfully.');
@@ -78,23 +66,9 @@ class SupplierController extends Controller
         return view('admin.suppliers.edit', compact('supplier'));
     }
 
-    public function update(Request $request, Supplier $supplier)
+    public function update(UpdateSupplierRequest $request, Supplier $supplier)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:suppliers,name,' . $supplier->id,
-            'contact_person' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'city' => 'required|string|max:100',
-            'country' => 'required|string|max:100',
-            'tax_number' => 'nullable|string|max:50',
-            'payment_terms' => 'nullable|string|max:100',
-            'status' => 'required|in:active,inactive',
-            'notes' => 'nullable|string'
-        ]);
-
-        $supplier->update($validated);
+        $supplier->update($request->validated());
 
         return redirect()->route('suppliers.index')
             ->with('success', 'Supplier updated successfully.');

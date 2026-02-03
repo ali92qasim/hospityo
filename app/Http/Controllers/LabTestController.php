@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreLabTestRequest;
+use App\Http\Requests\UpdateLabTestRequest;
 use App\Models\LabTest;
 use Illuminate\Http\Request;
 
@@ -31,21 +33,9 @@ class LabTestController extends Controller
         return view('admin.lab.tests.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreLabTestRequest $request)
     {
-        $validated = $request->validate([
-            'code' => 'required|unique:lab_tests',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'category' => 'required|in:hematology,biochemistry,microbiology,immunology,pathology,molecular',
-            'sample_type' => 'required|in:blood,urine,stool,sputum,csf,tissue,swab,other',
-            'price' => 'required|numeric|min:0',
-            'turnaround_time' => 'required|integer|min:1',
-            'instructions' => 'nullable|string',
-            'parameters' => 'nullable|array'
-        ]);
-
-        LabTest::create($validated);
+        LabTest::create($request->validated());
         return redirect()->route('lab-tests.index')->with('success', 'Lab test created successfully.');
     }
 
@@ -59,21 +49,9 @@ class LabTestController extends Controller
         return view('admin.lab.tests.edit', compact('labTest'));
     }
 
-    public function update(Request $request, LabTest $labTest)
+    public function update(UpdateLabTestRequest $request, LabTest $labTest)
     {
-        $validated = $request->validate([
-            'code' => 'required|unique:lab_tests,code,' . $labTest->id,
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'category' => 'required|in:hematology,biochemistry,microbiology,immunology,pathology,molecular',
-            'sample_type' => 'required|in:blood,urine,stool,sputum,csf,tissue,swab,other',
-            'price' => 'required|numeric|min:0',
-            'turnaround_time' => 'required|integer|min:1',
-            'instructions' => 'nullable|string',
-            'parameters' => 'nullable|array'
-        ]);
-
-        $labTest->update($validated);
+        $labTest->update($request->validated());
         return redirect()->route('lab-tests.index')->with('success', 'Lab test updated successfully.');
     }
 
