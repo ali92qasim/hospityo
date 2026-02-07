@@ -64,13 +64,6 @@
                         <a href="{{ route('patients.edit', $patient) }}" class="text-medical-green hover:text-green-700" title="Edit">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form action="{{ route('patients.destroy', $patient) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
                     </td>
                 </tr>
                 @empty

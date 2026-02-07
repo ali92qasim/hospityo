@@ -9,12 +9,11 @@ use Illuminate\Database\Eloquent\Builder;
 class LabTest extends Model
 {
     protected $fillable = [
-        'code', 'name', 'description', 'category', 'sample_type', 
-        'price', 'turnaround_time', 'parameters', 'instructions', 'is_active'
+        'code', 'name', 'description', 'category', 'sample_type',
+        'price', 'turnaround_time', 'instructions', 'is_active'
     ];
 
     protected $casts = [
-        'parameters' => 'array',
         'price' => 'decimal:2',
         'is_active' => 'boolean'
     ];
@@ -26,7 +25,7 @@ class LabTest extends Model
 
     public function parameters(): HasMany
     {
-        return $this->hasMany(LabTestParameter::class)->orderBy('display_order');
+        return $this->hasMany(LabTestParameter::class)->orderBy('display_order', 'asc');
     }
 
     public function scopeActive(Builder $query): Builder
@@ -36,6 +35,6 @@ class LabTest extends Model
 
     public function scopeByCategory(Builder $query, string $category): Builder
     {
-        return $query->where('category', $category);
+        return $query->where('category', '=', $category);
     }
 }

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 class LabOrder extends Model
 {
     protected $fillable = [
-        'order_number', 'patient_id', 'visit_id', 'doctor_id', 'lab_test_id',
+        'order_number', 'patient_id', 'visit_id', 'doctor_id', 'lab_test_id', 'quantity',
         'priority', 'status', 'test_location', 'ordered_at', 'sample_collected_at', 'completed_at',
         'clinical_notes', 'special_instructions'
     ];
@@ -27,12 +27,18 @@ class LabOrder extends Model
         parent::boot();
         
         static::creating(function ($order) {
-            $order->order_number = 'LAB' . str_pad(
-                (LabOrder::max('id') ?? 0) + 1,
-                6,
-                '0',
-                STR_PAD_LEFT
-            );
+            try {
+                $lastId = static::query()->max('id') ?? 0;
+                $order->order_number = 'LAB' . str_pad(
+                    $lastId + 1,
+                    6,
+                    '0',
+                    STR_PAD_LEFT
+                );
+            } catch (\Exception $e) {
+                \Log::error('Failed to generate lab order number: ' . $e->getMessage());
+                throw $e;
+            }
         });
     }
 
@@ -64,11 +70,6 @@ class LabOrder extends Model
     public function result(): HasOne
     {
         return $this->hasOne(LabResult::class);
-    }
-
-    public function resultItems(): HasMany
-    {
-        return $this->hasMany(LabResultItem::class);
     }
 
     public function scopeByStatus(Builder $query, string $status): Builder

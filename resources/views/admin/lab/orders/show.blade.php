@@ -11,7 +11,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-800">{{ $labOrder->order_number }}</h3>
-                    <p class="text-sm text-gray-600">{{ $labOrder->labTest->name }}</p>
+                    <p class="text-sm text-gray-600">{{ $labOrder->labTest?->name ?? 'Unknown Test' }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     @php
@@ -47,15 +47,15 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Test:</span>
-                                <span class="font-medium">{{ $labOrder->labTest->name }}</span>
+                                <span class="font-medium">{{ $labOrder->labTest?->name ?? 'Unknown Test' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Category:</span>
-                                <span>{{ ucfirst($labOrder->labTest->category) }}</span>
+                                <span>{{ $labOrder->labTest ? ucfirst($labOrder->labTest->category) : 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Sample Type:</span>
-                                <span>{{ ucfirst($labOrder->labTest->sample_type) }}</span>
+                                <span>{{ $labOrder->labTest ? ucfirst($labOrder->labTest->sample_type) : 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Priority:</span>
@@ -65,7 +65,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Price:</span>
-                                <span class="font-medium">₨{{ number_format($labOrder->labTest->price, 0) }}</span>
+                                <span class="font-medium">₨{{ $labOrder->labTest ? number_format($labOrder->labTest->price, 0) : 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -75,23 +75,23 @@
                         <div class="space-y-2 text-sm">
                             <div class="flex justify-between">
                                 <span class="text-green-600">Name:</span>
-                                <span class="font-medium">{{ $labOrder->patient->name }}</span>
+                                <span class="font-medium">{{ $labOrder->patient?->name ?? 'Unknown Patient' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-green-600">Patient No:</span>
-                                <span>{{ $labOrder->patient->patient_no }}</span>
+                                <span>{{ $labOrder->patient?->patient_no ?? 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-green-600">Age:</span>
-                                <span>{{ $labOrder->patient->age }} years</span>
+                                <span>{{ $labOrder->patient?->age ?? 'N/A' }} years</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-green-600">Gender:</span>
-                                <span>{{ ucfirst($labOrder->patient->gender) }}</span>
+                                <span>{{ $labOrder->patient ? ucfirst($labOrder->patient->gender) : 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-green-600">Phone:</span>
-                                <span>{{ $labOrder->patient->phone }}</span>
+                                <span>{{ $labOrder->patient?->phone ?? 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -102,11 +102,11 @@
                         <div class="space-y-2 text-sm">
                             <div class="flex justify-between">
                                 <span class="text-purple-600">Name:</span>
-                                <span class="font-medium">Dr. {{ $labOrder->doctor->name }}</span>
+                                <span class="font-medium">Dr. {{ $labOrder->doctor?->name ?? 'Unknown Doctor' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-purple-600">Specialization:</span>
-                                <span>{{ $labOrder->doctor->specialization }}</span>
+                                <span>{{ $labOrder->doctor?->specialization ?? 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -122,7 +122,7 @@
                                 <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
                                 <div>
                                     <span class="font-medium">Ordered</span>
-                                    <div class="text-gray-500">{{ $labOrder->ordered_at->format('M d, Y h:i A') }}</div>
+                                    <div class="text-gray-500">{{ $labOrder->ordered_at ? $labOrder->ordered_at->format('M d, Y h:i A') : 'N/A' }}</div>
                                 </div>
                             </div>
                             
@@ -131,7 +131,7 @@
                                 <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
                                 <div>
                                     <span class="font-medium">Sample Collected</span>
-                                    <div class="text-gray-500">{{ $labOrder->sample_collected_at->format('M d, Y h:i A') }}</div>
+                                    <div class="text-gray-500">{{ $labOrder->sample_collected_at ? $labOrder->sample_collected_at->format('M d, Y h:i A') : 'N/A' }}</div>
                                 </div>
                             </div>
                             @endif
@@ -141,7 +141,7 @@
                                 <div class="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
                                 <div>
                                     <span class="font-medium">Sample Received</span>
-                                    <div class="text-gray-500">{{ $labOrder->sample_received_at->format('M d, Y h:i A') }}</div>
+                                    <div class="text-gray-500">{{ $labOrder->sample_received_at ? $labOrder->sample_received_at->format('M d, Y h:i A') : 'N/A' }}</div>
                                 </div>
                             </div>
                             @endif
@@ -151,7 +151,7 @@
                                 <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
                                 <div>
                                     <span class="font-medium">Completed</span>
-                                    <div class="text-gray-500">{{ $labOrder->completed_at->format('M d, Y h:i A') }}</div>
+                                    <div class="text-gray-500">{{ $labOrder->completed_at ? $labOrder->completed_at->format('M d, Y h:i A') : 'N/A' }}</div>
                                 </div>
                             </div>
                             @endif

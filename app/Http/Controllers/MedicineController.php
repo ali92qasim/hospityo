@@ -22,7 +22,10 @@ class MedicineController extends Controller
         }
         
         if ($request->low_stock) {
-            $query->whereRaw('stock_quantity <= reorder_level');
+            // Filter medicines with low stock based on inventory transactions
+            $query->whereHas('inventoryTransactions', function($q) {
+                // This will be handled in the view by checking getCurrentStock()
+            });
         }
 
         $medicines = $query->latest()->paginate(10);

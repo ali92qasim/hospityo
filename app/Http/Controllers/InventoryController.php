@@ -6,6 +6,7 @@ use App\Http\Requests\StockInRequest;
 use App\Http\Requests\StockOutRequest;
 use App\Models\Medicine;
 use App\Models\InventoryTransaction;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 
 class InventoryController extends Controller
@@ -15,15 +16,15 @@ class InventoryController extends Controller
         $query = InventoryTransaction::with(['medicine', 'user']);
 
         if ($request->type) {
-            $query->where('type', $request->type);
+            $query->where('type', '=', $request->type);
         }
 
         if ($request->medicine_id) {
-            $query->where('medicine_id', $request->medicine_id);
+            $query->where('medicine_id', '=', $request->medicine_id);
         }
 
         $transactions = $query->latest()->paginate(15)->withQueryString();
-        $medicines = Medicine::where('status', 'active')->get();
+        $medicines = Medicine::where('status', '=', 'active')->get();
 
         return view('admin.inventory.index', compact('transactions', 'medicines'));
     }

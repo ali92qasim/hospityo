@@ -15,7 +15,7 @@ class PrescriptionController extends Controller
         $query = Prescription::with(['patient', 'doctor', 'visit']);
         
         if ($request->status) {
-            $query->where('status', $request->status);
+            $query->where('status', '=', $request->status);
         }
 
         $prescriptions = $query->latest()->paginate(10);
@@ -29,7 +29,7 @@ class PrescriptionController extends Controller
             $visit = Visit::with(['patient', 'doctor'])->findOrFail($request->visit_id);
         }
         
-        $medicines = Medicine::where('status', 'active')->where('stock_quantity', '>', 0)->get();
+        $medicines = Medicine::where('status', '=', 'active')->where('stock_quantity', '>', 0)->get();
         return view('admin.prescriptions.create', compact('visit', 'medicines'));
     }
 

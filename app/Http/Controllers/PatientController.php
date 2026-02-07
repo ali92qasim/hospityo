@@ -47,14 +47,6 @@ class PatientController extends Controller
             ->with('success', 'Patient updated successfully.');
     }
 
-    public function destroy(Patient $patient): RedirectResponse
-    {
-        $patient->delete();
-
-        return redirect()->route('patients.index')
-            ->with('success', 'Patient deleted successfully.');
-    }
-
     public function history(Patient $patient): View
     {
         $visits = $patient->visits()->with(['doctor', 'consultation'])->latest()->get();

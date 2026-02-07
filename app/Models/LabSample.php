@@ -18,17 +18,23 @@ class LabSample extends Model
         'storage_conditions' => 'array'
     ];
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
         
         static::creating(function ($sample) {
-            $sample->sample_id = 'S' . date('Ymd') . str_pad(
-                (LabSample::whereDate('created_at', today())->count() + 1),
-                4,
-                '0',
-                STR_PAD_LEFT
-            );
+            try {
+                $todayCount = static::query()->whereDate('created_at', today())->count();
+                $sample->sample_id = 'S' . date('Ymd') . str_pad(
+                    $todayCount + 1,
+                    4,
+                    '0',
+                    STR_PAD_LEFT
+                );
+            } catch (\Exception $e) {
+                \Log::error('Failed to generate sample ID: ' . $e->getMessage());
+                throw $e;
+            }
         });
     }
 

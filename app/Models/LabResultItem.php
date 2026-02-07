@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class LabResultItem extends Model
 {
     protected $fillable = [
-        'lab_order_id', 'lab_test_parameter_id', 'value', 'unit',
+        'lab_result_id', 'lab_test_parameter_id', 'value', 'unit',
         'flag', 'comment', 'entered_by', 'entered_at', 'verified_by', 'verified_at'
     ];
 
@@ -16,9 +16,9 @@ class LabResultItem extends Model
         'verified_at' => 'datetime'
     ];
 
-    public function labOrder()
+    public function labResult()
     {
-        return $this->belongsTo(LabOrder::class);
+        return $this->belongsTo(LabResult::class);
     }
 
     public function parameter()

@@ -14,8 +14,13 @@ class EmailVerificationPromptController extends Controller
      */
     public function __invoke(Request $request): RedirectResponse|View
     {
-        return $request->user()->hasVerifiedEmail()
-                    ? redirect()->intended(route('dashboard', absolute: false))
-                    : view('auth.verify-email');
+        try {
+            return $request->user()->hasVerifiedEmail()
+                        ? redirect()->intended(route('dashboard', absolute: false))
+                        : view('auth.verify-email');
+        } catch (\Exception $e) {
+            \Log::error('Email verification prompt error: ' . $e->getMessage());
+            return redirect()->route('login')->withErrors(['error' => 'Unable to verify email status. Please try again.']);
+        }
     }
 }

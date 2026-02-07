@@ -13,7 +13,7 @@ use App\Http\Requests\AdmitPatientRequest;
 use App\Http\Requests\DischargePatientRequest;
 use App\Http\Requests\TriagePatientRequest;
 use App\Http\Requests\CreatePrescriptionRequest;
-use App\Http\Requests\OrderLabTestRequest;
+use App\Http\Requests\OrderMultipleLabTestsRequest;
 use App\Models\Visit;
 use App\Models\Patient;
 use App\Models\Doctor;
@@ -259,32 +259,42 @@ class VisitController extends Controller
 
     public function dischargePatient(DischargePatientRequest $request, Visit $visit)
     {
-        $admission = $visit->admission;
-        $admission->update([
-            'discharge_date' => now(),
-            'status' => 'discharged',
-            'discharge_notes' => $request->discharge_notes,
-            'discharge_summary' => $request->discharge_summary
-        ]);
+        try {
+            $admission = $visit->admission;
+            $admission->update([
+                'discharge_date' => now(),
+                'status' => 'discharged',
+                'discharge_notes' => $request->discharge_notes,
+                'discharge_summary' => $request->discharge_summary
+            ]);
 
-        $admission->bed->update(['status' => 'available']);
-        $visit->update(['status' => 'discharged']);
+            $admission->bed->update(['status' => 'available']);
+            $visit->update(['status' => 'discharged']);
 
-        return back()->with('success', 'Patient discharged successfully.');
+            return back()->with('success', 'Patient discharged successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Failed to discharge patient: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to discharge patient. Please try again.']);
+        }
     }
 
     // Emergency Methods
     public function triagePatient(TriagePatientRequest $request, Visit $visit)
     {
-        $visit->triage()->create([
-            ...$request->only(['priority_level', 'chief_complaint', 'pain_scale', 'triage_notes']),
-            'triaged_by' => auth()->id(),
-            'triaged_at' => now()
-        ]);
+        try {
+            $visit->triage()->create([
+                ...$request->only(['priority_level', 'chief_complaint', 'pain_scale', 'triage_notes']),
+                'triaged_by' => auth()->id(),
+                'triaged_at' => now()
+            ]);
 
-        $visit->update(['status' => 'triaged']);
+            $visit->update(['status' => 'triaged']);
 
-        return back()->with('success', 'Patient triaged successfully.');
+            return back()->with('success', 'Patient triaged successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Failed to triage patient: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to triage patient. Please try again.']);
+        }
     }
 
     public function createPrescription(CreatePrescriptionRequest $request, Visit $visit)
@@ -293,6 +303,7 @@ class VisitController extends Controller
             $prescription = $visit->prescriptions()->create([
                 'patient_id' => $visit->patient_id,
                 'doctor_id' => $visit->doctor_id,
+                'prescribed_date' => now(),
                 'notes' => $request->notes,
                 'status' => 'pending'
             ]);
@@ -301,41 +312,84 @@ class VisitController extends Controller
                 $medicine = Medicine::find($medicineData['medicine_id']);
 
                 // Check stock availability
-                if ($medicine->stock_quantity < $medicineData['quantity']) {
+                $currentStock = $medicine->getCurrentStock();
+                if ($currentStock < $medicineData['quantity']) {
                     return back()->withErrors([
-                        'stock' => "Insufficient stock for {$medicine->name}. Available: {$medicine->stock_quantity}"
+                        'stock' => "Insufficient stock for {$medicine->name}. Available: {$currentStock}"
                     ]);
                 }
+
+                // Get unit price from latest inventory transaction or default to 0
+                $latestTransaction = $medicine->inventoryTransactions()
+                    ->where('type', 'stock_in')
+                    ->latest()
+                    ->first();
+                
+                $unitPrice = $latestTransaction ? $latestTransaction->unit_cost : 0;
+                $totalPrice = $unitPrice * $medicineData['quantity'];
 
                 $prescription->items()->create([
                     'medicine_id' => $medicineData['medicine_id'],
                     'quantity' => $medicineData['quantity'],
                     'dosage' => $medicineData['dosage'],
-                    'instructions' => $medicineData['instructions'] ?? null
+                    'frequency' => 'As directed', // Default value
+                    'duration' => 'As prescribed', // Default value
+                    'instructions' => $medicineData['instructions'] ?? null,
+                    'unit_price' => $unitPrice,
+                    'total_price' => $totalPrice
                 ]);
             }
 
             return back()->with('success', 'Prescription created successfully.');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to create prescription. Please try again.']);
+            return back()->withErrors(['error' => 'Failed to create prescription. Please try again. Error: ' . $e->getMessage()]);
         }
     }
 
-    public function orderLabTest(OrderLabTestRequest $request, Visit $visit)
+    public function orderMultipleLabTests(OrderMultipleLabTestsRequest $request, Visit $visit)
     {
-        $validated = $request->validated();
+        try {
+            $validated = $request->validated();
+            $orderedCount = 0;
 
-        $visit->labOrders()->create([
-            'patient_id' => $visit->patient_id,
-            'doctor_id' => $visit->doctor_id,
-            'lab_test_id' => $validated['lab_test_id'],
-            'test_location' => $validated['test_location'],
-            'priority' => $validated['priority'],
-            'clinical_notes' => $validated['clinical_notes'],
-            'status' => 'ordered',
-            'ordered_at' => now()
+            foreach ($validated['tests'] as $testData) {
+                $visit->labOrders()->create([
+                    'patient_id' => $visit->patient_id,
+                    'doctor_id' => $visit->doctor_id,
+                    'lab_test_id' => $testData['lab_test_id'],
+                    'quantity' => $testData['quantity'],
+                    'test_location' => 'indoor', // Default to indoor since field removed
+                    'priority' => $testData['priority'],
+                    'clinical_notes' => $testData['clinical_notes'] ?? null,
+                    'status' => 'ordered',
+                    'ordered_at' => now()
+                ]);
+                $orderedCount++;
+            }
+            
+            $message = $orderedCount === 1 ? 'Lab test ordered successfully.' : "{$orderedCount} lab tests ordered successfully.";
+            return back()->with('success', $message);
+        } catch (\Exception $e) {
+            \Log::error('Failed to order lab tests: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to order lab tests. Please try again.']);
+        }
+    }
+
+    public function print(Visit $visit)
+    {
+        $visit->load([
+            'patient',
+            'doctor.department',
+            'vitalSigns',
+            'allVitalSigns.user',
+            'consultation',
+            'labOrders.labTest',
+            'labOrders.result.resultItems',
+            'admission.bed.ward',
+            'triage',
+            'prescriptions.items.medicine'
         ]);
-        
-        return back()->with('success', 'Lab test ordered successfully.');
+
+        return view('admin.visits.print', compact('visit'));
     }
 }

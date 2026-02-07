@@ -11,7 +11,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-800">Add Test Result</h3>
-                    <p class="text-sm text-gray-600">{{ $labOrder->labTest->name }} - {{ $labOrder->patient->name }}</p>
+                    <p class="text-sm text-gray-600">{{ $labOrder->labTest?->name ?? 'Unknown Test' }} - {{ $labOrder->patient?->name ?? 'Unknown Patient' }}</p>
                 </div>
                 <a href="{{ route('lab-results.index') }}" class="text-gray-600 hover:text-gray-800">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Lab Results
@@ -26,7 +26,7 @@
                     <h4 class="font-medium text-blue-800 mb-2">Order Information</h4>
                     <div class="space-y-1 text-sm">
                         <div><span class="text-blue-600">Order #:</span> {{ $labOrder->order_number }}</div>
-                        <div><span class="text-blue-600">Test:</span> {{ $labOrder->labTest->name }}</div>
+                        <div><span class="text-blue-600">Test:</span> {{ $labOrder->labTest?->name ?? 'Unknown Test' }}</div>
                         <div><span class="text-blue-600">Priority:</span> {{ strtoupper($labOrder->priority) }}</div>
                     </div>
                 </div>
@@ -35,9 +35,9 @@
                 <div class="bg-green-50 rounded-lg p-4">
                     <h4 class="font-medium text-green-800 mb-2">Patient Information</h4>
                     <div class="space-y-1 text-sm">
-                        <div><span class="text-green-600">Name:</span> {{ $labOrder->patient->name }}</div>
-                        <div><span class="text-green-600">Age:</span> {{ $labOrder->patient->age }} years</div>
-                        <div><span class="text-green-600">Gender:</span> {{ ucfirst($labOrder->patient->gender) }}</div>
+                        <div><span class="text-green-600">Name:</span> {{ $labOrder->patient?->name ?? 'Unknown Patient' }}</div>
+                        <div><span class="text-green-600">Age:</span> {{ $labOrder->patient?->age ?? 'N/A' }} years</div>
+                        <div><span class="text-green-600">Gender:</span> {{ $labOrder->patient ? ucfirst($labOrder->patient->gender) : 'N/A' }}</div>
                     </div>
                 </div>
 
@@ -45,9 +45,16 @@
                 <div class="bg-purple-50 rounded-lg p-4">
                     <h4 class="font-medium text-purple-800 mb-2">Test Information</h4>
                     <div class="space-y-1 text-sm">
-                        <div><span class="text-purple-600">Category:</span> {{ ucfirst($labOrder->labTest->category) }}</div>
-                        <div><span class="text-purple-600">Sample:</span> {{ ucfirst($labOrder->labTest->sample_type) }}</div>
-                        <div><span class="text-purple-600">Ordered:</span> {{ $labOrder->ordered_at->format('M d, Y') }}</div>
+                        <div><span class="text-purple-600">Category:</span> {{ $labOrder->labTest ? ucfirst($labOrder->labTest->category) : 'N/A' }}</div>
+                        <div><span class="text-purple-600">Sample:</span> {{ $labOrder->labTest ? ucfirst($labOrder->labTest->sample_type) : 'N/A' }}</div>
+                        <div><span class="text-purple-600">Location:</span> 
+                            <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full font-medium
+                                {{ ($labOrder->test_location ?? 'indoor') === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
+                                <i class="fas {{ ($labOrder->test_location ?? 'indoor') === 'indoor' ? 'fa-building' : 'fa-external-link-alt' }} mr-1"></i>
+                                {{ ($labOrder->test_location ?? 'indoor') === 'indoor' ? 'Indoor Lab' : 'External Lab' }}
+                            </span>
+                        </div>
+                        <div><span class="text-purple-600">Ordered:</span> {{ $labOrder->ordered_at ? $labOrder->ordered_at->format('M d, Y') : 'N/A' }}</div>
                     </div>
                 </div>
             </div>
@@ -56,6 +63,23 @@
                 @csrf
                 
                 <div class="space-y-6">
+                    <!-- Test Location -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-800 mb-4">Test Location</h4>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Processing Location</label>
+                            <select name="test_location" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                                <option value="indoor" {{ ($labOrder->test_location ?? 'indoor') === 'indoor' ? 'selected' : '' }}>
+                                    <i class="fas fa-building"></i> Indoor Lab
+                                </option>
+                                <option value="outdoor" {{ ($labOrder->test_location ?? 'indoor') === 'outdoor' ? 'selected' : '' }}>
+                                    <i class="fas fa-external-link-alt"></i> External Lab
+                                </option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Select where this test was processed</p>
+                        </div>
+                    </div>
+
                     <!-- Test Results -->
                     <div class="bg-gray-50 rounded-lg p-4">
                         <h4 class="font-medium text-gray-800 mb-4">Test Results</h4>

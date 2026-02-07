@@ -24,7 +24,10 @@ class UpdateLabTestRequest extends FormRequest
             'price' => 'required|numeric|min:0',
             'turnaround_time' => 'required|integer|min:1',
             'instructions' => 'nullable|string',
-            'parameters' => 'nullable|array'
+            'parameters' => 'nullable|array',
+            'parameters.*.name' => 'nullable|string',
+            'parameters.*.unit' => 'nullable|string',
+            'parameters.*.reference_range' => 'nullable|string'
         ];
     }
 }

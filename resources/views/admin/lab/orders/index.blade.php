@@ -10,9 +10,10 @@
         <select onchange="filterOrders()" id="status-filter" class="px-3 py-2 border border-gray-300 rounded-lg">
             <option value="">All Status</option>
             <option value="ordered">Ordered</option>
-            <option value="sample_collected">Sample Collected</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
+            <option value="collected">Sample Collected</option>
+            <option value="testing">Testing</option>
+            <option value="verified">Verified</option>
+            <option value="reported">Reported</option>
         </select>
         <select onchange="filterOrders()" id="priority-filter" class="px-3 py-2 border border-gray-300 rounded-lg">
             <option value="">All Priority</option>
@@ -43,19 +44,19 @@
             @forelse($orders as $order)
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $order->order_number }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $order->patient->name }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $order->labTest->name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ $order->patient?->name ?? 'Unknown Patient' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ $order->labTest?->name ?? 'Unknown Test' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 text-xs rounded-full {{ $order->priority === 'stat' ? 'bg-red-100 text-red-800' : ($order->priority === 'urgent' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
                             {{ strtoupper($order->priority) }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 text-xs rounded-full {{ $order->status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' }}">
+                        <span class="px-2 py-1 text-xs rounded-full {{ in_array($order->status, ['verified', 'reported']) ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' }}">
                             {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $order->ordered_at->format('M d, Y H:i') }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $order->ordered_at ? $order->ordered_at->format('M d, Y H:i') : 'N/A' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <a href="{{ route('lab-orders.show', $order) }}" class="text-blue-600 hover:text-blue-800 mr-3">
                             <i class="fas fa-eye"></i>

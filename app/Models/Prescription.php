@@ -34,12 +34,18 @@ class Prescription extends Model
         parent::boot();
         
         static::creating(function ($prescription) {
-            $prescription->prescription_no = 'RX' . str_pad(
-                (Prescription::max('id') ?? 0) + 1,
-                6,
-                '0',
-                STR_PAD_LEFT
-            );
+            try {
+                $lastId = static::query()->max('id') ?? 0;
+                $prescription->prescription_no = 'RX' . str_pad(
+                    $lastId + 1,
+                    6,
+                    '0',
+                    STR_PAD_LEFT
+                );
+            } catch (\Exception $e) {
+                \Log::error('Failed to generate prescription number: ' . $e->getMessage());
+                throw $e;
+            }
         });
     }
 

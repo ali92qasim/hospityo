@@ -26,9 +26,9 @@
                         <option value="">Select Medicine</option>
                         @foreach($medicines as $medicine)
                             <option value="{{ $medicine->id }}" 
-                                    data-base-unit="{{ $medicine->baseUnit->abbreviation }}"
-                                    data-purchase-unit="{{ $medicine->purchaseUnit->id }}">
-                                {{ $medicine->name }} ({{ $medicine->generic_name }})
+                                    data-base-unit="{{ $medicine->baseUnit?->abbreviation ?? 'unit' }}"
+                                    data-purchase-unit="{{ $medicine->purchaseUnit?->id ?? '' }}">
+                                {{ $medicine->name }} @if($medicine->generic_name)({{ $medicine->generic_name }})@endif
                             </option>
                         @endforeach
                     </select>
@@ -136,23 +136,18 @@ function updateUnits() {
     const unitSelect = document.getElementById('unit-select');
     
     if (!medicineSelect.value) {
-        unitSelect.innerHTML = '<option value="">Select Unit</option>';
+        // Reset to show all units
+        unitSelect.disabled = false;
         return;
     }
     
     const selectedOption = medicineSelect.options[medicineSelect.selectedIndex];
-    const baseUnit = selectedOption.dataset.baseUnit;
     const purchaseUnitId = selectedOption.dataset.purchaseUnit;
     
-    // Filter units to show only compatible ones
-    const allOptions = Array.from(unitSelect.querySelectorAll('option'));
-    unitSelect.innerHTML = '<option value="">Select Unit</option>';
-    
-    allOptions.forEach(option => {
-        if (option.value && (option.dataset.baseUnit === purchaseUnitId || option.value === purchaseUnitId)) {
-            unitSelect.appendChild(option.cloneNode(true));
-        }
-    });
+    // If medicine has a purchase unit, pre-select it
+    if (purchaseUnitId) {
+        unitSelect.value = purchaseUnitId;
+    }
 }
 </script>
 @endsection

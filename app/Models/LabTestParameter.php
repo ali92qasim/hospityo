@@ -42,7 +42,7 @@ class LabTestParameter extends Model
             return $ranges[strtolower($patientGender)];
         }
         
-        return $ranges['normal'] ?? $ranges['range'] ?? '';
+        return $ranges['normal'] ?? $ranges['range'] ?? $this->reference_ranges ?? '';
     }
 
     public function calculateFlag($value, $patientAge = null, $patientGender = null)

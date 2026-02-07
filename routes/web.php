@@ -92,6 +92,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('departments', DepartmentController::class)->middleware('permission:view departments|create departments|edit departments|delete departments');
     Route::resource('visits', VisitController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
     Route::get('visits/{visit}/workflow', [VisitController::class, 'workflow'])->name('visits.workflow')->middleware('permission:view visits');
+    Route::get('visits/{visit}/print', [VisitController::class, 'print'])->name('visits.print')->middleware('permission:view visits');
     Route::post('visits/{visit}/vitals', [VisitController::class, 'updateVitals'])->name('visits.vitals')->middleware('permission:edit visits');
     Route::post('visits/{visit}/assign-doctor', [VisitController::class, 'assignDoctor'])->name('visits.assign-doctor')->middleware('permission:edit visits');
     Route::post('visits/{visit}/consultation', [VisitController::class, 'updateConsultation'])->name('visits.consultation')->middleware('permission:edit visits');
@@ -119,7 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Pharmacy Routes
     Route::resource('medicines', MedicineController::class)->middleware('permission:view services|create services|edit services|delete services');
     Route::post('visits/{visit}/prescription', [VisitController::class, 'createPrescription'])->name('visits.prescription')->middleware('permission:edit visits');
-    Route::post('visits/{visit}/order-lab-test', [VisitController::class, 'orderLabTest'])->name('visits.order-lab-test')->middleware('permission:edit visits');
+    Route::post('visits/{visit}/order-multiple-lab-tests', [VisitController::class, 'orderMultipleLabTests'])->name('visits.order-multiple-lab-tests')->middleware('permission:edit visits');
     Route::post('prescriptions/{prescription}/dispense', [PrescriptionController::class, 'dispense'])->name('prescriptions.dispense')->middleware('permission:edit visits');
     
     // Unit Routes
@@ -148,11 +149,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('lab-orders', LabOrderController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
     Route::post('lab-orders/{labOrder}/collect-sample', [LabOrderController::class, 'collectSample'])->name('lab-orders.collect-sample')->middleware('permission:edit visits');
     Route::post('lab-orders/{labOrder}/receive-sample', [LabOrderController::class, 'receiveSample'])->name('lab-orders.receive-sample')->middleware('permission:edit visits');
-    Route::resource('lab-results', LabResultController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
+    
+    // Lab Results - Custom routes BEFORE resource route
+    Route::get('lab-results/create-batch', [LabResultController::class, 'createBatch'])->name('lab-results.create-batch')->middleware('permission:edit visits');
+    Route::post('lab-results/store-batch', [LabResultController::class, 'storeBatch'])->name('lab-results.store-batch')->middleware('permission:edit visits');
     Route::get('lab-orders/{labOrder}/results/create', [LabResultController::class, 'create'])->name('lab-orders.results.create')->middleware('permission:edit visits');
     Route::post('lab-orders/{labOrder}/results', [LabResultController::class, 'store'])->name('lab-orders.results.store')->middleware('permission:edit visits');
     Route::post('lab-results/{labResult}/verify', [LabResultController::class, 'verify'])->name('lab-results.verify')->middleware('permission:edit visits');
     Route::get('lab-results/{labResult}/report', [LabResultController::class, 'report'])->name('lab-results.report')->middleware('permission:view visits');
+    
+    Route::resource('lab-results', LabResultController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
     
 
     

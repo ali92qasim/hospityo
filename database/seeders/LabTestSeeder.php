@@ -117,11 +117,40 @@ class LabTestSeeder extends Seeder
             ]
         ];
 
-        foreach ($tests as $test) {
-            LabTest::firstOrCreate(
-                ['code' => $test['code']],
-                $test
+        foreach ($tests as $testData) {
+            $parameters = $testData['parameters'];
+            unset($testData['parameters']);
+            
+            $test = LabTest::firstOrCreate(
+                ['code' => $testData['code']],
+                $testData
             );
+            
+            // Create parameters
+            foreach ($parameters as $index => $paramData) {
+                $referenceRanges = [];
+                if (isset($paramData['range'])) {
+                    $referenceRanges['range'] = $paramData['range'];
+                }
+                if (isset($paramData['male_range'])) {
+                    $referenceRanges['male'] = $paramData['male_range'];
+                }
+                if (isset($paramData['female_range'])) {
+                    $referenceRanges['female'] = $paramData['female_range'];
+                }
+                
+                $test->parameters()->firstOrCreate(
+                    ['parameter_name' => $paramData['name']],
+                    [
+                        'parameter_name' => $paramData['name'],
+                        'unit' => $paramData['unit'] ?? null,
+                        'data_type' => 'numeric',
+                        'reference_ranges' => $referenceRanges,
+                        'display_order' => $index + 1,
+                        'is_active' => true
+                    ]
+                );
+            }
         }
     }
 }

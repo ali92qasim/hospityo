@@ -41,8 +41,6 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expiry</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
@@ -60,19 +58,10 @@
                     <td class="px-6 py-4 text-sm text-gray-500">{{ $medicine->category }}</td>
                     <td class="px-6 py-4">
                         <div class="text-sm font-medium {{ $medicine->isLowStock() ? 'text-red-600' : 'text-gray-900' }}">
-                            {{ $medicine->stock_quantity }}
+                            {{ $medicine->getCurrentStock() }} {{ $medicine->baseUnit->name ?? '' }}
                         </div>
                         @if($medicine->isLowStock())
-                            <div class="text-xs text-red-500">Low Stock</div>
-                        @endif
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-500">₨{{ number_format($medicine->unit_price, 2) }}</td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm {{ $medicine->isExpired() ? 'text-red-600' : 'text-gray-900' }}">
-                            {{ $medicine->expiry_date->format('M d, Y') }}
-                        </div>
-                        @if($medicine->isExpired())
-                            <div class="text-xs text-red-500">Expired</div>
+                            <div class="text-xs text-red-500">Low Stock (Reorder: {{ $medicine->reorder_level }})</div>
                         @endif
                     </td>
                     <td class="px-6 py-4">

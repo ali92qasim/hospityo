@@ -73,46 +73,10 @@
             </div>
 
             <div>
-                <label for="unit_price" class="block text-sm font-medium text-gray-700 mb-2">Unit Price (₨)</label>
-                <input type="number" id="unit_price" name="unit_price" value="{{ old('unit_price', $medicine->unit_price) }}" min="0" step="0.01"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                @error('unit_price')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="stock_quantity" class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity</label>
-                <input type="number" id="stock_quantity" name="stock_quantity" value="{{ old('stock_quantity', $medicine->stock_quantity) }}" min="0"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                @error('stock_quantity')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
                 <label for="reorder_level" class="block text-sm font-medium text-gray-700 mb-2">Reorder Level</label>
                 <input type="number" id="reorder_level" name="reorder_level" value="{{ old('reorder_level', $medicine->reorder_level) }}" min="0"
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                 @error('reorder_level')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="expiry_date" class="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
-                <input type="date" id="expiry_date" name="expiry_date" value="{{ old('expiry_date', $medicine->expiry_date->format('Y-m-d')) }}"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                @error('expiry_date')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="batch_number" class="block text-sm font-medium text-gray-700 mb-2">Batch Number</label>
-                <input type="text" id="batch_number" name="batch_number" value="{{ old('batch_number', $medicine->batch_number) }}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                @error('batch_number')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>

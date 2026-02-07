@@ -19,11 +19,11 @@ class LabOrderController extends Controller
         $query = LabOrder::with(['patient', 'doctor', 'labTest', 'sample', 'result']);
         
         if ($request->status) {
-            $query->byStatus($request->status);
+            $query->where('status', '=', $request->status);
         }
         
         if ($request->priority) {
-            $query->byPriority($request->priority);
+            $query->where('priority', '=', $request->priority);
         }
         
         $orders = $query->latest()->paginate(15);
