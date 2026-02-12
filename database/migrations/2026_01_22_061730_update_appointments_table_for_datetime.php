@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('appointments', function (Blueprint $table) {
-            $table->datetime('appointment_datetime')->after('department_id');
+            $table->datetime('appointment_datetime')->after('doctor_id');
             $table->dropColumn(['appointment_date', 'appointment_time']);
         });
     }
