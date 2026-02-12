@@ -17,6 +17,7 @@ class StoreDoctorRequest extends FormRequest
             'name' => 'required|string|max:255',
             'specialization' => 'required|string|max:255',
             'qualification' => 'required|string|max:255',
+            'pmdc_number' => 'nullable|string|max:50',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|unique:doctors,email|unique:users,email',
             'gender' => 'required|in:male,female,other',

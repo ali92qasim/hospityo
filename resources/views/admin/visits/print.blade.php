@@ -27,57 +27,65 @@
 
         /* Header Section */
         .header {
-            display: flex;
-            align-items: flex-start;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 15px;
+            align-items: start;
             border-bottom: 2px solid #000;
             padding-bottom: 10px;
             margin-bottom: 15px;
         }
 
-        .logo {
-            width: 80px;
-            height: 80px;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-
-        .logo-placeholder {
-            width: 80px;
-            height: 80px;
-            border: 2px solid #2563eb;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f0f9ff;
-            font-size: 10pt;
-            color: #2563eb;
-            text-align: center;
-            font-weight: bold;
-        }
-
         .hospital-info {
-            flex: 1;
+            text-align: left;
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo img {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: contain;
+        }
+
+        .doctor-info {
+            text-align: right;
         }
 
         .hospital-name {
-            font-size: 20pt;
+            font-size: 14pt;
             font-weight: bold;
             color: #1e40af;
             margin-bottom: 3px;
         }
 
-        .department-name {
-            font-size: 12pt;
-            color: #4b5563;
-            margin-bottom: 2px;
-        }
-
         .hospital-contact {
             font-size: 9pt;
             color: #6b7280;
+            line-height: 1.4;
         }
 
+        .doctor-header-name {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 2px;
+        }
+
+        .doctor-credentials {
+            font-size: 10pt;
+            color: #4b5563;
+            margin-bottom: 1px;
+        }
+
+        .doctor-header-specialization {
+            font-size: 9pt;
+            color: #6b7280;
+        }
         /* Patient Info Bar */
         .patient-info-bar {
             background: #f3f4f6;
@@ -223,9 +231,6 @@
 
         /* Footer Section */
         .footer-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
             padding-top: 15px;
             border-top: 2px solid #000;
         }
@@ -245,26 +250,6 @@
             color: #1e40af;
             margin-top: 5px;
         }
-
-        .doctor-signature {
-            text-align: right;
-        }
-
-        .signature-line {
-            border-top: 1px solid #000;
-            margin-top: 40px;
-            padding-top: 8px;
-        }
-
-        .doctor-name {
-            font-weight: bold;
-            font-size: 11pt;
-        }
-
-        .doctor-specialization {
-            font-size: 9pt;
-            color: #6b7280;
-            margin-top: 2px;
         }
 
         /* Print Styles */
@@ -343,23 +328,37 @@
 
         <!-- Header -->
         <div class="header">
-            <div class="logo">
-                <div class="logo-placeholder">
-                    LOGO
-                </div>
-            </div>
+            <!-- Hospital Info (Left) -->
             <div class="hospital-info">
-                <div class="hospital-name">{{ config('app.name', 'Hospital Management System') }}</div>
-                <div class="department-name">
-                    @if($visit->doctor && $visit->doctor->department)
-                        {{ $visit->doctor->department->name }} Department
-                    @else
-                        General Medicine
+                <div class="hospital-name">{{ $settings['hospital_name'] }}</div>
+                @if($settings['hospital_address'])
+                    <div class="hospital-contact">{{ $settings['hospital_address'] }}</div>
+                @endif
+                @if($settings['hospital_phone'])
+                    <div class="hospital-contact">Phone: {{ $settings['hospital_phone'] }}</div>
+                @endif
+                @if($settings['hospital_email'])
+                    <div class="hospital-contact">Email: {{ $settings['hospital_email'] }}</div>
+                @endif
+            </div>
+
+            <!-- Logo (Center) -->
+            <div class="logo">
+                @if($settings['hospital_logo'])
+                    <img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Hospital Logo">
+                @endif
+            </div>
+
+            <!-- Doctor Info (Right) -->
+            <div class="doctor-info">
+                @if($visit->doctor)
+                    <div class="doctor-header-name">Dr. {{ $visit->doctor->name }}</div>
+                    <div class="doctor-credentials">{{ $visit->doctor->qualification }}</div>
+                    <div class="doctor-header-specialization">{{ $visit->doctor->specialization }}</div>
+                    @if($visit->doctor->pmdc_number)
+                        <div class="doctor-header-specialization">PMDC: {{ $visit->doctor->pmdc_number }}</div>
                     @endif
-                </div>
-                <div class="hospital-contact">
-                    Address: [Hospital Address] | Phone: [Contact Number] | Email: [Email Address]
-                </div>
+                @endif
             </div>
         </div>
 
@@ -422,9 +421,9 @@
 
             <!-- Right Column: Diagnosis, Issues, Tests -->
             <div>
-                <!-- Diagnosis Section -->
+                <!-- Provisional Diagnosis Section -->
                 <div class="diagnosis-section">
-                    <div class="section-title">Diagnosis</div>
+                    <div class="section-title">Provisional Diagnosis</div>
                     @if($visit->consultation && $visit->consultation->provisional_diagnosis)
                         <div class="list-item">
                             {{ $visit->consultation->provisional_diagnosis }}
@@ -434,9 +433,9 @@
                     @endif
                 </div>
 
-                <!-- Active Issues Section -->
+                <!-- Presenting Complaints Section -->
                 <div class="issues-section">
-                    <div class="section-title">Active Issues</div>
+                    <div class="section-title">Presenting Complaints</div>
                     @if($visit->consultation && $visit->consultation->chief_complaint)
                         <div class="list-item">
                             • {{ $visit->consultation->chief_complaint }}
@@ -455,9 +454,9 @@
                     @endif
                 </div>
 
-                <!-- Ordered Tests Section -->
+                <!-- Tests Section -->
                 <div class="tests-section">
-                    <div class="section-title">Ordered Tests</div>
+                    <div class="section-title">Tests</div>
                     @if($visit->labOrders && $visit->labOrders->count() > 0)
                         @foreach($visit->labOrders as $labOrder)
                         <div class="list-item">
@@ -508,25 +507,10 @@
             <div class="next-visit">
                 <div class="next-visit-label">Next Visit Date:</div>
                 <div class="next-visit-date">
-                    @if($visit->consultation && $visit->consultation->follow_up_date)
-                        {{ $visit->consultation->follow_up_date->format('d F Y') }}
+                    @if($visit->consultation && $visit->consultation->next_visit_date)
+                        {{ $visit->consultation->next_visit_date->format('d F Y') }}
                     @else
                         As needed
-                    @endif
-                </div>
-            </div>
-
-            <!-- Doctor Signature -->
-            <div class="doctor-signature">
-                <div class="signature-line">
-                    @if($visit->doctor)
-                        <div class="doctor-name">Dr. {{ $visit->doctor->name }}</div>
-                        <div class="doctor-specialization">{{ $visit->doctor->specialization }}</div>
-                        @if($visit->doctor->license_number)
-                            <div class="doctor-specialization">License: {{ $visit->doctor->license_number }}</div>
-                        @endif
-                    @else
-                        <div class="doctor-name">Doctor's Signature</div>
                     @endif
                 </div>
             </div>

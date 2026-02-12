@@ -127,7 +127,15 @@ class LabResultController extends Controller
 
     public function show(LabResult $labResult)
     {
-        $labResult->load(['labOrder.patient', 'labOrder.labTest', 'technician', 'pathologist']);
+        $labResult->load([
+            'labOrder.patient', 
+            'labOrder.labTest', 
+            'labOrder.visit',
+            'labOrder.doctor',
+            'technician', 
+            'pathologist',
+            'resultItems.parameter'
+        ]);
         return view('admin.lab.results.show', compact('labResult'));
     }
 
@@ -156,7 +164,15 @@ class LabResultController extends Controller
 
     public function report(LabResult $labResult)
     {
-        $labResult->load(['labOrder.patient', 'labOrder.doctor', 'labOrder.labTest', 'technician', 'pathologist']);
+        $labResult->load([
+            'labOrder.patient', 
+            'labOrder.doctor', 
+            'labOrder.labTest', 
+            'labOrder.visit',
+            'technician', 
+            'pathologist',
+            'resultItems.parameter'
+        ]);
         return view('admin.lab.results.report', compact('labResult'));
     }
 }

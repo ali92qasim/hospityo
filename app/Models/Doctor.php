@@ -17,6 +17,7 @@ class Doctor extends Model
         'doctor_no',
         'specialization',
         'qualification',
+        'pmdc_number',
         'phone',
         'email',
         'gender',

@@ -18,7 +18,7 @@
 
         <form action="{{ route('doctors.store') }}" method="POST" class="p-6">
             @csrf
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Personal Information -->
                 <div class="md:col-span-2">
@@ -30,8 +30,8 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                    <input type="text" name="name" value="{{ old('name') }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                    <input type="text" name="name" value="{{ old('name') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
 
@@ -47,21 +47,21 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                    <input type="tel" name="phone" value="{{ old('phone') }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                    <input type="tel" name="phone" value="{{ old('phone') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                    <input type="email" name="email" value="{{ old('email') }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                    <input type="email" name="email" value="{{ old('email') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                    <textarea name="address" rows="3" 
+                    <textarea name="address" rows="3"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('address') }}</textarea>
                 </div>
 
@@ -75,31 +75,38 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Specialization *</label>
-                    <input type="text" name="specialization" value="{{ old('specialization') }}" 
+                    <input type="text" name="specialization" value="{{ old('specialization') }}"
                            placeholder="e.g., Cardiology, Neurology"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Qualification *</label>
-                    <input type="text" name="qualification" value="{{ old('qualification') }}" 
+                    <input type="text" name="qualification" value="{{ old('qualification') }}"
                            placeholder="e.g., MBBS, MD"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">PMDC Number</label>
+                    <input type="text" name="pmdc_number" value="{{ old('pmdc_number') }}"
+                           placeholder="e.g., 12345-A"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Experience (Years) *</label>
                     <input type="number" name="experience_years" value="{{ old('experience_years') }}" min="0" max="50"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Consultation Fee ($) *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Consultation Fee *</label>
                     <input type="number" name="consultation_fee" value="{{ old('consultation_fee') }}" min="0" step="0.01"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
 
@@ -125,15 +132,15 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Shift Start *</label>
-                    <input type="time" name="shift_start" value="{{ old('shift_start') }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                    <input type="time" name="shift_start" value="{{ old('shift_start') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Shift End *</label>
-                    <input type="time" name="shift_end" value="{{ old('shift_end') }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                    <input type="time" name="shift_end" value="{{ old('shift_end') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
 
@@ -142,7 +149,7 @@
                     <div class="grid grid-cols-4 gap-2">
                         @foreach(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as $day)
                         <label class="flex items-center">
-                            <input type="checkbox" name="available_days[]" value="{{ $day }}" 
+                            <input type="checkbox" name="available_days[]" value="{{ $day }}"
                                    {{ in_array($day, old('available_days', [])) ? 'checked' : '' }}
                                    class="mr-2 text-medical-blue">
                             <span class="text-sm">{{ $day }}</span>

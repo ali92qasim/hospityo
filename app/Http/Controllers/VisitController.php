@@ -390,6 +390,15 @@ class VisitController extends Controller
             'prescriptions.items.medicine'
         ]);
 
-        return view('admin.visits.print', compact('visit'));
+        // Get hospital settings
+        $settings = [
+            'hospital_name' => cache('settings.hospital_name', config('app.name', 'Hospital Management System')),
+            'hospital_address' => cache('settings.hospital_address', ''),
+            'hospital_phone' => cache('settings.hospital_phone', ''),
+            'hospital_email' => cache('settings.hospital_email', ''),
+            'hospital_logo' => cache('settings.hospital_logo', null)
+        ];
+
+        return view('admin.visits.print', compact('visit', 'settings'));
     }
 }

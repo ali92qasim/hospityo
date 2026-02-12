@@ -19,6 +19,7 @@ class UpdateDoctorRequest extends FormRequest
             'name' => 'required|string|max:255',
             'specialization' => 'required|string|max:255',
             'qualification' => 'required|string|max:500',
+            'pmdc_number' => 'nullable|string|max:50',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:255|unique:doctors,email,' . $doctor->id . '|unique:users,email,' . ($doctor->user_id ?? 'NULL'),
             'gender' => 'required|in:male,female,other',

@@ -205,8 +205,8 @@
                                                 <div class="flex items-center">
                                                     <div class="w-3 h-8 {{ $item->isAbnormal() ? 'bg-red-400' : 'bg-green-400' }} rounded-full mr-3"></div>
                                                     <div>
-                                                        <div class="text-sm font-bold text-gray-900">{{ $item->parameter->name ?? 'N/A' }}</div>
-                                                        @if($item->parameter->description)
+                                                        <div class="text-sm font-bold text-gray-900">{{ $item->parameter ? $item->parameter->parameter_name : 'N/A' }}</div>
+                                                        @if($item->parameter && $item->parameter->description)
                                                             <div class="text-xs text-gray-600">{{ Str::limit($item->parameter->description, 50) }}</div>
                                                         @endif
                                                     </div>
@@ -221,7 +221,11 @@
                                                 {{ $item->unit ?? '-' }}
                                             </td>
                                             <td class="px-6 py-4 text-center text-sm text-gray-600 font-mono">
-                                                {{ $item->parameter->reference_range ?? 'Not specified' }}
+                                                @if($item->parameter)
+                                                    {{ $item->parameter->getReferenceRange($labResult->labOrder->patient->age, $labResult->labOrder->patient->gender) }}
+                                                @else
+                                                    Not specified
+                                                @endif
                                             </td>
                                             <td class="px-6 py-4 text-center">
                                                 @if($item->flag && $item->flag !== 'N')

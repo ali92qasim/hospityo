@@ -17,7 +17,12 @@ class Consultation extends Model
         'examination',
         'provisional_diagnosis',
         'treatment',
-        'notes'
+        'notes',
+        'next_visit_date'
+    ];
+
+    protected $casts = [
+        'next_visit_date' => 'date'
     ];
 
     public function visit(): BelongsTo

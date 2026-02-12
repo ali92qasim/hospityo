@@ -560,6 +560,12 @@
                             </div>
                         </div>
 
+                        <!-- Next Visit Date -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Next Visit Date (Optional)</label>
+                            <input type="date" name="next_visit_date" value="{{ old('next_visit_date', $visit->consultation?->next_visit_date?->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
+                        </div>
+
                         <div class="flex space-x-4">
                             <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                                 <i class="fas fa-save mr-2"></i>Save Consultation

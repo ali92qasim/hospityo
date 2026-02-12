@@ -96,6 +96,13 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">PMDC Number</label>
+                    <input type="text" name="pmdc_number" value="{{ old('pmdc_number', $doctor->pmdc_number) }}" 
+                           placeholder="e.g., 12345-A"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Experience (Years) *</label>
                     <input type="number" name="experience_years" value="{{ old('experience_years', $doctor->experience_years) }}" min="0" max="50"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
