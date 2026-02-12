@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained()->onDelete('cascade');
             $table->foreignId('doctor_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['pending', 'dispensed', 'cancelled'])->default('pending');
-            $table->datetime('prescribed_date');
+            $table->datetime('prescribed_date')->useCurrent();
             $table->datetime('dispensed_date')->nullable();
             $table->decimal('total_amount', 10, 2)->default(0);
             $table->text('notes')->nullable();

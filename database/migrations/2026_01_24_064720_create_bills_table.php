@@ -13,14 +13,14 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained()->onDelete('cascade');
             $table->foreignId('visit_id')->nullable()->constrained()->onDelete('set null');
             $table->string('bill_number')->unique();
-            $table->date('bill_date');
-            $table->enum('bill_type', ['opd', 'ipd', 'emergency', 'lab', 'pharmacy']);
+            $table->date('bill_date')->useCurrent();
+            $table->enum('bill_type', ['opd', 'ipd', 'emergency', 'lab', 'pharmacy'])->default('opd');
             $table->decimal('subtotal', 10, 2)->default(0);
             $table->decimal('tax_amount', 10, 2)->default(0);
             $table->decimal('discount_amount', 10, 2)->default(0);
-            $table->decimal('total_amount', 10, 2);
+            $table->decimal('total_amount', 10, 2)->default(0);
             $table->decimal('paid_amount', 10, 2)->default(0);
-            $table->decimal('due_amount', 10, 2);
+            $table->decimal('due_amount', 10, 2)->default(0);
             $table->enum('status', ['pending', 'partial', 'paid', 'cancelled'])->default('pending');
             $table->string('payment_method')->nullable();
             $table->text('notes')->nullable();

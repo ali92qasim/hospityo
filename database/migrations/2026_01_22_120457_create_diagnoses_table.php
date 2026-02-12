@@ -13,18 +13,18 @@ return new class extends Migration
     {
         Schema::create('diagnoses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('medical_record_id')->constrained()->onDelete('cascade');
+            $table->foreignId('visit_id')->constrained()->onDelete('cascade');
             $table->string('icd_10_code')->nullable();
             $table->string('diagnosis_name');
             $table->text('description')->nullable();
-            $table->enum('type', ['primary', 'secondary', 'differential']);
-            $table->enum('status', ['active', 'resolved', 'chronic', 'rule_out']);
+            $table->enum('type', ['primary', 'secondary', 'differential'])->default('primary');
+            $table->enum('status', ['active', 'resolved', 'chronic', 'rule_out'])->default('active');
             $table->date('onset_date')->nullable();
             $table->date('resolved_date')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
             
-            $table->index(['medical_record_id', 'type']);
+            $table->index(['visit_id', 'type']);
             $table->index('icd_10_code');
         });
     }

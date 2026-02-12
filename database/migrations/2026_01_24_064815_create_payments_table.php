@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('bill_id')->constrained()->onDelete('cascade');
-            $table->date('payment_date');
+            $table->date('payment_date')->useCurrent();
             $table->decimal('amount', 10, 2);
-            $table->enum('payment_method', ['cash', 'card', 'upi', 'bank_transfer', 'cheque', 'insurance']);
+            $table->enum('payment_method', ['cash', 'card', 'upi', 'bank_transfer', 'cheque', 'insurance'])->default('cash');
             $table->string('reference_number')->nullable();
             $table->text('notes')->nullable();
             $table->foreignId('received_by')->constrained('users')->onDelete('cascade');

@@ -15,9 +15,9 @@ return new class extends Migration
             $table->foreignId('visit_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('doctor_id')->constrained()->onDelete('cascade');
             $table->foreignId('lab_test_id')->constrained()->onDelete('cascade');
-            $table->enum('priority', ['routine', 'urgent', 'stat']);
-            $table->enum('status', ['ordered', 'sample_collected', 'in_progress', 'completed', 'cancelled']);
-            $table->timestamp('ordered_at');
+            $table->enum('priority', ['routine', 'urgent', 'stat'])->default('routine');
+            $table->enum('status', ['ordered', 'sample_collected', 'in_progress', 'completed', 'cancelled'])->default('ordered');
+            $table->timestamp('ordered_at')->useCurrent();
             $table->timestamp('sample_collected_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->text('clinical_notes')->nullable();

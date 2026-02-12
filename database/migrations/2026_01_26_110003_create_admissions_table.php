@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('visit_id')->constrained()->onDelete('cascade');
             $table->foreignId('bed_id')->constrained()->onDelete('cascade');
-            $table->datetime('admission_date');
+            $table->datetime('admission_date')->useCurrent();
             $table->datetime('discharge_date')->nullable();
             $table->enum('status', ['active', 'discharged'])->default('active');
             $table->text('admission_notes')->nullable();

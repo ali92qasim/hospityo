@@ -12,11 +12,14 @@ class Consultation extends Model
 
     protected $fillable = [
         'visit_id',
+        'chief_complaint',
         'presenting_complaints',
         'history',
         'examination',
         'provisional_diagnosis',
         'treatment',
+        'treatment_plan',
+        'follow_up_instructions',
         'notes',
         'next_visit_date'
     ];

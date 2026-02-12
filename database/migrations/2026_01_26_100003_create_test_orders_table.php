@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('instructions')->nullable();
             $table->enum('status', ['ordered', 'completed'])->default('ordered');
             $table->text('results')->nullable();
-            $table->timestamp('ordered_at');
+            $table->timestamp('ordered_at')->useCurrent();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
         });
