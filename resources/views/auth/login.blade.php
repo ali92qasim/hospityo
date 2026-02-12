@@ -52,11 +52,4 @@
         Sign In
     </button>
 </form>
-
-<div class="mt-6 text-center">
-    <p class="text-sm text-gray-600">
-        Don't have an account? 
-        <a href="{{ route('register') }}" class="text-medical-blue hover:text-blue-700 font-medium">Sign up</a>
-    </p>
-</div>
 @endsection
