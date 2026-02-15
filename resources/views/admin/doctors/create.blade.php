@@ -4,6 +4,10 @@
 @section('page-title', 'Add New Doctor')
 @section('page-description', 'Register a new medical professional')
 
+@push('styles')
+@vite(['resources/css/doctors-form.css'])
+@endpush
+
 @section('content')
 <div class="max-w-4xl mx-auto">
     <div class="bg-white rounded-lg shadow-sm">
@@ -132,15 +136,17 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Shift Start *</label>
-                    <input type="time" name="shift_start" value="{{ old('shift_start') }}"
+                    <input type="text" name="shift_start" value="{{ old('shift_start') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                           placeholder="HH:MM"
                            required>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Shift End *</label>
-                    <input type="time" name="shift_end" value="{{ old('shift_end') }}"
+                    <input type="text" name="shift_end" value="{{ old('shift_end') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                           placeholder="HH:MM"
                            required>
                 </div>
 
@@ -179,4 +185,8 @@
         </form>
     </div>
 </div>
+
+@push('scripts')
+@vite(['resources/js/doctors-form.js'])
+@endpush
 @endsection

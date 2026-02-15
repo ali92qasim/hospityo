@@ -4,6 +4,10 @@
 @section('page-title', 'Edit Visit')
 @section('page-description', 'Update visit information')
 
+@push('styles')
+@vite(['resources/css/visits-form.css'])
+@endpush
+
 @section('content')
 <div class="max-w-4xl mx-auto">
     <div class="bg-white rounded-lg shadow-sm">
@@ -91,15 +95,17 @@
                 <!-- Dates -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Visit Date & Time *</label>
-                    <input type="datetime-local" name="visit_datetime" value="{{ old('visit_datetime', $visit->visit_datetime->format('Y-m-d\TH:i')) }}" 
+                    <input type="text" name="visit_datetime" value="{{ old('visit_datetime', $visit->visit_datetime->format('Y-m-d H:i')) }}" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                           placeholder="YYYY-MM-DD HH:MM"
                            required>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Discharge Date & Time</label>
-                    <input type="datetime-local" name="discharge_datetime" value="{{ old('discharge_datetime', $visit->discharge_datetime?->format('Y-m-d\TH:i')) }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                    <input type="text" name="discharge_datetime" value="{{ old('discharge_datetime', $visit->discharge_datetime?->format('Y-m-d H:i')) }}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                           placeholder="YYYY-MM-DD HH:MM">
                 </div>
 
                 <!-- Room & Bed -->
@@ -166,4 +172,8 @@
         </form>
     </div>
 </div>
+
+@push('scripts')
+@vite(['resources/js/visits-form.js'])
+@endpush
 @endsection

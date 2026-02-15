@@ -5,21 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Hospityo')</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'medical-blue': '#0066CC',
-                        'medical-green': '#00A86B',
-                        'medical-light': '#F0F8FF',
-                        'medical-gray': '#6B7280'
-                    }
-                }
-            }
-        }
-    </script>
+    
+    <!-- Styles -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50">
@@ -33,5 +23,7 @@
             @yield('content')
         </main>
     </div>
+    
+    @stack('scripts')
 </body>
 </html>

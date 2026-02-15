@@ -7,12 +7,19 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        './resources/js/**/*.js',
     ],
 
     theme: {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+            },
+            colors: {
+                'medical-blue': '#0066CC',
+                'medical-green': '#00A86B',
+                'medical-light': '#F0F8FF',
+                'medical-gray': '#6B7280',
             },
         },
     },

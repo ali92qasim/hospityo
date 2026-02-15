@@ -4,6 +4,10 @@
 @section('page-title', 'Edit Doctor')
 @section('page-description', 'Update doctor information')
 
+@push('styles')
+@vite(['resources/css/doctors-form.css'])
+@endpush
+
 @section('content')
 <div class="max-w-4xl mx-auto">
     <div class="bg-white rounded-lg shadow-sm">
@@ -116,6 +120,18 @@
                            required>
                 </div>
 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Department *</label>
+                    <select name="department_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                        <option value="">Select Department</option>
+                        @foreach(\App\Models\Department::where('status', 'active')->get() as $department)
+                        <option value="{{ $department->id }}" {{ old('department_id', $doctor->department_id) == $department->id ? 'selected' : '' }}>
+                            {{ $department->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <!-- Schedule Information -->
                 <div class="md:col-span-2 mt-6">
                     <h4 class="text-md font-medium text-gray-800 mb-4 flex items-center">
@@ -126,15 +142,17 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Shift Start *</label>
-                    <input type="time" name="shift_start" value="{{ old('shift_start', $doctor->shift_start) }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                    <input type="text" name="shift_start" value="{{ old('shift_start', $doctor->shift_start) }}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                           placeholder="HH:MM"
                            required>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Shift End *</label>
-                    <input type="time" name="shift_end" value="{{ old('shift_end', $doctor->shift_end) }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                    <input type="text" name="shift_end" value="{{ old('shift_end', $doctor->shift_end) }}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                           placeholder="HH:MM"
                            required>
                 </div>
 
@@ -173,4 +191,8 @@
         </form>
     </div>
 </div>
+
+@push('scripts')
+@vite(['resources/js/doctors-form.js'])
+@endpush
 @endsection
