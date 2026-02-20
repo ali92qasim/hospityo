@@ -120,14 +120,17 @@
                             @if($latestVisit->vitalSigns->pulse_rate)
                                 <div><span class="text-green-600">Pulse:</span> {{ $latestVisit->vitalSigns->pulse_rate }} bpm</div>
                             @endif
-                            @if($latestVisit->vitalSigns->respiratory_rate)
-                                <div><span class="text-green-600">Resp:</span> {{ $latestVisit->vitalSigns->respiratory_rate }}</div>
+                            @if($latestVisit->vitalSigns->spo2)
+                                <div><span class="text-green-600">SpO<sub>2</sub>:</span> {{ $latestVisit->vitalSigns->spo2 }}%</div>
+                            @endif
+                            @if($latestVisit->vitalSigns->bsr)
+                                <div><span class="text-green-600">BSR:</span> {{ $latestVisit->vitalSigns->bsr }}%</div>
                             @endif
                             @if($latestVisit->vitalSigns->weight)
                                 <div><span class="text-green-600">Weight:</span> {{ $latestVisit->vitalSigns->weight }} kg</div>
                             @endif
                             @if($latestVisit->vitalSigns->height)
-                                <div><span class="text-green-600">Height:</span> {{ $latestVisit->vitalSigns->height }} cm</div>
+                                <div><span class="text-green-600">Height:</span> {{ $latestVisit->vitalSigns->height }} ft</div>
                             @endif
                         </div>
                     </div>
@@ -146,8 +149,29 @@
                             @if($latestVisit->consultation->examination)
                                 <div><span class="text-purple-600">Examination:</span> {{ $latestVisit->consultation->examination }}</div>
                             @endif
+                            @if($latestVisit->consultation->provisional_diagnosis_conditions && count($latestVisit->consultation->provisional_diagnosis_conditions) > 0)
+                                <div>
+                                    <span class="text-purple-600">Conditions:</span>
+                                    @php
+                                        $conditionLabels = [
+                                            'dm' => 'DM',
+                                            'htn' => 'HTN',
+                                            'ihd' => 'IHD',
+                                            'asthma' => 'Asthma'
+                                        ];
+                                        $selectedLabels = array_map(fn($c) => $conditionLabels[$c] ?? $c, $latestVisit->consultation->provisional_diagnosis_conditions);
+                                    @endphp
+                                    {{ implode(', ', $selectedLabels) }}
+                                </div>
+                            @endif
                             @if($latestVisit->consultation->provisional_diagnosis)
                                 <div><span class="text-purple-600">Diagnosis:</span> {{ $latestVisit->consultation->provisional_diagnosis }}</div>
+                            @endif
+                            @if($latestVisit->consultation->allergies && $latestVisit->consultation->allergies->count() > 0)
+                                <div>
+                                    <span class="text-purple-600">Allergies:</span>
+                                    <span class="text-red-600 font-medium">{{ $latestVisit->consultation->allergies->pluck('name')->join(', ') }}</span>
+                                </div>
                             @endif
                             @if($latestVisit->consultation->treatment)
                                 <div><span class="text-purple-600">Treatment:</span> {{ $latestVisit->consultation->treatment }}</div>
@@ -240,8 +264,17 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if($visit->consultation && $visit->consultation->provisional_diagnosis)
-                                    <div class="text-sm text-gray-900">{{ Str::limit($visit->consultation->provisional_diagnosis, 50) }}</div>
+                                @if($visit->consultation && ($visit->consultation->provisional_diagnosis_conditions || $visit->consultation->provisional_diagnosis))
+                                    @if($visit->consultation->provisional_diagnosis_conditions && count($visit->consultation->provisional_diagnosis_conditions) > 0)
+                                        @php
+                                            $conditionLabels = ['dm' => 'DM', 'htn' => 'HTN', 'ihd' => 'IHD', 'asthma' => 'Asthma'];
+                                            $selectedLabels = array_map(fn($c) => $conditionLabels[$c] ?? $c, $visit->consultation->provisional_diagnosis_conditions);
+                                        @endphp
+                                        <div class="text-xs text-gray-600 mb-1">{{ implode(', ', $selectedLabels) }}</div>
+                                    @endif
+                                    @if($visit->consultation->provisional_diagnosis)
+                                        <div class="text-sm text-gray-900">{{ Str::limit($visit->consultation->provisional_diagnosis, 50) }}</div>
+                                    @endif
                                 @else
                                     <span class="text-sm text-gray-400">No diagnosis</span>
                                 @endif

@@ -1,54 +1,93 @@
-// Import styles
-import '../css/visits-form.css';
-
-// Import Flatpickr
+import $ from 'jquery';
+import select2 from 'select2';
 import flatpickr from 'flatpickr';
 
-console.log('Visits form module loaded');
+// Initialize Select2
+select2(window, $);
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM ready, initializing Flatpickr...');
-    
-    // Initialize Flatpickr for visit datetime
-    const visitDatetimeInput = document.querySelector('input[name="visit_datetime"]');
-    console.log('Visit datetime input found:', visitDatetimeInput);
-    
-    if (visitDatetimeInput) {
+$(function() {
+    // Initialize Select2 for allergies dropdown
+    if ($('#allergies-select').length && typeof $.fn.select2 !== 'undefined') {
         try {
-            flatpickr(visitDatetimeInput, {
-                enableTime: true,
-                dateFormat: "Y-m-d H:i",
-                time_24hr: true,
-                minuteIncrement: 15,
-                defaultDate: visitDatetimeInput.value || new Date(),
-                allowInput: true
+            $('#allergies-select').select2({
+                placeholder: 'Select or type allergies',
+                allowClear: true,
+                tags: true, // Allow custom entries
+                width: '100%',
+                tokenSeparators: [','],
+                createTag: function (params) {
+                    var term = params.term.trim(); // Use native trim instead of $.trim
+                    
+                    if (term === '') {
+                        return null;
+                    }
+                    
+                    // Check if the term already exists in the options
+                    var exists = false;
+                    var $select = $(this.$element);
+                    $select.find('option').each(function() {
+                        if ($(this).val().toLowerCase() === term.toLowerCase()) {
+                            exists = true;
+                            return false;
+                        }
+                    });
+                    
+                    if (exists) {
+                        return null;
+                    }
+                    
+                    return {
+                        id: term,
+                        text: term,
+                        newTag: true
+                    };
+                },
+                templateResult: function(data) {
+                    if (data.loading) {
+                        return data.text;
+                    }
+                    
+                    if (data.newTag) {
+                        return $('<span class="select2-new-tag"><i class="fas fa-plus-circle mr-2"></i>' + data.text + ' <span class="select2-new-tag-label">(Add New)</span></span>');
+                    }
+                    return data.text;
+                },
+                templateSelection: function(data) {
+                    // Return just the text for selected items (no icon in chips)
+                    return data.text;
+                }
             });
-            console.log('✓ Flatpickr initialized on visit_datetime');
+            
+            // Handle when a new tag is added
+            $('#allergies-select').on('select2:select', function(e) {
+                var data = e.params.data;
+                
+                // If it's a new tag, we'll let the backend handle saving it
+                if (data.newTag) {
+                    console.log('New allergy will be saved:', data.text);
+                }
+            });
+            
         } catch (error) {
-            console.error('Flatpickr visit_datetime error:', error);
+            console.error('Error initializing allergies Select2:', error);
         }
-    } else {
-        console.warn('Visit datetime input not found in DOM');
     }
-
-    // Initialize Flatpickr for discharge datetime (only on edit page)
-    const dischargeDatetimeInput = document.querySelector('input[name="discharge_datetime"]');
-    console.log('Discharge datetime input found:', dischargeDatetimeInput);
     
-    if (dischargeDatetimeInput) {
+    // Initialize Flatpickr for next visit date
+    if ($('#next-visit-date').length) {
         try {
-            flatpickr(dischargeDatetimeInput, {
-                enableTime: true,
-                dateFormat: "Y-m-d H:i",
-                time_24hr: true,
-                minuteIncrement: 15,
-                defaultDate: dischargeDatetimeInput.value || null,
-                allowInput: true
+            flatpickr('#next-visit-date', {
+                dateFormat: 'Y-m-d',
+                minDate: 'today',
+                allowInput: true,
+                altInput: true,
+                altFormat: 'F j, Y',
+                locale: {
+                    firstDayOfWeek: 1
+                }
             });
-            console.log('✓ Flatpickr initialized on discharge_datetime');
         } catch (error) {
-            console.error('Flatpickr discharge_datetime error:', error);
+            console.error('Error initializing next visit date Flatpickr:', error);
         }
     }
 });

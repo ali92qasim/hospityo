@@ -12,7 +12,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/appointments-calendar.js',
                 'resources/js/doctors-form.js',
-                'resources/js/visits-form.js'
+                'resources/js/visits-form.js',
+                'resources/js/visits-index.js'
             ],
             refresh: true,
         }),

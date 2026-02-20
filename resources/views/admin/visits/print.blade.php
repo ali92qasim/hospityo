@@ -424,12 +424,49 @@
                 <!-- Provisional Diagnosis Section -->
                 <div class="diagnosis-section">
                     <div class="section-title">Provisional Diagnosis</div>
-                    @if($visit->consultation && $visit->consultation->provisional_diagnosis)
-                        <div class="list-item">
-                            {{ $visit->consultation->provisional_diagnosis }}
-                        </div>
+                    @if($visit->consultation && ($visit->consultation->provisional_diagnosis_conditions || $visit->consultation->provisional_diagnosis))
+                        @if($visit->consultation->provisional_diagnosis_conditions && count($visit->consultation->provisional_diagnosis_conditions) > 0)
+                            <div class="list-item">
+                                <strong>Conditions:</strong>
+                                @php
+                                    $conditionLabels = [
+                                        'dm' => 'DM (Diabetes Mellitus)',
+                                        'htn' => 'HTN (Hypertension)',
+                                        'ihd' => 'IHD (Ischemic Heart Disease)',
+                                        'asthma' => 'Asthma'
+                                    ];
+                                    $selectedLabels = array_map(fn($c) => $conditionLabels[$c] ?? $c, $visit->consultation->provisional_diagnosis_conditions);
+                                @endphp
+                                {{ implode(', ', $selectedLabels) }}
+                            </div>
+                        @endif
+                        @if($visit->consultation->provisional_diagnosis)
+                            <div class="list-item">
+                                {{ $visit->consultation->provisional_diagnosis }}
+                            </div>
+                        @endif
                     @else
                         <div class="empty-state">No diagnosis recorded</div>
+                    @endif
+                </div>
+
+                <!-- Allergies Section -->
+                <div class="diagnosis-section">
+                    <div class="section-title">Allergies</div>
+                    @if($visit->consultation && ($visit->consultation->allergies->count() > 0 || $visit->consultation->allergy_notes))
+                        @if($visit->consultation->allergies->count() > 0)
+                            <div class="list-item">
+                                <strong>Known Allergies:</strong>
+                                {{ $visit->consultation->allergies->pluck('name')->join(', ') }}
+                            </div>
+                        @endif
+                        @if($visit->consultation->allergy_notes)
+                            <div class="list-item">
+                                <strong>Notes:</strong> {{ $visit->consultation->allergy_notes }}
+                            </div>
+                        @endif
+                    @else
+                        <div class="empty-state">No allergies recorded</div>
                     @endif
                 </div>
 

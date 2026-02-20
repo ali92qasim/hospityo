@@ -4,6 +4,10 @@
 @section('page-title', 'Patient Visits')
 @section('page-description', 'Manage patient visits workflow')
 
+@push('styles')
+@vite(['resources/css/visits-form.css'])
+@endpush
+
 @section('content')
 <div class="bg-white rounded-lg shadow-sm">
     <div class="p-6 border-b border-gray-200">
@@ -34,21 +38,101 @@
             </div>
         </div>
 
+        <!-- Date Filters -->
+        <div class="mb-4">
+            <div class="flex items-center space-x-2 mb-3">
+                <i class="fas fa-calendar text-gray-500"></i>
+                <span class="text-sm font-medium text-gray-700">Date Filter:</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('visits.index', array_merge(request()->except('date_filter', 'start_date', 'end_date'))) }}" 
+                   class="px-3 py-1 text-sm rounded-full {{ !request('date_filter') && !request('start_date') ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                    All Time
+                </a>
+                <a href="{{ route('visits.index', array_merge(request()->except('start_date', 'end_date'), ['date_filter' => 'today'])) }}" 
+                   class="px-3 py-1 text-sm rounded-full {{ request('date_filter') == 'today' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200' }}">
+                    Today
+                </a>
+                <a href="{{ route('visits.index', array_merge(request()->except('start_date', 'end_date'), ['date_filter' => 'yesterday'])) }}" 
+                   class="px-3 py-1 text-sm rounded-full {{ request('date_filter') == 'yesterday' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200' }}">
+                    Yesterday
+                </a>
+                <a href="{{ route('visits.index', array_merge(request()->except('start_date', 'end_date'), ['date_filter' => 'this_week'])) }}" 
+                   class="px-3 py-1 text-sm rounded-full {{ request('date_filter') == 'this_week' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
+                    This Week
+                </a>
+                <a href="{{ route('visits.index', array_merge(request()->except('start_date', 'end_date'), ['date_filter' => 'last_week'])) }}" 
+                   class="px-3 py-1 text-sm rounded-full {{ request('date_filter') == 'last_week' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
+                    Last Week
+                </a>
+                <a href="{{ route('visits.index', array_merge(request()->except('start_date', 'end_date'), ['date_filter' => 'this_month'])) }}" 
+                   class="px-3 py-1 text-sm rounded-full {{ request('date_filter') == 'this_month' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200' }}">
+                    This Month
+                </a>
+                <a href="{{ route('visits.index', array_merge(request()->except('start_date', 'end_date'), ['date_filter' => 'last_month'])) }}" 
+                   class="px-3 py-1 text-sm rounded-full {{ request('date_filter') == 'last_month' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200' }}">
+                    Last Month
+                </a>
+                <button onclick="toggleCustomDateRange()" 
+                        class="px-3 py-1 text-sm rounded-full {{ request('start_date') ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-700 hover:bg-orange-200' }}">
+                    <i class="fas fa-calendar-alt mr-1"></i>Custom Range
+                </button>
+            </div>
+            
+            <!-- Custom Date Range Form -->
+            <div id="custom-date-range" class="{{ request('start_date') ? '' : 'hidden' }} mt-3 p-4 bg-gray-50 rounded-lg">
+                <form method="GET" action="{{ route('visits.index') }}" class="flex items-end gap-3">
+                    <!-- Preserve other filters -->
+                    @if(request('status'))
+                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @endif
+                    @if(request('visit_type'))
+                        <input type="hidden" name="visit_type" value="{{ request('visit_type') }}">
+                    @endif
+                    @if(request('search'))
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                    @endif
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input type="date" name="start_date" value="{{ request('start_date') }}" 
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <input type="date" name="end_date" value="{{ request('end_date') }}" 
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue text-sm" required>
+                    </div>
+                    <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                        <i class="fas fa-filter mr-1"></i>Apply
+                    </button>
+                    <a href="{{ route('visits.index', request()->except('start_date', 'end_date', 'date_filter')) }}" 
+                       class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm">
+                        <i class="fas fa-times mr-1"></i>Clear
+                    </a>
+                </form>
+            </div>
+        </div>
+
         <!-- Status Filters -->
+        <div class="flex items-center space-x-2 mb-3">
+            <i class="fas fa-filter text-gray-500"></i>
+            <span class="text-sm font-medium text-gray-700">Status Filter:</span>
+        </div>
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('visits.index') }}" class="px-3 py-1 text-sm rounded-full {{ !request('status') ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+            <a href="{{ route('visits.index', request()->except('status')) }}" class="px-3 py-1 text-sm rounded-full {{ !request('status') ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                 All
             </a>
-            <a href="{{ route('visits.index', ['status' => 'registered']) }}" class="px-3 py-1 text-sm rounded-full {{ request('status') == 'registered' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200' }}">
+            <a href="{{ route('visits.index', array_merge(request()->all(), ['status' => 'registered'])) }}" class="px-3 py-1 text-sm rounded-full {{ request('status') == 'registered' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200' }}">
                 Registered
             </a>
-            <a href="{{ route('visits.index', ['status' => 'vitals_recorded']) }}" class="px-3 py-1 text-sm rounded-full {{ request('status') == 'vitals_recorded' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
+            <a href="{{ route('visits.index', array_merge(request()->all(), ['status' => 'vitals_recorded'])) }}" class="px-3 py-1 text-sm rounded-full {{ request('status') == 'vitals_recorded' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
                 Vitals Recorded
             </a>
-            <a href="{{ route('visits.index', ['status' => 'with_doctor']) }}" class="px-3 py-1 text-sm rounded-full {{ request('status') == 'with_doctor' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200' }}">
+            <a href="{{ route('visits.index', array_merge(request()->all(), ['status' => 'with_doctor'])) }}" class="px-3 py-1 text-sm rounded-full {{ request('status') == 'with_doctor' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200' }}">
                 With Doctor
             </a>
-            <a href="{{ route('visits.index', ['status' => 'completed']) }}" class="px-3 py-1 text-sm rounded-full {{ request('status') == 'completed' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+            <a href="{{ route('visits.index', array_merge(request()->all(), ['status' => 'completed'])) }}" class="px-3 py-1 text-sm rounded-full {{ request('status') == 'completed' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                 Completed
             </a>
         </div>
@@ -141,4 +225,19 @@
     </div>
     @endif
 </div>
+
+<script>
+// Define toggle function globally (outside module scope)
+function toggleCustomDateRange() {
+    const customRange = document.getElementById('custom-date-range');
+    customRange.classList.toggle('hidden');
+}
+
+// Make it available globally
+window.toggleCustomDateRange = toggleCustomDateRange;
+</script>
+
+@push('scripts')
+@vite(['resources/js/visits-index.js'])
+@endpush
 @endsection

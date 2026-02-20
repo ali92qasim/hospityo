@@ -47,6 +47,46 @@ class VisitController extends Controller
             }
         }
 
+        // Date filters
+        if ($request->date_filter) {
+            switch ($request->date_filter) {
+                case 'today':
+                    $query->whereDate('visit_datetime', today());
+                    break;
+                case 'yesterday':
+                    $query->whereDate('visit_datetime', today()->subDay());
+                    break;
+                case 'this_week':
+                    $query->whereBetween('visit_datetime', [
+                        now()->startOfWeek(),
+                        now()->endOfWeek()
+                    ]);
+                    break;
+                case 'last_week':
+                    $query->whereBetween('visit_datetime', [
+                        now()->subWeek()->startOfWeek(),
+                        now()->subWeek()->endOfWeek()
+                    ]);
+                    break;
+                case 'this_month':
+                    $query->whereMonth('visit_datetime', now()->month)
+                          ->whereYear('visit_datetime', now()->year);
+                    break;
+                case 'last_month':
+                    $query->whereMonth('visit_datetime', now()->subMonth()->month)
+                          ->whereYear('visit_datetime', now()->subMonth()->year);
+                    break;
+            }
+        }
+
+        // Custom date range
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('visit_datetime', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59'
+            ]);
+        }
+
         // Search functionality
         if ($request->search) {
             $search = $request->search;
@@ -112,7 +152,7 @@ class VisitController extends Controller
 
     public function workflow(Visit $visit)
     {
-        $visit->load(['patient', 'doctor.department', 'vitalSigns', 'allVitalSigns.user', 'consultation', 'testOrders', 'labOrders.labTest', 'labOrders.result', 'admission.bed.ward', 'triage', 'prescriptions.items.medicine']);
+        $visit->load(['patient', 'doctor.department', 'vitalSigns', 'allVitalSigns.user', 'consultation.allergies', 'testOrders', 'labOrders.labTest', 'labOrders.result', 'admission.bed.ward', 'triage', 'prescriptions.items.medicine']);
         $doctors = Doctor::where('status', 'active')->get();
         $medicines = Medicine::where('status', 'active')
             ->get()
@@ -120,8 +160,9 @@ class VisitController extends Controller
                 return $medicine->getCurrentStock() > 0;
             });
         $labTests = LabTest::where('is_active', true)->get();
+        $allergies = \App\Models\Allergy::orderBy('category')->orderBy('name')->get();
 
-        $data = compact('visit', 'doctors', 'medicines', 'labTests');
+        $data = compact('visit', 'doctors', 'medicines', 'labTests', 'allergies');
 
         // Add type-specific data
         if ($visit->visit_type === 'ipd') {
@@ -134,6 +175,21 @@ class VisitController extends Controller
     public function updateVitals(UpdateVitalsRequest $request, Visit $visit)
     {
         $validated = $request->validated();
+        
+        // Check if at least one vital sign field is filled
+        $vitalFields = ['blood_pressure', 'temperature', 'pulse_rate', 'spo2', 'bsr', 'weight', 'height'];
+        $hasAnyValue = false;
+        
+        foreach ($vitalFields as $field) {
+            if (!empty($validated[$field])) {
+                $hasAnyValue = true;
+                break;
+            }
+        }
+        
+        if (!$hasAnyValue) {
+            return back()->with('warning', 'Please fill in at least one vital sign measurement before saving. All fields are currently empty.');
+        }
 
         // For IPD patients, create new vital signs record each time
         if ($visit->visit_type === 'ipd') {
@@ -168,10 +224,39 @@ class VisitController extends Controller
 
     public function updateConsultation(UpdateConsultationRequest $request, Visit $visit)
     {
-        $visit->consultation()->updateOrCreate(
+        $validated = $request->validated();
+        
+        // Extract allergies from validated data
+        $allergyNames = $validated['allergies'] ?? [];
+        unset($validated['allergies']);
+        
+        // Update or create consultation
+        $consultation = $visit->consultation()->updateOrCreate(
             ['visit_id' => $visit->id],
-            $request->validated()
+            $validated
         );
+        
+        // Handle allergies
+        if (!empty($allergyNames)) {
+            $allergyIds = [];
+            
+            foreach ($allergyNames as $allergyName) {
+                if (!empty($allergyName)) {
+                    // Find existing allergy or create new one
+                    $allergy = \App\Models\Allergy::firstOrCreate(
+                        ['name' => $allergyName],
+                        ['category' => 'other', 'is_standard' => false]
+                    );
+                    $allergyIds[] = $allergy->id;
+                }
+            }
+            
+            // Sync allergies (this will add new ones and remove unselected ones)
+            $consultation->allergies()->sync($allergyIds);
+        } else {
+            // If no allergies selected, remove all
+            $consultation->allergies()->sync([]);
+        }
 
         return back()->with('success', 'Consultation updated successfully.');
     }

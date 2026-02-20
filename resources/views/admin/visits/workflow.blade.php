@@ -347,6 +347,13 @@
 
             <!-- Vital Signs Tab -->
             <div id="vitals-content" class="tab-content {{ $visit->visit_type === 'opd' ? '' : 'hidden' }}">
+                @if(session('warning'))
+                    <div class="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg flex items-start">
+                        <i class="fas fa-exclamation-triangle mr-3 mt-0.5"></i>
+                        <span>{{ session('warning') }}</span>
+                    </div>
+                @endif
+                
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
                         <h4 class="text-lg font-medium text-gray-800 mb-4">{{ $visit->visit_type === 'ipd' ? 'Record New Vital Signs' : 'Record Vital Signs' }}</h4>
@@ -369,9 +376,14 @@
                                            placeholder="72" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Respiratory Rate</label>
-                                    <input type="number" name="respiratory_rate" value="{{ $visit->visit_type === 'ipd' ? '' : old('respiratory_rate', $visit->vitalSigns?->respiratory_rate) }}" 
-                                           placeholder="16" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">SpO<sub>2</sub> (%)</label>
+                                    <input type="number" name="spo2" value="{{ $visit->visit_type === 'ipd' ? '' : old('spo2', $visit->vitalSigns?->spo2) }}" 
+                                           min="0" max="100" placeholder="98" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">BSR (%)</label>
+                                    <input type="number" name="bsr" value="{{ $visit->visit_type === 'ipd' ? '' : old('bsr', $visit->vitalSigns?->bsr) }}" 
+                                           step="0.01" min="0" placeholder="120" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
@@ -379,9 +391,10 @@
                                            step="0.1" placeholder="70.5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Height (ft)</label>
                                     <input type="number" name="height" value="{{ $visit->visit_type === 'ipd' ? '' : old('height', $visit->vitalSigns?->height) }}" 
-                                           step="0.1" placeholder="175" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
+                                           step="0.01" placeholder="5.6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
+                                    <p class="text-xs text-gray-500 mt-1">Example: 5.6 for 5'6"</p>
                                 </div>
                             </div>
                             <div class="mt-4">
@@ -398,30 +411,39 @@
                         @if($visit->visit_type === 'ipd')
                             <!-- Doctor Assignment for IPD -->
                             <h4 class="text-lg font-medium text-gray-800 mb-4">Doctor Assignment</h4>
-                            @if(!$visit->doctor_id)
+                            @if(!$visit->doctor_id || ($visit->doctor_id && $visit->status !== 'completed' && $visit->status !== 'discharged'))
                                 <form action="{{ route('visits.assign-doctor', $visit) }}" method="POST" class="mb-6">
                                     @csrf
                                     <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Assign Doctor</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            {{ $visit->doctor_id ? 'Change Doctor' : 'Assign Doctor' }}
+                                        </label>
                                         <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                                             <option value="">Select Doctor</option>
                                             @foreach($doctors as $doctor)
-                                            <option value="{{ $doctor->id }}">Dr. {{ $doctor->name }} - {{ $doctor->specialization }}</option>
+                                            <option value="{{ $doctor->id }}" {{ $visit->doctor_id == $doctor->id ? 'selected' : '' }}>
+                                                Dr. {{ $doctor->name }} - {{ $doctor->specialization }}
+                                            </option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                                        <i class="fas fa-user-md mr-2"></i>Assign Doctor
+                                        <i class="fas fa-user-md mr-2"></i>{{ $visit->doctor_id ? 'Update Doctor' : 'Assign Doctor' }}
                                     </button>
                                 </form>
                             @else
                                 <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                                        <div>
-                                            <p class="font-medium text-green-800">Dr. {{ $visit->doctor->name }}</p>
-                                            <p class="text-sm text-green-600">{{ $visit->doctor->specialization }}</p>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                            <div>
+                                                <p class="font-medium text-green-800">Dr. {{ $visit->doctor->name }}</p>
+                                                <p class="text-sm text-green-600">{{ $visit->doctor->specialization }}</p>
+                                            </div>
                                         </div>
+                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                                            <i class="fas fa-lock mr-1"></i>Locked
+                                        </span>
                                     </div>
                                 </div>
                             @endif
@@ -445,19 +467,22 @@
                                             @if($vital->pulse_rate)
                                                 <div><span class="text-blue-600">Pulse:</span> {{ $vital->pulse_rate }} bpm</div>
                                             @endif
-                                            @if($vital->respiratory_rate)
-                                                <div><span class="text-blue-600">Resp:</span> {{ $vital->respiratory_rate }}</div>
+                                            @if($vital->spo2)
+                                                <div><span class="text-blue-600">SpO<sub>2</sub>:</span> {{ $vital->spo2 }}%</div>
+                                            @endif
+                                            @if($vital->bsr)
+                                                <div><span class="text-blue-600">BSR:</span> {{ $vital->bsr }}%</div>
                                             @endif
                                             @if($vital->weight)
                                                 <div><span class="text-blue-600">Weight:</span> {{ $vital->weight }} kg</div>
                                             @endif
                                             @if($vital->height)
-                                                <div><span class="text-blue-600">Height:</span> {{ $vital->height }} cm</div>
+                                                <div><span class="text-blue-600">Height:</span> {{ $vital->height }} ft</div>
                                             @endif
                                         </div>
                                         @if($vital->notes)
-                                            <div class="mt-2 pt-2 border-t border-blue-200">
-                                                <p class="text-sm text-blue-700">{{ $vital->notes }}</p>
+                                            <div class="mt-2 text-sm text-blue-700">
+                                                <span class="font-medium">Notes:</span> {{ $vital->notes }}
                                             </div>
                                         @endif
                                     </div>
@@ -467,30 +492,39 @@
                             </div>
                         @else
                             <h4 class="text-lg font-medium text-gray-800 mb-4">Doctor Assignment</h4>
-                            @if(!$visit->doctor_id)
+                            @if(!$visit->doctor_id || ($visit->doctor_id && $visit->status !== 'completed'))
                                 <form action="{{ route('visits.assign-doctor', $visit) }}" method="POST">
                                     @csrf
                                     <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Assign Doctor</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            {{ $visit->doctor_id ? 'Change Doctor' : 'Assign Doctor' }}
+                                        </label>
                                         <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                                             <option value="">Select Doctor</option>
                                             @foreach($doctors as $doctor)
-                                            <option value="{{ $doctor->id }}">Dr. {{ $doctor->name }} - {{ $doctor->specialization }}</option>
+                                            <option value="{{ $doctor->id }}" {{ $visit->doctor_id == $doctor->id ? 'selected' : '' }}>
+                                                Dr. {{ $doctor->name }} - {{ $doctor->specialization }}
+                                            </option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                                        <i class="fas fa-user-md mr-2"></i>Assign Doctor
+                                        <i class="fas fa-user-md mr-2"></i>{{ $visit->doctor_id ? 'Update Doctor' : 'Assign Doctor' }}
                                     </button>
                                 </form>
                             @else
                                 <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                                        <div>
-                                            <p class="font-medium text-green-800">Dr. {{ $visit->doctor->name }}</p>
-                                            <p class="text-sm text-green-600">{{ $visit->doctor->specialization }}</p>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                            <div>
+                                                <p class="font-medium text-green-800">Dr. {{ $visit->doctor->name }}</p>
+                                                <p class="text-sm text-green-600">{{ $visit->doctor->specialization }}</p>
+                                            </div>
                                         </div>
+                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                                            <i class="fas fa-lock mr-1"></i>Locked
+                                        </span>
                                     </div>
                                 </div>
                             @endif
@@ -545,25 +579,143 @@
                                 <i id="diagnosis-icon" class="fas fa-chevron-down text-gray-500"></i>
                             </button>
                             <div id="diagnosis-content" class="hidden p-4">
-                                <textarea name="provisional_diagnosis" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter provisional diagnosis...">{{ old('provisional_diagnosis', $visit->consultation?->provisional_diagnosis) }}</textarea>
+                                <!-- Common Conditions Input Fields -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-3">Common Conditions</label>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">DM (Diabetes Mellitus)</label>
+                                            <input type="text" name="diagnosis_dm" value="{{ old('diagnosis_dm', $visit->consultation?->diagnosis_dm) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter DM details">
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">HTN (Hypertension)</label>
+                                            <input type="text" name="diagnosis_htn" value="{{ old('diagnosis_htn', $visit->consultation?->diagnosis_htn) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter HTN details">
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">IHD (Ischemic Heart Disease)</label>
+                                            <input type="text" name="diagnosis_ihd" value="{{ old('diagnosis_ihd', $visit->consultation?->diagnosis_ihd) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter IHD details">
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Asthma</label>
+                                            <input type="text" name="diagnosis_asthma" value="{{ old('diagnosis_asthma', $visit->consultation?->diagnosis_asthma) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter Asthma details">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Additional Diagnosis Text -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Additional Diagnosis</label>
+                                    <textarea name="provisional_diagnosis" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter additional provisional diagnosis...">{{ old('provisional_diagnosis', $visit->consultation?->provisional_diagnosis) }}</textarea>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Treatment Accordion -->
+                        <!-- Allergies Accordion -->
                         <div class="border border-gray-200 rounded-lg mb-4">
-                            <button type="button" onclick="toggleAccordion('treatment')" class="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 flex justify-between items-center">
-                                <span class="font-medium text-gray-800">Treatment</span>
-                                <i id="treatment-icon" class="fas fa-chevron-down text-gray-500"></i>
+                            <button type="button" onclick="toggleAccordion('allergies')" class="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 flex justify-between items-center">
+                                <span class="font-medium text-gray-800">Allergies</span>
+                                <i id="allergies-icon" class="fas fa-chevron-down text-gray-500"></i>
                             </button>
-                            <div id="treatment-content" class="hidden p-4">
-                                <textarea name="treatment" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter treatment plan...">{{ old('treatment', $visit->consultation?->treatment) }}</textarea>
+                            <div id="allergies-content" class="hidden p-4">
+                                <!-- Allergies Multi-Select -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Allergies</label>
+                                    <select id="allergies-select" name="allergies[]" multiple class="w-full">
+                                        @php
+                                            $selectedAllergyIds = old('allergies', $visit->consultation?->allergies->pluck('name')->toArray() ?? []);
+                                        @endphp
+                                        @foreach($allergies->groupBy('category') as $category => $categoryAllergies)
+                                            <optgroup label="{{ ucfirst($category) }} Allergies">
+                                                @foreach($categoryAllergies as $allergy)
+                                                    <option value="{{ $allergy->name }}" {{ in_array($allergy->name, $selectedAllergyIds) ? 'selected' : '' }}>
+                                                        {{ $allergy->name }}
+                                                    </option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endforeach
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        You can select multiple allergies or type to add custom ones
+                                    </p>
+                                </div>
+                                
+                                <!-- Additional Allergy Notes -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Additional Information</label>
+                                    <textarea name="allergy_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter additional allergy information, reactions, or severity...">{{ old('allergy_notes', $visit->consultation?->allergy_notes) }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GPE (General Physical Examination) Accordion -->
+                        <div class="border border-gray-200 rounded-lg mb-4">
+                            <button type="button" onclick="toggleAccordion('gpe')" class="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 flex justify-between items-center">
+                                <span class="font-medium text-gray-800">GPE (General Physical Examination)</span>
+                                <i id="gpe-icon" class="fas fa-chevron-down text-gray-500"></i>
+                            </button>
+                            <div id="gpe-content" class="hidden p-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Chest</label>
+                                        <input type="text" name="gpe_chest" value="{{ old('gpe_chest', $visit->consultation?->gpe_chest) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter chest examination findings">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Abdomen</label>
+                                        <input type="text" name="gpe_abdomen" value="{{ old('gpe_abdomen', $visit->consultation?->gpe_abdomen) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter abdomen examination findings">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">CVS</label>
+                                        <input type="text" name="gpe_cvs" value="{{ old('gpe_cvs', $visit->consultation?->gpe_cvs) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter CVS examination findings">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">CNS</label>
+                                        <input type="text" name="gpe_cns" value="{{ old('gpe_cns', $visit->consultation?->gpe_cns) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter CNS examination findings">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Pupils</label>
+                                        <input type="text" name="gpe_pupils" value="{{ old('gpe_pupils', $visit->consultation?->gpe_pupils) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter pupils examination findings">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Conjunctiva</label>
+                                        <input type="text" name="gpe_conjunctiva" value="{{ old('gpe_conjunctiva', $visit->consultation?->gpe_conjunctiva) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter conjunctiva examination findings">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nails</label>
+                                        <input type="text" name="gpe_nails" value="{{ old('gpe_nails', $visit->consultation?->gpe_nails) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter nails examination findings">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Throat</label>
+                                        <input type="text" name="gpe_throat" value="{{ old('gpe_throat', $visit->consultation?->gpe_throat) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter throat examination findings">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Sclera</label>
+                                        <input type="text" name="gpe_sclera" value="{{ old('gpe_sclera', $visit->consultation?->gpe_sclera) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter sclera examination findings">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">GCS</label>
+                                        <input type="text" name="gpe_gcs" value="{{ old('gpe_gcs', $visit->consultation?->gpe_gcs) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter GCS score">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Next Visit Date -->
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Next Visit Date (Optional)</label>
-                            <input type="date" name="next_visit_date" value="{{ old('next_visit_date', $visit->consultation?->next_visit_date?->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
+                            <input type="text" id="next-visit-date" name="next_visit_date" value="{{ old('next_visit_date', $visit->consultation?->next_visit_date?->format('Y-m-d')) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Select date">
                         </div>
 
                         <div class="flex space-x-4">
@@ -1326,4 +1478,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTestCount();
 });
 </script>
+
+@vite(['resources/css/visits-form.css', 'resources/js/visits-form.js'])
 @endsection
