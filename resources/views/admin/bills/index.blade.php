@@ -50,15 +50,18 @@
                         {{ $bill->bill_date->format('M d, Y') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="{{ route('bills.show', $bill) }}" class="text-medical-blue hover:text-blue-700 mr-3">
+                        <a href="{{ route('bills.show', $bill) }}" class="text-medical-blue hover:text-blue-700 mr-3" title="View">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <a href="{{ route('bills.edit', $bill) }}" class="text-medical-blue hover:text-blue-700 mr-3">
+                        <a href="{{ route('bills.print', $bill) }}" target="_blank" class="text-green-600 hover:text-green-700 mr-3" title="Print">
+                            <i class="fas fa-print"></i>
+                        </a>
+                        <a href="{{ route('bills.edit', $bill) }}" class="text-medical-blue hover:text-blue-700 mr-3" title="Edit">
                             <i class="fas fa-edit"></i>
                         </a>
                         <form method="POST" action="{{ route('bills.destroy', $bill) }}" class="inline">
                             @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Are you sure?')">
+                            <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Are you sure?')" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>

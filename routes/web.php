@@ -111,6 +111,7 @@ Route::middleware('auth')->group(function () {
     // Billing Routes
     Route::resource('bills', BillController::class)->middleware('permission:view bills|create bills|edit bills|delete bills');
     Route::post('bills/{bill}/payment', [BillController::class, 'addPayment'])->name('bills.add-payment')->middleware('permission:create payments');
+    Route::get('bills/{bill}/print', [BillController::class, 'print'])->name('bills.print')->middleware('permission:view bills');
     Route::resource('services', ServiceController::class)->middleware('permission:view services|create services|edit services|delete services');
     
     // IPD Management Routes

@@ -163,6 +163,9 @@
 
 <div class="flex justify-end space-x-3 mt-6">
     <a href="{{ route('bills.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Back</a>
+    <a href="{{ route('bills.print', $bill) }}" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        <i class="fas fa-print mr-2"></i>Print Bill
+    </a>
     <a href="{{ route('bills.edit', $bill) }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">Edit Bill</a>
 </div>
 @endsection

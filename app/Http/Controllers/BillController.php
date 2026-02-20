@@ -127,4 +127,10 @@ class BillController extends Controller
 
         return redirect()->route('bills.show', $bill)->with('success', 'Payment added successfully');
     }
+
+    public function print(Bill $bill)
+    {
+        $bill->load(['patient', 'visit', 'billItems.service', 'payments.receivedBy', 'createdBy']);
+        return view('admin.bills.print', compact('bill'));
+    }
 }
