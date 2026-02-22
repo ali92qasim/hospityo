@@ -22,7 +22,12 @@ class LabTestParameter extends Model
 
     public function labTest()
     {
-        return $this->belongsTo(LabTest::class);
+        return $this->belongsTo(Investigation::class, 'lab_test_id');
+    }
+
+    public function investigation()
+    {
+        return $this->belongsTo(Investigation::class, 'lab_test_id');
     }
 
     public function resultItems()

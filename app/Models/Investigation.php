@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 
-class LabTest extends Model
+class Investigation extends Model
 {
     protected $fillable = [
-        'code', 'name', 'description', 'category', 'sample_type',
+        'code', 'name', 'type', 'description', 'category', 'sample_type',
         'price', 'turnaround_time', 'instructions', 'is_active'
     ];
 
@@ -20,12 +20,12 @@ class LabTest extends Model
 
     public function orders(): HasMany
     {
-        return $this->hasMany(LabOrder::class);
+        return $this->hasMany(InvestigationOrder::class);
     }
 
     public function parameters(): HasMany
     {
-        return $this->hasMany(LabTestParameter::class)->orderBy('display_order', 'asc');
+        return $this->hasMany(LabTestParameter::class, 'lab_test_id')->orderBy('display_order', 'asc');
     }
 
     public function scopeActive(Builder $query): Builder
@@ -36,5 +36,10 @@ class LabTest extends Model
     public function scopeByCategory(Builder $query, string $category): Builder
     {
         return $query->where('category', '=', $category);
+    }
+
+    public function scopeByType(Builder $query, string $type): Builder
+    {
+        return $query->where('type', '=', $type);
     }
 }

@@ -11,7 +11,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-800">{{ $labOrder->order_number }}</h3>
-                    <p class="text-sm text-gray-600">{{ $labOrder->labTest?->name ?? 'Unknown Test' }}</p>
+                    <p class="text-sm text-gray-600">{{ $labOrder->investigation?->name ?? 'Unknown Test' }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     @php
@@ -28,7 +28,7 @@
                         {{ ucfirst(str_replace('_', ' ', $labOrder->status)) }}
                     </span>
                     <a href="{{ route('lab-orders.index') }}" class="text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-arrow-left mr-2"></i>Back to Lab Orders
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Investigation Orders
                     </a>
                 </div>
             </div>
@@ -47,15 +47,15 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Test:</span>
-                                <span class="font-medium">{{ $labOrder->labTest?->name ?? 'Unknown Test' }}</span>
+                                <span class="font-medium">{{ $labOrder->investigation?->name ?? 'Unknown Test' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Category:</span>
-                                <span>{{ $labOrder->labTest ? ucfirst($labOrder->labTest->category) : 'N/A' }}</span>
+                                <span>{{ $labOrder->investigation ? ucfirst($labOrder->investigation->category) : 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Sample Type:</span>
-                                <span>{{ $labOrder->labTest ? ucfirst($labOrder->labTest->sample_type) : 'N/A' }}</span>
+                                <span>{{ $labOrder->investigation ? ucfirst($labOrder->investigation->sample_type) : 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Priority:</span>
@@ -65,7 +65,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Price:</span>
-                                <span class="font-medium">₨{{ $labOrder->labTest ? number_format($labOrder->labTest->price, 0) : 'N/A' }}</span>
+                                <span class="font-medium">₨{{ $labOrder->investigation ? number_format($labOrder->investigation->price, 0) : 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -165,10 +165,10 @@
                     </div>
                     @endif
 
-                    @if($labOrder->labTest->instructions)
+                    @if($labOrder->investigation?->instructions)
                     <div class="bg-indigo-50 rounded-lg p-4">
                         <h4 class="font-medium text-indigo-800 mb-2">Test Instructions</h4>
-                        <p class="text-sm text-indigo-700">{{ $labOrder->labTest->instructions }}</p>
+                        <p class="text-sm text-indigo-700">{{ $labOrder->investigation->instructions }}</p>
                     </div>
                     @endif
 

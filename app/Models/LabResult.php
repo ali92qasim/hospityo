@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class LabResult extends Model
 {
     protected $fillable = [
-        'lab_order_id', 'results', 'flags', 'interpretation', 'comments', 'status', 
+        'investigation_order_id', 'lab_order_id', 'results', 'flags', 'interpretation', 'comments', 'status', 
         'technician_id', 'pathologist_id', 'tested_at', 'verified_at', 'reported_at'
     ];
 
@@ -23,7 +23,12 @@ class LabResult extends Model
 
     public function labOrder(): BelongsTo
     {
-        return $this->belongsTo(LabOrder::class);
+        return $this->belongsTo(InvestigationOrder::class, 'investigation_order_id');
+    }
+
+    public function investigationOrder(): BelongsTo
+    {
+        return $this->belongsTo(InvestigationOrder::class, 'investigation_order_id');
     }
 
     public function technician(): BelongsTo

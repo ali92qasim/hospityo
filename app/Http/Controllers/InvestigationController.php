@@ -4,18 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreLabTestRequest;
 use App\Http\Requests\UpdateLabTestRequest;
-use App\Models\LabTest;
+use App\Models\Investigation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class LabTestController extends Controller
+class InvestigationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = LabTest::query();
+        $query = Investigation::query();
 
         if ($request->category) {
             $query->byCategory($request->category);
+        }
+
+        if ($request->type) {
+            $query->byType($request->type);
         }
 
         if ($request->search) {
@@ -26,8 +30,9 @@ class LabTestController extends Controller
             });
         }
 
-        $tests = $query->latest()->paginate(15);
-        return view('admin.lab.tests.index', compact('tests'));
+        $investigations = $query->latest()->paginate(15);
+        $tests = $investigations; // Backward compatibility for views
+        return view('admin.lab.tests.index', compact('investigations', 'tests'));
     }
 
     public function create()
@@ -37,13 +42,13 @@ class LabTestController extends Controller
 
     public function store(StoreLabTestRequest $request)
     {
-        $labTest = LabTest::create($request->validated());
+        $investigation = Investigation::create($request->validated());
 
         // Handle parameters
         if ($request->has('parameters')) {
             foreach ($request->parameters as $index => $paramData) {
                 if (!empty($paramData['name'])) {
-                    $labTest->parameters()->create([
+                    $investigation->parameters()->create([
                         'parameter_name' => $paramData['name'],
                         'unit' => $paramData['unit'] ?? null,
                         'data_type' => 'numeric',
@@ -55,34 +60,36 @@ class LabTestController extends Controller
             }
         }
 
-        return redirect()->route('lab-tests.index')->with('success', 'Lab test created successfully.');
+        return redirect()->route('investigations.index')->with('success', 'Investigation created successfully.');
     }
 
-    public function show(LabTest $labTest)
+    public function show(Investigation $investigation)
     {
-        $labTest->load('parameters');
-        return view('admin.lab.tests.show', compact('labTest'));
+        $investigation->load('parameters');
+        $labTest = $investigation; // Backward compatibility for views
+        return view('admin.lab.tests.show', compact('investigation', 'labTest'));
     }
 
-    public function edit(LabTest $labTest)
+    public function edit(Investigation $investigation)
     {
-        $labTest->load('parameters');
-        return view('admin.lab.tests.edit', compact('labTest'));
+        $investigation->load('parameters');
+        $labTest = $investigation; // Backward compatibility for views
+        return view('admin.lab.tests.edit', compact('investigation', 'labTest'));
     }
 
-    public function update(UpdateLabTestRequest $request, LabTest $labTest)
+    public function update(UpdateLabTestRequest $request, Investigation $investigation)
     {
-        $labTest->update($request->validated());
+        $investigation->update($request->validated());
 
         // Handle parameters
         if ($request->has('parameters')) {
             // Delete existing parameters
-            $labTest->parameters()->delete();
+            $investigation->parameters()->delete();
 
             // Create new parameters
             foreach ($request->parameters as $index => $paramData) {
                 if (!empty($paramData['name'])) {
-                    $labTest->parameters()->create([
+                    $investigation->parameters()->create([
                         'parameter_name' => $paramData['name'],
                         'unit' => $paramData['unit'] ?? null,
                         'data_type' => 'numeric',
@@ -94,12 +101,12 @@ class LabTestController extends Controller
             }
         }
 
-        return redirect()->route('lab-tests.index')->with('success', 'Lab test updated successfully.');
+        return redirect()->route('investigations.index')->with('success', 'Investigation updated successfully.');
     }
 
-    public function destroy(LabTest $labTest)
+    public function destroy(Investigation $investigation)
     {
-        $labTest->delete();
-        return redirect()->route('lab-tests.index')->with('success', 'Lab test deleted successfully.');
+        $investigation->delete();
+        return redirect()->route('investigations.index')->with('success', 'Investigation deleted successfully.');
     }
 }

@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
 
-class LabOrder extends Model
+class InvestigationOrder extends Model
 {
     protected $fillable = [
-        'order_number', 'patient_id', 'visit_id', 'doctor_id', 'lab_test_id', 'quantity',
+        'order_number', 'patient_id', 'visit_id', 'doctor_id', 'investigation_id', 'quantity',
         'priority', 'status', 'test_location', 'ordered_at', 'sample_collected_at', 'completed_at',
         'clinical_notes', 'special_instructions'
     ];
@@ -29,14 +29,14 @@ class LabOrder extends Model
         static::creating(function ($order) {
             try {
                 $lastId = static::query()->max('id') ?? 0;
-                $order->order_number = 'LAB' . str_pad(
+                $order->order_number = 'INV' . str_pad(
                     $lastId + 1,
                     6,
                     '0',
                     STR_PAD_LEFT
                 );
             } catch (\Exception $e) {
-                \Log::error('Failed to generate lab order number: ' . $e->getMessage());
+                \Log::error('Failed to generate investigation order number: ' . $e->getMessage());
                 throw $e;
             }
         });
@@ -57,24 +57,24 @@ class LabOrder extends Model
         return $this->belongsTo(Doctor::class);
     }
 
-    public function labTest(): BelongsTo
-    {
-        return $this->belongsTo(Investigation::class, 'lab_test_id');
-    }
-
     public function investigation(): BelongsTo
     {
-        return $this->belongsTo(Investigation::class, 'lab_test_id');
+        return $this->belongsTo(Investigation::class);
     }
 
     public function sample(): HasOne
     {
-        return $this->hasOne(LabSample::class);
+        return $this->hasOne(LabSample::class, 'lab_order_id');
     }
 
     public function result(): HasOne
     {
-        return $this->hasOne(LabResult::class);
+        return $this->hasOne(LabResult::class, 'investigation_order_id');
+    }
+
+    public function radiologyResult(): HasOne
+    {
+        return $this->hasOne(RadiologyResult::class);
     }
 
     public function scopeByStatus(Builder $query, string $status): Builder
@@ -85,5 +85,15 @@ class LabOrder extends Model
     public function scopeByPriority(Builder $query, string $priority): Builder
     {
         return $query->where('priority', $priority);
+    }
+
+    public function isPathology(): bool
+    {
+        return $this->investigation->type === 'pathology';
+    }
+
+    public function isRadiology(): bool
+    {
+        return $this->investigation->type === 'radiology';
     }
 }

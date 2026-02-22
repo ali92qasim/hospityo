@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Lab Results - Laboratory Information System')
-@section('page-title', 'Lab Results')
-@section('page-description', 'Manage laboratory test results')
+@section('title', 'Investigation Results - Hospital Management System')
+@section('page-title', 'Investigation Results')
+@section('page-description', 'Manage pathology, radiology, and cardiology test results')
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
@@ -55,6 +55,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test Name</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Type</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Priority</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered</th>
@@ -65,12 +66,27 @@
                             @foreach($orders as $order)
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-4 py-3">
-                                        <div class="font-medium text-gray-900">{{ $order->labTest->name }}</div>
-                                        @if($order->labTest && $order->labTest->parameters && is_object($order->labTest->parameters) && $order->labTest->parameters->count() > 0)
+                                        <div class="font-medium text-gray-900">{{ $order->investigation->name }}</div>
+                                        @if($order->investigation && $order->investigation->parameters && is_object($order->investigation->parameters) && $order->investigation->parameters->count() > 0)
                                             <div class="text-xs text-gray-500 mt-1">
-                                                {{ $order->labTest->parameters->count() }} parameter{{ $order->labTest->parameters->count() > 1 ? 's' : '' }}
+                                                {{ $order->investigation->parameters->count() }} parameter{{ $order->investigation->parameters->count() > 1 ? 's' : '' }}
                                             </div>
                                         @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        @php
+                                            $typeConfig = [
+                                                'pathology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                'radiology' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                'cardiology' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
+                                            ];
+                                            $type = $order->investigation->type ?? 'pathology';
+                                            $typeStyle = $typeConfig[$type] ?? $typeConfig['pathology'];
+                                        @endphp
+                                        <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $typeStyle['bg'] }} {{ $typeStyle['text'] }}">
+                                            <i class="fas {{ $typeStyle['icon'] }} mr-1"></i>
+                                            {{ ucfirst($type) }}
+                                        </span>
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
@@ -119,7 +135,7 @@
 @else
 <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-8 text-center mb-8">
     <i class="fas fa-clipboard-list text-gray-400 text-3xl mb-3"></i>
-    <p class="text-gray-500">No pending lab orders found</p>
+    <p class="text-gray-500">No pending Investigation orders found</p>
 </div>
 @endif
 
@@ -135,6 +151,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reported</th>
@@ -146,7 +163,22 @@
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $result->labOrder?->order_number ?? 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $result->labOrder?->patient?->name ?? 'Unknown Patient' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ $result->labOrder?->labTest?->name ?? 'Unknown Test' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ $result->labOrder?->investigation?->name ?? 'Unknown Test' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @php
+                                $typeConfig = [
+                                    'pathology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                    'radiology' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                    'cardiology' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
+                                ];
+                                $type = $result->labOrder?->investigation?->type ?? 'pathology';
+                                $typeStyle = $typeConfig[$type] ?? $typeConfig['pathology'];
+                            @endphp
+                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $typeStyle['bg'] }} {{ $typeStyle['text'] }}">
+                                <i class="fas {{ $typeStyle['icon'] }} mr-1"></i>
+                                {{ ucfirst($type) }}
+                            </span>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
                                 {{ ($result->labOrder?->test_location ?? 'indoor') === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">

@@ -128,27 +128,27 @@
             @canany(['view services', 'create services'])
             <li class="pt-4">
                 <div class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Laboratory
+                    Diagnostics
                 </div>
             </li>
             @endcanany
             @can('view services')
             <li>
-                <a href="{{ route('lab-tests.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('lab-tests.*') ? 'bg-medical-light text-medical-blue' : '' }}">
+                <a href="{{ route('investigations.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('investigations.*') || request()->routeIs('lab-tests.*') ? 'bg-medical-light text-medical-blue' : '' }}">
                     <i class="fas fa-flask mr-3"></i>
-                    Lab Tests
+                    Investigations
                 </a>
             </li>
             <li>
-                <a href="{{ route('lab-orders.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('lab-orders.*') ? 'bg-medical-light text-medical-blue' : '' }}">
+                <a href="{{ route('investigation-orders.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('investigation-orders.*') || request()->routeIs('lab-orders.*') ? 'bg-medical-light text-medical-blue' : '' }}">
                     <i class="fas fa-clipboard-list mr-3"></i>
-                    Lab Orders
+                    Investigation Orders
                 </a>
             </li>
             <li>
-                <a href="{{ route('lab-results.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('lab-results.*') ? 'bg-medical-light text-medical-blue' : '' }}">
-                    <i class="fas fa-chart-line mr-3"></i>
-                    Lab Results
+                <a href="{{ route('lab-results.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('lab-results.*') || request()->routeIs('radiology-results.*') ? 'bg-medical-light text-medical-blue' : '' }}">
+                    <i class="fas fa-file-medical-alt mr-3"></i>
+                    Investigation Results
                 </a>
             </li>
 

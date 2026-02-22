@@ -857,7 +857,7 @@
                                     <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
                                         <div class="flex justify-between items-start mb-2">
                                             <div class="flex-1">
-                                                <h5 class="font-medium text-gray-800 mb-1">{{ $testOrder->labTest?->name ?? 'Unknown Test' }}</h5>
+                                                <h5 class="font-medium text-gray-800 mb-1">{{ $testOrder->investigation?->name ?? 'Unknown Test' }}</h5>
                                                 <div class="flex items-center gap-2 mb-2">
                                                     <span class="px-2 py-1 text-xs rounded-full font-medium
                                                         {{ $testOrder->priority === 'stat' ? 'bg-red-100 text-red-800' : 
@@ -928,11 +928,20 @@
                                                     <tr class="test-row border-b border-gray-100 hover:bg-gray-25">
                                                         <td class="py-3 pr-4">
                                                             <select name="tests[0][lab_test_id]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
-                                                                <option value="">Select test...</option>
-                                                                @foreach($labTests as $test)
-                                                                <option value="{{ $test->id }}">
-                                                                    {{ $test->name }} - ₨{{ number_format($test->price, 0) }}
-                                                                </option>
+                                                                <option value="">Select investigation...</option>
+                                                                @php
+                                                                    $groupedInvestigations = $investigations->groupBy('type');
+                                                                @endphp
+                                                                @foreach(['pathology' => 'Pathology', 'radiology' => 'Radiology', 'cardiology' => 'Cardiology'] as $type => $label)
+                                                                    @if($groupedInvestigations->has($type))
+                                                                        <optgroup label="{{ $label }}">
+                                                                            @foreach($groupedInvestigations[$type] as $investigation)
+                                                                            <option value="{{ $investigation->id }}">
+                                                                                {{ $investigation->name }} - ₨{{ number_format($investigation->price, 0) }}
+                                                                            </option>
+                                                                            @endforeach
+                                                                        </optgroup>
+                                                                    @endif
                                                                 @endforeach
                                                             </select>
                                                         </td>
@@ -1020,7 +1029,7 @@
                                                 <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-3 gap-3">
                                                     <div class="flex-1 min-w-0">
                                                         <div class="flex flex-col sm:flex-row sm:items-center mb-3 gap-2">
-                                                            <h6 class="text-base font-semibold text-gray-900 truncate">{{ $labOrder->labTest->name }}</h6>
+                                                            <h6 class="text-base font-semibold text-gray-900 truncate">{{ $labOrder->investigation->name }}</h6>
                                                             @php
                                                                 $statusConfig = [
                                                                     'ordered' => ['label' => 'Pending', 'bg' => 'bg-gray-200', 'text' => 'text-gray-800', 'icon' => 'fas fa-clock'],
@@ -1077,7 +1086,7 @@
                                                     <div class="mt-4 pt-3 border-t border-yellow-200">
                                                         <a href="{{ route('lab-results.create', ['lab_order' => $labOrder->id]) }}" 
                                                            class="inline-flex items-center px-4 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
-                                                           aria-label="Add result for {{ $labOrder->labTest->name }}">
+                                                           aria-label="Add result for {{ $labOrder->investigation->name }}">
                                                             <i class="fas fa-plus mr-2" aria-hidden="true"></i>
                                                             Add Result
                                                         </a>
@@ -1105,7 +1114,7 @@
                                                 <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-3 gap-3">
                                                     <div class="flex-1 min-w-0">
                                                         <div class="flex flex-col sm:flex-row sm:items-center mb-3 gap-2">
-                                                            <h6 class="text-base font-semibold text-gray-900 truncate">{{ $labOrder->labTest->name }}</h6>
+                                                            <h6 class="text-base font-semibold text-gray-900 truncate">{{ $labOrder->investigation->name }}</h6>
                                                             <span class="inline-flex items-center px-2.5 py-1 text-sm rounded-full font-medium bg-green-200 text-green-900" aria-label="Status: Reported">
                                                                 <i class="fas fa-check-circle mr-1.5 text-xs" aria-hidden="true"></i>
                                                                 Reported
@@ -1198,13 +1207,13 @@
                                                             <div class="mt-4 flex flex-col sm:flex-row sm:justify-end gap-3">
                                                                 <a href="{{ route('lab-results.report', $labOrder->result) }}" 
                                                                    class="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200"
-                                                                   aria-label="View report for {{ $labOrder->labTest->name }}">
+                                                                   aria-label="View report for {{ $labOrder->investigation->name }}">
                                                                     <i class="fas fa-file-medical mr-2" aria-hidden="true"></i>View Report
                                                                 </a>
                                                                 <a href="{{ route('lab-results.report', $labOrder->result) }}?print=1" 
                                                                    target="_blank"
                                                                    class="inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
-                                                                   aria-label="Print report for {{ $labOrder->labTest->name }} (opens in new tab)">
+                                                                   aria-label="Print report for {{ $labOrder->investigation->name }} (opens in new tab)">
                                                                     <i class="fas fa-print mr-2" aria-hidden="true"></i>Print
                                                                 </a>
                                                             </div>
@@ -1226,7 +1235,7 @@
                                                                 <div class="space-y-2 text-sm text-blue-700">
                                                                     <div class="grid grid-cols-2 gap-4">
                                                                         <div>
-                                                                            <span class="font-medium">Test:</span> {{ $labOrder->labTest->name }}
+                                                                            <span class="font-medium">Test:</span> {{ $labOrder->investigation->name }}
                                                                         </div>
                                                                         <div>
                                                                             <span class="font-medium">Priority:</span> 

@@ -1,7 +1,7 @@
 @extends('admin.layout')
 
-@section('title', 'Enter Lab Results - Laboratory Information System')
-@section('page-title', 'Enter Lab Results')
+@section('title', 'Enter Investigation Results - Hospital Management System')
+@section('page-title', 'Enter Investigation Results')
 @section('page-description', 'Enter results for multiple tests')
 
 @section('content')
@@ -52,7 +52,7 @@
                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
                     <div class="flex justify-between items-center">
                         <div>
-                            <h4 class="text-lg font-semibold text-gray-900">{{ $labOrder->labTest->name }}</h4>
+                            <h4 class="text-lg font-semibold text-gray-900">{{ $labOrder->investigation->name }}</h4>
                             <div class="flex items-center space-x-3 mt-1">
                                 <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
                                     {{ $labOrder->priority === 'stat' ? 'bg-red-100 text-red-800' : 
@@ -96,7 +96,7 @@
                         </div>
                     </div>
                     
-                    @if($labOrder->labTest->parameters && is_object($labOrder->labTest->parameters) && $labOrder->labTest->parameters->count() > 0)
+                    @if($labOrder->investigation->parameters && is_object($labOrder->investigation->parameters) && $labOrder->investigation->parameters->count() > 0)
                         <!-- Parameter-based Results -->
                         <div class="mb-4">
                             <h5 class="text-sm font-medium text-gray-700 mb-3">Test Parameters</h5>
@@ -112,7 +112,7 @@
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-200">
-                                        @foreach($labOrder->labTest->parameters as $paramIndex => $parameter)
+                                        @foreach($labOrder->investigation->parameters as $paramIndex => $parameter)
                                             <tr>
                                                 <td class="px-4 py-2 font-medium text-gray-900">{{ $parameter->parameter_name }}</td>
                                                 <td class="px-4 py-2">

@@ -497,7 +497,7 @@
                     @if($visit->labOrders && $visit->labOrders->count() > 0)
                         @foreach($visit->labOrders as $labOrder)
                         <div class="list-item">
-                            • {{ $labOrder->labTest->name }}
+                            • {{ $labOrder->investigation->name }}
                             @if($labOrder->priority === 'stat')
                                 <span class="badge badge-warning">STAT</span>
                             @elseif($labOrder->priority === 'urgent')

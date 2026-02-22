@@ -14,7 +14,7 @@ class OrderLabTestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lab_test_id' => 'required|exists:lab_tests,id',
+            'lab_test_id' => 'required|exists:investigations,id',
             'test_location' => 'required|in:indoor,outdoor',
             'priority' => 'required|in:routine,urgent,stat',
             'clinical_notes' => 'nullable|string'

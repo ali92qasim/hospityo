@@ -18,7 +18,7 @@ use App\Models\Visit;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Department;
-use App\Models\LabTest;
+use App\Models\Investigation;
 use App\Models\LabOrder;
 use App\Models\VitalSign;
 use App\Models\Consultation;
@@ -159,10 +159,10 @@ class VisitController extends Controller
             ->filter(function($medicine) {
                 return $medicine->getCurrentStock() > 0;
             });
-        $labTests = LabTest::where('is_active', true)->get();
+        $investigations = Investigation::where('is_active', true)->orderBy('type')->orderBy('name')->get();
         $allergies = \App\Models\Allergy::orderBy('category')->orderBy('name')->get();
 
-        $data = compact('visit', 'doctors', 'medicines', 'labTests', 'allergies');
+        $data = compact('visit', 'doctors', 'medicines', 'investigations', 'allergies');
 
         // Add type-specific data
         if ($visit->visit_type === 'ipd') {

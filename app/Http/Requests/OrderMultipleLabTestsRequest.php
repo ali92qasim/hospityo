@@ -15,7 +15,7 @@ class OrderMultipleLabTestsRequest extends FormRequest
     {
         return [
             'tests' => 'required|array|min:1',
-            'tests.*.lab_test_id' => 'required|exists:lab_tests,id',
+            'tests.*.lab_test_id' => 'required|exists:investigations,id',
             'tests.*.quantity' => 'required|integer|min:1|max:10',
             'tests.*.priority' => 'required|in:routine,urgent,stat',
             'tests.*.clinical_notes' => 'nullable|string|max:500'

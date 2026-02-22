@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Add Lab Result - Hospital Management System')
-@section('page-title', 'Add Lab Result')
-@section('page-description', 'Enter laboratory test results')
+@section('title', 'Add Investigation Result - Hospital Management System')
+@section('page-title', 'Add Investigation Result')
+@section('page-description', 'Enter test results')
 
 @section('content')
 <div class="max-w-4xl mx-auto">
@@ -11,10 +11,10 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-800">Add Test Result</h3>
-                    <p class="text-sm text-gray-600">{{ $labOrder->labTest?->name ?? 'Unknown Test' }} - {{ $labOrder->patient?->name ?? 'Unknown Patient' }}</p>
+                    <p class="text-sm text-gray-600">{{ $labOrder->investigation?->name ?? 'Unknown Test' }} - {{ $labOrder->patient?->name ?? 'Unknown Patient' }}</p>
                 </div>
                 <a href="{{ route('lab-results.index') }}" class="text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to Lab Results
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Investigation Results
                 </a>
             </div>
         </div>
@@ -26,7 +26,7 @@
                     <h4 class="font-medium text-blue-800 mb-2">Order Information</h4>
                     <div class="space-y-1 text-sm">
                         <div><span class="text-blue-600">Order #:</span> {{ $labOrder->order_number }}</div>
-                        <div><span class="text-blue-600">Test:</span> {{ $labOrder->labTest?->name ?? 'Unknown Test' }}</div>
+                        <div><span class="text-blue-600">Test:</span> {{ $labOrder->investigation?->name ?? 'Unknown Test' }}</div>
                         <div><span class="text-blue-600">Priority:</span> {{ strtoupper($labOrder->priority) }}</div>
                     </div>
                 </div>
@@ -45,8 +45,8 @@
                 <div class="bg-purple-50 rounded-lg p-4">
                     <h4 class="font-medium text-purple-800 mb-2">Test Information</h4>
                     <div class="space-y-1 text-sm">
-                        <div><span class="text-purple-600">Category:</span> {{ $labOrder->labTest ? ucfirst($labOrder->labTest->category) : 'N/A' }}</div>
-                        <div><span class="text-purple-600">Sample:</span> {{ $labOrder->labTest ? ucfirst($labOrder->labTest->sample_type) : 'N/A' }}</div>
+                        <div><span class="text-purple-600">Category:</span> {{ $labOrder->investigation ? ucfirst($labOrder->investigation->category) : 'N/A' }}</div>
+                        <div><span class="text-purple-600">Sample:</span> {{ $labOrder->investigation ? ucfirst($labOrder->investigation->sample_type) : 'N/A' }}</div>
                         <div><span class="text-purple-600">Location:</span> 
                             <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full font-medium
                                 {{ ($labOrder->test_location ?? 'indoor') === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">

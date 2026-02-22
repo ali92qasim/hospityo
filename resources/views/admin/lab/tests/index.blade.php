@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Lab Tests - Laboratory Information System')
-@section('page-title', 'Lab Tests')
-@section('page-description', 'Manage laboratory test definitions')
+@section('title', 'Investigations - Laboratory Information System')
+@section('page-title', 'Investigations')
+@section('page-description', 'Manage investigation definitions')
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
@@ -73,7 +73,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">No lab tests found</td>
+                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">No investigations found</td>
                 </tr>
             @endforelse
         </tbody>

@@ -204,7 +204,7 @@
                         <div class="space-y-1">
                             @foreach($latestVisit->labOrders as $labOrder)
                                 <div class="text-sm text-indigo-600">
-                                    • {{ $labOrder->labTest->name }} 
+                                    • {{ $labOrder->investigation->name }} 
                                     <span class="text-xs">({{ ucfirst($labOrder->status) }})</span>
                                 </div>
                             @endforeach

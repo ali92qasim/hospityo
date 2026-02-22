@@ -1,17 +1,17 @@
 @extends('admin.layout')
 
-@section('title', 'Edit Lab Test - Hospital Management System')
-@section('page-title', 'Edit Lab Test')
-@section('page-description', 'Update laboratory test information')
+@section('title', 'Edit Investigation - Hospital Management System')
+@section('page-title', 'Edit Investigation')
+@section('page-description', 'Update investigation information')
 
 @section('content')
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-lg shadow-sm">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-800">Edit Lab Test</h3>
-                <a href="{{ route('lab-tests.index') }}" class="text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to Lab Tests
+                <h3 class="text-lg font-semibold text-gray-800">Edit Investigation</h3>
+                <a href="{{ route('investigations.index') }}" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Investigations
                 </a>
             </div>
         </div>
@@ -155,7 +155,7 @@
                 </a>
                 <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 flex items-center">
                     <i class="fas fa-save mr-2"></i>
-                    Update Lab Test
+                    Update Investigation
                 </button>
             </div>
         </form>

@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Lab Result Details - Laboratory Information System')
-@section('page-title', 'Lab Result Details')
-@section('page-description', 'View comprehensive laboratory test result analysis')
+@section('title', 'Investigation Result Details - Hospital Management System')
+@section('page-title', 'Investigation Result Details')
+@section('page-description', 'View comprehensive test result analysis')
 
 @section('content')
 <div class="max-w-7xl mx-auto">
@@ -13,7 +13,7 @@
                 <i class="fas fa-arrow-left mr-2"></i>Back to Results
             </a>
             <div class="border-l border-gray-300 pl-4">
-                <h1 class="text-xl font-bold text-gray-800">{{ $labResult->labOrder->labTest->name }}</h1>
+                <h1 class="text-xl font-bold text-gray-800">{{ $labResult->labOrder->investigation->name }}</h1>
                 <p class="text-sm text-gray-600">Order #{{ $labResult->labOrder->order_number }} • {{ $labResult->labOrder->patient->name }}</p>
             </div>
         </div>
@@ -86,7 +86,7 @@
                                 </div>
                                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                     <span class="text-gray-600 w-28 text-sm font-medium">Test Name:</span>
-                                    <span class="text-gray-900">{{ $labResult->labOrder->labTest->name }}</span>
+                                    <span class="text-gray-900">{{ $labResult->labOrder->investigation->name }}</span>
                                 </div>
                                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                     <span class="text-gray-600 w-28 text-sm font-medium">Priority:</span>

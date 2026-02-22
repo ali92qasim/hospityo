@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Lab Test Details - Laboratory Information System')
-@section('page-title', 'Lab Test Details')
-@section('page-description', 'View lab test information and parameters')
+@section('title', 'Investigation Details - Laboratory Information System')
+@section('page-title', 'Investigation Details')
+@section('page-description', 'View investigation information and parameters')
 
 @section('content')
 <div class="flex justify-between items-center mb-6">

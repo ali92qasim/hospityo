@@ -1,7 +1,7 @@
 @extends('admin.layout')
 
-@section('title', 'Lab Orders - Laboratory Information System')
-@section('page-title', 'Lab Orders')
+@section('title', 'Investigation Orders - Laboratory Information System')
+@section('page-title', 'Investigation Orders')
 @section('page-description', 'Manage laboratory test orders')
 
 @section('content')
@@ -45,7 +45,7 @@
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $order->order_number }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">{{ $order->patient?->name ?? 'Unknown Patient' }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $order->labTest?->name ?? 'Unknown Test' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ $order->investigation?->name ?? 'Unknown Test' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 text-xs rounded-full {{ $order->priority === 'stat' ? 'bg-red-100 text-red-800' : ($order->priority === 'urgent' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
                             {{ strtoupper($order->priority) }}
@@ -70,7 +70,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No lab orders found</td>
+                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No Investigation orders found</td>
                 </tr>
             @endforelse
         </tbody>

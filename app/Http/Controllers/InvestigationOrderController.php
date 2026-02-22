@@ -5,18 +5,18 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreLabOrderRequest;
 use App\Http\Requests\UpdateLabOrderRequest;
 use App\Http\Requests\CollectSampleRequest;
-use App\Models\LabOrder;
+use App\Models\InvestigationOrder;
 use App\Models\Investigation;
 use App\Models\LabSample;
 use App\Models\Patient;
 use App\Models\Doctor;
 use Illuminate\Http\Request;
 
-class LabOrderController extends Controller
+class InvestigationOrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = LabOrder::with(['patient', 'doctor', 'investigation', 'sample', 'result']);
+        $query = InvestigationOrder::with(['patient', 'doctor', 'investigation', 'sample', 'result']);
         
         if ($request->status) {
             $query->where('status', '=', $request->status);
@@ -44,30 +44,30 @@ class LabOrderController extends Controller
         $validated['ordered_at'] = now();
         $validated['status'] = 'ordered';
 
-        LabOrder::create($validated);
-        return redirect()->route('lab-orders.index')->with('success', 'Lab order created successfully.');
+        InvestigationOrder::create($validated);
+        return redirect()->route('investigation-orders.index')->with('success', 'Investigation order created successfully.');
     }
 
-    public function show(LabOrder $labOrder)
+    public function show(InvestigationOrder $investigationOrder)
     {
-        $labOrder->load(['patient', 'doctor', 'investigation', 'sample', 'result']);
-        return view('admin.lab.orders.show', compact('labOrder'));
+        $investigationOrder->load(['patient', 'doctor', 'investigation', 'sample', 'result']);
+        return view('admin.lab.orders.show', compact('investigationOrder'));
     }
 
-    public function collectSample(CollectSampleRequest $request, LabOrder $labOrder)
+    public function collectSample(CollectSampleRequest $request, InvestigationOrder $investigationOrder)
     {
         $validated = $request->validated();
 
         LabSample::create([
-            'lab_order_id' => $labOrder->id,
-            'sample_type' => $labOrder->investigation->sample_type,
+            'lab_order_id' => $investigationOrder->id,
+            'sample_type' => $investigationOrder->investigation->sample_type,
             'status' => 'collected',
             'collected_at' => now(),
             'collected_by' => auth()->id(),
             'collection_notes' => $validated['collection_notes'] ?? null
         ]);
 
-        $labOrder->update([
+        $investigationOrder->update([
             'status' => 'collected',
             'sample_collected_at' => now()
         ]);
@@ -75,30 +75,30 @@ class LabOrderController extends Controller
         return back()->with('success', 'Sample collected successfully.');
     }
 
-    public function edit(LabOrder $labOrder)
+    public function edit(InvestigationOrder $investigationOrder)
     {
         $patients = Patient::all();
         $doctors = Doctor::where('status', 'active')->get();
         $investigations = Investigation::where('is_active', true)->get();
-        return view('admin.lab.orders.edit', compact('labOrder', 'patients', 'doctors', 'investigations'));
+        return view('admin.lab.orders.edit', compact('investigationOrder', 'patients', 'doctors', 'investigations'));
     }
 
-    public function update(UpdateLabOrderRequest $request, LabOrder $labOrder)
+    public function update(UpdateLabOrderRequest $request, InvestigationOrder $investigationOrder)
     {
-        $labOrder->update($request->validated());
-        return redirect()->route('lab-orders.show', $labOrder)->with('success', 'Lab order updated successfully.');
+        $investigationOrder->update($request->validated());
+        return redirect()->route('investigation-orders.show', $investigationOrder)->with('success', 'Investigation order updated successfully.');
     }
 
-    public function receiveSample(Request $request, LabOrder $labOrder)
+    public function receiveSample(Request $request, InvestigationOrder $investigationOrder)
     {
-        $sample = $labOrder->sample;
+        $sample = $investigationOrder->sample;
         $sample->update([
             'status' => 'received',
             'received_at' => now(),
             'received_by' => auth()->id()
         ]);
 
-        $labOrder->update(['status' => 'testing']);
+        $investigationOrder->update(['status' => 'testing']);
         return back()->with('success', 'Sample received in laboratory.');
     }
 }

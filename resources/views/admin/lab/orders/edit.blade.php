@@ -1,20 +1,21 @@
 @extends('admin.layout')
 
-@section('title', 'Create Investigation Order - Laboratory Information System')
-@section('page-title', 'Create Investigation Order')
-@section('page-description', 'Order new test')
+@section('title', 'Edit Investigation Order - Laboratory Information System')
+@section('page-title', 'Edit Investigation Order')
+@section('page-description', 'Update laboratory test order')
 
 @section('content')
 <div class="bg-white rounded-lg shadow-sm p-6">
-    <form action="{{ route('lab-orders.store') }}" method="POST">
+    <form action="{{ route('lab-orders.update', $labOrder) }}" method="POST">
         @csrf
+        @method('PUT')
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Patient</label>
                 <select name="patient_id" id="patient_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="">Select Patient</option>
                     @foreach($patients as $patient)
-                        <option value="{{ $patient->id }}">{{ $patient->name }} - {{ $patient->phone }}</option>
+                        <option value="{{ $patient->id }}" {{ $labOrder->patient_id == $patient->id ? 'selected' : '' }}>{{ $patient->name }} - {{ $patient->phone }}</option>
                     @endforeach
                 </select>
             </div>
@@ -24,7 +25,7 @@
                 <select name="doctor_id" id="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="">Select Doctor</option>
                     @foreach($doctors as $doctor)
-                        <option value="{{ $doctor->id }}">Dr. {{ $doctor->name }} - {{ $doctor->specialization }}</option>
+                        <option value="{{ $doctor->id }}" {{ $labOrder->doctor_id == $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->name }} - {{ $doctor->specialization }}</option>
                     @endforeach
                 </select>
             </div>
@@ -34,7 +35,7 @@
                 <select name="lab_test_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="">Select Investigation</option>
                     @foreach($investigations as $investigation)
-                        <option value="{{ $investigation->id }}">{{ $investigation->name }} - ₨{{ number_format($investigation->price, 0) }}</option>
+                        <option value="{{ $investigation->id }}" {{ $labOrder->lab_test_id == $investigation->id ? 'selected' : '' }}>{{ $investigation->name }} - ₨{{ number_format($investigation->price, 0) }}</option>
                     @endforeach
                 </select>
             </div>
@@ -42,27 +43,27 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
                 <select name="priority" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                    <option value="routine">Routine</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="stat">STAT</option>
+                    <option value="routine" {{ $labOrder->priority == 'routine' ? 'selected' : '' }}>Routine</option>
+                    <option value="urgent" {{ $labOrder->priority == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                    <option value="stat" {{ $labOrder->priority == 'stat' ? 'selected' : '' }}>STAT</option>
                 </select>
             </div>
             
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Clinical Notes</label>
-                <textarea name="clinical_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Clinical indication for test..."></textarea>
+                <textarea name="clinical_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Clinical indication for test...">{{ $labOrder->clinical_notes }}</textarea>
             </div>
             
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Special Instructions</label>
-                <textarea name="special_instructions" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Special handling or collection instructions..."></textarea>
+                <textarea name="special_instructions" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Special handling or collection instructions...">{{ $labOrder->special_instructions }}</textarea>
             </div>
         </div>
         
         <div class="flex justify-end space-x-4 mt-6">
-            <a href="{{ route('lab-orders.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
+            <a href="{{ route('lab-orders.show', $labOrder) }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
             <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                <i class="fas fa-plus mr-2"></i>Create Order
+                <i class="fas fa-save mr-2"></i>Update Order
             </button>
         </div>
     </form>

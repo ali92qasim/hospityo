@@ -14,7 +14,7 @@ class StoreLabTestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => 'required|unique:lab_tests',
+            'code' => 'required|unique:investigations',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category' => 'required|in:hematology,biochemistry,microbiology,immunology,pathology,molecular',

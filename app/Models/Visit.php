@@ -92,6 +92,11 @@ class Visit extends Model
 
     public function labOrders(): HasMany
     {
-        return $this->hasMany(LabOrder::class);
+        return $this->hasMany(InvestigationOrder::class);
+    }
+
+    public function investigationOrders(): HasMany
+    {
+        return $this->hasMany(InvestigationOrder::class);
     }
 }

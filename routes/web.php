@@ -16,9 +16,11 @@ use App\Http\Controllers\WardController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\PrescriptionController;
-use App\Http\Controllers\LabTestController;
+use App\Http\Controllers\InvestigationController;
 use App\Http\Controllers\LabOrderController;
+use App\Http\Controllers\InvestigationOrderController;
 use App\Http\Controllers\LabResultController;
+use App\Http\Controllers\RadiologyResultController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PurchaseController;
@@ -146,7 +148,15 @@ Route::middleware('auth')->group(function () {
     Route::post('purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel')->middleware('permission:edit services');
     
     // Laboratory Routes
-    Route::resource('lab-tests', LabTestController::class)->middleware('permission:view services|create services|edit services|delete services');
+    Route::resource('investigations', InvestigationController::class)->middleware('permission:view services|create services|edit services|delete services');
+    Route::resource('lab-tests', InvestigationController::class)->middleware('permission:view services|create services|edit services|delete services');
+    
+    // Investigation Orders (new routes)
+    Route::resource('investigation-orders', InvestigationOrderController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
+    Route::post('investigation-orders/{investigationOrder}/collect-sample', [InvestigationOrderController::class, 'collectSample'])->name('investigation-orders.collect-sample')->middleware('permission:edit visits');
+    Route::post('investigation-orders/{investigationOrder}/receive-sample', [InvestigationOrderController::class, 'receiveSample'])->name('investigation-orders.receive-sample')->middleware('permission:edit visits');
+    
+    // Lab Orders (legacy routes - kept for backward compatibility)
     Route::resource('lab-orders', LabOrderController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
     Route::post('lab-orders/{labOrder}/collect-sample', [LabOrderController::class, 'collectSample'])->name('lab-orders.collect-sample')->middleware('permission:edit visits');
     Route::post('lab-orders/{labOrder}/receive-sample', [LabOrderController::class, 'receiveSample'])->name('lab-orders.receive-sample')->middleware('permission:edit visits');
@@ -161,6 +171,10 @@ Route::middleware('auth')->group(function () {
     
     Route::resource('lab-results', LabResultController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
     
+    // Radiology Results Routes
+    Route::get('investigation-orders/{investigationOrder}/radiology-results/create', [RadiologyResultController::class, 'create'])->name('radiology-results.create')->middleware('permission:edit visits');
+    Route::post('investigation-orders/{investigationOrder}/radiology-results', [RadiologyResultController::class, 'store'])->name('radiology-results.store')->middleware('permission:edit visits');
+    Route::resource('radiology-results', RadiologyResultController::class)->except(['create', 'store'])->middleware('permission:view visits|create visits|edit visits|delete visits');
 
     
     // RBAC Routes

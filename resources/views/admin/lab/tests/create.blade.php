@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Create Lab Test - Laboratory Information System')
-@section('page-title', 'Create Lab Test')
-@section('page-description', 'Add new laboratory test definition')
+@section('title', 'Create Investigation - Laboratory Information System')
+@section('page-title', 'Create Investigation')
+@section('page-description', 'Add new investigation definition')
 
 @section('content')
 <div class="bg-white rounded-lg shadow-sm p-6">

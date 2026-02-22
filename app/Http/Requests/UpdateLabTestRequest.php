@@ -16,7 +16,7 @@ class UpdateLabTestRequest extends FormRequest
         $labTest = $this->route('lab_test');
         
         return [
-            'code' => 'required|unique:lab_tests,code,' . $labTest->id,
+            'code' => 'required|unique:investigations,code,' . $labTest->id,
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category' => 'required|in:hematology,biochemistry,microbiology,immunology,pathology,molecular',
