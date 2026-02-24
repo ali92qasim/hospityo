@@ -19,6 +19,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Route model binding for backward compatibility
+        \Route::bind('labOrder', function ($value) {
+            return \App\Models\InvestigationOrder::findOrFail($value);
+        });
+        
+        \Route::bind('lab_test', function ($value) {
+            return \App\Models\Investigation::findOrFail($value);
+        });
+        
         // Set application timezone from settings
         $timezone = cache('settings.timezone', config('app.timezone', 'Asia/Karachi'));
         config(['app.timezone' => $timezone]);

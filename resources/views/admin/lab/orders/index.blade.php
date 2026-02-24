@@ -28,53 +28,57 @@
 </div>
 
 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-            @forelse($orders as $order)
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
                 <tr>
-                    <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $order->order_number }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $order->patient?->name ?? 'Unknown Patient' }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $order->investigation?->name ?? 'Unknown Test' }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 text-xs rounded-full {{ $order->priority === 'stat' ? 'bg-red-100 text-red-800' : ($order->priority === 'urgent' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
-                            {{ strtoupper($order->priority) }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 text-xs rounded-full {{ in_array($order->status, ['verified', 'reported']) ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' }}">
-                            {{ ucfirst(str_replace('_', ' ', $order->status)) }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $order->ordered_at ? $order->ordered_at->format('M d, Y H:i') : 'N/A' }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <a href="{{ route('lab-orders.show', $order) }}" class="text-blue-600 hover:text-blue-800 mr-3">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        @if($order->status === 'ordered')
-                            <button onclick="collectSample({{ $order->id }})" class="text-green-600 hover:text-green-800">
-                                <i class="fas fa-vial"></i>
-                            </button>
-                        @endif
-                    </td>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-32">Actions</th>
                 </tr>
-            @empty
-                <tr>
-                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No Investigation orders found</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                @forelse($orders as $order)
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $order->order_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ $order->patient?->name ?? 'Unknown Patient' }}</td>
+                        <td class="px-6 py-4">{{ $order->investigation?->name ?? 'Unknown Test' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full {{ $order->priority === 'stat' ? 'bg-red-100 text-red-800' : ($order->priority === 'urgent' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
+                                {{ strtoupper($order->priority) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full {{ in_array($order->status, ['verified', 'reported']) ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' }}">
+                                {{ ucfirst(str_replace('_', ' ', $order->status)) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $order->ordered_at ? $order->ordered_at->format('M d, Y H:i') : 'N/A' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-3">
+                                <a href="{{ route('lab-orders.show', $order) }}" class="text-blue-600 hover:text-blue-800" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                @if($order->status === 'ordered')
+                                    <button onclick="collectSample({{ $order->id }})" class="text-green-600 hover:text-green-800" title="Collect Sample">
+                                        <i class="fas fa-vial"></i>
+                                    </button>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">No Investigation orders found</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {{ $orders->links() }}

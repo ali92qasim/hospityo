@@ -11,10 +11,10 @@
         <p class="text-gray-600 mt-1">{{ $labTest->description ?? 'No description available' }}</p>
     </div>
     <div class="flex space-x-3">
-        <a href="{{ route('lab-tests.edit', $labTest) }}" class="px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700">
+        <a href="{{ route('investigations.edit', $labTest->id) }}" class="px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700">
             <i class="fas fa-edit mr-2"></i>Edit Test
         </a>
-        <a href="{{ route('lab-tests.index') }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+        <a href="{{ route('investigations.index') }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
             <i class="fas fa-arrow-left mr-2"></i>Back to Tests
         </a>
     </div>
@@ -51,54 +51,66 @@
     </div>
 </div>
 
-<!-- Test Parameters -->
-@if($labTest->load('parameters') && $labTest->parameters->isNotEmpty())
-<div class="bg-white rounded-lg shadow-sm">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-800">Test Parameters ({{ $labTest->parameters->count() }})</h3>
-    </div>
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parameter Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference Range</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                @foreach($labTest->parameters as $parameter)
+<!-- Test Parameters (Only for Pathology Tests) -->
+@if($labTest->type === 'pathology')
+    @if($labTest->load('parameters') && $labTest->parameters->isNotEmpty())
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Test Parameters ({{ $labTest->parameters->count() }})</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                            {{ $parameter->parameter_name }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-                            {{ $parameter->unit ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-                            {{ is_array($parameter->reference_ranges) ? ($parameter->reference_ranges['range'] ?? '-') : ($parameter->reference_ranges ?? '-') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-800">
-                                {{ $parameter->data_type ?? 'Numeric' }}
-                            </span>
-                        </td>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parameter Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference Range</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach($labTest->parameters as $parameter)
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                                {{ $parameter->parameter_name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                                {{ $parameter->unit ?? '-' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                                {{ is_array($parameter->reference_ranges) ? ($parameter->reference_ranges['range'] ?? '-') : ($parameter->reference_ranges ?? '-') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-800">
+                                    {{ $parameter->data_type ?? 'Numeric' }}
+                                </span>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+    @else
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Test Parameters</h3>
+        </div>
+        <div class="p-6 text-center text-gray-500">
+            <i class="fas fa-flask text-3xl mb-3"></i>
+            <p>This test has no specific parameters. Results will be entered as free text.</p>
+        </div>
+    </div>
+    @endif
 @else
-<div class="bg-white rounded-lg shadow-sm">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-800">Test Parameters</h3>
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Result Entry</h3>
+        </div>
+        <div class="p-6 text-center text-gray-500">
+            <i class="fas fa-file-medical text-3xl mb-3"></i>
+            <p>This {{ $labTest->type }} investigation uses report-based result entry with findings and impressions.</p>
+        </div>
     </div>
-    <div class="p-6 text-center text-gray-500">
-        <i class="fas fa-flask text-3xl mb-3"></i>
-        <p>This test has no specific parameters. Results will be entered as free text.</p>
-    </div>
-</div>
 @endif
 @endsection

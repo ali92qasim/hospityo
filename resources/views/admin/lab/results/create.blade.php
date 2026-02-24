@@ -83,40 +83,54 @@
                     <!-- Test Results -->
                     <div class="bg-gray-50 rounded-lg p-4">
                         <h4 class="font-medium text-gray-800 mb-4">Test Results</h4>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Result Value *</label>
-                                <input type="text" name="results[value]" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
-                                       placeholder="Enter test result value" required>
+                        
+                        @if($labOrder->investigation->parameters && $labOrder->investigation->parameters->count() > 0)
+                            <!-- Parameter-based Results -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full border border-gray-200 rounded-lg">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Parameter</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value *</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reference Range</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        @foreach($labOrder->investigation->parameters as $paramIndex => $parameter)
+                                            <tr>
+                                                <td class="px-4 py-2 font-medium text-gray-900">{{ $parameter->parameter_name }}</td>
+                                                <td class="px-4 py-2">
+                                                    <input type="hidden" name="parameters[{{ $paramIndex }}][parameter_id]" value="{{ $parameter->id }}">
+                                                    <input type="text" name="parameters[{{ $paramIndex }}][value]" 
+                                                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-medical-blue" 
+                                                           required>
+                                                </td>
+                                                <td class="px-4 py-2">
+                                                    <input type="text" name="parameters[{{ $paramIndex }}][unit]" 
+                                                           value="{{ $parameter->unit }}" 
+                                                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-medical-blue" 
+                                                           readonly>
+                                                </td>
+                                                <td class="px-4 py-2 text-sm text-gray-600">
+                                                    {{ is_array($parameter->reference_ranges) ? ($parameter->reference_ranges['range'] ?? '-') : ($parameter->reference_ranges ?? '-') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @else
+                            <!-- Text-based Results (for tests without parameters) -->
+                            <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Unit</label>
-                                    <input type="text" name="results[unit]" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
-                                           placeholder="e.g., mg/dL, cells/μL">
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Reference Range</label>
-                                    <input type="text" name="results[reference_range]" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
-                                           placeholder="e.g., 70-100 mg/dL">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Test Result *</label>
+                                    <textarea name="result_text" rows="4" 
+                                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                                              placeholder="Enter test results..." required></textarea>
                                 </div>
                             </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Flag</label>
-                                <select name="results[flag]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                                    <option value="">Normal</option>
-                                    <option value="high">High</option>
-                                    <option value="low">Low</option>
-                                    <option value="critical">Critical</option>
-                                </select>
-                            </div>
-                        </div>
+                        @endif
                     </div>
 
                     <!-- Clinical Interpretation -->

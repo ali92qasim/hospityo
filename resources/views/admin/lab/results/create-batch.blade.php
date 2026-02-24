@@ -107,7 +107,6 @@
                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Parameter</th>
                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value *</th>
                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Flag</th>
                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reference Range</th>
                                         </tr>
                                     </thead>
@@ -124,18 +123,8 @@
                                                 <td class="px-4 py-2">
                                                     <input type="text" name="orders[{{ $index }}][parameters][{{ $paramIndex }}][unit]" 
                                                            value="{{ $parameter->unit }}" 
-                                                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-medical-blue">
-                                                </td>
-                                                <td class="px-4 py-2">
-                                                    <select name="orders[{{ $index }}][parameters][{{ $paramIndex }}][flag]" 
-                                                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-medical-blue">
-                                                        <option value="N">Normal</option>
-                                                        <option value="H">High</option>
-                                                        <option value="L">Low</option>
-                                                        <option value="HH">Critical High</option>
-                                                        <option value="LL">Critical Low</option>
-                                                        <option value="A">Abnormal</option>
-                                                    </select>
+                                                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-medical-blue" 
+                                                           readonly>
                                                 </td>
                                                 <td class="px-4 py-2 text-sm text-gray-600">
                                                     {{ is_array($parameter->reference_ranges) ? ($parameter->reference_ranges['range'] ?? '-') : ($parameter->reference_ranges ?? '-') }}

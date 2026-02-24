@@ -27,18 +27,16 @@
 
         /* Header Section */
         .header {
-            display: grid;
-            grid-template-columns: 100px 1fr;
-            gap: 20px;
-            align-items: start;
-            border-bottom: 2px solid #000;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 3px solid #000;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .logo {
-            width: 100px;
-            height: 100px;
+            margin: 0 auto 15px;
+            width: 120px;
+            height: 120px;
         }
 
         .logo img {
@@ -52,21 +50,36 @@
         }
 
         .hospital-name {
-            font-size: 18pt;
+            font-size: 22pt;
             font-weight: bold;
-            margin-bottom: 5px;
+            color: #000;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
         .hospital-address {
+            font-size: 10pt;
+            color: #333;
+            margin-bottom: 4px;
+            line-height: 1.6;
+        }
+
+        .hospital-contact {
             font-size: 9pt;
+            color: #555;
             margin-bottom: 3px;
         }
 
         .report-title {
             font-size: 16pt;
             font-weight: bold;
-            margin-top: 10px;
-            text-decoration: underline;
+            margin-top: 15px;
+            padding: 8px 0;
+            border-top: 2px solid #ddd;
+            border-bottom: 2px solid #ddd;
+            letter-spacing: 2px;
+            color: #000;
         }
 
         /* Patient Details */
@@ -182,35 +195,44 @@
 
         <!-- Header -->
         <div class="header">
-            <!-- Logo (Left) -->
-            <div class="logo">
-                @php
-                    $settings = [
-                        'hospital_name' => cache('settings.hospital_name', config('app.name', 'Hospital Management System')),
-                        'hospital_address' => cache('settings.hospital_address', ''),
-                        'hospital_phone' => cache('settings.hospital_phone', ''),
-                        'hospital_email' => cache('settings.hospital_email', ''),
-                        'hospital_logo' => cache('settings.hospital_logo', null)
-                    ];
-                @endphp
-                @if($settings['hospital_logo'])
+            @php
+                $settings = [
+                    'hospital_name' => cache('settings.hospital_name', config('app.name', 'Hospital Management System')),
+                    'hospital_address' => cache('settings.hospital_address', ''),
+                    'hospital_phone' => cache('settings.hospital_phone', ''),
+                    'hospital_email' => cache('settings.hospital_email', ''),
+                    'hospital_logo' => cache('settings.hospital_logo', null)
+                ];
+            @endphp
+            
+            <!-- Logo (Centered) -->
+            @if($settings['hospital_logo'])
+                <div class="logo">
                     <img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Hospital Logo">
-                @endif
-            </div>
+                </div>
+            @endif
 
-            <!-- Hospital Info & Report Title (Center) -->
+            <!-- Hospital Info (Centered) -->
             <div class="hospital-header">
                 <div class="hospital-name">{{ $settings['hospital_name'] }}</div>
+                
                 @if($settings['hospital_address'])
                     <div class="hospital-address">{{ $settings['hospital_address'] }}</div>
                 @endif
-                @if($settings['hospital_phone'])
-                    <div class="hospital-address">Phone: {{ $settings['hospital_phone'] }}</div>
-                @endif
-                @if($settings['hospital_email'])
-                    <div class="hospital-address">Email: {{ $settings['hospital_email'] }}</div>
-                @endif
-                <div class="report-title">LAB REPORT</div>
+                
+                <div class="hospital-contact">
+                    @if($settings['hospital_phone'])
+                        <span>Tel: {{ $settings['hospital_phone'] }}</span>
+                    @endif
+                    @if($settings['hospital_phone'] && $settings['hospital_email'])
+                        <span> | </span>
+                    @endif
+                    @if($settings['hospital_email'])
+                        <span>Email: {{ $settings['hospital_email'] }}</span>
+                    @endif
+                </div>
+                
+                <div class="report-title">LABORATORY REPORT</div>
             </div>
         </div>
 

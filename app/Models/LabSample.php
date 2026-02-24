@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class LabSample extends Model
 {
     protected $fillable = [
-        'sample_id', 'lab_order_id', 'sample_type', 'status',
+        'sample_id', 'investigation_order_id', 'lab_order_id', 'sample_type', 'status',
         'collected_at', 'received_at', 'collected_by', 'received_by',
         'collection_notes', 'rejection_reason', 'storage_conditions'
     ];

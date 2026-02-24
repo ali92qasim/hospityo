@@ -16,9 +16,7 @@ class CreatePrescriptionRequest extends FormRequest
         return [
             'medicines' => 'required|array|min:1',
             'medicines.*.medicine_id' => 'required|exists:medicines,id',
-            'medicines.*.quantity' => 'required|integer|min:1',
-            'medicines.*.dosage' => 'required|string|max:255',
-            'medicines.*.instructions' => 'nullable|string|max:500',
+            'medicines.*.instruction_id' => 'nullable|exists:prescription_instructions,id',
             'notes' => 'nullable|string|max:1000'
         ];
     }
@@ -29,9 +27,7 @@ class CreatePrescriptionRequest extends FormRequest
             'medicines.required' => 'At least one medicine must be selected.',
             'medicines.*.medicine_id.required' => 'Medicine selection is required.',
             'medicines.*.medicine_id.exists' => 'Selected medicine does not exist.',
-            'medicines.*.quantity.required' => 'Quantity is required for each medicine.',
-            'medicines.*.quantity.min' => 'Quantity must be at least 1.',
-            'medicines.*.dosage.required' => 'Dosage is required for each medicine.'
+            'medicines.*.instruction_id.exists' => 'Selected instruction does not exist.'
         ];
     }
 }

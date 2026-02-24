@@ -64,6 +64,18 @@ class LabResultController extends Controller
     public function create(InvestigationOrder $labOrder)
     {
         $labOrder->load(['patient', 'visit', 'investigation.parameters']);
+        
+        // Route radiology/cardiology tests to radiology result form
+        if ($labOrder->isRadiology() || $labOrder->investigation->type === 'cardiology') {
+            return redirect()->route('radiology-results.create', $labOrder);
+        }
+        
+        // Validate that this is a pathology investigation
+        if (!$labOrder->isPathology()) {
+            return redirect()->route('lab-results.index')
+                ->withErrors(['error' => 'Invalid investigation type for pathology result entry.']);
+        }
+        
         return view('admin.lab.results.create', compact('labOrder'));
     }
 
@@ -81,8 +93,8 @@ class LabResultController extends Controller
             'parameters.*.parameter_id' => 'nullable|integer',
             'parameters.*.value' => 'required_with:parameters.*.parameter_id|string',
             'parameters.*.unit' => 'nullable|string',
-            'parameters.*.flag' => 'nullable|in:N,H,L,HH,LL,A',
-            'notes' => 'nullable|string',
+            'interpretation' => 'nullable|string',
+            'comments' => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($validated, $labOrder) {
@@ -90,7 +102,8 @@ class LabResultController extends Controller
             $result = LabResult::create([
                 'investigation_order_id' => $labOrder->id,
                 'results' => [],
-                'comments' => $validated['notes'] ?? null,
+                'interpretation' => $validated['interpretation'] ?? null,
+                'comments' => $validated['comments'] ?? null,
                 'status' => 'preliminary',
                 'technician_id' => auth()->id(),
                 'tested_at' => now()
@@ -103,11 +116,23 @@ class LabResultController extends Controller
                         continue;
                     }
                     
+                    // Get the parameter to calculate flag
+                    $parameter = \App\Models\LabTestParameter::find($paramData['parameter_id']);
+                    $flag = 'N'; // Default to normal
+                    
+                    if ($parameter) {
+                        $flag = $parameter->calculateFlag(
+                            $paramData['value'],
+                            $labOrder->patient->age ?? null,
+                            $labOrder->patient->gender ?? null
+                        );
+                    }
+                    
                     $result->resultItems()->create([
                         'lab_test_parameter_id' => $paramData['parameter_id'],
                         'value' => $paramData['value'],
                         'unit' => $paramData['unit'] ?? null,
-                        'flag' => $paramData['flag'] ?? 'N',
+                        'flag' => $flag,
                         'entered_by' => auth()->id(),
                         'entered_at' => now()
                     ]);
@@ -123,7 +148,7 @@ class LabResultController extends Controller
         });
 
         return redirect()->route('lab-results.index')
-            ->with('success', 'Result entered successfully.');
+            ->with('success', 'Investigation result entered successfully.');
     }
 
     public function storeBatch(Request $request)
@@ -138,7 +163,6 @@ class LabResultController extends Controller
             'orders.*.parameters.*.parameter_id' => 'nullable|integer',
             'orders.*.parameters.*.value' => 'required_with:orders.*.parameters.*.parameter_id|string',
             'orders.*.parameters.*.unit' => 'nullable|string',
-            'orders.*.parameters.*.flag' => 'nullable|in:N,H,L,HH,LL,A',
             'orders.*.notes' => 'nullable|string',
         ]);
 
@@ -175,11 +199,23 @@ class LabResultController extends Controller
                             continue;
                         }
                         
+                        // Get the parameter to calculate flag
+                        $parameter = \App\Models\LabTestParameter::find($paramData['parameter_id']);
+                        $flag = 'N'; // Default to normal
+                        
+                        if ($parameter) {
+                            $flag = $parameter->calculateFlag(
+                                $paramData['value'],
+                                $investigationOrder->patient->age ?? null,
+                                $investigationOrder->patient->gender ?? null
+                            );
+                        }
+                        
                         $result->resultItems()->create([
                             'lab_test_parameter_id' => $paramData['parameter_id'],
                             'value' => $paramData['value'],
                             'unit' => $paramData['unit'] ?? null,
-                            'flag' => $paramData['flag'] ?? 'N',
+                            'flag' => $flag,
                             'entered_by' => auth()->id(),
                             'entered_at' => now()
                         ]);

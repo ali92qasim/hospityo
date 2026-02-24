@@ -62,14 +62,24 @@ class InvestigationOrder extends Model
         return $this->belongsTo(Investigation::class);
     }
 
+    public function labTest(): BelongsTo
+    {
+        return $this->belongsTo(Investigation::class, 'investigation_id');
+    }
+
     public function sample(): HasOne
     {
-        return $this->hasOne(LabSample::class, 'lab_order_id');
+        return $this->hasOne(LabSample::class, 'investigation_order_id');
     }
 
     public function result(): HasOne
     {
         return $this->hasOne(LabResult::class, 'investigation_order_id');
+    }
+
+    public function resultItems(): HasMany
+    {
+        return $this->hasMany(LabResultItem::class, 'lab_result_id');
     }
 
     public function radiologyResult(): HasOne

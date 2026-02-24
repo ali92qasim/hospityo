@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 class LabOrder extends Model
 {
+    protected $table = 'investigation_orders'; // Using renamed table
+    
     protected $fillable = [
-        'order_number', 'patient_id', 'visit_id', 'doctor_id', 'lab_test_id', 'quantity',
+        'order_number', 'patient_id', 'visit_id', 'doctor_id', 'lab_test_id', 'investigation_id', 'quantity',
         'priority', 'status', 'test_location', 'ordered_at', 'sample_collected_at', 'completed_at',
         'clinical_notes', 'special_instructions'
     ];
@@ -59,12 +61,12 @@ class LabOrder extends Model
 
     public function labTest(): BelongsTo
     {
-        return $this->belongsTo(Investigation::class, 'lab_test_id');
+        return $this->belongsTo(Investigation::class, 'investigation_id');
     }
 
     public function investigation(): BelongsTo
     {
-        return $this->belongsTo(Investigation::class, 'lab_test_id');
+        return $this->belongsTo(Investigation::class, 'investigation_id');
     }
 
     public function sample(): HasOne

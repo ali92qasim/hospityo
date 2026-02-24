@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             UnitSeeder::class,
             InvestigationSeeder::class,
+            LabTestParameterSeeder::class,
             AllergySeeder::class
         ]);
     }

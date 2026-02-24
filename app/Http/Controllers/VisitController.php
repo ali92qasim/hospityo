@@ -398,7 +398,7 @@ class VisitController extends Controller
 
                 // Check stock availability
                 $currentStock = $medicine->getCurrentStock();
-                if ($currentStock < $medicineData['quantity']) {
+                if ($currentStock < 1) {
                     return back()->withErrors([
                         'stock' => "Insufficient stock for {$medicine->name}. Available: {$currentStock}"
                     ]);
@@ -411,15 +411,16 @@ class VisitController extends Controller
                     ->first();
                 
                 $unitPrice = $latestTransaction ? $latestTransaction->unit_cost : 0;
-                $totalPrice = $unitPrice * $medicineData['quantity'];
+                $totalPrice = $unitPrice * 1; // Quantity is always 1 now
 
                 $prescription->items()->create([
                     'medicine_id' => $medicineData['medicine_id'],
-                    'quantity' => $medicineData['quantity'],
-                    'dosage' => $medicineData['dosage'],
+                    'prescription_instruction_id' => $medicineData['instruction_id'] ?? null,
+                    'quantity' => 1, // Default quantity
+                    'dosage' => 'As directed', // Default dosage
                     'frequency' => 'As directed', // Default value
                     'duration' => 'As prescribed', // Default value
-                    'instructions' => $medicineData['instructions'] ?? null,
+                    'instructions' => null, // Instructions now come from PrescriptionInstruction
                     'unit_price' => $unitPrice,
                     'total_price' => $totalPrice
                 ]);
@@ -441,7 +442,7 @@ class VisitController extends Controller
                 $visit->labOrders()->create([
                     'patient_id' => $visit->patient_id,
                     'doctor_id' => $visit->doctor_id,
-                    'lab_test_id' => $testData['lab_test_id'],
+                    'investigation_id' => $testData['lab_test_id'], // Map lab_test_id to investigation_id
                     'quantity' => $testData['quantity'],
                     'test_location' => 'indoor', // Default to indoor since field removed
                     'priority' => $testData['priority'],
@@ -452,11 +453,11 @@ class VisitController extends Controller
                 $orderedCount++;
             }
             
-            $message = $orderedCount === 1 ? 'Lab test ordered successfully.' : "{$orderedCount} lab tests ordered successfully.";
+            $message = $orderedCount === 1 ? 'Investigation ordered successfully.' : "{$orderedCount} investigations ordered successfully.";
             return back()->with('success', $message);
         } catch (\Exception $e) {
-            \Log::error('Failed to order lab tests: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to order lab tests. Please try again.']);
+            \Log::error('Failed to order investigations: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to order investigations. Please try again.']);
         }
     }
 
@@ -472,7 +473,8 @@ class VisitController extends Controller
             'labOrders.result.resultItems',
             'admission.bed.ward',
             'triage',
-            'prescriptions.items.medicine'
+            'prescriptions.items.medicine',
+            'prescriptions.items.prescriptionInstruction'
         ]);
 
         // Get hospital settings

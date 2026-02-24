@@ -63,22 +63,23 @@ class InvestigationController extends Controller
         return redirect()->route('investigations.index')->with('success', 'Investigation created successfully.');
     }
 
-    public function show(Investigation $investigation)
+    public function show($id)
     {
-        $investigation->load('parameters');
+        $investigation = Investigation::with('parameters')->findOrFail($id);
         $labTest = $investigation; // Backward compatibility for views
         return view('admin.lab.tests.show', compact('investigation', 'labTest'));
     }
 
-    public function edit(Investigation $investigation)
+    public function edit($id)
     {
-        $investigation->load('parameters');
+        $investigation = Investigation::with('parameters')->findOrFail($id);
         $labTest = $investigation; // Backward compatibility for views
         return view('admin.lab.tests.edit', compact('investigation', 'labTest'));
     }
 
-    public function update(UpdateLabTestRequest $request, Investigation $investigation)
+    public function update(UpdateLabTestRequest $request, $id)
     {
+        $investigation = Investigation::findOrFail($id);
         $investigation->update($request->validated());
 
         // Handle parameters
@@ -104,8 +105,9 @@ class InvestigationController extends Controller
         return redirect()->route('investigations.index')->with('success', 'Investigation updated successfully.');
     }
 
-    public function destroy(Investigation $investigation)
+    public function destroy($id)
     {
+        $investigation = Investigation::findOrFail($id);
         $investigation->delete();
         return redirect()->route('investigations.index')->with('success', 'Investigation deleted successfully.');
     }

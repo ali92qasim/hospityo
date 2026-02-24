@@ -126,6 +126,9 @@ Route::middleware('auth')->group(function () {
     Route::post('visits/{visit}/order-multiple-lab-tests', [VisitController::class, 'orderMultipleLabTests'])->name('visits.order-multiple-lab-tests')->middleware('permission:edit visits');
     Route::post('prescriptions/{prescription}/dispense', [PrescriptionController::class, 'dispense'])->name('prescriptions.dispense')->middleware('permission:edit visits');
     
+    // Prescription Instructions Routes
+    Route::resource('prescription-instructions', \App\Http\Controllers\Admin\PrescriptionInstructionController::class)->middleware('permission:view services|create services|edit services|delete services');
+    
     // Unit Routes
     Route::resource('units', UnitController::class)->middleware('permission:view services|create services|edit services|delete services');
     

@@ -22,7 +22,7 @@
         .container {
             max-width: 210mm;
             margin: 0 auto;
-            padding: 15mm;
+            padding: 12mm;
         }
 
         /* Header Section */
@@ -119,17 +119,53 @@
         /* Main Content Grid */
         .content-grid {
             display: grid;
-            grid-template-columns: 1.5fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
         }
 
         /* Prescription Section */
         .prescription-section {
             border: 1px solid #d1d5db;
             border-radius: 6px;
-            padding: 15px;
-            min-height: 300px;
+            padding: 12px;
+        }
+
+        .gpe-section {
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px dashed #d1d5db;
+        }
+
+        .gpe-title {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+
+        .gpe-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .gpe-item {
+            font-size: 9pt;
+            padding: 4px;
+            background: #f9fafb;
+            border-radius: 3px;
+        }
+
+        .gpe-label {
+            font-weight: 600;
+            color: #374151;
+            display: inline-block;
+            min-width: 70px;
+        }
+
+        .gpe-value {
+            color: #000;
         }
 
         .section-title {
@@ -171,29 +207,47 @@
         /* Right Column Sections */
         .diagnosis-section,
         .issues-section,
-        .tests-section {
+        .tests-section,
+        .history-section {
             border: 1px solid #d1d5db;
             border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 15px;
+            padding: 10px;
+            margin-bottom: 12px;
         }
 
         .diagnosis-section {
-            min-height: 120px;
+            min-height: 80px;
         }
 
         .issues-section {
-            min-height: 100px;
+            min-height: 70px;
         }
 
         .tests-section {
-            min-height: 100px;
+            min-height: 70px;
+        }
+
+        .history-section {
+            min-height: 70px;
+        }
+
+        .vco-label {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 8pt;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
 
         .list-item {
             padding: 5px 0;
             border-bottom: 1px dashed #e5e7eb;
             font-size: 10pt;
+            line-height: 1.5;
+            word-wrap: break-word;
         }
 
         .list-item:last-child {
@@ -217,9 +271,9 @@
         .instructions-section {
             border: 1px solid #d1d5db;
             border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 20px;
-            min-height: 80px;
+            padding: 12px;
+            margin-bottom: 15px;
+            min-height: 60px;
             background: #fffbeb;
         }
 
@@ -231,24 +285,28 @@
 
         /* Footer Section */
         .footer-section {
-            padding-top: 15px;
+            padding-top: 12px;
             border-top: 2px solid #000;
         }
 
         .next-visit {
             font-size: 11pt;
+            text-align: center;
         }
 
         .next-visit-label {
             font-weight: 600;
             color: #374151;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12pt;
         }
 
         .next-visit-date {
-            font-size: 12pt;
+            font-size: 13pt;
             font-weight: bold;
             color: #1e40af;
-            margin-top: 5px;
+            display: block;
         }
         }
 
@@ -379,7 +437,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">Patient No:</span>
-                    <span class="info-value">{{ $visit->patient->patient_id }}</span>
+                    <span class="info-value">{{ $visit->patient->patient_no }}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Visit No:</span>
@@ -394,7 +452,7 @@
 
         <!-- Main Content Grid -->
         <div class="content-grid">
-            <!-- Left Column: Prescription -->
+            <!-- Left Column: Prescription & GPE -->
             <div class="prescription-section">
                 <div class="rx-symbol">℞</div>
                 <div class="section-title">Prescription</div>
@@ -404,18 +462,96 @@
                         @foreach($prescription->items as $index => $item)
                         <div class="medicine-item">
                             <div class="medicine-name">{{ $index + 1 }}. {{ $item->medicine->name }}</div>
-                            <div class="medicine-details">
-                                <strong>Dosage:</strong> {{ $item->dosage }} | 
-                                <strong>Qty:</strong> {{ $item->quantity }}
-                                @if($item->instructions)
-                                <br><strong>Instructions:</strong> {{ $item->instructions }}
-                                @endif
+                            @if($item->prescriptionInstruction)
+                            <div class="medicine-details" style="color: #1e40af; margin-top: 4px;">
+                                {{ $item->prescriptionInstruction->instruction }}
                             </div>
+                            @endif
                         </div>
                         @endforeach
                     @endforeach
                 @else
                     <div class="empty-state">No prescription added</div>
+                @endif
+
+                <!-- GPE Section -->
+                @if($visit->consultation && (
+                    $visit->consultation->gpe_chest || 
+                    $visit->consultation->gpe_abdomen || 
+                    $visit->consultation->gpe_cvs || 
+                    $visit->consultation->gpe_cns || 
+                    $visit->consultation->gpe_pupils || 
+                    $visit->consultation->gpe_conjunctiva || 
+                    $visit->consultation->gpe_nails || 
+                    $visit->consultation->gpe_throat || 
+                    $visit->consultation->gpe_sclera || 
+                    $visit->consultation->gpe_gcs
+                ))
+                <div class="gpe-section">
+                    <div class="gpe-title">General Physical Examination (GPE)</div>
+                    <div class="gpe-grid">
+                        @if($visit->consultation->gpe_chest)
+                        <div class="gpe-item">
+                            <span class="gpe-label">Chest:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_chest }}</span>
+                        </div>
+                        @endif
+                        @if($visit->consultation->gpe_abdomen)
+                        <div class="gpe-item">
+                            <span class="gpe-label">Abdomen:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_abdomen }}</span>
+                        </div>
+                        @endif
+                        @if($visit->consultation->gpe_cvs)
+                        <div class="gpe-item">
+                            <span class="gpe-label">CVS:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_cvs }}</span>
+                        </div>
+                        @endif
+                        @if($visit->consultation->gpe_cns)
+                        <div class="gpe-item">
+                            <span class="gpe-label">CNS:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_cns }}</span>
+                        </div>
+                        @endif
+                        @if($visit->consultation->gpe_pupils)
+                        <div class="gpe-item">
+                            <span class="gpe-label">Pupils:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_pupils }}</span>
+                        </div>
+                        @endif
+                        @if($visit->consultation->gpe_conjunctiva)
+                        <div class="gpe-item">
+                            <span class="gpe-label">Conjunctiva:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_conjunctiva }}</span>
+                        </div>
+                        @endif
+                        @if($visit->consultation->gpe_nails)
+                        <div class="gpe-item">
+                            <span class="gpe-label">Nails:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_nails }}</span>
+                        </div>
+                        @endif
+                        @if($visit->consultation->gpe_throat)
+                        <div class="gpe-item">
+                            <span class="gpe-label">Throat:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_throat }}</span>
+                        </div>
+                        @endif
+                        @if($visit->consultation->gpe_sclera)
+                        <div class="gpe-item">
+                            <span class="gpe-label">Sclera:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_sclera }}</span>
+                        </div>
+                        @endif
+                        @if($visit->consultation->gpe_gcs)
+                        <div class="gpe-item">
+                            <span class="gpe-label">GCS:</span>
+                            <span class="gpe-value">{{ $visit->consultation->gpe_gcs }}</span>
+                        </div>
+                        @endif
+                    </div>
+                </div>
                 @endif
             </div>
 
@@ -424,28 +560,36 @@
                 <!-- Provisional Diagnosis Section -->
                 <div class="diagnosis-section">
                     <div class="section-title">Provisional Diagnosis</div>
-                    @if($visit->consultation && ($visit->consultation->provisional_diagnosis_conditions || $visit->consultation->provisional_diagnosis))
-                        @if($visit->consultation->provisional_diagnosis_conditions && count($visit->consultation->provisional_diagnosis_conditions) > 0)
-                            <div class="list-item">
-                                <strong>Conditions:</strong>
-                                @php
-                                    $conditionLabels = [
-                                        'dm' => 'DM (Diabetes Mellitus)',
-                                        'htn' => 'HTN (Hypertension)',
-                                        'ihd' => 'IHD (Ischemic Heart Disease)',
-                                        'asthma' => 'Asthma'
-                                    ];
-                                    $selectedLabels = array_map(fn($c) => $conditionLabels[$c] ?? $c, $visit->consultation->provisional_diagnosis_conditions);
-                                @endphp
-                                {{ implode(', ', $selectedLabels) }}
-                            </div>
+                    <div class="vco-label">V.C.O</div>
+                    @php
+                        $hasDiagnosis = false;
+                        $diagnoses = [];
+                        if($visit->consultation) {
+                            if($visit->consultation->diagnosis_dm) {
+                                $diagnoses[] = 'DM: ' . $visit->consultation->diagnosis_dm;
+                            }
+                            if($visit->consultation->diagnosis_htn) {
+                                $diagnoses[] = 'HTN: ' . $visit->consultation->diagnosis_htn;
+                            }
+                            if($visit->consultation->diagnosis_ihd) {
+                                $diagnoses[] = 'IHD: ' . $visit->consultation->diagnosis_ihd;
+                            }
+                            if($visit->consultation->diagnosis_asthma) {
+                                $diagnoses[] = 'Asthma: ' . $visit->consultation->diagnosis_asthma;
+                            }
+                        }
+                    @endphp
+                    @if($visit->consultation)
+                        @if(count($diagnoses) > 0)
+                            <div class="list-item">{{ implode(', ', $diagnoses) }}</div>
+                            @php $hasDiagnosis = true; @endphp
                         @endif
                         @if($visit->consultation->provisional_diagnosis)
-                            <div class="list-item">
-                                {{ $visit->consultation->provisional_diagnosis }}
-                            </div>
+                            <div class="list-item">{{ $visit->consultation->provisional_diagnosis }}</div>
+                            @php $hasDiagnosis = true; @endphp
                         @endif
-                    @else
+                    @endif
+                    @if(!$hasDiagnosis)
                         <div class="empty-state">No diagnosis recorded</div>
                     @endif
                 </div>
@@ -473,43 +617,73 @@
                 <!-- Presenting Complaints Section -->
                 <div class="issues-section">
                     <div class="section-title">Presenting Complaints</div>
+                    @php
+                        $hasComplaints = false;
+                    @endphp
+                    @if($visit->consultation && $visit->consultation->presenting_complaints)
+                        <div class="list-item">{{ $visit->consultation->presenting_complaints }}</div>
+                        @php $hasComplaints = true; @endphp
+                    @endif
                     @if($visit->consultation && $visit->consultation->chief_complaint)
-                        <div class="list-item">
-                            • {{ $visit->consultation->chief_complaint }}
-                        </div>
+                        <div class="list-item">{{ $visit->consultation->chief_complaint }}</div>
+                        @php $hasComplaints = true; @endphp
                     @endif
                     @if($visit->triage && $visit->triage->chief_complaint)
                         <div class="list-item">
-                            • {{ $visit->triage->chief_complaint }}
+                            {{ $visit->triage->chief_complaint }}
                             @if($visit->triage->priority_level)
                                 <span class="badge badge-warning">{{ strtoupper(str_replace('_', ' ', $visit->triage->priority_level)) }}</span>
                             @endif
                         </div>
+                        @php $hasComplaints = true; @endphp
                     @endif
-                    @if((!$visit->consultation || !$visit->consultation->chief_complaint) && (!$visit->triage || !$visit->triage->chief_complaint))
-                        <div class="empty-state">No active issues recorded</div>
+                    @if(!$hasComplaints)
+                        <div class="empty-state">No complaints recorded</div>
                     @endif
                 </div>
 
-                <!-- Tests Section -->
-                <div class="tests-section">
-                    <div class="section-title">Tests</div>
-                    @if($visit->labOrders && $visit->labOrders->count() > 0)
-                        @foreach($visit->labOrders as $labOrder)
-                        <div class="list-item">
-                            • {{ $labOrder->investigation->name }}
-                            @if($labOrder->priority === 'stat')
-                                <span class="badge badge-warning">STAT</span>
-                            @elseif($labOrder->priority === 'urgent')
-                                <span class="badge badge-warning">URGENT</span>
-                            @endif
-                            @if(in_array($labOrder->status, ['verified', 'reported']))
-                                <span class="badge badge-success">Completed</span>
-                            @endif
-                        </div>
-                        @endforeach
+                <!-- Patient History Section -->
+                <div class="history-section">
+                    <div class="section-title">Patient History</div>
+                    @if($visit->consultation && $visit->consultation->history)
+                        <div class="list-item">{{ $visit->consultation->history }}</div>
                     @else
-                        <div class="empty-state">No tests ordered</div>
+                        <div class="empty-state">No history recorded</div>
+                    @endif
+                </div>
+
+                <!-- Investigations Section -->
+                <div class="tests-section">
+                    <div class="section-title">Investigations</div>
+                    @if($visit->labOrders && $visit->labOrders->count() > 0)
+                        <div style="font-size: 10pt; line-height: 1.6;">
+                            @php
+                                $investigationNames = $visit->labOrders->map(function($order) {
+                                    $name = $order->investigation->name;
+                                    // Extract abbreviation from name (text in parentheses or first word)
+                                    if (preg_match('/\(([^)]+)\)/', $name, $matches)) {
+                                        return $matches[1]; // Return text in parentheses like (CBC)
+                                    }
+                                    // If no parentheses, extract first meaningful part
+                                    $parts = explode(' ', $name);
+                                    // For multi-word tests, take first 2-3 words or abbreviation
+                                    if (count($parts) > 1) {
+                                        // Check if it's an abbreviation pattern (all caps)
+                                        foreach ($parts as $part) {
+                                            if (strlen($part) <= 5 && strtoupper($part) === $part && ctype_alpha($part)) {
+                                                return $part;
+                                            }
+                                        }
+                                        // Otherwise take first word
+                                        return $parts[0];
+                                    }
+                                    return $parts[0];
+                                })->unique()->join(', ');
+                            @endphp
+                            {{ $investigationNames }}
+                        </div>
+                    @else
+                        <div class="empty-state">No investigations ordered</div>
                     @endif
                 </div>
             </div>
@@ -517,7 +691,7 @@
 
         <!-- Doctor Instructions -->
         <div class="instructions-section">
-            <div class="section-title">Doctor's Instructions</div>
+            <div class="section-title">ہدایات</div>
             <div class="instructions-text">
                 @if($visit->consultation)
                     @if($visit->consultation->treatment_plan)
@@ -542,10 +716,10 @@
         <div class="footer-section">
             <!-- Next Visit Date -->
             <div class="next-visit">
-                <div class="next-visit-label">Next Visit Date:</div>
+                <div class="next-visit-label">آئندہ معائنہ کی تاریخ</div>
                 <div class="next-visit-date">
                     @if($visit->consultation && $visit->consultation->next_visit_date)
-                        {{ $visit->consultation->next_visit_date->format('d F Y') }}
+                        {{ \Carbon\Carbon::parse($visit->consultation->next_visit_date)->format('d F Y') }}
                     @else
                         As needed
                     @endif

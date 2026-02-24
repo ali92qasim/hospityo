@@ -6,7 +6,7 @@
 
 @section('content')
 <div class="bg-white rounded-lg shadow-sm p-6">
-    <form action="{{ route('lab-tests.store') }}" method="POST">
+    <form action="{{ route('investigations.store') }}" method="POST">
         @csrf
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -86,7 +86,7 @@
         </div>
         
         <div class="flex justify-end space-x-4 mt-6">
-            <a href="{{ route('lab-tests.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
+            <a href="{{ route('investigations.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
             <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                 <i class="fas fa-plus mr-2"></i>Create Test
             </button>

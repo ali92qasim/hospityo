@@ -155,7 +155,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reported</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-32">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -163,7 +163,7 @@
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $result->labOrder?->order_number ?? 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $result->labOrder?->patient?->name ?? 'Unknown Patient' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ $result->labOrder?->investigation?->name ?? 'Unknown Test' }}</td>
+                        <td class="px-6 py-4">{{ $result->labOrder?->investigation?->name ?? 'Unknown Test' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php
                                 $typeConfig = [
@@ -201,23 +201,25 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $result->reported_at ? $result->reported_at->format('M d, Y H:i') : ($result->tested_at ? $result->tested_at->format('M d, Y H:i') : 'N/A') }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <a href="{{ route('lab-results.show', $result) }}" class="text-blue-600 hover:text-blue-800 mr-3" title="View">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            @if($result->status === 'preliminary')
-                                <button onclick="verifyResult({{ $result->id }})" class="text-green-600 hover:text-green-800 mr-3" title="Verify">
-                                    <i class="fas fa-check-circle"></i>
-                                </button>
-                            @endif
-                            <a href="{{ route('lab-results.report', $result) }}" class="text-purple-600 hover:text-purple-800" target="_blank" title="Print Report">
-                                <i class="fas fa-print"></i>
-                            </a>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-3">
+                                <a href="{{ route('lab-results.show', $result) }}" class="text-blue-600 hover:text-blue-800" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                @if($result->status === 'preliminary')
+                                    <button onclick="verifyResult({{ $result->id }})" class="text-green-600 hover:text-green-800" title="Verify">
+                                        <i class="fas fa-check-circle"></i>
+                                    </button>
+                                @endif
+                                <a href="{{ route('lab-results.report', $result) }}" class="text-purple-600 hover:text-purple-800" target="_blank" title="Print Report">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">No completed results found</td>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">No completed results found</td>
                     </tr>
                 @endforelse
             </tbody>

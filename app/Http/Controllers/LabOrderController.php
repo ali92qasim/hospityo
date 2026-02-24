@@ -59,7 +59,7 @@ class LabOrderController extends Controller
         $validated = $request->validated();
 
         LabSample::create([
-            'lab_order_id' => $labOrder->id,
+            'investigation_order_id' => $labOrder->id,
             'sample_type' => $labOrder->investigation->sample_type,
             'status' => 'collected',
             'collected_at' => now(),
