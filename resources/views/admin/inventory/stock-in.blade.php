@@ -22,7 +22,7 @@
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Medicine *</label>
-                    <select name="medicine_id" id="medicine-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required onchange="updateUnits()">
+                    <select name="medicine_id" id="medicine-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent select2-medicine" required onchange="updateUnits()">
                         <option value="">Select Medicine</option>
                         @foreach($medicines as $medicine)
                             <option value="{{ $medicine->id }}" 
@@ -39,7 +39,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Unit *</label>
-                    <select name="unit_id" id="unit-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                    <select name="unit_id" id="unit-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent select2-unit" required>
                         <option value="">Select Unit</option>
                         @foreach($units as $unit)
                             <option value="{{ $unit->id }}" data-base-unit="{{ $unit->base_unit_id ?? $unit->id }}" data-factor="{{ $unit->conversion_factor }}">
@@ -72,7 +72,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Supplier *</label>
-                    <select name="supplier" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                    <select name="supplier" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent select2-supplier" required>
                         <option value="">Select Supplier</option>
                         @foreach($suppliers as $supplier)
                             <option value="{{ $supplier->name }}">{{ $supplier->name }}</option>
@@ -94,7 +94,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
-                        <input type="date" name="expiry_date" min="{{ date('Y-m-d', strtotime('+1 day')) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <input type="text" id="expiry-date" name="expiry_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" placeholder="Select expiry date">
                         @error('expiry_date')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror
@@ -130,7 +130,78 @@
     </div>
 </div>
 
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .select2-container {
+        width: 100% !important;
+    }
+    .select2-container--default .select2-selection--single {
+        height: 42px;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 42px;
+        padding-left: 12px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+    .flatpickr-calendar {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    .flatpickr-day.selected {
+        background: #0066CC;
+        border-color: #0066CC;
+    }
+    .flatpickr-day:hover {
+        background: #e5f3ff;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('.select2-medicine').select2({
+        placeholder: 'Select Medicine',
+        allowClear: true,
+        width: '100%'
+    });
+    
+    $('.select2-unit').select2({
+        placeholder: 'Select Unit',
+        allowClear: true,
+        width: '100%'
+    });
+    
+    $('.select2-supplier').select2({
+        placeholder: 'Select Supplier',
+        allowClear: true,
+        width: '100%'
+    });
+    
+    // Initialize Flatpickr
+    flatpickr("#expiry-date", {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        altInput: true,
+        altFormat: "F j, Y",
+        allowInput: true
+    });
+});
+
 function updateUnits() {
     const medicineSelect = document.getElementById('medicine-select');
     const unitSelect = document.getElementById('unit-select');
@@ -146,8 +217,9 @@ function updateUnits() {
     
     // If medicine has a purchase unit, pre-select it
     if (purchaseUnitId) {
-        unitSelect.value = purchaseUnitId;
+        $('.select2-unit').val(purchaseUnitId).trigger('change');
     }
 }
 </script>
+@endpush
 @endsection

@@ -40,10 +40,10 @@
                         <div class="text-xs text-gray-500">{{ $medicine->generic_name }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $medicine->getCurrentStockInUnit($medicine->dispensing_unit_id) }} {{ $medicine->dispensingUnit->abbreviation }}
+                        {{ $medicine->getCurrentStockInUnit($medicine->dispensing_unit_id) }} {{ $medicine->dispensingUnit?->abbreviation ?? $medicine->baseUnit?->abbreviation ?? '' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $medicine->reorder_level }} {{ $medicine->baseUnit->abbreviation }}
+                        {{ $medicine->reorder_level }} {{ $medicine->baseUnit?->abbreviation ?? '' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @php $currentStock = $medicine->getCurrentStock(); @endphp

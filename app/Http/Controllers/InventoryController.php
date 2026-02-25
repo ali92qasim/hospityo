@@ -31,7 +31,10 @@ class InventoryController extends Controller
 
     public function stockIn()
     {
-        $medicines = Medicine::where('status', 'active')->with(['baseUnit', 'purchaseUnit'])->get();
+        $medicines = Medicine::where('status', 'active')
+            ->where('manage_stock', true)
+            ->with(['baseUnit', 'purchaseUnit'])
+            ->get();
         $suppliers = \App\Models\Supplier::where('status', 'active')->get();
         $units = \App\Models\Unit::active()->get();
         return view('admin.inventory.stock-in', compact('medicines', 'suppliers', 'units'));
@@ -42,6 +45,12 @@ class InventoryController extends Controller
         $validated = $request->validated();
 
         $medicine = Medicine::findOrFail($validated['medicine_id']);
+        
+        // Check if stock management is enabled for this medicine
+        if (!$medicine->manage_stock) {
+            return back()->withErrors(['medicine_id' => 'Stock management is not enabled for this medicine.']);
+        }
+        
         $unit = Unit::findOrFail($validated['unit_id']);
         
         // Convert to base unit for storage
@@ -69,6 +78,7 @@ class InventoryController extends Controller
     public function stockOut()
     {
         $medicines = Medicine::where('status', 'active')
+            ->where('manage_stock', true)
             ->get()
             ->filter(function($medicine) {
                 return $medicine->getCurrentStock() > 0;
@@ -82,6 +92,12 @@ class InventoryController extends Controller
         $validated = $request->validated();
 
         $medicine = Medicine::findOrFail($validated['medicine_id']);
+        
+        // Check if stock management is enabled for this medicine
+        if (!$medicine->manage_stock) {
+            return back()->withErrors(['medicine_id' => 'Stock management is not enabled for this medicine.']);
+        }
+        
         $currentStock = $medicine->getCurrentStock();
 
         if ($currentStock < $validated['quantity']) {
@@ -107,6 +123,7 @@ class InventoryController extends Controller
     public function lowStock()
     {
         $lowStockMedicines = Medicine::where('status', 'active')
+            ->where('manage_stock', true)
             ->with(['baseUnit', 'dispensingUnit'])
             ->get()
             ->filter(function($medicine) {

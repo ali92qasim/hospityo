@@ -13,10 +13,12 @@
 <!-- Filters -->
 <div class="bg-white rounded-lg shadow p-4 mb-6">
     <form method="GET" class="flex flex-wrap gap-4">
-        <select name="category" class="px-3 py-2 border border-gray-300 rounded-lg">
+        <select name="category_id" class="px-3 py-2 border border-gray-300 rounded-lg">
             <option value="">All Categories</option>
             @foreach($categories as $category)
-                <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>{{ $category }}</option>
+                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                    {{ $category->name }}
+                </option>
             @endforeach
         </select>
         <select name="status" class="px-3 py-2 border border-gray-300 rounded-lg">
@@ -52,16 +54,24 @@
                         <div class="font-medium text-gray-900">{{ $medicine->name }}</div>
                         <div class="text-sm text-gray-500">{{ $medicine->strength }} - {{ $medicine->dosage_form }}</div>
                         @if($medicine->brand)
-                            <div class="text-xs text-gray-400">{{ $medicine->brand }}</div>
+                            <div class="text-xs text-gray-400">{{ $medicine->brand->name }}</div>
                         @endif
                     </td>
-                    <td class="px-6 py-4 text-sm text-gray-500">{{ $medicine->category }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">
+                        {{ $medicine->category ? $medicine->category->name : '-' }}
+                    </td>
                     <td class="px-6 py-4">
-                        <div class="text-sm font-medium {{ $medicine->isLowStock() ? 'text-red-600' : 'text-gray-900' }}">
-                            {{ $medicine->getCurrentStock() }} {{ $medicine->baseUnit->name ?? '' }}
-                        </div>
-                        @if($medicine->isLowStock())
-                            <div class="text-xs text-red-500">Low Stock (Reorder: {{ $medicine->reorder_level }})</div>
+                        @if($medicine->manage_stock)
+                            <div class="text-sm font-medium {{ $medicine->isLowStock() ? 'text-red-600' : 'text-gray-900' }}">
+                                {{ $medicine->getCurrentStock() }} {{ $medicine->baseUnit->name ?? '' }}
+                            </div>
+                            @if($medicine->isLowStock())
+                                <div class="text-xs text-red-500">Low Stock (Reorder: {{ $medicine->reorder_level }})</div>
+                            @endif
+                        @else
+                            <div class="text-sm text-gray-500">
+                                <i class="fas fa-ban mr-1"></i>Not Managed
+                            </div>
                         @endif
                     </td>
                     <td class="px-6 py-4">

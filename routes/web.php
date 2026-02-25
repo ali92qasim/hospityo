@@ -15,6 +15,8 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\WardController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\MedicineController;
+use App\Http\Controllers\MedicineCategoryController;
+use App\Http\Controllers\MedicineBrandController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\InvestigationController;
 use App\Http\Controllers\LabOrderController;
@@ -25,6 +27,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\ReportController;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -121,6 +124,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('beds', BedController::class)->middleware('permission:view departments|create departments|edit departments|delete departments');
     
     // Pharmacy Routes
+    Route::resource('medicine-categories', MedicineCategoryController::class)->middleware('permission:view services|create services|edit services|delete services');
+    Route::resource('medicine-brands', MedicineBrandController::class)->middleware('permission:view services|create services|edit services|delete services');
     Route::resource('medicines', MedicineController::class)->middleware('permission:view services|create services|edit services|delete services');
     Route::post('visits/{visit}/prescription', [VisitController::class, 'createPrescription'])->name('visits.prescription')->middleware('permission:edit visits');
     Route::post('visits/{visit}/order-multiple-lab-tests', [VisitController::class, 'orderMultipleLabTests'])->name('visits.order-multiple-lab-tests')->middleware('permission:edit visits');
@@ -184,6 +189,23 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UserController::class)->middleware('role:Super Admin|Hospital Administrator');
     Route::resource('roles', RoleController::class)->middleware('permission:view roles|create roles|edit roles|delete roles');
     Route::resource('permissions', PermissionController::class)->middleware('permission:view permissions|create permissions|edit permissions|delete permissions');
+    
+    // Reports Routes
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('daily-cash-register', [ReportController::class, 'dailyCashRegister'])->name('daily-cash-register');
+        Route::get('patient-visits', [ReportController::class, 'patientVisits'])->name('patient-visits');
+        Route::get('revenue', [ReportController::class, 'revenue'])->name('revenue');
+        Route::get('outstanding-bills', [ReportController::class, 'outstandingBills'])->name('outstanding-bills');
+        Route::get('lab-tests', [ReportController::class, 'labTests'])->name('lab-tests');
+        Route::get('medicine-sales', [ReportController::class, 'medicineSales'])->name('medicine-sales');
+        Route::get('inventory-status', [ReportController::class, 'inventoryStatus'])->name('inventory-status');
+        Route::get('expiry-report', [ReportController::class, 'expiryReport'])->name('expiry-report');
+        Route::get('doctor-performance', [ReportController::class, 'doctorPerformance'])->name('doctor-performance');
+        Route::get('appointment-statistics', [ReportController::class, 'appointmentStatistics'])->name('appointment-statistics');
+        Route::get('ipd-report', [ReportController::class, 'ipdReport'])->name('ipd-report');
+        Route::get('department-performance', [ReportController::class, 'departmentPerformance'])->name('department-performance');
+        Route::get('patient-demographics', [ReportController::class, 'patientDemographics'])->name('patient-demographics');
+    });
     
     // Patient Search API
     Route::get('api/patients/search', function (Request $request) {

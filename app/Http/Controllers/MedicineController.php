@@ -11,10 +11,10 @@ class MedicineController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Medicine::query();
+        $query = Medicine::with(['category', 'brand']);
         
-        if ($request->category) {
-            $query->where('category', $request->category);
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
         }
         
         if ($request->status) {
@@ -22,14 +22,12 @@ class MedicineController extends Controller
         }
         
         if ($request->low_stock) {
-            // Filter medicines with low stock based on inventory transactions
-            $query->whereHas('inventoryTransactions', function($q) {
-                // This will be handled in the view by checking getCurrentStock()
-            });
+            // Only show medicines with stock management enabled
+            $query->where('manage_stock', true);
         }
 
         $medicines = $query->latest()->paginate(10);
-        $categories = Medicine::distinct()->pluck('category');
+        $categories = \App\Models\MedicineCategory::active()->orderBy('name')->get();
         
         return view('admin.medicines.index', compact('medicines', 'categories'));
     }

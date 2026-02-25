@@ -14,8 +14,8 @@ class Medicine extends Model
     protected $fillable = [
         'name',
         'generic_name',
-        'brand',
-        'category',
+        'brand_id',
+        'category_id',
         'dosage_form',
         'strength',
         'base_unit_id',
@@ -23,11 +23,12 @@ class Medicine extends Model
         'dispensing_unit_id',
         'reorder_level',
         'manufacturer',
-        'status'
+        'status',
+        'manage_stock'
     ];
 
     protected $casts = [
-        // Removed unit_price and expiry_date as they're managed by inventory
+        'manage_stock' => 'boolean',
     ];
 
     public function prescriptionItems(): HasMany
@@ -38,6 +39,16 @@ class Medicine extends Model
     public function inventoryTransactions(): HasMany
     {
         return $this->hasMany(InventoryTransaction::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(MedicineCategory::class, 'category_id');
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(MedicineBrand::class, 'brand_id');
     }
 
     public function baseUnit(): BelongsTo
@@ -57,6 +68,11 @@ class Medicine extends Model
 
     public function getCurrentStock(): int
     {
+        // If manage_stock is disabled, return 0
+        if (!$this->manage_stock) {
+            return 0;
+        }
+        
         return $this->inventoryTransactions()
             ->selectRaw('SUM(CASE WHEN type = "stock_in" THEN quantity ELSE -quantity END) as current_stock')
             ->value('current_stock') ?? 0;
@@ -64,6 +80,11 @@ class Medicine extends Model
 
     public function getCurrentStockInUnit($unitId): int
     {
+        // If manage_stock is disabled, return 0
+        if (!$this->manage_stock) {
+            return 0;
+        }
+        
         $baseStock = $this->getCurrentStock();
         $unit = Unit::find($unitId);
         
@@ -76,6 +97,11 @@ class Medicine extends Model
 
     public function isLowStock(): bool
     {
+        // If manage_stock is disabled, never show as low stock
+        if (!$this->manage_stock) {
+            return false;
+        }
+        
         return $this->getCurrentStock() <= $this->reorder_level;
     }
 }
