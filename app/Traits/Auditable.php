@@ -15,6 +15,7 @@ trait Auditable
         'password',
         'remember_token',
         'updated_at',
+        'created_at',
     ];
 
     public static function bootAuditable()
@@ -80,7 +81,6 @@ trait Auditable
 
         AuditLog::create([
             'user_id'        => Auth::id(),
-            'hospital_id'    => Auth::user()->hospital_id ?? null, // Future SaaS safety
             'event'          => $event,
             'auditable_type' => get_class($this),
             'auditable_id'   => $this->getKey(),

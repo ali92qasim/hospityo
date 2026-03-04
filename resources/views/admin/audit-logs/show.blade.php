@@ -53,27 +53,42 @@
                 <div class="border-t border-gray-200 pt-6">
                     <h4 class="text-md font-semibold text-gray-800 mb-4">Changes</h4>
                     <div class="space-y-4">
+                        @php
+                            $hasChanges = false;
+                        @endphp
                         @foreach($auditLog->new_values as $key => $newValue)
-                            @if(isset($auditLog->old_values[$key]) && $auditLog->old_values[$key] != $newValue)
-                                <div class="bg-gray-50 rounded-lg p-4">
-                                    <div class="font-medium text-gray-700 mb-2">{{ ucfirst(str_replace('_', ' ', $key)) }}</div>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <div class="text-xs text-gray-500 mb-1">Old Value</div>
-                                            <div class="text-sm text-red-600 bg-red-50 px-3 py-2 rounded">
-                                                {{ is_array($auditLog->old_values[$key]) ? json_encode($auditLog->old_values[$key]) : $auditLog->old_values[$key] }}
+                            @if(isset($auditLog->old_values[$key]))
+                                @php
+                                    $oldValue = $auditLog->old_values[$key];
+                                    $isDifferent = $oldValue != $newValue;
+                                    if ($isDifferent) $hasChanges = true;
+                                @endphp
+                                @if($isDifferent)
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <div class="font-medium text-gray-700 mb-2">{{ ucfirst(str_replace('_', ' ', $key)) }}</div>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div class="text-xs text-gray-500 mb-1">Old Value</div>
+                                                <div class="text-sm text-red-600 bg-red-50 px-3 py-2 rounded break-words">
+                                                    {{ is_array($oldValue) ? json_encode($oldValue) : ($oldValue ?: 'Empty') }}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <div class="text-xs text-gray-500 mb-1">New Value</div>
-                                            <div class="text-sm text-green-600 bg-green-50 px-3 py-2 rounded">
-                                                {{ is_array($newValue) ? json_encode($newValue) : $newValue }}
+                                            <div>
+                                                <div class="text-xs text-gray-500 mb-1">New Value</div>
+                                                <div class="text-sm text-green-600 bg-green-50 px-3 py-2 rounded break-words">
+                                                    {{ is_array($newValue) ? json_encode($newValue) : ($newValue ?: 'Empty') }}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                @endif
                             @endif
                         @endforeach
+                        @if(!$hasChanges)
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <p class="text-yellow-800 text-sm">No field changes detected in this update.</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif
