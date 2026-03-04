@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Patient extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'name',
@@ -28,7 +29,7 @@ class Patient extends Model
     protected static function boot(): void
     {
         parent::boot();
-        
+
         static::creating(function ($patient) {
             $patient->patient_no = 'P' . str_pad(
                 (Patient::max('id') ?? 0) + 1,

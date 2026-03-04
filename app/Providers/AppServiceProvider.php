@@ -28,10 +28,16 @@ class AppServiceProvider extends ServiceProvider
             return \App\Models\Investigation::findOrFail($value);
         });
         
-        // Set application timezone from settings
-        $timezone = cache('settings.timezone', config('app.timezone', 'Asia/Karachi'));
-        config(['app.timezone' => $timezone]);
-        date_default_timezone_set($timezone);
+        // Set application timezone from settings (skip if not installed)
+        try {
+            if (\Schema::hasTable('cache')) {
+                $timezone = cache('settings.timezone', config('app.timezone', 'Asia/Karachi'));
+                config(['app.timezone' => $timezone]);
+                date_default_timezone_set($timezone);
+            }
+        } catch (\Exception $e) {
+            // Skip if database not ready
+        }
         
         // Register Blade directives for settings
         \Blade::directive('currency', function ($expression) {

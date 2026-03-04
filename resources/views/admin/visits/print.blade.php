@@ -462,6 +462,11 @@
                         @foreach($prescription->items as $index => $item)
                         <div class="medicine-item">
                             <div class="medicine-name">{{ $index + 1 }}. {{ $item->medicine->name }}</div>
+                            @if($item->medicine->sku)
+                            <div class="medicine-details" style="color: #6b7280; font-size: 9pt; margin-top: 2px;">
+                                SKU: {{ $item->medicine->sku }}
+                            </div>
+                            @endif
                             @if($item->prescriptionInstruction)
                             <div class="medicine-details" style="color: #1e40af; margin-top: 4px;">
                                 {{ $item->prescriptionInstruction->instruction }}

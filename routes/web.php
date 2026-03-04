@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\InstallController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\DoctorController;
@@ -28,9 +30,26 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\LanguageController;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Installation Routes
+Route::prefix('install')->name('install.')->group(function () {
+    Route::get('/', [InstallController::class, 'index'])->name('index');
+    Route::get('/requirements', [InstallController::class, 'requirements'])->name('requirements');
+    Route::get('/database', [InstallController::class, 'database'])->name('database');
+    Route::post('/database/setup', [InstallController::class, 'setupDatabase'])->name('database.setup');
+    Route::get('/admin', [InstallController::class, 'admin'])->name('admin');
+    Route::post('/admin/setup', [InstallController::class, 'setupAdmin'])->name('admin.setup');
+    Route::get('/seed', [InstallController::class, 'seed'])->name('seed');
+    Route::post('/seed/run', [InstallController::class, 'runSeed'])->name('seed.run');
+    Route::get('/complete', [InstallController::class, 'complete'])->name('complete');
+});
+
+// Language Switcher Route
+Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () {
@@ -205,6 +224,18 @@ Route::middleware('auth')->group(function () {
         Route::get('ipd-report', [ReportController::class, 'ipdReport'])->name('ipd-report');
         Route::get('department-performance', [ReportController::class, 'departmentPerformance'])->name('department-performance');
         Route::get('patient-demographics', [ReportController::class, 'patientDemographics'])->name('patient-demographics');
+    });
+    
+    // Audit Logs
+    Route::resource('audit-logs', AuditLogController::class)->only(['index', 'show'])->middleware('role:Super Admin|Hospital Administrator');
+    
+    // Backup & Restore Routes
+    Route::prefix('backup')->name('backup.')->middleware('role:Super Admin|Hospital Administrator')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BackupController::class, 'index'])->name('index');
+        Route::post('/create', [\App\Http\Controllers\BackupController::class, 'create'])->name('create');
+        Route::get('/download/{filename}', [\App\Http\Controllers\BackupController::class, 'download'])->name('download');
+        Route::delete('/delete/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('destroy');
+        Route::post('/restore/{filename}', [\App\Http\Controllers\BackupController::class, 'restore'])->name('restore');
     });
     
     // Patient Search API

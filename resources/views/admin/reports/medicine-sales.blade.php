@@ -9,14 +9,14 @@
             <h1 class="text-2xl font-bold text-gray-800">Medicine Sales Report</h1>
             <p class="text-gray-600 mt-1">Prescription and medicine dispensing statistics</p>
         </div>
-        <button onclick="window.print()" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        <button onclick="window.print()" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 no-print">
             <i class="fas fa-print mr-2"></i>Print Report
         </button>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="bg-white rounded-lg shadow p-4 mb-6">
+<div class="bg-white rounded-lg shadow p-4 mb-6 no-print">
     <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
@@ -108,6 +108,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicine Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity Dispensed</th>
@@ -119,6 +120,9 @@
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {{ $item['medicine']->name }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-xs font-mono text-gray-600">{{ $item['medicine']->sku ?? '-' }}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {{ $item['medicine']->brand?->name ?? 'N/A' }}
@@ -135,7 +139,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                         No medicine sales data available for the selected period
                     </td>
                 </tr>
@@ -269,12 +273,32 @@
 @push('styles')
 <style>
 @media print {
-    .no-print {
+    /* Hide navigation and non-report elements */
+    .no-print,
+    aside,
+    header,
+    .ml-64,
+    nav,
+    button {
         display: none !important;
     }
+    
+    /* Reset body and main container for print */
     body {
+        margin: 0 !important;
+        padding: 0 !important;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
+    }
+    
+    main {
+        margin: 0 !important;
+        padding: 20px !important;
+    }
+    
+    /* Show only the report content */
+    @page {
+        margin: 1cm;
     }
 }
 </style>

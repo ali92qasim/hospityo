@@ -22,6 +22,19 @@
             </div>
 
             <div>
+                <label for="sku" class="block text-sm font-medium text-gray-700 mb-2">
+                    SKU (Stock Keeping Unit)
+                </label>
+                <input type="text" id="sku" name="sku" value="{{ old('sku', $medicine->sku) }}" 
+                       placeholder="e.g., PAR-500MG-TAB-GSK"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue uppercase">
+                @error('sku')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+                <p class="mt-1 text-xs text-gray-500">Unique identifier for this medicine</p>
+            </div>
+
+            <div>
                 <label for="generic_name" class="block text-sm font-medium text-gray-700 mb-2">Generic Name</label>
                 <input type="text" id="generic_name" name="generic_name" value="{{ old('generic_name', $medicine->generic_name) }}" 
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">

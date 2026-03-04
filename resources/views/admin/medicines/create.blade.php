@@ -3,15 +3,15 @@
 @section('title', 'Add Medicine')
 
 @section('content')
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Add Medicine</h1>
+<div class="mb-4 md:mb-6">
+    <h1 class="text-xl md:text-2xl font-bold text-gray-800">Add Medicine</h1>
 </div>
 
-<div class="bg-white rounded-lg shadow p-6">
+<div class="bg-white rounded-lg shadow p-4 md:p-6">
     <form method="POST" action="{{ route('medicines.store') }}">
         @csrf
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="responsive-form">
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Medicine Name <span class="text-red-500">*</span></label>
                 <input type="text" id="name" name="name" value="{{ old('name') }}" 
@@ -19,6 +19,20 @@
                 @error('name')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
+            </div>
+
+            <div>
+                <label for="sku" class="block text-sm font-medium text-gray-700 mb-2">
+                    SKU (Stock Keeping Unit)
+                    <span class="text-xs text-gray-500 ml-1">(Auto-generated if left empty)</span>
+                </label>
+                <input type="text" id="sku" name="sku" value="{{ old('sku') }}" 
+                       placeholder="e.g., PAR-500MG-TAB-GSK"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue uppercase">
+                @error('sku')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+                <p class="mt-1 text-xs text-gray-500">Leave empty to auto-generate based on medicine details</p>
             </div>
 
             <div>
@@ -141,11 +155,11 @@
             </div>
         </div>
 
-        <div class="flex justify-end space-x-4 mt-6">
-            <a href="{{ route('medicines.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+        <div class="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-6">
+            <a href="{{ route('medicines.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-center btn-touch">
                 Cancel
             </a>
-            <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 btn-touch">
                 <i class="fas fa-save mr-2"></i>Save Medicine
             </button>
         </div>

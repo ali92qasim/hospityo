@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 
 class Investigation extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'code', 'name', 'type', 'description', 'category', 'sample_type',
         'price', 'turnaround_time', 'instructions', 'is_active'

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Prescription extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'prescription_no',
@@ -32,7 +33,7 @@ class Prescription extends Model
     protected static function boot(): void
     {
         parent::boot();
-        
+
         static::creating(function ($prescription) {
             try {
                 $lastId = static::query()->max('id') ?? 0;

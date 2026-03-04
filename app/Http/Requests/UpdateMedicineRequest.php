@@ -13,8 +13,17 @@ class UpdateMedicineRequest extends FormRequest
 
     public function rules(): array
     {
+        $medicineId = $this->route('medicine');
+        
         return [
             'name' => 'required|string|max:255',
+            'sku' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:medicines,sku,' . $medicineId,
+                'regex:/^[A-Z0-9\-]+$/'
+            ],
             'generic_name' => 'nullable|string|max:255',
             'brand_id' => 'nullable|exists:medicine_brands,id',
             'category_id' => 'nullable|exists:medicine_categories,id',
@@ -27,6 +36,40 @@ class UpdateMedicineRequest extends FormRequest
             'manufacturer' => 'nullable|string|max:255',
             'status' => 'nullable|in:active,inactive',
             'manage_stock' => 'nullable|boolean'
+        ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $medicineId = $this->route('medicine');
+            
+            // Check for duplicate medicine based on name, strength, dosage_form, and brand
+            $duplicate = \App\Models\Medicine::checkDuplicate(
+                $this->name,
+                $this->strength,
+                $this->dosage_form,
+                $this->brand_id,
+                $medicineId
+            );
+            
+            if ($duplicate) {
+                $validator->errors()->add('name', 
+                    'A medicine with the same name' . 
+                    ($this->strength ? ', strength' : '') . 
+                    ($this->dosage_form ? ', dosage form' : '') . 
+                    ($this->brand_id ? ', and brand' : '') . 
+                    ' already exists (SKU: ' . $duplicate->sku . '). Please check if this is a duplicate entry.'
+                );
+            }
+        });
+    }
+
+    public function messages(): array
+    {
+        return [
+            'sku.unique' => 'This SKU already exists. The system detected a duplicate medicine.',
+            'sku.regex' => 'SKU must contain only uppercase letters, numbers, and hyphens.',
         ];
     }
 }

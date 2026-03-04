@@ -45,6 +45,7 @@
             <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
@@ -62,6 +63,9 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">{{ $transaction->medicine->name }}</div>
                         <div class="text-xs text-gray-500">{{ $transaction->medicine->generic_name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-xs font-mono text-gray-600">{{ $transaction->medicine->sku ?? '-' }}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 text-xs rounded-full {{ $transaction->type === 'stock_in' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
@@ -90,7 +94,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">No transactions found</td>
+                    <td colspan="9" class="px-6 py-4 text-center text-gray-500">No transactions found</td>
                 </tr>
             @endforelse
         </tbody>

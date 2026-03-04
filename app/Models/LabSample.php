@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class LabSample extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'sample_id', 'investigation_order_id', 'lab_order_id', 'sample_type', 'status',
         'collected_at', 'received_at', 'collected_by', 'received_by',
@@ -21,7 +24,7 @@ class LabSample extends Model
     protected static function boot(): void
     {
         parent::boot();
-        
+
         static::creating(function ($sample) {
             try {
                 $todayCount = static::query()->whereDate('created_at', today())->count();

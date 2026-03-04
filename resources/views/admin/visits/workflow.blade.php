@@ -1138,7 +1138,6 @@ let testRowIndex = 1;
 
 function showTab(tabName) {
     activeTab = tabName;
-    localStorage.setItem('activeTab', tabName);
     
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
@@ -1305,12 +1304,37 @@ function removeItem(button) {
 
 // Restore active tab on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Determine the correct starting tab based on visit status and completion
+    let defaultTab = '{{ $visit->visit_type === "emergency" ? "triage" : ($visit->visit_type === "ipd" ? "admission" : "vitals") }}';
+    
+    @if($visit->visit_type === 'emergency')
+        @if($visit->triage)
+            defaultTab = 'vitals';
+            @if($visit->vitalSigns)
+                defaultTab = 'consultation';
+            @endif
+        @endif
+    @elseif($visit->visit_type === 'ipd')
+        @if($visit->admission)
+            defaultTab = 'vitals';
+            @if($visit->doctor_id)
+                defaultTab = 'consultation';
+            @endif
+        @endif
+    @else
+        @if($visit->vitalSigns && $visit->doctor_id)
+            defaultTab = 'consultation';
+        @endif
+    @endif
+    
+    // Only use saved tab if it exists and is valid, otherwise use default
     const savedTab = localStorage.getItem('activeTab');
-    if (savedTab && document.getElementById(savedTab + '-tab')) {
-        showTab(savedTab);
-    } else {
-        showTab(activeTab);
-    }
+    const tabToShow = (savedTab && document.getElementById(savedTab + '-tab')) ? savedTab : defaultTab;
+    
+    showTab(tabToShow);
+    
+    // Clear saved tab after using it
+    localStorage.removeItem('activeTab');
     
     // Initialize test count display
     updateTestCount();

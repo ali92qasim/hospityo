@@ -21,6 +21,9 @@ export default {
                 'medical-light': '#F0F8FF',
                 'medical-gray': '#6B7280',
             },
+            screens: {
+                'xs': '475px',
+            },
         },
     },
 

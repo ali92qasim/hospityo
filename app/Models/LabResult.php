@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LabResult extends Model
 {
+    use Auditable;
+
     protected $fillable = [
-        'investigation_order_id', 'lab_order_id', 'results', 'flags', 'interpretation', 'comments', 'status', 
+        'investigation_order_id', 'lab_order_id', 'results', 'flags', 'interpretation', 'comments', 'status',
         'technician_id', 'pathologist_id', 'tested_at', 'verified_at', 'reported_at'
     ];
 

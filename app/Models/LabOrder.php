@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,8 +11,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 class LabOrder extends Model
 {
-    protected $table = 'investigation_orders'; // Using renamed table
+    use Auditable;
     
+    protected $table = 'investigation_orders'; // Using renamed table
+
     protected $fillable = [
         'order_number', 'patient_id', 'visit_id', 'doctor_id', 'lab_test_id', 'investigation_id', 'quantity',
         'priority', 'status', 'test_location', 'ordered_at', 'sample_collected_at', 'completed_at',
@@ -27,7 +30,7 @@ class LabOrder extends Model
     protected static function boot(): void
     {
         parent::boot();
-        
+
         static::creating(function ($order) {
             try {
                 $lastId = static::query()->max('id') ?? 0;

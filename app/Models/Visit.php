@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Visit extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'visit_no',
@@ -28,14 +29,14 @@ class Visit extends Model
     protected static function boot(): void
     {
         parent::boot();
-        
+
         static::creating(function ($visit) {
             $prefix = match($visit->visit_type) {
                 'opd' => 'OPD',
                 'ipd' => 'IPD',
                 'emergency' => 'EMR'
             };
-            
+
             $visit->visit_no = $prefix . str_pad(
                 (Visit::where('visit_type', $visit->visit_type)->max('id') ?? 0) + 1,
                 5,

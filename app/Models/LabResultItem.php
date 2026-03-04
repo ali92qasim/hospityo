@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class LabResultItem extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'lab_result_id', 'lab_test_parameter_id', 'value', 'unit',
         'flag', 'comment', 'entered_by', 'entered_at', 'verified_by', 'verified_at'
