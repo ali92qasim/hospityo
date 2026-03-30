@@ -13,20 +13,26 @@ class DoctorSeeder extends Seeder
     public function run(): void
     {
         $departments = Department::all();
-        
+
         $doctors = [
             [
                 'name' => 'Dr. Sarah Ahmed',
                 'email' => 'doctor@hospityo.com',
+                'doctor_no' => 'abc123',
                 'qualification' => 'MBBS, FCPS (Medicine)',
                 'specialization' => 'Internal Medicine',
                 'pmdc_number' => 'PMDC-12345',
                 'phone' => '0300-1234567',
                 'department_id' => $departments->where('code', 'IM')->first()->id,
                 'experience_years' => 15,
+                'gender' => 'female',
+                'consultation_fee' => 1500.00,
+                'shift_start' => '08:00',
+                'shift_end' => '16:00',
             ],
             [
                 'name' => 'Dr. Ahmed Khan',
+                'doctor_no' => 'abc234',
                 'email' => 'ahmed.khan@hospityo.com',
                 'qualification' => 'MBBS, FCPS (Surgery)',
                 'specialization' => 'General Surgery',
@@ -34,9 +40,14 @@ class DoctorSeeder extends Seeder
                 'phone' => '0300-1234568',
                 'department_id' => $departments->where('code', 'SURG')->first()->id,
                 'experience_years' => 12,
+                'gender' => 'male',
+                'consultation_fee' => 2000.00,
+                'shift_start' => '09:00',
+                'shift_end' => '17:00',
             ],
             [
                 'name' => 'Dr. Fatima Ali',
+                'doctor_no' => 'abc345',
                 'email' => 'fatima.ali@hospityo.com',
                 'qualification' => 'MBBS, FCPS (Pediatrics)',
                 'specialization' => 'Pediatrics',
@@ -44,9 +55,14 @@ class DoctorSeeder extends Seeder
                 'phone' => '0300-1234569',
                 'department_id' => $departments->where('code', 'PED')->first()->id,
                 'experience_years' => 10,
+                'gender' => 'female',
+                'consultation_fee' => 1200.00,
+                'shift_start' => '08:00',
+                'shift_end' => '16:00',
             ],
             [
                 'name' => 'Dr. Maria Hassan',
+                'doctor_no' => 'abc786',
                 'email' => 'maria.hassan@hospityo.com',
                 'qualification' => 'MBBS, FCPS (Gynecology)',
                 'specialization' => 'Obstetrics & Gynecology',
@@ -54,66 +70,10 @@ class DoctorSeeder extends Seeder
                 'phone' => '0300-1234570',
                 'department_id' => $departments->where('code', 'OBGYN')->first()->id,
                 'experience_years' => 14,
-            ],
-            [
-                'name' => 'Dr. Usman Malik',
-                'email' => 'usman.malik@hospityo.com',
-                'qualification' => 'MBBS, FCPS (Orthopedics)',
-                'specialization' => 'Orthopedic Surgery',
-                'pmdc_number' => 'PMDC-12349',
-                'phone' => '0300-1234571',
-                'department_id' => $departments->where('code', 'ORTHO')->first()->id,
-                'experience_years' => 11,
-            ],
-            [
-                'name' => 'Dr. Ayesha Siddiqui',
-                'email' => 'ayesha.siddiqui@hospityo.com',
-                'qualification' => 'MBBS, FCPS (Cardiology)',
-                'specialization' => 'Cardiology',
-                'pmdc_number' => 'PMDC-12350',
-                'phone' => '0300-1234572',
-                'department_id' => $departments->where('code', 'CARD')->first()->id,
-                'experience_years' => 13,
-            ],
-            [
-                'name' => 'Dr. Hassan Raza',
-                'email' => 'hassan.raza@hospityo.com',
-                'qualification' => 'MBBS, FCPS (Neurology)',
-                'specialization' => 'Neurology',
-                'pmdc_number' => 'PMDC-12351',
-                'phone' => '0300-1234573',
-                'department_id' => $departments->where('code', 'NEURO')->first()->id,
-                'experience_years' => 9,
-            ],
-            [
-                'name' => 'Dr. Zainab Tariq',
-                'email' => 'zainab.tariq@hospityo.com',
-                'qualification' => 'MBBS, FCPS (Dermatology)',
-                'specialization' => 'Dermatology',
-                'pmdc_number' => 'PMDC-12352',
-                'phone' => '0300-1234574',
-                'department_id' => $departments->where('code', 'DERM')->first()->id,
-                'experience_years' => 8,
-            ],
-            [
-                'name' => 'Dr. Ali Raza',
-                'email' => 'ali.raza@hospityo.com',
-                'qualification' => 'MBBS, FCPS (Emergency Medicine)',
-                'specialization' => 'Emergency Medicine',
-                'pmdc_number' => 'PMDC-12353',
-                'phone' => '0300-1234575',
-                'department_id' => $departments->where('code', 'ER')->first()->id,
-                'experience_years' => 7,
-            ],
-            [
-                'name' => 'Dr. Sana Iqbal',
-                'email' => 'sana.iqbal@hospityo.com',
-                'qualification' => 'MBBS, FCPS (Psychiatry)',
-                'specialization' => 'Psychiatry',
-                'pmdc_number' => 'PMDC-12354',
-                'phone' => '0300-1234576',
-                'department_id' => $departments->where('code', 'PSY')->first()->id,
-                'experience_years' => 10,
+                'gender' => 'female',
+                'consultation_fee' => 1800.00,
+                'shift_start' => '09:00',
+                'shift_end' => '17:00',
             ],
         ];
 
@@ -125,18 +85,25 @@ class DoctorSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]);
-            
+
             $user->assignRole('Doctor');
 
             // Create doctor profile
-            $doctor = Doctor::create([
+            Doctor::create([
                 'name' => $doctorData['name'],
+                'email' => $doctorData['email'],
+                'doctor_no' => $doctorData['doctor_no'],
                 'qualification' => $doctorData['qualification'],
                 'specialization' => $doctorData['specialization'],
                 'pmdc_number' => $doctorData['pmdc_number'],
                 'phone' => $doctorData['phone'],
                 'department_id' => $doctorData['department_id'],
                 'user_id' => $user->id,
+                'gender' => $doctorData['gender'],
+                'experience_years' => $doctorData['experience_years'],
+                'consultation_fee' => $doctorData['consultation_fee'],
+                'shift_start' => $doctorData['shift_start'],
+                'shift_end' => $doctorData['shift_end'],
             ]);
         }
     }

@@ -233,9 +233,20 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>{{ config('app.name', 'Hospital Management System') }}</h1>
-            <p>{{ cache('settings.hospital_address', '') }}</p>
-            <p>Phone: {{ cache('settings.hospital_phone', '') }} | Email: {{ cache('settings.hospital_email', '') }}</p>
+            @if($settings['hospital_logo'])
+                <img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Logo" style="max-height: 60px; margin-bottom: 8px;">
+            @endif
+            <h1>{{ $settings['hospital_name'] }}</h1>
+            @if($settings['hospital_address'])
+                <p>{{ $settings['hospital_address'] }}</p>
+            @endif
+            @if($settings['hospital_phone'] || $settings['hospital_email'])
+                <p>
+                    @if($settings['hospital_phone'])Phone: {{ $settings['hospital_phone'] }}@endif
+                    @if($settings['hospital_phone'] && $settings['hospital_email']) | @endif
+                    @if($settings['hospital_email'])Email: {{ $settings['hospital_email'] }}@endif
+                </p>
+            @endif
         </div>
 
         <!-- Bill Info -->
@@ -254,7 +265,7 @@
                 <h2>{{ $bill->bill_number }}</h2>
                 <p>Date: {{ $bill->bill_date->format('M d, Y') }}</p>
                 <p>Type: <strong>{{ strtoupper($bill->bill_type) }}</strong></p>
-                <p><span class="status-badge status-{{ $bill->status }}">{{ ucfirst($bill->status) }}</span></p>
+                <p style="margin-top: 8px;"><span class="status-badge status-{{ $bill->status }}">{{ ucfirst($bill->status) }}</span></p>
             </div>
         </div>
 

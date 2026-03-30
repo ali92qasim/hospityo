@@ -14,49 +14,49 @@ class WardSeeder extends Seeder
             [
                 'name' => 'General Ward - Male',
                 'ward_type' => 'general',
-                'total_beds' => 20,
-                'description' => 'General ward for male patients',
+                'capacity' => 5,
                 'status' => 'active',
+                'department_id' => 1,
                 'beds' => 20,
             ],
             [
                 'name' => 'General Ward - Female',
                 'ward_type' => 'general',
-                'total_beds' => 20,
-                'description' => 'General ward for female patients',
                 'status' => 'active',
+                'capacity' => 5,
+                'department_id' => 1,
                 'beds' => 20,
             ],
             [
                 'name' => 'ICU',
                 'ward_type' => 'icu',
-                'total_beds' => 10,
-                'description' => 'Intensive Care Unit',
                 'status' => 'active',
+                'department_id' => 1,
+                'capacity' => 5,
                 'beds' => 10,
             ],
             [
                 'name' => 'Private Rooms',
                 'ward_type' => 'private',
-                'total_beds' => 15,
-                'description' => 'Private rooms for patients',
                 'status' => 'active',
+                'department_id' => 1,
+                'capacity' => 5,
                 'beds' => 15,
             ],
             [
                 'name' => 'Pediatric Ward',
                 'ward_type' => 'general',
-                'total_beds' => 12,
-                'description' => 'Ward for children',
                 'status' => 'active',
+                'department_id' => 1,
+                'capacity' => 5,
                 'beds' => 12,
             ],
             [
                 'name' => 'Maternity Ward',
                 'ward_type' => 'general',
-                'total_beds' => 15,
-                'description' => 'Ward for maternity patients',
                 'status' => 'active',
+                'department_id' => 1,
+                'capacity' => 5,
                 'beds' => 15,
             ],
         ];
@@ -64,9 +64,9 @@ class WardSeeder extends Seeder
         foreach ($wards as $wardData) {
             $bedCount = $wardData['beds'];
             unset($wardData['beds']);
-            
+
             $ward = Ward::create($wardData);
-            
+
             // Create beds for this ward
             for ($i = 1; $i <= $bedCount; $i++) {
                 Bed::create([

@@ -131,6 +131,13 @@ class BillController extends Controller
     public function print(Bill $bill)
     {
         $bill->load(['patient', 'visit', 'billItems.service', 'payments.receivedBy', 'createdBy']);
-        return view('admin.bills.print', compact('bill'));
+        $settings = [
+            'hospital_name'    => setting('hospital_name', config('app.name', 'Hospital Management System')),
+            'hospital_address' => setting('hospital_address', ''),
+            'hospital_phone'   => setting('hospital_phone', ''),
+            'hospital_email'   => setting('hospital_email', ''),
+            'hospital_logo'    => setting('hospital_logo', ''),
+        ];
+        return view('admin.bills.print', compact('bill', 'settings'));
     }
 }

@@ -12,6 +12,7 @@ class PatientSeeder extends Seeder
         $patients = [
             [
                 'name' => 'Muhammad Ali',
+                'patient_no' => 'anc123',
                 'gender' => 'male',
                 'age' => 45,
                 'phone' => '0321-1234567',
@@ -25,6 +26,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Fatima Khan',
                 'gender' => 'female',
+                'patient_no' => 'anx123',
                 'age' => 32,
                 'phone' => '0322-2345678',
                 'marital_status' => 'married',
@@ -37,6 +39,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Hassan Ahmed',
                 'gender' => 'male',
+                'patient_no' => 'avc123',
                 'age' => 28,
                 'phone' => '0323-3456789',
                 'marital_status' => 'single',
@@ -49,6 +52,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Ayesha Malik',
                 'gender' => 'female',
+                'patient_no' => 'adc123',
                 'age' => 55,
                 'phone' => '0324-4567890',
                 'marital_status' => 'married',
@@ -60,6 +64,7 @@ class PatientSeeder extends Seeder
             ],
             [
                 'name' => 'Zain Abbas',
+                'patient_no' => 'anc1234',
                 'gender' => 'male',
                 'age' => 8,
                 'phone' => '0325-5678901',
@@ -73,6 +78,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Sana Tariq',
                 'gender' => 'female',
+                'patient_no' => 'anc1235',
                 'age' => 26,
                 'phone' => '0326-6789012',
                 'marital_status' => 'single',
@@ -85,6 +91,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Ahmed Raza',
                 'gender' => 'male',
+                'patient_no' => 'anc1236',
                 'age' => 62,
                 'phone' => '0327-7890123',
                 'marital_status' => 'married',
@@ -97,6 +104,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Maria Hassan',
                 'gender' => 'female',
+                'patient_no' => 'anc1237',
                 'age' => 35,
                 'phone' => '0328-8901234',
                 'marital_status' => 'married',
@@ -109,6 +117,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Bilal Khan',
                 'gender' => 'male',
+                'patient_no' => 'anc1238',
                 'age' => 19,
                 'phone' => '0329-9012345',
                 'marital_status' => 'single',
@@ -121,6 +130,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Hira Siddiqui',
                 'gender' => 'female',
+                'patient_no' => 'anc12309',
                 'age' => 42,
                 'phone' => '0330-0123456',
                 'marital_status' => 'married',
@@ -133,6 +143,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Usman Iqbal',
                 'gender' => 'male',
+                'patient_no' => 'anc12312',
                 'age' => 51,
                 'phone' => '0331-1234567',
                 'marital_status' => 'married',
@@ -145,6 +156,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Zara Ahmed',
                 'gender' => 'female',
+                'patient_no' => 'anc1290',
                 'age' => 15,
                 'phone' => '0332-2345678',
                 'marital_status' => 'single',
@@ -157,6 +169,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Kamran Ali',
                 'gender' => 'male',
+                'patient_no' => 'anc1273',
                 'age' => 38,
                 'phone' => '0333-3456789',
                 'marital_status' => 'married',
@@ -169,6 +182,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Nida Malik',
                 'gender' => 'female',
+                'patient_no' => 'anc2123',
                 'age' => 29,
                 'phone' => '0334-4567890',
                 'marital_status' => 'single',
@@ -181,6 +195,7 @@ class PatientSeeder extends Seeder
             [
                 'name' => 'Fahad Hassan',
                 'gender' => 'male',
+                'patient_no' => 'amnc123',
                 'age' => 47,
                 'phone' => '0335-5678901',
                 'marital_status' => 'married',

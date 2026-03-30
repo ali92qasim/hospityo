@@ -557,7 +557,29 @@
                                 <i id="history-icon" class="fas fa-chevron-down text-gray-500"></i>
                             </button>
                             <div id="history-content" class="hidden p-4">
-                                <textarea name="history" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter patient history...">{{ old('history', $visit->consultation?->history) }}</textarea>
+                                <textarea name="history" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue mb-4" placeholder="Enter patient history...">{{ old('history', $visit->consultation?->history) }}</textarea>
+                                <!-- Common Conditions -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-3">Common Conditions</label>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">DM (Diabetes Mellitus)</label>
+                                            <input type="text" name="diagnosis_dm" value="{{ old('diagnosis_dm', $visit->consultation?->diagnosis_dm) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter DM details">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">HTN (Hypertension)</label>
+                                            <input type="text" name="diagnosis_htn" value="{{ old('diagnosis_htn', $visit->consultation?->diagnosis_htn) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter HTN details">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">IHD (Ischemic Heart Disease)</label>
+                                            <input type="text" name="diagnosis_ihd" value="{{ old('diagnosis_ihd', $visit->consultation?->diagnosis_ihd) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter IHD details">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Asthma</label>
+                                            <input type="text" name="diagnosis_asthma" value="{{ old('diagnosis_asthma', $visit->consultation?->diagnosis_asthma) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter Asthma details">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -579,33 +601,6 @@
                                 <i id="diagnosis-icon" class="fas fa-chevron-down text-gray-500"></i>
                             </button>
                             <div id="diagnosis-content" class="hidden p-4">
-                                <!-- Common Conditions Input Fields -->
-                                <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-700 mb-3">Common Conditions</label>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">DM (Diabetes Mellitus)</label>
-                                            <input type="text" name="diagnosis_dm" value="{{ old('diagnosis_dm', $visit->consultation?->diagnosis_dm) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter DM details">
-                                        </div>
-                                        
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">HTN (Hypertension)</label>
-                                            <input type="text" name="diagnosis_htn" value="{{ old('diagnosis_htn', $visit->consultation?->diagnosis_htn) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter HTN details">
-                                        </div>
-                                        
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">IHD (Ischemic Heart Disease)</label>
-                                            <input type="text" name="diagnosis_ihd" value="{{ old('diagnosis_ihd', $visit->consultation?->diagnosis_ihd) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter IHD details">
-                                        </div>
-                                        
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Asthma</label>
-                                            <input type="text" name="diagnosis_asthma" value="{{ old('diagnosis_asthma', $visit->consultation?->diagnosis_asthma) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter Asthma details">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Additional Diagnosis Text -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Additional Diagnosis</label>
                                     <textarea name="provisional_diagnosis" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter additional provisional diagnosis...">{{ old('provisional_diagnosis', $visit->consultation?->provisional_diagnosis) }}</textarea>

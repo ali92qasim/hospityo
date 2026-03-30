@@ -13,8 +13,8 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            font-size: 11pt;
-            line-height: 1.4;
+            font-size: 9pt;
+            line-height: 1.3;
             color: #000;
             background: white;
         }
@@ -22,18 +22,18 @@
         .container {
             max-width: 210mm;
             margin: 0 auto;
-            padding: 12mm;
+            padding: 6mm 10mm;
         }
 
         /* Header Section */
         .header {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
-            gap: 15px;
+            gap: 10px;
             align-items: start;
             border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .hospital-info {
@@ -47,8 +47,8 @@
         }
 
         .logo img {
-            max-width: 100px;
-            max-height: 100px;
+            max-width: 70px;
+            max-height: 70px;
             object-fit: contain;
         }
 
@@ -57,59 +57,59 @@
         }
 
         .hospital-name {
-            font-size: 14pt;
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 3px;
-        }
-
-        .hospital-contact {
-            font-size: 9pt;
-            color: #6b7280;
-            line-height: 1.4;
-        }
-
-        .doctor-header-name {
-            font-size: 14pt;
+            font-size: 12pt;
             font-weight: bold;
             color: #1e40af;
             margin-bottom: 2px;
         }
 
+        .hospital-contact {
+            font-size: 8pt;
+            color: #6b7280;
+            line-height: 1.3;
+        }
+
+        .doctor-header-name {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 1px;
+        }
+
         .doctor-credentials {
-            font-size: 10pt;
+            font-size: 8.5pt;
             color: #4b5563;
             margin-bottom: 1px;
         }
 
         .doctor-header-specialization {
-            font-size: 9pt;
+            font-size: 8pt;
             color: #6b7280;
         }
         /* Patient Info Bar */
         .patient-info-bar {
             background: #f3f4f6;
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
             border: 1px solid #d1d5db;
         }
 
         .patient-info-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 4px;
         }
 
         .info-item {
-            font-size: 10pt;
+            font-size: 8.5pt;
         }
 
         .info-label {
             font-weight: 600;
             color: #374151;
             display: inline-block;
-            min-width: 80px;
+            min-width: 70px;
         }
 
         .info-value {
@@ -120,48 +120,48 @@
         .content-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: 10px;
+            margin-bottom: 8px;
         }
 
         /* Prescription Section */
         .prescription-section {
             border: 1px solid #d1d5db;
-            border-radius: 6px;
-            padding: 12px;
+            border-radius: 4px;
+            padding: 8px;
         }
 
         .gpe-section {
-            margin-top: 15px;
-            padding-top: 12px;
+            margin-top: 8px;
+            padding-top: 6px;
             border-top: 1px dashed #d1d5db;
         }
 
         .gpe-title {
-            font-size: 11pt;
+            font-size: 9pt;
             font-weight: bold;
             color: #1e40af;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .gpe-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
+            gap: 3px;
         }
 
         .gpe-item {
-            font-size: 9pt;
-            padding: 4px;
+            font-size: 8pt;
+            padding: 2px 4px;
             background: #f9fafb;
-            border-radius: 3px;
+            border-radius: 2px;
         }
 
         .gpe-label {
             font-weight: 600;
             color: #374151;
             display: inline-block;
-            min-width: 70px;
+            min-width: 60px;
         }
 
         .gpe-value {
@@ -169,39 +169,39 @@
         }
 
         .section-title {
-            font-size: 13pt;
+            font-size: 9.5pt;
             font-weight: bold;
             color: #1e40af;
-            margin-bottom: 12px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 5px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .rx-symbol {
-            font-size: 24pt;
+            font-size: 18pt;
             font-weight: bold;
             color: #2563eb;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
         }
 
         .medicine-item {
-            margin-bottom: 12px;
-            padding: 8px;
+            margin-bottom: 5px;
+            padding: 4px 6px;
             background: #f9fafb;
             border-left: 3px solid #2563eb;
-            border-radius: 3px;
+            border-radius: 2px;
         }
 
         .medicine-name {
             font-weight: bold;
-            font-size: 11pt;
+            font-size: 9pt;
             color: #000;
         }
 
         .medicine-details {
-            font-size: 10pt;
+            font-size: 8.5pt;
             color: #4b5563;
-            margin-top: 3px;
+            margin-top: 2px;
         }
 
         /* Right Column Sections */
@@ -210,25 +210,9 @@
         .tests-section,
         .history-section {
             border: 1px solid #d1d5db;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 12px;
-        }
-
-        .diagnosis-section {
-            min-height: 80px;
-        }
-
-        .issues-section {
-            min-height: 70px;
-        }
-
-        .tests-section {
-            min-height: 70px;
-        }
-
-        .history-section {
-            min-height: 70px;
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin-bottom: 6px;
         }
 
         .vco-label {
@@ -243,10 +227,10 @@
         }
 
         .list-item {
-            padding: 5px 0;
+            padding: 2px 0;
             border-bottom: 1px dashed #e5e7eb;
-            font-size: 10pt;
-            line-height: 1.5;
+            font-size: 8.5pt;
+            line-height: 1.4;
             word-wrap: break-word;
         }
 
@@ -270,27 +254,26 @@
         /* Instructions Section */
         .instructions-section {
             border: 1px solid #d1d5db;
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 15px;
-            min-height: 60px;
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin-bottom: 6px;
             background: #fffbeb;
         }
 
         .instructions-text {
-            font-size: 10pt;
-            line-height: 1.6;
+            font-size: 8.5pt;
+            line-height: 1.4;
             color: #000;
         }
 
         /* Footer Section */
         .footer-section {
-            padding-top: 12px;
+            padding-top: 6px;
             border-top: 2px solid #000;
         }
 
         .next-visit {
-            font-size: 11pt;
+            font-size: 9pt;
             text-align: center;
         }
 
@@ -298,16 +281,15 @@
             font-weight: 600;
             color: #374151;
             display: block;
-            margin-bottom: 5px;
-            font-size: 12pt;
+            margin-bottom: 2px;
+            font-size: 10pt;
         }
 
         .next-visit-date {
-            font-size: 13pt;
+            font-size: 11pt;
             font-weight: bold;
             color: #1e40af;
             display: block;
-        }
         }
 
         /* Print Styles */
@@ -319,7 +301,7 @@
 
             .container {
                 max-width: 100%;
-                padding: 10mm;
+                padding: 5mm 8mm;
             }
 
             .no-print {
@@ -327,7 +309,8 @@
             }
 
             @page {
-                margin: 10mm;
+                size: A4;
+                margin: 6mm;
             }
         }
 
@@ -456,7 +439,7 @@
             <div class="prescription-section">
                 <div class="rx-symbol">℞</div>
                 <div class="section-title">Prescription</div>
-                
+
                 @if($visit->prescriptions && $visit->prescriptions->count() > 0)
                     @foreach($visit->prescriptions as $prescription)
                         @foreach($prescription->items as $index => $item)
@@ -481,15 +464,15 @@
 
                 <!-- GPE Section -->
                 @if($visit->consultation && (
-                    $visit->consultation->gpe_chest || 
-                    $visit->consultation->gpe_abdomen || 
-                    $visit->consultation->gpe_cvs || 
-                    $visit->consultation->gpe_cns || 
-                    $visit->consultation->gpe_pupils || 
-                    $visit->consultation->gpe_conjunctiva || 
-                    $visit->consultation->gpe_nails || 
-                    $visit->consultation->gpe_throat || 
-                    $visit->consultation->gpe_sclera || 
+                    $visit->consultation->gpe_chest ||
+                    $visit->consultation->gpe_abdomen ||
+                    $visit->consultation->gpe_cvs ||
+                    $visit->consultation->gpe_cns ||
+                    $visit->consultation->gpe_pupils ||
+                    $visit->consultation->gpe_conjunctiva ||
+                    $visit->consultation->gpe_nails ||
+                    $visit->consultation->gpe_throat ||
+                    $visit->consultation->gpe_sclera ||
                     $visit->consultation->gpe_gcs
                 ))
                 <div class="gpe-section">
@@ -559,42 +542,15 @@
                 </div>
                 @endif
             </div>
-
             <!-- Right Column: Diagnosis, Issues, Tests -->
             <div>
+                <div class="vco-label">V.C.O</div>
                 <!-- Provisional Diagnosis Section -->
                 <div class="diagnosis-section">
                     <div class="section-title">Provisional Diagnosis</div>
-                    <div class="vco-label">V.C.O</div>
-                    @php
-                        $hasDiagnosis = false;
-                        $diagnoses = [];
-                        if($visit->consultation) {
-                            if($visit->consultation->diagnosis_dm) {
-                                $diagnoses[] = 'DM: ' . $visit->consultation->diagnosis_dm;
-                            }
-                            if($visit->consultation->diagnosis_htn) {
-                                $diagnoses[] = 'HTN: ' . $visit->consultation->diagnosis_htn;
-                            }
-                            if($visit->consultation->diagnosis_ihd) {
-                                $diagnoses[] = 'IHD: ' . $visit->consultation->diagnosis_ihd;
-                            }
-                            if($visit->consultation->diagnosis_asthma) {
-                                $diagnoses[] = 'Asthma: ' . $visit->consultation->diagnosis_asthma;
-                            }
-                        }
-                    @endphp
-                    @if($visit->consultation)
-                        @if(count($diagnoses) > 0)
-                            <div class="list-item">{{ implode(', ', $diagnoses) }}</div>
-                            @php $hasDiagnosis = true; @endphp
-                        @endif
-                        @if($visit->consultation->provisional_diagnosis)
-                            <div class="list-item">{{ $visit->consultation->provisional_diagnosis }}</div>
-                            @php $hasDiagnosis = true; @endphp
-                        @endif
-                    @endif
-                    @if(!$hasDiagnosis)
+                    @if($visit->consultation && $visit->consultation->provisional_diagnosis)
+                        <div class="list-item">{{ $visit->consultation->provisional_diagnosis }}</div>
+                    @else
                         <div class="empty-state">No diagnosis recorded</div>
                     @endif
                 </div>
@@ -650,9 +606,22 @@
                 <!-- Patient History Section -->
                 <div class="history-section">
                     <div class="section-title">Patient History</div>
+                    @php
+                        $conditions = [];
+                        if($visit->consultation) {
+                            if($visit->consultation->diagnosis_dm) $conditions[] = 'DM: ' . $visit->consultation->diagnosis_dm;
+                            if($visit->consultation->diagnosis_htn) $conditions[] = 'HTN: ' . $visit->consultation->diagnosis_htn;
+                            if($visit->consultation->diagnosis_ihd) $conditions[] = 'IHD: ' . $visit->consultation->diagnosis_ihd;
+                            if($visit->consultation->diagnosis_asthma) $conditions[] = 'Asthma: ' . $visit->consultation->diagnosis_asthma;
+                        }
+                    @endphp
+                    @if(count($conditions) > 0)
+                        <div class="list-item"><strong>Common Conditions:</strong> {{ implode(', ', $conditions) }}</div>
+                    @endif
                     @if($visit->consultation && $visit->consultation->history)
                         <div class="list-item">{{ $visit->consultation->history }}</div>
-                    @else
+                    @endif
+                    @if(count($conditions) === 0 && (!$visit->consultation || !$visit->consultation->history))
                         <div class="empty-state">No history recorded</div>
                     @endif
                 </div>
