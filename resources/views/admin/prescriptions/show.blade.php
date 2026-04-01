@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="mb-6">
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">Prescription Details</h1>
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Prescription Details</h1>
         <div class="flex space-x-2">
             @if($prescription->status === 'pending')
                 <form method="POST" action="{{ route('prescriptions.dispense', $prescription) }}" class="inline">

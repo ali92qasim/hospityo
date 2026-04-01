@@ -15,7 +15,7 @@ class SettingsController extends Controller
     {
         // Handle logo upload
         if ($request->hasFile('hospital_logo')) {
-            $logoPath = $request->file('hospital_logo')->store('logos', 'public');
+            $logoPath = $request->file('hospital_logo')->store(tenant_storage_path('logos'), 'public');
             cache()->put('settings.hospital_logo', $logoPath);
         }
 

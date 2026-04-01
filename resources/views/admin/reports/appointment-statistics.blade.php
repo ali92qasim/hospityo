@@ -4,9 +4,9 @@
 
 @section('content')
 <div class="mb-6">
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Appointment Statistics Report</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Appointment Statistics Report</h1>
             <p class="text-gray-600 mt-1">Comprehensive appointment analytics and trends</p>
         </div>
         <button onclick="window.print()" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 no-print">
@@ -58,7 +58,7 @@
 </div>
 
 <!-- Statistics Cards -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between">
             <div>
@@ -112,7 +112,7 @@
 </div>
 
 <!-- Status Breakdown -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-sm font-medium text-gray-700 mb-4">Scheduled</h3>
         <div class="flex items-center justify-between mb-2">

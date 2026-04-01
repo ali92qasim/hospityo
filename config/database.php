@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'landlord'),
 
     /*
     |--------------------------------------------------------------------------
@@ -30,6 +30,44 @@ return [
     */
 
     'connections' => [
+
+        /*
+        |----------------------------------------------------------------------
+        | Landlord Connection (Central Database)
+        |----------------------------------------------------------------------
+        | Holds the tenants table and any system-wide data.
+        | Uses SQLite — your existing database.
+        */
+        'landlord' => [
+            'driver' => 'sqlite',
+            'url' => env('DB_URL'),
+            'database' => database_path('database.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+            'busy_timeout' => null,
+            'journal_mode' => null,
+            'synchronous' => null,
+            'transaction_mode' => 'DEFERRED',
+        ],
+
+        /*
+        |----------------------------------------------------------------------
+        | Tenant Connection (Per-Tenant Database)
+        |----------------------------------------------------------------------
+        | Each tenant gets its own SQLite file at database/tenants/{database}.sqlite
+        | Spatie dynamically switches the database path per tenant.
+        */
+        'tenant' => [
+            'driver' => 'sqlite',
+            'url' => env('DB_URL'),
+            'database' => null,
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+            'busy_timeout' => null,
+            'journal_mode' => null,
+            'synchronous' => null,
+            'transaction_mode' => 'DEFERRED',
+        ],
 
         'sqlite' => [
             'driver' => 'sqlite',

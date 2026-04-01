@@ -6,10 +6,11 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class Service extends Model
 {
-    use Auditable;
+    use Auditable, UsesTenantConnection;
 
     protected $fillable = [
         'name',

@@ -9,7 +9,7 @@
     <div class="bg-white rounded-lg shadow-sm">
         <!-- Header -->
         <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div>
                     <h3 class="text-xl font-semibold text-gray-800">{{ $radiologyResult->investigationOrder->investigation->name }}</h3>
                     <p class="text-sm text-gray-600 mt-1">
@@ -101,7 +101,7 @@
 
         <!-- Actions -->
         <div class="p-6 border-t border-gray-200 bg-gray-50">
-            <div class="flex justify-between items-center">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <a href="{{ route('lab-results.index') }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Results
                 </a>

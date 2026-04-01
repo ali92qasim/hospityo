@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Profile Settings</h1>
+    <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Profile Settings</h1>
 </div>
 
 @if(session('status') === 'profile-updated')

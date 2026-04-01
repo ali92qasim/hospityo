@@ -4,9 +4,9 @@
 
 @section('content')
 <div class="mb-6">
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Medicine Expiry Report</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Medicine Expiry Report</h1>
             <p class="text-gray-600 mt-1">Track expired and expiring medicines</p>
         </div>
         <button onclick="window.print()" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 no-print">
@@ -17,7 +17,7 @@
 
 <!-- Filters -->
 <div class="bg-white rounded-lg shadow p-4 mb-6 no-print">
-    <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Expiry Within (Days)</label>
             <select name="days" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
@@ -48,7 +48,7 @@
 </div>
 
 <!-- Statistics Cards -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between">
             <div>

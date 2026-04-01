@@ -1,11 +1,20 @@
 <?php
 
+use App\Models\Tenant;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
-});
+/*
+|--------------------------------------------------------------------------
+| Tenant-Scoped Broadcast Channels
+|--------------------------------------------------------------------------
+| Channel names include the tenant slug to prevent cross-tenant leakage.
+| Format: tenant.{tenantSlug}.user.{id}
+*/
 
-Broadcast::channel('user.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+Broadcast::channel('tenant.{tenantSlug}.user.{id}', function ($user, $tenantSlug, $id) {
+    $tenant = Tenant::current();
+
+    return $tenant
+        && $tenant->slug === $tenantSlug
+        && (int) $user->id === (int) $id;
 });

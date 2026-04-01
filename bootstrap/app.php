@@ -16,9 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'module' => \App\Http\Middleware\CheckModule::class,
+            'super_admin' => \App\Http\Middleware\SuperAdminAuth::class,
         ]);
-        
-        // Register SetLocale middleware globally
+
+        // Tenant middleware group — apply to tenant-aware routes only
+        $middleware->group('tenant', [
+            \App\Http\Middleware\EnsureTenantActive::class,
+            \App\Http\Middleware\SetTenantTimezone::class,
+            \App\Http\Middleware\CheckModule::class,
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
         ]);

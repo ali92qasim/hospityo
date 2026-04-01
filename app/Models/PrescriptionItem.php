@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class PrescriptionItem extends Model
 {
-    use HasFactory, Auditable;
+    use HasFactory, Auditable, UsesTenantConnection;
 
     protected $fillable = [
         'prescription_id',

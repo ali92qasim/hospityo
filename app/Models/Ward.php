@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class Ward extends Model
 {
-    use HasFactory, Auditable;
+    use HasFactory, Auditable, UsesTenantConnection;
 
     protected $fillable = [
         'name',

@@ -7,7 +7,7 @@
 @section('content')
 <div class="bg-white rounded-lg shadow-sm">
     <div class="px-6 py-4 border-b border-gray-200">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <h3 class="text-lg font-semibold text-gray-800">All Assigned Patients</h3>
             <a href="{{ route('dashboard') }}" class="text-medical-blue hover:text-blue-700">
                 <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard

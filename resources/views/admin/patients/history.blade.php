@@ -9,18 +9,18 @@
     <!-- Patient Header -->
     <div class="bg-white rounded-lg shadow-sm">
         <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex items-center">
-                    <div class="w-16 h-16 bg-medical-blue rounded-full flex items-center justify-center mr-4">
-                        <i class="fas fa-user text-white text-2xl"></i>
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-medical-blue rounded-full flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+                        <i class="fas fa-user text-white text-lg sm:text-2xl"></i>
                     </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-800">{{ $patient->name }}</h3>
-                        <p class="text-sm text-gray-600">{{ $patient->patient_no }} • {{ ucfirst($patient->gender) }}, {{ $patient->age }} years</p>
-                        <p class="text-sm text-gray-500">{{ $patient->phone }}</p>
+                    <div class="min-w-0">
+                        <h3 class="text-lg sm:text-xl font-semibold text-gray-800 truncate">{{ $patient->name }}</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 truncate">{{ $patient->patient_no }} • {{ ucfirst($patient->gender) }}, {{ $patient->age }} years</p>
+                        <p class="text-xs sm:text-sm text-gray-500">{{ $patient->phone }}</p>
                     </div>
                 </div>
-                <a href="{{ route('patients.index') }}" class="text-gray-600 hover:text-gray-800">
+                <a href="{{ route('patients.index') }}" class="text-gray-600 hover:text-gray-800 text-sm flex-shrink-0">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Patients
                 </a>
             </div>
@@ -28,7 +28,7 @@
         
         <!-- Summary Stats -->
         <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-blue-50 rounded-lg p-4">
                     <div class="flex items-center">
                         <i class="fas fa-clipboard-list text-blue-600 text-xl mr-3"></i>

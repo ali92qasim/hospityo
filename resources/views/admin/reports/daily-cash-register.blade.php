@@ -4,9 +4,9 @@
 
 @section('content')
 <div class="mb-6">
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Daily Cash Register</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Daily Cash Register</h1>
             <p class="text-gray-600 mt-1">Daily collection and payment summary</p>
         </div>
         <button onclick="window.print()" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 no-print">
@@ -30,7 +30,7 @@
 </div>
 
 <!-- Summary Cards -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between">
             <div>
@@ -86,7 +86,7 @@
         <h2 class="text-lg font-semibold text-gray-800">Payment Method Breakdown</h2>
     </div>
     <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div class="border border-gray-200 rounded-lg p-4">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm text-gray-600">Cash</span>

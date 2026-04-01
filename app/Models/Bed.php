@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
+
 class Bed extends Model
 {
-    use HasFactory, Auditable;
+    use HasFactory, Auditable, UsesTenantConnection;
 
     protected $fillable = [
         'bed_number',

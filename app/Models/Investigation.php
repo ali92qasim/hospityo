@@ -6,10 +6,11 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class Investigation extends Model
 {
-    use Auditable;
+    use Auditable, UsesTenantConnection;
 
     protected $fillable = [
         'code', 'name', 'type', 'description', 'category', 'sample_type',

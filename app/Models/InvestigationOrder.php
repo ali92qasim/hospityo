@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class InvestigationOrder extends Model
 {
-    use Auditable;
+    use Auditable, UsesTenantConnection;
 
     protected $fillable = [
         'order_number', 'patient_id', 'visit_id', 'doctor_id', 'investigation_id', 'quantity',

@@ -5,7 +5,7 @@
 @section('page-description', 'Manage pathology, radiology, and cardiology test results')
 
 @section('content')
-<div class="flex justify-between items-center mb-6">
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
     <div class="flex space-x-4">
         <form method="GET" class="flex space-x-2">
             <input type="text" name="patient_search" value="{{ request('patient_search') }}" 
@@ -32,7 +32,7 @@
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
                 <!-- Patient Header -->
                 <div class="bg-blue-50 px-6 py-4 border-b border-blue-200">
-                    <div class="flex justify-between items-center">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                         <div>
                             <h4 class="text-lg font-semibold text-blue-900">{{ $patient->name }}</h4>
                             <div class="flex items-center space-x-4 text-sm text-blue-700">

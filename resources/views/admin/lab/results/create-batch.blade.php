@@ -23,7 +23,7 @@
 <!-- Patient Header -->
 <div class="bg-white rounded-lg shadow-sm mb-6">
     <div class="bg-blue-50 px-6 py-4 border-b border-blue-200">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div>
                 <h3 class="text-xl font-semibold text-blue-900">{{ $patient->name }}</h3>
                 <div class="flex items-center space-x-4 text-sm text-blue-700 mt-1">
@@ -50,7 +50,7 @@
             <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                 <!-- Test Header -->
                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <div class="flex justify-between items-center">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                         <div>
                             <h4 class="text-lg font-semibold text-gray-900">{{ $labOrder->investigation->name }}</h4>
                             <div class="flex items-center space-x-3 mt-1">
@@ -158,7 +158,7 @@
     </div>
     
     <!-- Submit Actions -->
-    <div class="flex justify-between items-center mt-8 p-6 bg-white rounded-lg shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-8 p-6 bg-white rounded-lg shadow-sm">
         <a href="{{ route('lab-results.index') }}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
             <i class="fas fa-arrow-left mr-2"></i>Back to Results
         </a>

@@ -28,7 +28,7 @@ class RadiologyResultController extends Controller
         // Handle file upload
         $filePath = null;
         if ($request->hasFile('report_file')) {
-            $filePath = $request->file('report_file')->store('radiology-reports', 'public');
+            $filePath = $request->file('report_file')->store(tenant_storage_path('radiology-reports'), 'public');
         }
 
         // Create radiology result
@@ -80,7 +80,7 @@ class RadiologyResultController extends Controller
             if ($radiologyResult->file_path) {
                 Storage::disk('public')->delete($radiologyResult->file_path);
             }
-            $validated['file_path'] = $request->file('report_file')->store('radiology-reports', 'public');
+            $validated['file_path'] = $request->file('report_file')->store(tenant_storage_path('radiology-reports'), 'public');
         }
 
         // Update reported_at timestamp when status changes to final

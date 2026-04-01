@@ -33,6 +33,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\LanguageController;
 use App\Models\Patient;
 use Illuminate\Http\Request;
+use App\Http\Controllers\TenantRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 // Installation Routes
@@ -48,25 +49,79 @@ Route::prefix('install')->name('install.')->group(function () {
     Route::get('/complete', [InstallController::class, 'complete'])->name('complete');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Tenant Registration (Landlord Routes — no tenant required)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('register')->name('tenant.')->group(function () {
+    Route::get('/', [TenantRegistrationController::class, 'create'])->name('register');
+    Route::post('/', [TenantRegistrationController::class, 'store'])->name('register.store');
+    Route::get('/{tenant}/provisioning', [TenantRegistrationController::class, 'provisioning'])->name('provisioning');
+    Route::get('/{tenant}/status', [TenantRegistrationController::class, 'status'])->name('status');
+});
+
 // Language Switcher Route
 Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/', function () {
-        $user = auth()->user();
-        
-        // Check if user is a doctor
-        if ($user->hasRole('Doctor')) {
-            $doctor = \App\Models\Doctor::where('user_id', $user->id)->first();
-            if ($doctor) {
-                $assignedPatients = $doctor->assignedPatients()->limit(5)->get();
-                $totalAssigned = $doctor->assignedPatients()->count();
-                return view('admin.dashboard', compact('assignedPatients', 'totalAssigned'));
-            }
-        }
-        
-        return view('admin.dashboard');
+// PayFast Webhook (server-to-server, no auth/tenant required)
+Route::post('/billing/payfast/webhook', [\App\Http\Controllers\BillingController::class, 'webhook'])
+    ->name('billing.payfast.webhook')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+/*
+|--------------------------------------------------------------------------
+| Super Admin Panel (Landlord Domain — no tenant required)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('super-admin')->name('super-admin.')->group(function () {
+    // Auth
+    Route::get('/login', [\App\Http\Controllers\SuperAdmin\AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [\App\Http\Controllers\SuperAdmin\AuthController::class, 'login']);
+    Route::post('/logout', [\App\Http\Controllers\SuperAdmin\AuthController::class, 'logout'])->name('logout');
+
+    // Protected routes
+    Route::middleware('super_admin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
+
+        // Tenant management
+        Route::get('/tenants', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'index'])->name('tenants.index');
+        Route::get('/tenants/{tenant}', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'show'])->name('tenants.show');
+        Route::post('/tenants/{tenant}/suspend', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'suspend'])->name('tenants.suspend');
+        Route::post('/tenants/{tenant}/activate', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'activate'])->name('tenants.activate');
+        Route::post('/tenants/{tenant}/change-plan', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'changePlan'])->name('tenants.change-plan');
     });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Landing Page (Main Domain — no tenant required)
+|--------------------------------------------------------------------------
+*/
+Route::get('/', function () {
+    // If on a tenant subdomain and authenticated, show dashboard
+    $tenant = \App\Models\Tenant::current();
+    if ($tenant) {
+        if (auth()->check()) {
+            return redirect()->route('dashboard');
+        }
+        return redirect()->route('login');
+    }
+
+    // Main domain — show SaaS landing page
+    return view('landing');
+})->name('home');
+
+/*
+|--------------------------------------------------------------------------
+| Tenant-Aware Routes
+|--------------------------------------------------------------------------
+| All routes below require a valid tenant (resolved via subdomain).
+| The 'tenant' middleware group runs NeedsTenant + EnsureValidTenantSession.
+*/
+Route::middleware('tenant')->group(function () {
+
+Route::middleware('auth')->group(function () {
     
     Route::get('/dashboard', function () {
         $user = auth()->user();
@@ -107,6 +162,14 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Billing & Subscription Routes
+    Route::prefix('billing')->name('billing.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BillingController::class, 'index'])->name('index');
+        Route::post('/subscribe', [\App\Http\Controllers\BillingController::class, 'subscribe'])->name('subscribe');
+        Route::get('/payfast/success', [\App\Http\Controllers\BillingController::class, 'success'])->name('payfast.success');
+        Route::get('/payfast/cancel', [\App\Http\Controllers\BillingController::class, 'cancel'])->name('payfast.cancel');
+    });
 });
 
 Route::middleware('auth')->group(function () {
@@ -265,3 +328,5 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+}); // end tenant middleware group

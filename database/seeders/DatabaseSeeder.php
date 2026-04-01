@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Tenant;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,22 +13,38 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * When run via `tenants:artisan "db:seed --database=tenant"`,
+     * Tenant::checkCurrent() returns true → tenant seeders run.
+     * When run directly on the landlord DB, landlord seeders run.
      */
     public function run(): void
+    {
+        if (Tenant::checkCurrent()) {
+            $this->runTenantSeeders();
+        } else {
+            $this->runLandlordSeeders();
+        }
+    }
+
+    /**
+     * Seeders that populate a tenant database.
+     */
+    protected function runTenantSeeders(): void
     {
         $this->call([
             // Core System
             RolePermissionSeeder::class,
             UserSeeder::class,
-            
+
             // Hospital Structure
             DepartmentSeeder::class,
             DoctorSeeder::class,
             WardSeeder::class,
-            
+
             // Patients
             PatientSeeder::class,
-            
+
             // Pharmacy
             MedicineCategorySeeder::class,
             MedicineBrandSeeder::class,
@@ -35,34 +52,31 @@ class DatabaseSeeder extends Seeder
             MedicineSeeder::class,
             PrescriptionInstructionSeeder::class,
             SupplierSeeder::class,
-            
+
             // Diagnostics
             InvestigationSeeder::class,
             LabTestParameterSeeder::class,
-            
+
             // Billing
             ServiceSeeder::class,
-            
+
             // Medical Data
             AllergySeeder::class,
         ]);
-        
-        $this->command->info('✓ All seeders completed successfully!');
-        $this->command->info('');
-        $this->command->info('Sample Data Summary:');
-        $this->command->info('- 12 Departments');
-        $this->command->info('- 10 Doctors with user accounts');
-        $this->command->info('- 15 Patients');
-        $this->command->info('- 6 Wards with 92 Beds');
-        $this->command->info('- 12 Medicine Categories');
-        $this->command->info('- 12 Medicine Brands');
-        $this->command->info('- 20 Medicines with SKU');
-        $this->command->info('- 5 Suppliers');
-        $this->command->info('- Investigation tests and parameters');
-        $this->command->info('- Services and allergies');
-        $this->command->info('');
-        $this->command->info('Demo Credentials:');
-        $this->command->info('Admin: admin@hospityo.com / password');
-        $this->command->info('Doctor: doctor@hospityo.com / password');
+
+        $this->command->info('✓ Tenant seeders completed for: ' . Tenant::current()->name);
+    }
+
+    /**
+     * Seeders that populate the landlord (central) database.
+     */
+    protected function runLandlordSeeders(): void
+    {
+        $this->call([
+            PlanSeeder::class,
+            SuperAdminSeeder::class,
+        ]);
+
+        $this->command->info('✓ Landlord seeders completed.');
     }
 }

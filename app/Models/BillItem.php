@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class BillItem extends Model
 {
-    use Auditable;
+    use Auditable, UsesTenantConnection;
 
     protected $fillable = [
         'bill_id',

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class LabTestParameter extends Model
 {
-    use Auditable;
+    use Auditable, UsesTenantConnection;
 
     protected $fillable = [
         'lab_test_id', 'parameter_name', 'unit', 'data_type',

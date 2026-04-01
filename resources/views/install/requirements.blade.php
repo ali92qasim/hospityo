@@ -10,7 +10,7 @@
 <body class="bg-gray-50">
     <div class="min-h-screen flex items-center justify-center p-6">
         <div class="max-w-2xl w-full bg-white rounded-lg shadow-lg p-8">
-            <h1 class="text-2xl font-bold text-gray-900 mb-6">System Requirements</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 mb-6">System Requirements</h1>
             
             <div class="mb-6">
                 <h2 class="text-lg font-semibold mb-3">PHP Extensions</h2>

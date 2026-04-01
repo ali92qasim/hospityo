@@ -7,7 +7,7 @@
 @section('content')
 <div class="bg-white rounded-lg shadow-sm">
     <div class="p-6 border-b border-gray-200">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div>
                 <h3 class="text-lg font-semibold text-gray-800">Medical Staff</h3>
                 <p class="text-sm text-gray-600">Total: {{ $doctors->total() }} doctors</p>

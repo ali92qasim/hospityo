@@ -28,6 +28,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Stamp session with current tenant ID for cross-tenant protection
+        $tenant = \App\Models\Tenant::current();
+        if ($tenant) {
+            $request->session()->put('tenant_id', $tenant->id);
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

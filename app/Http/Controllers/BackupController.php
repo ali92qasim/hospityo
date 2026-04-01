@@ -33,7 +33,7 @@ class BackupController extends Controller
             $backupName = "backup_{$backupType}_{$timestamp}";
             
             // Create backup directory if it doesn't exist
-            $backupPath = storage_path('app/backups');
+            $backupPath = storage_path('app/backups/' . tenant_storage_path());
             if (!file_exists($backupPath)) {
                 mkdir($backupPath, 0755, true);
             }
@@ -81,7 +81,7 @@ class BackupController extends Controller
      */
     public function download($filename)
     {
-        $filePath = storage_path('app/backups/' . $filename);
+        $filePath = storage_path('app/backups/' . tenant_storage_path() . '/' . $filename);
         
         if (!file_exists($filePath)) {
             return redirect()->route('backup.index')
@@ -97,7 +97,7 @@ class BackupController extends Controller
     public function destroy($filename)
     {
         try {
-            $filePath = storage_path('app/backups/' . $filename);
+            $filePath = storage_path('app/backups/' . tenant_storage_path() . '/' . $filename);
             
             if (file_exists($filePath)) {
                 unlink($filePath);
@@ -118,7 +118,7 @@ class BackupController extends Controller
     public function restore(Request $request, $filename)
     {
         try {
-            $filePath = storage_path('app/backups/' . $filename);
+            $filePath = storage_path('app/backups/' . tenant_storage_path() . '/' . $filename);
             
             if (!file_exists($filePath)) {
                 throw new \Exception('Backup file not found');
@@ -220,12 +220,10 @@ class BackupController extends Controller
      */
     private function backupFiles($zip)
     {
-        // Backup storage/app/public (uploaded files)
-        $this->addDirectoryToZip($zip, storage_path('app/public'), 'storage/public');
-        
-        // Backup .env file
-        if (file_exists(base_path('.env'))) {
-            $zip->addFile(base_path('.env'), 'env_backup.txt');
+        // Backup tenant-scoped storage files
+        $tenantPublicPath = storage_path('app/public/' . tenant_storage_path());
+        if (is_dir($tenantPublicPath)) {
+            $this->addDirectoryToZip($zip, $tenantPublicPath, 'storage/public');
         }
     }
     
@@ -269,7 +267,7 @@ class BackupController extends Controller
      */
     private function getBackupList()
     {
-        $backupPath = storage_path('app/backups');
+        $backupPath = storage_path('app/backups/' . tenant_storage_path());
         
         if (!file_exists($backupPath)) {
             return [];

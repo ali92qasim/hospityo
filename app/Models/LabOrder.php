@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class LabOrder extends Model
 {
-    use Auditable;
+    use Auditable, UsesTenantConnection;
     
     protected $table = 'investigation_orders'; // Using renamed table
 
