@@ -1,5 +1,7 @@
 @extends('super-admin.layout')
 @section('title', 'All Hospitals')
+@section('page-title', 'Hospitals')
+@section('page-description', 'Manage all registered hospitals')
 
 @section('content')
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2">

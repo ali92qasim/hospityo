@@ -1,5 +1,7 @@
 @extends('super-admin.layout')
 @section('title', 'Dashboard')
+@section('page-title', 'Dashboard')
+@section('page-description', 'Platform overview')
 
 @section('content')
 <h1 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Platform Overview</h1>

@@ -1,5 +1,7 @@
 @extends('super-admin.layout')
 @section('title', $tenant->name)
+@section('page-title', $tenant->name)
+@section('page-description', 'Hospital details and management')
 
 @section('content')
 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
