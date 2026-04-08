@@ -14,8 +14,8 @@ class UpdateAppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
+            'patient_id' => 'required|exists:tenant.patients,id',
+            'doctor_id' => 'required|exists:tenant.doctors,id',
             'appointment_datetime' => 'required|date',
             'status' => 'required|in:scheduled,completed,cancelled,no_show',
             'reason' => 'nullable|string',

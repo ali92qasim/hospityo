@@ -18,7 +18,7 @@ class LabResultController extends Controller
     {
         // Group pending investigation orders by patient and visit for batch result entry
         $pendingOrdersQuery = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
-            ->whereIn('status', ['ordered', 'collected', 'testing'])
+            ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
             ->whereDoesntHave('result');
         
         if ($request->patient_search) {
@@ -46,17 +46,21 @@ class LabResultController extends Controller
         $patientId = $request->patient_id;
         $visitId = $request->visit_id;
         
-        if (!$patientId || !$visitId) {
+        if (!$patientId) {
             return redirect()->route('lab-results.index')
-                ->with('error', 'Patient ID and Visit ID are required.');
+                ->with('error', 'Patient ID is required.');
         }
         
-        $labOrders = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
+        $query = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
             ->where('patient_id', $patientId)
-            ->where('visit_id', $visitId)
-            ->whereIn('status', ['ordered', 'collected', 'testing'])
-            ->whereDoesntHave('result')
-            ->get();
+            ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
+            ->whereDoesntHave('result');
+
+        if ($visitId) {
+            $query->where('visit_id', $visitId);
+        }
+        
+        $labOrders = $query->get();
         
         return view('admin.lab.results.create-batch', compact('labOrders'));
     }

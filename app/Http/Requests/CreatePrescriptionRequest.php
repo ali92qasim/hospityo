@@ -15,8 +15,8 @@ class CreatePrescriptionRequest extends FormRequest
     {
         return [
             'medicines' => 'required|array|min:1',
-            'medicines.*.medicine_id' => 'required|exists:medicines,id',
-            'medicines.*.instruction_id' => 'nullable|exists:prescription_instructions,id',
+            'medicines.*.medicine_id' => 'required|exists:tenant.medicines,id',
+            'medicines.*.instruction_id' => 'nullable|exists:tenant.prescription_instructions,id',
             'notes' => 'nullable|string|max:1000'
         ];
     }

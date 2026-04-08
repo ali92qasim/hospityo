@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Spatie\Multitenancy\Jobs\NotTenantAware;
 
@@ -22,30 +23,49 @@ class CreateTenantDatabase implements ShouldQueue, NotTenantAware
 
     public function handle(): void
     {
-        $dbPath = $this->tenant->database;
+        $database = $this->tenant->database;
+        $driver = config('database.connections.tenant.driver', 'sqlite');
 
-        Log::info("[Provisioning] Creating SQLite database: {$dbPath}", [
+        Log::info("[Provisioning] Creating {$driver} database: {$database}", [
             'tenant_id' => $this->tenant->id,
         ]);
 
-        // Ensure the tenants directory exists
-        $dir = dirname($dbPath);
+        try {
+            if ($driver === 'sqlite') {
+                $this->createSqliteDatabase($database);
+            } else {
+                $this->createMysqlDatabase($database);
+            }
+
+            Log::info("[Provisioning] Database created: {$database}");
+        } catch (\Throwable $e) {
+            Log::error("[Provisioning] Failed to create database: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
+    protected function createSqliteDatabase(string $path): void
+    {
+        $dir = dirname($path);
         if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
-
-        // Create the empty SQLite file
-        if (! file_exists($dbPath)) {
-            touch($dbPath);
+        if (! file_exists($path)) {
+            touch($path);
         }
+    }
 
-        Log::info("[Provisioning] SQLite database created: {$dbPath}");
+    protected function createMysqlDatabase(string $database): void
+    {
+        // Use the landlord connection to create the new database
+        DB::connection('landlord')->statement(
+            "CREATE DATABASE IF NOT EXISTS `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+        );
     }
 
     public function failed(\Throwable $e): void
     {
         Log::error("[Provisioning] Failed to create database for tenant {$this->tenant->id}: {$e->getMessage()}");
-
         $this->tenant->update(['status' => 'failed']);
     }
 }

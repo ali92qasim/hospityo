@@ -15,7 +15,7 @@ class StoreWardRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'department_id' => 'required|exists:departments,id',
+            'department_id' => 'required|exists:tenant.departments,id',
             'capacity' => 'required|integer|min:1',
             'ward_type' => 'required|in:general,private,icu,emergency',
             'status' => 'required|in:active,inactive'

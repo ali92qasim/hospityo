@@ -14,7 +14,7 @@ class StockOutRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'medicine_id' => 'required|exists:medicines,id',
+            'medicine_id' => 'required|exists:tenant.medicines,id',
             'quantity' => 'required|integer|min:1',
             'reason' => 'required|in:expired,damaged,dispensed,adjustment',
             'reference_no' => 'nullable|string|max:100',

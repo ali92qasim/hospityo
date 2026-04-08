@@ -14,7 +14,7 @@ class StoreMedicineBrandRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:medicine_brands,name'],
+            'name' => ['required', 'string', 'max:255', 'unique:tenant.medicine_brands,name'],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ];

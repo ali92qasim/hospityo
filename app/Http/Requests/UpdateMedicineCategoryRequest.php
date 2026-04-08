@@ -16,7 +16,7 @@ class UpdateMedicineCategoryRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50', Rule::unique('medicine_categories', 'code')->ignore($this->medicine_category)],
+            'code' => ['required', 'string', 'max:50', Rule::unique('tenant.medicine_categories', 'code')->ignore($this->medicine_category)],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ];

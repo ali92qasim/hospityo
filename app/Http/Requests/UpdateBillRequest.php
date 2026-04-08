@@ -14,7 +14,7 @@ class UpdateBillRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'required|exists:patients,id',
+            'patient_id' => 'required|exists:tenant.patients,id',
             'bill_date' => 'required|date',
             'bill_type' => 'required|in:opd,ipd,emergency,lab,pharmacy',
             'items' => 'required|array|min:1'

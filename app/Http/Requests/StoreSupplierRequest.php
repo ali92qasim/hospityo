@@ -14,7 +14,7 @@ class StoreSupplierRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:suppliers',
+            'name' => 'required|string|max:255|unique:tenant.suppliers',
             'contact_person' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',

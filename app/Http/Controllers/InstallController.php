@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 
 class InstallController extends Controller
 {

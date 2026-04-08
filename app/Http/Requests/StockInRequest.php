@@ -14,9 +14,9 @@ class StockInRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'medicine_id' => 'required|exists:medicines,id',
+            'medicine_id' => 'required|exists:tenant.medicines,id',
             'quantity' => 'required|integer|min:1',
-            'unit_id' => 'required|exists:units,id',
+            'unit_id' => 'required|exists:tenant.units,id',
             'unit_cost' => 'required|numeric|min:0',
             'supplier' => 'required|string|max:255',
             'batch_no' => 'nullable|string|max:100',

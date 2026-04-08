@@ -17,8 +17,8 @@ class UpdateUnitRequest extends FormRequest
         
         return [
             'name' => 'required|string|max:255',
-            'abbreviation' => 'required|string|max:10|unique:units,abbreviation,' . $unit->id,
-            'base_unit_id' => 'nullable|exists:units,id',
+            'abbreviation' => 'required|string|max:10|unique:tenant.units,abbreviation,' . $unit->id,
+            'base_unit_id' => 'nullable|exists:tenant.units,id',
             'conversion_factor' => 'required|numeric|min:0.0001',
             'type' => 'required|in:solid,liquid,gas,packaging',
             'is_active' => 'boolean'

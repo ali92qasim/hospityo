@@ -14,7 +14,7 @@ class AdmitPatientRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'bed_id' => 'required|exists:beds,id',
+            'bed_id' => 'required|exists:tenant.beds,id',
             'admission_notes' => 'nullable|string'
         ];
     }

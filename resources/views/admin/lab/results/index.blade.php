@@ -26,9 +26,10 @@
         @foreach($pendingOrders as $groupKey => $orders)
             @php
                 $firstOrder = collect($orders)->first();
-                $patient = $firstOrder->patient;
-                $visit = $firstOrder->visit;
+                $patient = $firstOrder?->patient;
+                $visit = $firstOrder?->visit;
             @endphp
+            @if(!$patient) @continue @endif
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
                 <!-- Patient Header -->
                 <div class="bg-blue-50 px-6 py-4 border-b border-blue-200">
@@ -38,7 +39,7 @@
                             <div class="flex items-center space-x-4 text-sm text-blue-700">
                                 <span><i class="fas fa-phone mr-1"></i>{{ $patient->phone }}</span>
                                 <span><i class="fas fa-calendar mr-1"></i>{{ $patient->date_of_birth?->format('M d, Y') ?? 'N/A' }}</span>
-                                <span><i class="fas fa-clipboard-list mr-1"></i>{{ $visit->visit_no }}</span>
+                                <span><i class="fas fa-clipboard-list mr-1"></i>{{ $visit?->visit_no }}</span>
                             </div>
                         </div>
                         <div class="text-right">
@@ -122,7 +123,13 @@
                 
                 <!-- Action Button -->
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                    <a href="{{ route('lab-results.create-batch', ['patient_id' => $patient->id, 'visit_id' => $visit->id]) }}" 
+                    @php
+                        $batchParams = ['patient_id' => $patient->id];
+                        if ($visit) {
+                            $batchParams['visit_id'] = $visit->id;
+                        }
+                    @endphp
+                    <a href="{{ route('lab-results.create-batch', $batchParams) }}" 
                        class="inline-flex items-center px-4 py-2 bg-medical-blue text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-flask mr-2"></i>
                         Enter Results for All Tests

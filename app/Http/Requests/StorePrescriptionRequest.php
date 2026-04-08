@@ -14,10 +14,10 @@ class StorePrescriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'visit_id' => 'required|exists:visits,id',
+            'visit_id' => 'required|exists:tenant.visits,id',
             'notes' => 'nullable|string',
             'medicines' => 'required|array|min:1',
-            'medicines.*.medicine_id' => 'required|exists:medicines,id',
+            'medicines.*.medicine_id' => 'required|exists:tenant.medicines,id',
             'medicines.*.quantity' => 'required|integer|min:1',
             'medicines.*.dosage' => 'required|string',
             'medicines.*.frequency' => 'required|string',

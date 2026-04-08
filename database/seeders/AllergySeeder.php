@@ -47,7 +47,10 @@ class AllergySeeder extends Seeder
         ];
 
         foreach ($allergies as $allergy) {
-            Allergy::create($allergy);
+            Allergy::firstOrCreate(
+                ['name' => $allergy['name']],
+                $allergy
+            );
         }
     }
 }

@@ -25,7 +25,7 @@ class LabOrderController extends Controller
         if ($request->priority) {
             $query->where('priority', '=', $request->priority);
         }
-        
+    
         $orders = $query->latest()->paginate(15);
         return view('admin.lab.orders.index', compact('orders'));
     }

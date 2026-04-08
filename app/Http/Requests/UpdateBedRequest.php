@@ -15,7 +15,7 @@ class UpdateBedRequest extends FormRequest
     {
         return [
             'bed_number' => 'required|string|max:255',
-            'ward_id' => 'required|exists:wards,id',
+            'ward_id' => 'required|exists:tenant.wards,id',
             'bed_type' => 'required|in:general,private,icu,emergency',
             'daily_rate' => 'required|numeric|min:0',
             'status' => 'required|in:available,occupied,maintenance'

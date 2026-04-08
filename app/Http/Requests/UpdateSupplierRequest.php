@@ -16,7 +16,7 @@ class UpdateSupplierRequest extends FormRequest
         $supplier = $this->route('supplier');
         
         return [
-            'name' => 'required|string|max:255|unique:suppliers,name,' . $supplier->id,
+            'name' => 'required|string|max:255|unique:tenant.suppliers,name,' . $supplier->id,
             'contact_person' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',

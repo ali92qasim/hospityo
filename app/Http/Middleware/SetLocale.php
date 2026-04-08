@@ -26,8 +26,8 @@ class SetLocale
             $locale = $request->get('locale');
             Session::put('locale', $locale);
         }
-        // Check if user has a preferred locale
-        elseif ($request->user() && $request->user()->locale) {
+        // Check if user has a preferred locale (only when tenant is active)
+        elseif (\App\Models\Tenant::checkCurrent() && $request->user() && $request->user()->locale) {
             $locale = $request->user()->locale;
         }
         // Use default locale

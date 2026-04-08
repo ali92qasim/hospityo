@@ -14,10 +14,10 @@ class StoreLabOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
-            'lab_test_id' => 'required|exists:investigations,id',
-            'investigation_id' => 'nullable|exists:investigations,id', // Legacy support
+            'patient_id' => 'required|exists:tenant.patients,id',
+            'doctor_id' => 'required|exists:tenant.doctors,id',
+            'lab_test_id' => 'required|exists:tenant.investigations,id',
+            'investigation_id' => 'nullable|exists:tenant.investigations,id', // Legacy support
             'priority' => 'required|in:routine,urgent,stat',
             'clinical_notes' => 'nullable|string',
             'special_instructions' => 'nullable|string'

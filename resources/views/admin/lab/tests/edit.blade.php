@@ -81,9 +81,9 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Turnaround Time (hours)</label>
-                        <input type="number" name="turnaround_time" value="{{ old('turnaround_time', $labTest->turnaround_time) }}" 
-                               min="1"
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Turnaround Time</label>
+                        <input type="text" name="turnaround_time" value="{{ old('turnaround_time', $labTest->turnaround_time) }}" 
+                               placeholder="e.g. 24 hours, 2-3 days"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                     </div>
                 </div>

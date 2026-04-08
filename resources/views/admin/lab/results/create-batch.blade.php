@@ -29,7 +29,7 @@
                 <div class="flex items-center space-x-4 text-sm text-blue-700 mt-1">
                     <span><i class="fas fa-phone mr-1"></i>{{ $patient->phone }}</span>
                     <span><i class="fas fa-calendar mr-1"></i>{{ $patient->date_of_birth?->format('M d, Y') ?? 'N/A' }}</span>
-                    <span><i class="fas fa-clipboard-list mr-1"></i>{{ $visit->visit_no }}</span>
+                    <span><i class="fas fa-clipboard-list mr-1"></i>{{ $visit?->visit_no }}</span>
                 </div>
             </div>
             <div class="text-right">

@@ -8,11 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Ensures a valid, active tenant exists for the request.
- * Also prevents cross-tenant session abuse by validating
- * the session's tenant matches the current tenant.
- */
 class EnsureTenantActive
 {
     public function handle(Request $request, Closure $next): Response
@@ -24,15 +19,23 @@ class EnsureTenantActive
         }
 
         if ($tenant->status === 'suspended') {
-            abort(403, 'This hospital account has been suspended. Please contact support.');
+            return response()->view('errors.tenant-suspended', ['tenant' => $tenant], 403);
+        }
+
+        if ($tenant->status === 'provisioning') {
+            // Redirect to the provisioning status page on the main domain
+            return redirect(config('app.url') . '/register/' . $tenant->id . '/provisioning');
+        }
+
+        if ($tenant->status === 'failed') {
+            return response()->view('errors.tenant-failed', ['tenant' => $tenant], 500);
         }
 
         if ($tenant->status !== 'active') {
-            abort(503, 'This hospital account is being set up. Please try again shortly.');
+            return redirect(config('app.url'));
         }
 
-        // Cross-tenant session protection:
-        // If user is authenticated but session was created for a different tenant, log them out
+        // Cross-tenant session protection
         if (Auth::check()) {
             $sessionTenantId = $request->session()->get('tenant_id');
 
@@ -40,11 +43,9 @@ class EnsureTenantActive
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-
                 return redirect()->route('login');
             }
 
-            // Stamp the session with the current tenant ID
             if (! $sessionTenantId) {
                 $request->session()->put('tenant_id', $tenant->id);
             }

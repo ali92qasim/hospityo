@@ -14,7 +14,7 @@ class StoreVisitRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'required|exists:patients,id',
+            'patient_id' => 'required|exists:tenant.patients,id',
             'visit_type' => 'required|in:opd,ipd,emergency',
             'visit_datetime' => 'required|date',
         ];

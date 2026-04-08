@@ -14,8 +14,8 @@ class UpdateVisitRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
+            'patient_id' => 'required|exists:tenant.patients,id',
+            'doctor_id' => 'required|exists:tenant.doctors,id',
             'visit_type' => 'required|in:opd,ipd,emergency',
             'visit_datetime' => 'required|date',
             'status' => 'required|string',

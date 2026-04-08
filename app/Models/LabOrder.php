@@ -17,7 +17,7 @@ class LabOrder extends Model
     protected $table = 'investigation_orders'; // Using renamed table
 
     protected $fillable = [
-        'order_number', 'patient_id', 'visit_id', 'doctor_id', 'lab_test_id', 'investigation_id', 'quantity',
+        'order_number', 'patient_id', 'visit_id', 'doctor_id', 'investigation_id', 'quantity',
         'priority', 'status', 'test_location', 'ordered_at', 'sample_collected_at', 'completed_at',
         'clinical_notes', 'special_instructions'
     ];
@@ -75,12 +75,12 @@ class LabOrder extends Model
 
     public function sample(): HasOne
     {
-        return $this->hasOne(LabSample::class);
+        return $this->hasOne(LabSample::class, 'investigation_order_id');
     }
 
     public function result(): HasOne
     {
-        return $this->hasOne(LabResult::class);
+        return $this->hasOne(LabResult::class, 'investigation_order_id');
     }
 
     public function scopeByStatus(Builder $query, string $status): Builder

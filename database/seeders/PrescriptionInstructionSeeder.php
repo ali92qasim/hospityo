@@ -4,15 +4,12 @@ namespace Database\Seeders;
 
 use App\Models\PrescriptionInstruction;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class PrescriptionInstructionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Truncate table before seeding
-        DB::table('prescription_instructions')->truncate();
-
+        // Prepare instructions data
         $instructions = [
             // FREQUENCY
             ['instruction' => 'روزانہ ایک بار استعمال کریں', 'category' => 'frequency', 'is_active' => true],
@@ -59,8 +56,9 @@ class PrescriptionInstructionSeeder extends Seeder
             ['instruction' => 'نس میں لگائیں', 'category' => 'injection', 'is_active' => true],
         ];
 
-        foreach ($instructions as $instruction) {
-            PrescriptionInstruction::create($instruction);
+        // Insert instructions only if table is empty (idempotent for retries)
+        if (PrescriptionInstruction::count() === 0) {
+            PrescriptionInstruction::insert($instructions);
         }
     }
 }

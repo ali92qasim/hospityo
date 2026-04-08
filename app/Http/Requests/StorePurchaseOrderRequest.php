@@ -14,12 +14,12 @@ class StorePurchaseOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'supplier_id' => 'required|exists:suppliers,id',
+            'supplier_id' => 'required|exists:tenant.suppliers,id',
             'order_date' => 'required|date',
             'expected_delivery' => 'nullable|date|after:order_date',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.medicine_id' => 'required|exists:medicines,id',
+            'items.*.medicine_id' => 'required|exists:tenant.medicines,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0'
         ];

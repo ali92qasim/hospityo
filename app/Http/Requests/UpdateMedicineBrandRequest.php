@@ -15,7 +15,7 @@ class UpdateMedicineBrandRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique('medicine_brands', 'name')->ignore($this->medicine_brand)],
+            'name' => ['required', 'string', 'max:255', Rule::unique('tenant.medicine_brands', 'name')->ignore($this->medicine_brand)],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ];

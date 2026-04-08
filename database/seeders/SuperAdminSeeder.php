@@ -12,7 +12,7 @@ class SuperAdminSeeder extends Seeder
         SuperAdmin::firstOrCreate(
             ['email' => 'superadmin@hospityo.com'],
             [
-                'name'     => 'Super Admin',
+                'name'     => 'Qasim Ali',
                 'password' => bcrypt('password'),
             ]
         );

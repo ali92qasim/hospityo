@@ -15,7 +15,7 @@ class StoreMedicineCategoryRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50', 'unique:medicine_categories,code'],
+            'code' => ['required', 'string', 'max:50', 'unique:tenant.medicine_categories,code'],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ];

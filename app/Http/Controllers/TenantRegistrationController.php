@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RegisterTenantRequest;
+use App\Models\Tenant;
 use App\Services\TenantProvisioningService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class TenantRegistrationController extends Controller
@@ -13,20 +16,28 @@ class TenantRegistrationController extends Controller
         protected TenantProvisioningService $provisioning,
     ) {}
 
-    /**
-     * Show the hospital registration form.
-     */
     public function create(): View
     {
         $plans = \App\Models\Plan::active()->orderBy('sort_order')->get();
         return view('tenant.register', compact('plans'));
     }
 
-    /**
-     * Handle hospital registration and kick off provisioning.
-     */
     public function store(RegisterTenantRequest $request): RedirectResponse
     {
+        $slug = $request->slug ?: Str::slug($request->hospital_name);
+        $existing = Tenant::where('slug', $slug)->first();
+
+        if ($existing) {
+            if (in_array($existing->status, ['provisioning', 'active'])) {
+                return redirect()->route('tenant.provisioning', $existing);
+            }
+            if ($existing->status === 'failed') {
+                try { $existing->delete(); } catch (\Throwable $e) {
+                    Log::warning('[Registration] Cleanup failed', ['slug' => $slug]);
+                }
+            }
+        }
+
         try {
             $tenant = $this->provisioning->provision(
                 data: [
@@ -39,33 +50,28 @@ class TenantRegistrationController extends Controller
                     'admin_password' => $request->admin_password,
                     'plan'           => $request->plan ?? 'starter',
                 ],
-                async: false,
+                async: true, // Background queue — returns instantly
             );
 
-            return redirect()
-                ->route('tenant.provisioning', $tenant)
-                ->with('success', 'Your hospital has been set up successfully.');
+            return redirect()->route('tenant.provisioning', $tenant);
 
         } catch (\InvalidArgumentException $e) {
             return back()->withErrors(['slug' => $e->getMessage()])->withInput();
+        } catch (\Throwable $e) {
+            Log::error('[Registration] Provisioning failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Something went wrong. Please try again.')->withInput();
         }
     }
 
-    /**
-     * Show provisioning status page (polls until active).
-     */
-    public function provisioning(\App\Models\Tenant $tenant): View
+    public function provisioning(Tenant $tenant): View
     {
         return view('tenant.provisioning', compact('tenant'));
     }
 
-    /**
-     * API endpoint for polling provisioning status.
-     */
-    public function status(\App\Models\Tenant $tenant)
+    public function status(Tenant $tenant)
     {
         return response()->json([
-            'status' => $tenant->status,
+            'status' => $tenant->fresh()->status,
             'domain' => $tenant->domain,
             'url'    => 'http://' . $tenant->domain . '/login',
         ]);

@@ -145,14 +145,18 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
      */
     protected function seedAdminUser(): void
     {
-        $user = User::create([
-            'name'              => $this->adminData['name'],
-            'email'             => $this->adminData['email'],
-            'password'          => Hash::make($this->adminData['password']),
-            'email_verified_at' => now(),
-        ]);
+        $user = User::firstOrCreate(
+            ['email' => $this->adminData['email']],
+            [
+                'name'              => $this->adminData['name'],
+                'password'          => Hash::make($this->adminData['password']),
+                'email_verified_at' => now(),
+            ]
+        );
 
-        $user->assignRole('Super Admin');
+        if (! $user->hasRole('Super Admin')) {
+            $user->assignRole('Super Admin');
+        }
     }
 
     /**

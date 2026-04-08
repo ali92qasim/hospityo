@@ -35,30 +35,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             // Core System
             RolePermissionSeeder::class,
-            UserSeeder::class,
 
             // Hospital Structure
             DepartmentSeeder::class,
-            DoctorSeeder::class,
-            WardSeeder::class,
-
-            // Patients
-            PatientSeeder::class,
-
-            // Pharmacy
-            MedicineCategorySeeder::class,
-            MedicineBrandSeeder::class,
-            UnitSeeder::class,
-            MedicineSeeder::class,
-            PrescriptionInstructionSeeder::class,
-            SupplierSeeder::class,
 
             // Diagnostics
             InvestigationSeeder::class,
             LabTestParameterSeeder::class,
-
-            // Billing
-            ServiceSeeder::class,
 
             // Medical Data
             AllergySeeder::class,

@@ -16,7 +16,7 @@ class RegisterTenantRequest extends FormRequest
     {
         return [
             'hospital_name'  => ['required', 'string', 'max:255'],
-            'slug'           => ['nullable', 'string', 'max:63', 'regex:/^[a-z0-9][a-z0-9\-]*[a-z0-9]$/', 'unique:tenants,slug'],
+            'slug'           => ['nullable', 'string', 'max:63', 'regex:/^[a-z0-9][a-z0-9\-]*[a-z0-9]$/'],
             'email'          => ['required', 'email', 'max:255'],
             'phone'          => ['nullable', 'string', 'max:20'],
             'admin_name'     => ['required', 'string', 'max:255'],

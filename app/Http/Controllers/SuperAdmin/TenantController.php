@@ -137,11 +137,14 @@ class TenantController extends Controller
         $defaults = [
             'users' => 0, 'patients' => 0, 'doctors' => 0,
             'visits' => 0, 'appointments' => 0, 'bills' => 0,
-            'db_size' => '0 KB',
+            'db_size' => 'N/A',
         ];
 
         try {
-            if (! file_exists($tenant->database)) {
+            $driver = config('database.connections.tenant.driver', 'sqlite');
+
+            // For SQLite, check if file exists
+            if ($driver === 'sqlite' && ! file_exists($tenant->database)) {
                 return $defaults;
             }
 
@@ -154,7 +157,9 @@ class TenantController extends Controller
                 'visits'       => DB::connection('tenant')->table('visits')->count(),
                 'appointments' => DB::connection('tenant')->table('appointments')->count(),
                 'bills'        => DB::connection('tenant')->table('bills')->count(),
-                'db_size'      => $this->formatBytes(filesize($tenant->database)),
+                'db_size'      => $driver === 'sqlite' && file_exists($tenant->database)
+                    ? $this->formatBytes(filesize($tenant->database))
+                    : 'N/A',
             ];
 
             Tenant::forgetCurrent();

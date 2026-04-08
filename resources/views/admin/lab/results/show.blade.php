@@ -427,21 +427,21 @@
                             <i class="fas fa-hashtag text-emerald-600 mr-3"></i>
                             <div>
                                 <span class="text-xs text-gray-600 block">Visit Number</span>
-                                <span class="font-mono text-gray-900">{{ $labResult->labOrder->visit->visit_no }}</span>
+                                <span class="font-mono text-gray-900">{{ $labResult->labOrder->visit?->visit_no }}</span>
                             </div>
                         </div>
                         <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                             <i class="fas fa-hospital text-emerald-600 mr-3"></i>
                             <div>
                                 <span class="text-xs text-gray-600 block">Visit Type</span>
-                                <span class="uppercase text-gray-900 font-medium">{{ $labResult->labOrder->visit->visit_type }}</span>
+                                <span class="uppercase text-gray-900 font-medium">{{ $labResult->labOrder->visit?->visit_type }}</span>
                             </div>
                         </div>
                         <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                             <i class="fas fa-calendar text-emerald-600 mr-3"></i>
                             <div>
                                 <span class="text-xs text-gray-600 block">Visit Date</span>
-                                <span class="text-gray-900">{{ $labResult->labOrder->visit->visit_datetime->format('M d, Y H:i') }}</span>
+                                <span class="text-gray-900">{{ $labResult->labOrder->visit?->visit_datetime->format('M d, Y H:i') }}</span>
                             </div>
                         </div>
                         @if($labResult->labOrder->doctor)

@@ -51,7 +51,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($test->sample_type) }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">₨{{ number_format($test->price, 0) }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $test->turnaround_time }}h</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ $test->turnaround_time ?? '-' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 text-xs rounded-full {{ $test->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                             {{ $test->is_active ? 'Active' : 'Inactive' }}

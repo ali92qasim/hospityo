@@ -84,7 +84,14 @@ class Tenant extends BaseTenant
 
     public static function databaseNameFor(string $slug): string
     {
-        return database_path('tenants/tenant_' . $slug . '.sqlite');
+        $driver = config('database.connections.tenant.driver', 'sqlite');
+
+        if ($driver === 'sqlite') {
+            return database_path('tenants/tenant_' . $slug . '.sqlite');
+        }
+
+        // MySQL/PgSQL: just a database name
+        return 'tenant_' . $slug;
     }
 
     public static function domainFor(string $slug): string
