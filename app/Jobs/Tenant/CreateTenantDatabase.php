@@ -55,13 +55,17 @@ class CreateTenantDatabase implements ShouldQueue, NotTenantAware
         }
     }
 
-    protected function createMysqlDatabase(string $database): void
-    {
-        // Use the landlord connection to create the new database
-        DB::connection('landlord')->statement(
-            "CREATE DATABASE IF NOT EXISTS `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-        );
-    }
+    /**
+     * commented until VPS/Clpud hosting not acquired
+     * 
+     */
+    // protected function createMysqlDatabase(string $database): void
+    // {
+    //     // Use the landlord connection to create the new database
+    //     DB::connection('landlord')->statement(
+    //         "CREATE DATABASE IF NOT EXISTS `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    //     );
+    // }
 
     public function failed(\Throwable $e): void
     {
