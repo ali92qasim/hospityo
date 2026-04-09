@@ -17,6 +17,7 @@ class CreatePrescriptionRequest extends FormRequest
             'medicines' => 'required|array|min:1',
             'medicines.*.medicine_id' => 'required|exists:tenant.medicines,id',
             'medicines.*.instruction_id' => 'nullable|exists:tenant.prescription_instructions,id',
+            'medicines.*.quantity' => 'nullable|integer|min:1|max:999',
             'notes' => 'nullable|string|max:1000'
         ];
     }

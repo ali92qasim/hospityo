@@ -46,7 +46,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <select name="category" id="category-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                             <option value="">Select Category</option>
                             <option value="hematology" {{ old('category', $labTest->category) == 'hematology' ? 'selected' : '' }}>Hematology</option>
                             <option value="biochemistry" {{ old('category', $labTest->category) == 'biochemistry' ? 'selected' : '' }}>Biochemistry</option>
@@ -59,7 +59,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Sample Type</label>
-                        <select name="sample_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <select name="sample_type" id="sample-type-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                             <option value="">Select Sample Type</option>
                             <option value="blood" {{ old('sample_type', $labTest->sample_type) == 'blood' ? 'selected' : '' }}>Blood</option>
                             <option value="urine" {{ old('sample_type', $labTest->sample_type) == 'urine' ? 'selected' : '' }}>Urine</option>
@@ -201,4 +201,6 @@ function removeParameter(button) {
     button.closest('.parameter-row').remove();
 }
 </script>
+
+@vite(['resources/js/investigations-form.js'])
 @endsection

@@ -779,21 +779,21 @@
                             <form action="{{ route('visits.prescription', $visit) }}" method="POST" id="prescription-form">
                                 @csrf
                                 <div id="prescription-items">
-                                    <div class="prescription-item border border-gray-200 rounded-lg p-4 mb-4">
-                                        <div class="grid grid-cols-1 gap-4">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">Medicine</label>
-                                                <select name="medicines[0][medicine_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                                    <div class="prescription-item border border-gray-200 rounded-lg p-3 mb-3">
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex-[2] min-w-0">
+                                                <label class="block text-xs font-medium text-gray-500 mb-1">Medicine</label>
+                                                <select name="medicines[0][medicine_id]" class="medicine-select w-full" required>
                                                     <option value="">Select Medicine</option>
                                                     @foreach($medicines ?? [] as $medicine)
-                                                        <option value="{{ $medicine->id }}">{{ $medicine->name }} ({{ $medicine->strength }}) - Stock: {{ $medicine->stock_quantity }}</option>
+                                                        <option value="{{ $medicine->id }}">{{ $medicine->name }}{{ $medicine->strength ? ' ('.$medicine->strength.')' : '' }}</option>
                                                     @endforeach
                                                 </select>
                                             </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">Instruction</label>
-                                                <select name="medicines[0][instruction_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
-                                                    <option value="">Select Instruction (Optional)</option>
+                                            <div class="flex-[2] min-w-0">
+                                                <label class="block text-xs font-medium text-gray-500 mb-1">Instruction</label>
+                                                <select name="medicines[0][instruction_id]" class="instruction-select w-full">
+                                                    <option value="">Select Instruction</option>
                                                     @php
                                                         $groupedInstructions = \App\Models\PrescriptionInstruction::active()
                                                             ->orderBy('category')
@@ -827,14 +827,21 @@
                                                     @endif
                                                 </select>
                                             </div>
+                                            <div class="w-20 flex-shrink-0">
+                                                <label class="block text-xs font-medium text-gray-500 mb-1">Qty</label>
+                                                <input type="number" name="medicines[0][quantity]" value="1" min="1" max="999"
+                                                       class="w-full px-2 py-2 text-sm text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
+                                            </div>
+                                            <div class="pt-5 flex-shrink-0">
+                                                <button type="button" class="remove-item-btn p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Remove">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <button type="button" onclick="removeItem(this)" class="mt-3 text-red-600 hover:text-red-800">
-                                            <i class="fas fa-trash mr-1"></i>Remove Medicine
-                                        </button>
                                     </div>
                                 </div>
                                 
-                                <button type="button" onclick="addItem()" class="mb-4 text-medical-blue hover:text-blue-700">
+                                <button type="button" onclick="addPrescriptionItem()" class="mb-4 text-medical-blue hover:text-blue-700">
                                     <i class="fas fa-plus mr-1"></i>Add Another Medicine
                                 </button>
                                 
@@ -1168,36 +1175,10 @@ function toggleAccordion(section) {
 }
 
 function addItem() {
-    const container = document.getElementById('prescription-items');
-    const firstItem = container.querySelector('.prescription-item');
-    const medicineSelect = firstItem.querySelector('select[name*="medicine_id"]');
-    const instructionSelect = firstItem.querySelector('select[name*="instruction_id"]');
-    const medicineOptions = medicineSelect.innerHTML;
-    const instructionOptions = instructionSelect.innerHTML;
-    
-    const newItem = document.createElement('div');
-    newItem.className = 'prescription-item border border-gray-200 rounded-lg p-4 mb-4';
-    newItem.innerHTML = `
-        <div class="grid grid-cols-1 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Medicine</label>
-                <select name="medicines[${itemIndex}][medicine_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                    ${medicineOptions}
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Instruction</label>
-                <select name="medicines[${itemIndex}][instruction_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
-                    ${instructionOptions}
-                </select>
-            </div>
-        </div>
-        <button type="button" onclick="removeItem(this)" class="mt-3 text-red-600 hover:text-red-800">
-            <i class="fas fa-trash mr-1"></i>Remove Medicine
-        </button>
-    `;
-    container.appendChild(newItem);
-    itemIndex++;
+    // Handled by prescription-form.js
+    if (typeof window.addPrescriptionItem === 'function') {
+        window.addPrescriptionItem();
+    }
 }
 
 function addTestRow() {
@@ -1291,6 +1272,7 @@ function resetForm() {
 }
 
 function removeItem(button) {
+    // Handled by prescription-form.js via delegated event
     const items = document.querySelectorAll('.prescription-item');
     if (items.length > 1) {
         button.closest('.prescription-item').remove();
@@ -1336,5 +1318,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-@vite(['resources/css/visits-form.css', 'resources/js/visits-form.js'])
+@vite(['resources/css/visits-form.css', 'resources/js/visits-form.js', 'resources/js/prescription-form.js'])
 @endsection

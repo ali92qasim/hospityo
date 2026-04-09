@@ -81,4 +81,6 @@
         </div>
     </form>
 </div>
+
+@vite(['resources/js/wards-form.js'])
 @endsection

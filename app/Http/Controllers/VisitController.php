@@ -155,9 +155,11 @@ class VisitController extends Controller
         $visit->load(['patient', 'doctor.department', 'vitalSigns', 'allVitalSigns.user', 'consultation.allergies', 'testOrders', 'labOrders.labTest', 'labOrders.result', 'admission.bed.ward', 'triage', 'prescriptions.items.medicine']);
         $doctors = Doctor::where('status', 'active')->get();
         $medicines = Medicine::where('status', 'active')
+            ->orderBy('name')
             ->get()
             ->filter(function($medicine) {
-                return $medicine->getCurrentStock() > 0;
+                // Show medicine if stock tracking is disabled OR if it has stock
+                return !$medicine->manage_stock || $medicine->getCurrentStock() > 0;
             });
         $investigations = Investigation::where('is_active', true)->orderBy('type')->orderBy('name')->get();
         $allergies = \App\Models\Allergy::orderBy('category')->orderBy('name')->get();
@@ -395,13 +397,16 @@ class VisitController extends Controller
 
             foreach ($request->medicines as $medicineData) {
                 $medicine = Medicine::find($medicineData['medicine_id']);
+                $quantity = (int) ($medicineData['quantity'] ?? 1);
 
-                // Check stock availability
-                $currentStock = $medicine->getCurrentStock();
-                if ($currentStock < 1) {
-                    return back()->withErrors([
-                        'stock' => "Insufficient stock for {$medicine->name}. Available: {$currentStock}"
-                    ]);
+                // Check stock availability if stock tracking is enabled
+                if ($medicine->manage_stock) {
+                    $currentStock = $medicine->getCurrentStock();
+                    if ($currentStock < $quantity) {
+                        return back()->withErrors([
+                            'stock' => "Insufficient stock for {$medicine->name}. Available: {$currentStock}, Requested: {$quantity}"
+                        ])->withInput();
+                    }
                 }
 
                 // Get unit price from latest inventory transaction or default to 0
@@ -411,18 +416,18 @@ class VisitController extends Controller
                     ->first();
                 
                 $unitPrice = $latestTransaction ? $latestTransaction->unit_cost : 0;
-                $totalPrice = $unitPrice * 1; // Quantity is always 1 now
+                $totalPrice = $unitPrice * $quantity;
 
                 $prescription->items()->create([
                     'medicine_id' => $medicineData['medicine_id'],
                     'prescription_instruction_id' => $medicineData['instruction_id'] ?? null,
-                    'quantity' => 1, // Default quantity
-                    'dosage' => 'As directed', // Default dosage
-                    'frequency' => 'As directed', // Default value
-                    'duration' => 'As prescribed', // Default value
-                    'instructions' => null, // Instructions now come from PrescriptionInstruction
+                    'quantity' => $quantity,
+                    'dosage' => null,
+                    'frequency' => null,
+                    'duration' => null,
+                    'instructions' => null,
                     'unit_price' => $unitPrice,
-                    'total_price' => $totalPrice
+                    'total_price' => $totalPrice,
                 ]);
             }
 

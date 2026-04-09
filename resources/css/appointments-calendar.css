@@ -119,14 +119,39 @@
     background: #f3f4f6 !important;
 }
 
-/* Calendar event hover effects */
+/* Calendar event styling — blue pill, white text */
 .fc-event {
     cursor: pointer !important;
-    transition: all 0.2s ease;
+    background-color: #0066CC !important;
+    border-color: #0066CC !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 .fc-event:hover {
+    background-color: #0052a3 !important;
+    border-color: #0052a3 !important;
+    box-shadow: 0 3px 10px rgba(0, 102, 204, 0.35);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+.fc-event-pill {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+/* Remove FullCalendar's default inner dot/bullet */
+.fc-daygrid-event-dot {
+    display: none !important;
+}
+/* Remove default fc time text since we show only name */
+.fc-event-time {
+    display: none !important;
 }
 
 /* Calendar date hover */

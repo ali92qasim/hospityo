@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Route model binding for backward compatibility
         \Route::bind('labOrder', function ($value) {
-            return \App\Models\InvestigationOrder::findOrFail($value);
+            return \App\Models\LabOrder::findOrFail($value);
         });
         
         \Route::bind('lab_test', function ($value) {

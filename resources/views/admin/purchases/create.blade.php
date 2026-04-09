@@ -22,7 +22,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Supplier *</label>
-                    <select name="supplier_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                    <select name="supplier_id" id="supplier-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                         <option value="">Select Supplier</option>
                         @foreach($suppliers as $supplier)
                             <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
@@ -35,7 +35,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Order Date *</label>
-                    <input type="date" name="order_date" value="{{ date('Y-m-d') }}" 
+                    <input type="text" name="order_date" id="order-date" value="{{ date('Y-m-d') }}" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                     @error('order_date')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -44,7 +44,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Expected Delivery</label>
-                    <input type="date" name="expected_delivery" 
+                    <input type="text" name="expected_delivery" id="expected-delivery"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                     @error('expected_delivery')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -74,7 +74,7 @@
                         <tbody id="items-table">
                             <tr class="item-row">
                                 <td class="px-4 py-3">
-                                    <select name="items[0][medicine_id]" class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required>
+                                    <select name="items[0][medicine_id]" class="medicine-select w-full px-2 py-1 border border-gray-300 rounded text-sm" required>
                                         <option value="">Select Medicine</option>
                                         @foreach($medicines as $medicine)
                                             <option value="{{ $medicine->id }}">{{ $medicine->name }} ({{ $medicine->generic_name }})</option>
@@ -82,16 +82,16 @@
                                     </select>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <input type="number" name="items[0][quantity]" min="1" class="w-full px-2 py-1 border border-gray-300 rounded text-sm quantity-input" required onchange="calculateTotal(this)">
+                                    <input type="number" name="items[0][quantity]" min="1" class="w-full px-2 py-1 border border-gray-300 rounded text-sm quantity-input" required>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <input type="number" name="items[0][unit_price]" step="0.01" min="0" class="w-full px-2 py-1 border border-gray-300 rounded text-sm price-input" required onchange="calculateTotal(this)">
+                                    <input type="number" name="items[0][unit_price]" step="0.01" min="0" class="w-full px-2 py-1 border border-gray-300 rounded text-sm price-input" required>
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="total-display">0.00</span>
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    <button type="button" onclick="removeItem(this)" class="text-red-600 hover:text-red-800">
+                                    <button type="button" class="remove-item-btn text-red-600 hover:text-red-800">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
@@ -120,54 +120,5 @@
     </div>
 </div>
 
-<script>
-let itemIndex = 1;
-
-function addItem() {
-    const tbody = document.getElementById('items-table');
-    const newRow = document.createElement('tr');
-    newRow.className = 'item-row';
-    newRow.innerHTML = `
-        <td class="px-4 py-3">
-            <select name="items[${itemIndex}][medicine_id]" class="w-full px-2 py-1 border border-gray-300 rounded text-sm" required>
-                <option value="">Select Medicine</option>
-                @foreach($medicines as $medicine)
-                    <option value="{{ $medicine->id }}">{{ $medicine->name }} ({{ $medicine->generic_name }})</option>
-                @endforeach
-            </select>
-        </td>
-        <td class="px-4 py-3">
-            <input type="number" name="items[${itemIndex}][quantity]" min="1" class="w-full px-2 py-1 border border-gray-300 rounded text-sm quantity-input" required onchange="calculateTotal(this)">
-        </td>
-        <td class="px-4 py-3">
-            <input type="number" name="items[${itemIndex}][unit_price]" step="0.01" min="0" class="w-full px-2 py-1 border border-gray-300 rounded text-sm price-input" required onchange="calculateTotal(this)">
-        </td>
-        <td class="px-4 py-3">
-            <span class="total-display">0.00</span>
-        </td>
-        <td class="px-4 py-3 text-center">
-            <button type="button" onclick="removeItem(this)" class="text-red-600 hover:text-red-800">
-                <i class="fas fa-trash"></i>
-            </button>
-        </td>
-    `;
-    tbody.appendChild(newRow);
-    itemIndex++;
-}
-
-function removeItem(button) {
-    const rows = document.querySelectorAll('.item-row');
-    if (rows.length > 1) {
-        button.closest('tr').remove();
-    }
-}
-
-function calculateTotal(input) {
-    const row = input.closest('tr');
-    const quantity = row.querySelector('.quantity-input').value || 0;
-    const price = row.querySelector('.price-input').value || 0;
-    const total = quantity * price;
-    row.querySelector('.total-display').textContent = total.toFixed(2);
-}
-</script>
+@vite(['resources/js/purchases-form.js'])
 @endsection

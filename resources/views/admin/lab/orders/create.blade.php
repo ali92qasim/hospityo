@@ -31,7 +31,7 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Investigation</label>
-                <select name="investigation_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                <select name="investigation_id" id="investigation_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="">Select Investigation</option>
                     @foreach($investigations as $investigation)
                         <option value="{{ $investigation->id }}">{{ $investigation->name }} - ₨{{ number_format($investigation->price, 0) }}</option>
@@ -41,7 +41,7 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                <select name="priority" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                <select name="priority" id="priority_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="routine">Routine</option>
                     <option value="urgent">Urgent</option>
                     <option value="stat">STAT</option>
@@ -67,91 +67,6 @@
         </div>
     </form>
 </div>
-@endsection
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<style>
-.select2-container {
-    width: 100% !important;
-    box-sizing: border-box;
-}
-.select2-container--default .select2-selection--single {
-    height: 42px;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    box-sizing: border-box;
-    overflow: hidden;
-}
-.select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 40px;
-    padding-left: 12px;
-    padding-right: 50px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.select2-container--default .select2-selection--single .select2-selection__clear {
-    position: absolute;
-    right: 28px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 16px;
-    line-height: 1;
-    width: 16px;
-    height: 16px;
-    text-align: center;
-}
-.select2-container--default .select2-selection--single .select2-selection__arrow {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-}
-.select2-container--default .select2-selection--single .select2-selection__arrow b {
-    border-color: #6b7280 transparent transparent transparent;
-    border-style: solid;
-    border-width: 5px 4px 0 4px;
-    height: 0;
-    left: 50%;
-    margin-left: -4px;
-    margin-top: -2px;
-    position: absolute;
-    top: 50%;
-    width: 0;
-}
-.select2-dropdown {
-    border-radius: 0.5rem;
-    border: 1px solid #d1d5db;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-.select2-container--default .select2-results__option--highlighted[aria-selected] {
-    background-color: #0066CC;
-}
-.select2-container--default.select2-container--focus .select2-selection--single {
-    border-color: #0066CC;
-    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
-    outline: none;
-}
-.select2-container * {
-    box-sizing: border-box;
-}
-</style>
-<script>
-$(document).ready(function() {
-    $('#patient_id').select2({
-        placeholder: 'Select Patient',
-        allowClear: true,
-        width: '100%'
-    });
-    
-    $('#doctor_id').select2({
-        placeholder: 'Select Doctor',
-        allowClear: true,
-        width: '100%'
-    });
-});
-</script>
+@vite(['resources/js/investigations-form.js'])
+@endsection

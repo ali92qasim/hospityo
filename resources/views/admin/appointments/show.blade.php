@@ -114,11 +114,11 @@
                             </div>
                             <div class="flex justify-between py-2 border-b border-gray-100">
                                 <span class="text-gray-600">Date:</span>
-                                <span class="font-medium">{{ $appointment->appointment_date->format('M d, Y') }}</span>
+                                <span class="font-medium">{{ $appointment->appointment_datetime?->format('M d, Y') ?? 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between py-2 border-b border-gray-100">
                                 <span class="text-gray-600">Time:</span>
-                                <span class="font-medium">{{ $appointment->appointment_time->format('h:i A') }}</span>
+                                <span class="font-medium">{{ $appointment->appointment_datetime?->format('h:i A') ?? 'N/A' }}</span>
                             </div>
                         </div>
                         <div class="space-y-4">

@@ -107,9 +107,6 @@ class PurchaseController extends Controller
                     'notes' => 'Purchase order received',
                     'created_by' => auth()->id()
                 ]);
-
-                // Update medicine stock
-                $item->medicine->increment('stock_quantity', $item->quantity);
             }
 
             $purchase->update(['status' => 'received']);

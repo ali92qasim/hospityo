@@ -280,7 +280,7 @@
                         <div class="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg text-center shadow-md">
                                 <div class="text-2xl font-bold">{{ $totalParams }}</div>
-                                <div class="text-sm opacity-90">Total Tests</div>
+                                <div class="text-sm opacity-90">Total Parameters</div>
                             </div>
                             <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg text-center shadow-md">
                                 <div class="text-2xl font-bold">{{ $normalParams }}</div>

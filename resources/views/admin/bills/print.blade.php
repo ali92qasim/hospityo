@@ -326,25 +326,7 @@
                 @endif
             </table>
         </div>
-
-        <!-- Payment History -->
-        @if($bill->payments->count() > 0)
-        <div class="payment-history">
-            <h3>Payment History</h3>
-            @foreach($bill->payments as $payment)
-            <div class="payment-item">
-                <p><strong>₨{{ number_format($payment->amount, 2) }}</strong> - {{ $payment->payment_date->format('M d, Y') }}</p>
-                <p>Method: {{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
-                @if($payment->reference_number)
-                    | Ref: {{ $payment->reference_number }}
-                @endif
-                </p>
-                <p>Received by: {{ $payment->receivedBy->name }}</p>
-            </div>
-            @endforeach
-        </div>
-        @endif
-
+        
         <!-- Notes -->
         @if($bill->notes)
         <div class="notes">

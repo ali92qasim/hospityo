@@ -21,7 +21,7 @@ class PermissionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|unique:permissions,name'
+            'name' => 'required|unique:tenant.permissions,name'
         ]);
 
         Permission::create(['name' => $request->name]);
@@ -37,7 +37,7 @@ class PermissionController extends Controller
     public function update(Request $request, Permission $permission)
     {
         $request->validate([
-            'name' => 'required|unique:permissions,name,' . $permission->id
+            'name' => 'required|unique:tenant.permissions,name,' . $permission->id
         ]);
 
         $permission->update(['name' => $request->name]);

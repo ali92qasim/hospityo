@@ -33,7 +33,7 @@ class AppointmentController extends Controller
     {
         Appointment::create($request->validated());
 
-        if ($request->expectsJson()) {
+        if ($request->ajax() || $request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Appointment created successfully.']);
         }
 
@@ -41,9 +41,14 @@ class AppointmentController extends Controller
             ->with('success', 'Appointment created successfully.');
     }
 
-    public function show(Appointment $appointment): View
+    public function show(Request $request, Appointment $appointment): View|JsonResponse
     {
         $appointment->load(['patient', 'doctor']);
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json($appointment);
+        }
+
         return view('admin.appointments.show', compact('appointment'));
     }
 
@@ -58,7 +63,7 @@ class AppointmentController extends Controller
     {
         $appointment->update($request->validated());
 
-        if ($request->expectsJson()) {
+        if ($request->ajax() || $request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Appointment updated successfully.']);
         }
 

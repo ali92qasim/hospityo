@@ -7,95 +7,98 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Arial', sans-serif; font-size: 8.5pt; line-height: 1.25; color: #000; background: white; }
-        .container { max-width: 210mm; height: 287mm; margin: 0 auto; padding: 4mm 8mm; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Header */
-        .header { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: start; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 5px; }
+        /* ── Page: exactly 960px = 10 inches ── */
+        .page { width: 750px; height: 960px; margin: 0 auto; padding: 8px 12px; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* ── Header: 75px ── */
+        .header { height: 75px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: start; border-bottom: 2px solid #000; padding-bottom: 4px; }
         .hospital-info { text-align: left; }
         .logo { display: flex; justify-content: center; align-items: center; }
-        .logo img { max-width: 60px; max-height: 60px; object-fit: contain; }
+        .logo img { max-width: 70px; max-height: 70px; object-fit: contain; }
         .doctor-info { text-align: right; }
-        .hospital-name { font-size: 11pt; font-weight: bold; color: #1e40af; margin-bottom: 1px; }
-        .hospital-contact { font-size: 7.5pt; color: #6b7280; line-height: 1.2; }
-        .doctor-header-name { font-size: 11pt; font-weight: bold; color: #1e40af; margin-bottom: 1px; }
-        .doctor-credentials { font-size: 8pt; color: #4b5563; }
-        .doctor-header-specialization { font-size: 7.5pt; color: #6b7280; }
+        .hospital-name { font-size: 12pt; font-weight: bold; color: #1e40af; }
+        .hospital-contact { font-size: 9pt; color: #6b7280; line-height: 1.2; }
+        .doctor-header-name { font-size: 12pt; font-weight: bold; color: #1e40af; }
+        .doctor-credentials { font-size: 9pt; color: #4b5563; }
+        .doctor-header-specialization { font-size: 9pt; color: #6b7280; }
 
-        /* Patient Info Bar */
-        .patient-info-bar { background: #f3f4f6; padding: 4px 8px; border-radius: 3px; margin-bottom: 5px; border: 1px solid #d1d5db; }
+        /* ── Patient Info: 45px ── */
+        .patient-info-bar { height: 45px; background: #f3f4f6; padding: 4px 8px; border-radius: 3px; margin: 5px 0; border: 1px solid #d1d5db; overflow: hidden; }
         .patient-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
-        .info-item { font-size: 8pt; }
-        .info-label { font-weight: 600; color: #374151; display: inline-block; min-width: 65px; }
-        .info-value { color: #000; }
+        .info-item { font-size: 9pt; }
+        .info-label { font-weight: 600; color: #374151; display: inline-block; min-width: 62px; }
 
-        /* Main Content — fills remaining page */
-        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 4px; flex: 1; min-height: 0; }
+        /* ── Content Grid: 720px (flex: 1 fills remaining) ── */
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1; margin: 4px 0; min-height: 0; }
 
-        /* Sections */
-        .prescription-section { border: 1px solid #d1d5db; border-radius: 3px; padding: 5px 6px; display: flex; flex-direction: column; min-height: 0; }
-        .right-column { display: flex; flex-direction: column; min-height: 0; }
-        .diagnosis-section, .issues-section, .tests-section, .history-section { border: 1px solid #d1d5db; border-radius: 3px; padding: 4px 6px; margin-bottom: 4px; flex: 1; min-height: 0; }
-        .instructions-section { border: 1px solid #d1d5db; border-radius: 3px; padding: 4px 6px; margin-bottom: 4px; background: #fffbeb; }
+        /* Left: Prescription */
+        .prescription-section { border: 1px solid #d1d5db; border-radius: 3px; padding: 5px 6px; display: flex; flex-direction: column; overflow: hidden; }
 
-        .section-title { font-size: 8.5pt; font-weight: bold; color: #1e40af; margin-bottom: 3px; padding-bottom: 2px; border-bottom: 1px solid #e5e7eb; }
-        .rx-symbol { font-size: 16pt; font-weight: bold; color: #2563eb; margin-bottom: 2px; }
-        .vco-label { display: inline-block; background: #dbeafe; color: #1e40af; padding: 1px 6px; border-radius: 3px; font-size: 7.5pt; font-weight: 600; margin-bottom: 4px; }
+        /* Right column */
+        .right-column { display: flex; flex-direction: column; overflow: hidden; }
+        .right-section { border: 1px solid #d1d5db; border-radius: 3px; padding: 4px 6px; margin-bottom: 3px; flex: 1; overflow: hidden; }
 
-        /* Medicine items */
-        .medicine-item { margin-bottom: 3px; padding: 3px 5px; background: #f9fafb; border-left: 2px solid #2563eb; border-radius: 2px; }
-        .medicine-name { font-weight: bold; font-size: 8.5pt; color: #000; }
-        .medicine-details { font-size: 8pt; color: #4b5563; margin-top: 1px; }
+        .section-title { font-size: 10pt; font-weight: bold; color: #000; padding: 5px 0; }
+        .rx-symbol { font-size: 14pt; font-weight: bold; color: #000; margin-bottom: 2px; }
+        .vco-label { display: inline-block; color: #000; padding: 5px; font-size: 9pt; font-weight: 600;  }
 
-        /* GPE */
-        .gpe-section { margin-top: 5px; padding-top: 4px; border-top: 1px dashed #d1d5db; }
-        .gpe-title { font-size: 8.5pt; font-weight: bold; color: #1e40af; margin-bottom: 3px; }
+        .medicine-item { margin-bottom: 2px; padding: 2px 4px; background: #f9fafb; border-left: 2px solid #2563eb; border-radius: 2px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .medicine-info { flex: 1; }
+        .medicine-name { font-weight: bold; font-size: 10pt; }
+        .medicine-qty { font-size: 8pt; font-weight: 600; white-space: nowrap; padding-left: 8px; min-width: 30px; text-align: right; }
+        .medicine-details { font-size: 10pt; padding: 2px; }
+
+        .gpe-section { margin-top: 4px; padding: 5px; border-top: 1px dashed #d1d5db; }
+        .gpe-title { font-size: 10pt; font-weight: bold; color: #1e40af; padding: 5px 0; }
         .gpe-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
-        .gpe-item { font-size: 7.5pt; padding: 1px 3px; background: #f9fafb; border-radius: 2px; }
-        .gpe-label { font-weight: 600; color: #374151; display: inline-block; min-width: 50px; }
+        .gpe-item { font-size: 9pt; padding: 1px 3px; background: #f9fafb; border-radius: 2px; }
+        .gpe-label { font-weight: 600; color: #374151; display: inline-block; min-width: 45px; }
 
-        .list-item { padding: 1px 0; border-bottom: 1px dashed #e5e7eb; font-size: 8pt; line-height: 1.3; word-wrap: break-word; }
+        .list-item { padding: 1px 0; border-bottom: 1px dashed #e5e7eb; font-size: 9pt; line-height: 1.3; }
         .list-item:last-child { border-bottom: none; }
-        .badge { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 7.5pt; font-weight: 600; margin-left: 4px; }
+        .badge { display: inline-block; padding: 1px 5px; border-radius: 8px; font-size: 7pt; font-weight: 600; margin-left: 3px; }
         .badge-warning { background: #fef3c7; color: #92400e; }
 
-        /* Writable blank area — prescription gets extra space */
-        .writable-area { flex: 1; min-height: 80px; }
-        .writable-lines { min-height: 20px; }
-        .writable-lines .line { border-bottom: 1px dotted #e5e7eb; height: 18px; }
+        /* Writable blank space */
+        .writable-fill { flex: 1; }
+        .writable-lines .line { border-bottom: 1px dotted #d1d5db; height: 16px; }
 
-        /* Footer */
-        .footer-section { padding-top: 4px; border-top: 2px solid #000; margin-top: auto; }
-        .next-visit { font-size: 8.5pt; text-align: center; }
-        .next-visit-label { font-weight: 600; color: #374151; display: block; margin-bottom: 1px; font-size: 9pt; }
-        .next-visit-date { font-size: 10pt; font-weight: bold; color: #1e40af; display: block; }
+        /* ── Instructions: 60px ── */
+        .instructions-section { height: 100px; border: 1px solid #d1d5db; border-radius: 3px; padding: 4px 6px; overflow: hidden; }
+        .section-urdu { font-size: 20px; display: flex; justify-content: flex-end; padding: 5px}
+        /* ── Footer: 35px ── */
+        .footer-section { height: 35px; padding-top: 4px; border-top: 2px solid #000; }
+        .next-visit { display: flex; align-items: center; gap: 6px; direction: rtl; }
+
+        .next-visit-label { font-weight: 600; color: #374151; font-size: 12pt; padding: 5px; white-space: nowrap; }
+
+        .next-visit-date { font-size: 9.5pt; font-weight: bold; color: #1e40af; direction: ltr; white-space: nowrap; }
 
         @media print {
             body { margin: 0; padding: 0; }
-            .container { max-width: 100%; height: auto; max-height: 287mm; padding: 4mm 7mm; }
+            .page { width: 100%; height: 100vh; padding: 4px 10px; }
             .no-print { display: none !important; }
             @page { size: A4; margin: 5mm; }
         }
         .no-print { text-align: center; margin: 10px 0; }
         .print-btn { background: #2563eb; color: white; border: none; padding: 8px 20px; font-size: 11pt; border-radius: 5px; cursor: pointer; margin-right: 8px; }
-        .print-btn:hover { background: #1d4ed8; }
         .close-btn { background: #6b7280; color: white; border: none; padding: 8px 20px; font-size: 11pt; border-radius: 5px; cursor: pointer; }
-        .close-btn:hover { background: #4b5563; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="page">
         <div class="no-print">
             <button onclick="window.print()" class="print-btn">Print Prescription</button>
             <button onclick="window.close()" class="close-btn">Close</button>
         </div>
 
-        <!-- Header -->
+        <!-- HEADER: 75px -->
         <div class="header">
             <div class="hospital-info">
                 <div class="hospital-name">{{ $settings['hospital_name'] }}</div>
                 @if($settings['hospital_address'])<div class="hospital-contact">{{ $settings['hospital_address'] }}</div>@endif
-                @if($settings['hospital_phone'])<div class="hospital-contact">Phone: {{ $settings['hospital_phone'] }}</div>@endif
-                @if($settings['hospital_email'])<div class="hospital-contact">Email: {{ $settings['hospital_email'] }}</div>@endif
+                @if($settings['hospital_phone'])<div class="hospital-contact">Ph: {{ $settings['hospital_phone'] }}</div>@endif
             </div>
             <div class="logo">
                 @if($settings['hospital_logo'])<img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Logo">@endif
@@ -110,73 +113,86 @@
             </div>
         </div>
 
-        <!-- Patient Info -->
+        <!-- PATIENT INFO: 45px -->
         <div class="patient-info-bar">
             <div class="patient-info-grid">
-                <div class="info-item"><span class="info-label">Patient Name:</span> <span class="info-value">{{ $visit->patient->name }}</span></div>
-                <div class="info-item"><span class="info-label">Age/Gender:</span> <span class="info-value">{{ $visit->patient->age }} Years / {{ ucfirst($visit->patient->gender) }}</span></div>
-                <div class="info-item"><span class="info-label">Mobile:</span> <span class="info-value">{{ $visit->patient->phone ?? 'N/A' }}</span></div>
-                <div class="info-item"><span class="info-label">Patient No:</span> <span class="info-value">{{ $visit->patient->patient_no }}</span></div>
-                <div class="info-item"><span class="info-label">Visit No:</span> <span class="info-value">{{ $visit->visit_no }}</span></div>
-                <div class="info-item"><span class="info-label">Date & Time:</span> <span class="info-value">{{ $visit->visit_datetime ? $visit->visit_datetime->format('d M Y, h:i A') : now()->format('d M Y, h:i A') }}</span></div>
+                <div class="info-item"><span class="info-label">Patient:</span> {{ $visit->patient->name }}</div>
+                <div class="info-item"><span class="info-label">Age/Gender:</span> {{ $visit->patient->age }}Y / {{ ucfirst($visit->patient->gender) }}</div>
+                <div class="info-item"><span class="info-label">Mobile:</span> {{ $visit->patient->phone ?? 'N/A' }}</div>
+                <div class="info-item"><span class="info-label">Patient #:</span> {{ $visit->patient->patient_no }}</div>
+                <div class="info-item"><span class="info-label">Visit #:</span> {{ $visit->visit_no }}</div>
+                <div class="info-item"><span class="info-label">Date:</span> {{ $visit->visit_datetime ? $visit->visit_datetime->format('d M Y, h:i A') : now()->format('d M Y, h:i A') }}</div>
             </div>
         </div>
 
         @php
             $hasPrescription = $visit->prescriptions && $visit->prescriptions->count() > 0;
-            $hasConsultation = $visit->consultation;
-            $hasDiagnosis = $hasConsultation && $visit->consultation->provisional_diagnosis;
-            $hasComplaints = ($hasConsultation && ($visit->consultation->presenting_complaints || $visit->consultation->chief_complaint)) || ($visit->triage && $visit->triage->chief_complaint);
-            $hasHistory = false;
+            $c = $visit->consultation;
+            $hasDiagnosis = $c && $c->provisional_diagnosis;
+            $hasComplaints = ($c && ($c->presenting_complaints || $c->chief_complaint)) || ($visit->triage && $visit->triage->chief_complaint);
             $conditions = [];
-            if ($hasConsultation) {
-                if ($visit->consultation->diagnosis_dm) $conditions[] = 'DM: ' . $visit->consultation->diagnosis_dm;
-                if ($visit->consultation->diagnosis_htn) $conditions[] = 'HTN: ' . $visit->consultation->diagnosis_htn;
-                if ($visit->consultation->diagnosis_ihd) $conditions[] = 'IHD: ' . $visit->consultation->diagnosis_ihd;
-                if ($visit->consultation->diagnosis_asthma) $conditions[] = 'Asthma: ' . $visit->consultation->diagnosis_asthma;
-                if (count($conditions) > 0 || $visit->consultation->history) $hasHistory = true;
+            if ($c) {
+                if ($c->diagnosis_dm) $conditions[] = 'DM: ' . $c->diagnosis_dm;
+                if ($c->diagnosis_htn) $conditions[] = 'HTN: ' . $c->diagnosis_htn;
+                if ($c->diagnosis_ihd) $conditions[] = 'IHD: ' . $c->diagnosis_ihd;
+                if ($c->diagnosis_asthma) $conditions[] = 'Asthma: ' . $c->diagnosis_asthma;
             }
+            $hasHistory = count($conditions) > 0 || ($c && $c->history);
             $hasTests = $visit->labOrders && $visit->labOrders->count() > 0;
-            $hasGpe = $hasConsultation && ($visit->consultation->gpe_chest || $visit->consultation->gpe_abdomen || $visit->consultation->gpe_cvs || $visit->consultation->gpe_cns || $visit->consultation->gpe_pupils || $visit->consultation->gpe_conjunctiva || $visit->consultation->gpe_nails || $visit->consultation->gpe_throat || $visit->consultation->gpe_sclera || $visit->consultation->gpe_gcs);
-            $hasAllergies = $hasConsultation && ($visit->consultation->allergies->count() > 0 || $visit->consultation->allergy_notes);
+            $hasGpe = $c && ($c->gpe_chest || $c->gpe_abdomen || $c->gpe_cvs || $c->gpe_cns || $c->gpe_pupils || $c->gpe_conjunctiva || $c->gpe_nails || $c->gpe_throat || $c->gpe_sclera || $c->gpe_gcs);
+            $hasAllergies = $c && ($c->allergies->count() > 0 || $c->allergy_notes);
+            $hasInstructions = $c && ($c->treatment_plan || $c->follow_up_instructions);
         @endphp
 
-        <!-- Main Content Grid -->
+        <!-- CONTENT GRID: fills remaining ~720px -->
         <div class="content-grid">
-            <!-- Left Column: Prescription -->
+            <!-- LEFT: Prescription -->
             <div class="prescription-section">
                 <div class="rx-symbol">℞</div>
                 <div class="section-title">Prescription</div>
-
                 @if($hasPrescription)
                     @foreach($visit->prescriptions as $prescription)
-                        @foreach($prescription->items as $index => $item)
+                        @foreach($prescription->items as $i => $item)
                         <div class="medicine-item">
-                            <div class="medicine-name">{{ $index + 1 }}. {{ $item->medicine->name }}</div>
-                            @if($item->medicine->sku)
-                            <div class="medicine-details" style="color: #6b7280;">SKU: {{ $item->medicine->sku }}</div>
-                            @endif
-                            @if($item->prescriptionInstruction)
-                            <div class="medicine-details" style="color: #1e40af;">{{ $item->prescriptionInstruction->instruction }}</div>
+                            <div class="medicine-info">
+                                <div class="medicine-name">{{ $i + 1 }}. {{ $item->medicine->name }}</div>
+                                @if($item->prescriptionInstruction)
+                                <div class="medicine-details">{{ $item->prescriptionInstruction->instruction }}</div>
+                                @endif
+                            </div>
+                            @if($item->quantity && $item->quantity > 1)
+                            <div class="medicine-qty"> {{ $item->quantity }}</div>
                             @endif
                         </div>
                         @endforeach
                     @endforeach
-                    {{-- Extra space below filled prescriptions for doctor to add more --}}
-                    <div style="flex: 1; min-height: 40px;"></div>
-                @else
-                    {{-- Empty writable area for doctor to write prescriptions manually --}}
-                    <div class="writable-area"></div>
+                @endif
+                {{-- Always leave remaining space for handwriting --}}
+                <div class="writable-fill"></div>
+
+                {{-- Vitals --}}
+                @if($visit->vitalSigns)
+                <div class="gpe-section">
+                    <div class="gpe-title">Vital Signs</div>
+                    <div class="gpe-grid">
+                        @if($visit->vitalSigns->blood_pressure)<div class="gpe-item"><span class="gpe-label">BP:</span> {{ $visit->vitalSigns->blood_pressure }}</div>@endif
+                        @if($visit->vitalSigns->temperature)<div class="gpe-item"><span class="gpe-label">Temp:</span> {{ $visit->vitalSigns->temperature }}°F</div>@endif
+                        @if($visit->vitalSigns->pulse_rate)<div class="gpe-item"><span class="gpe-label">Pulse:</span> {{ $visit->vitalSigns->pulse_rate }} bpm</div>@endif
+                        @if($visit->vitalSigns->spo2)<div class="gpe-item"><span class="gpe-label">SpO₂:</span> {{ $visit->vitalSigns->spo2 }}%</div>@endif
+                        @if($visit->vitalSigns->bsr)<div class="gpe-item"><span class="gpe-label">BSR:</span> {{ $visit->vitalSigns->bsr }}</div>@endif
+                        @if($visit->vitalSigns->weight)<div class="gpe-item"><span class="gpe-label">Weight:</span> {{ $visit->vitalSigns->weight }} kg</div>@endif
+                        @if($visit->vitalSigns->height)<div class="gpe-item"><span class="gpe-label">Height:</span> {{ $visit->vitalSigns->height }} ft</div>@endif
+                    </div>
+                </div>
                 @endif
 
                 @if($hasGpe)
                 <div class="gpe-section">
-                    <div class="gpe-title">General Physical Examination (GPE)</div>
+                    <div class="gpe-title">GPE</div>
                     <div class="gpe-grid">
-                        @foreach(['chest' => 'Chest', 'abdomen' => 'Abdomen', 'cvs' => 'CVS', 'cns' => 'CNS', 'pupils' => 'Pupils', 'conjunctiva' => 'Conjunctiva', 'nails' => 'Nails', 'throat' => 'Throat', 'sclera' => 'Sclera', 'gcs' => 'GCS'] as $field => $label)
-                            @php $val = $visit->consultation->{'gpe_' . $field}; @endphp
-                            @if($val)
-                            <div class="gpe-item"><span class="gpe-label">{{ $label }}:</span> <span>{{ $val }}</span></div>
+                        @foreach(['chest'=>'Chest','abdomen'=>'Abd','cvs'=>'CVS','cns'=>'CNS','pupils'=>'Pupils','conjunctiva'=>'Conj','nails'=>'Nails','throat'=>'Throat','sclera'=>'Sclera','gcs'=>'GCS'] as $f => $l)
+                            @if($c->{'gpe_'.$f})
+                            <div class="gpe-item"><span class="gpe-label">{{ $l }}:</span> {{ $c->{'gpe_'.$f} }}</div>
                             @endif
                         @endforeach
                     </div>
@@ -184,142 +200,95 @@
                 @endif
             </div>
 
-            <!-- Right Column -->
+            <!-- RIGHT: Diagnosis, Allergies, Complaints, History, Investigations -->
             <div class="right-column">
                 <div class="vco-label">V.C.O</div>
 
-                <!-- Provisional Diagnosis -->
-                <div class="diagnosis-section">
+                <div class="right-section">
                     <div class="section-title">Provisional Diagnosis</div>
                     @if($hasDiagnosis)
-                        <div class="list-item">{{ $visit->consultation->provisional_diagnosis }}</div>
-                    @else
-                        <div class="writable-lines">
-                            <div class="line"></div><div class="line"></div>
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Allergies -->
-                <div class="diagnosis-section">
-                    <div class="section-title">Allergies</div>
-                    @if($hasAllergies)
-                        @if($visit->consultation->allergies->count() > 0)
-                            <div class="list-item"><strong>Known:</strong> {{ $visit->consultation->allergies->pluck('name')->join(', ') }}</div>
-                        @endif
-                        @if($visit->consultation->allergy_notes)
-                            <div class="list-item"><strong>Notes:</strong> {{ $visit->consultation->allergy_notes }}</div>
-                        @endif
+                        <div class="list-item">{{ $c->provisional_diagnosis }}</div>
                     @else
                         <div class="writable-lines"><div class="line"></div><div class="line"></div></div>
                     @endif
                 </div>
 
-                <!-- Presenting Complaints -->
-                <div class="issues-section">
+                <div class="right-section">
+                    <div class="section-title">Allergies</div>
+                    @if($hasAllergies)
+                        @if($c->allergies->count() > 0)<div class="list-item">{{ $c->allergies->pluck('name')->join(', ') }}</div>@endif
+                        @if($c->allergy_notes)<div class="list-item">{{ $c->allergy_notes }}</div>@endif
+                    @else
+                        <div class="writable-lines"><div class="line"></div></div>
+                    @endif
+                </div>
+
+                <div class="right-section">
                     <div class="section-title">Presenting Complaints</div>
                     @if($hasComplaints)
-                        @if($hasConsultation && $visit->consultation->presenting_complaints)
-                            <div class="list-item">{{ $visit->consultation->presenting_complaints }}</div>
-                        @endif
-                        @if($hasConsultation && $visit->consultation->chief_complaint)
-                            <div class="list-item">{{ $visit->consultation->chief_complaint }}</div>
-                        @endif
-                        @if($visit->triage && $visit->triage->chief_complaint)
-                            <div class="list-item">{{ $visit->triage->chief_complaint }}
-                                @if($visit->triage->priority_level)<span class="badge badge-warning">{{ strtoupper(str_replace('_', ' ', $visit->triage->priority_level)) }}</span>@endif
-                            </div>
-                        @endif
+                        @if($c && $c->presenting_complaints)<div class="list-item">{{ $c->presenting_complaints }}</div>@endif
+                        @if($c && $c->chief_complaint)<div class="list-item">{{ $c->chief_complaint }}</div>@endif
+                        @if($visit->triage && $visit->triage->chief_complaint)<div class="list-item">{{ $visit->triage->chief_complaint }}</div>@endif
                     @else
-                        <div class="writable-lines">
-                            <div class="line"></div><div class="line"></div>
-                        </div>
+                        <div class="writable-lines"><div class="line"></div><div class="line"></div></div>
                     @endif
                 </div>
 
-                <!-- Patient History -->
-                <div class="history-section">
+                <div class="right-section">
                     <div class="section-title">Patient History</div>
                     @if($hasHistory)
-                        @if(count($conditions) > 0)
-                            <div class="list-item"><strong>Conditions:</strong> {{ implode(', ', $conditions) }}</div>
-                        @endif
-                        @if($visit->consultation->history)
-                            <div class="list-item">{{ $visit->consultation->history }}</div>
-                        @endif
+                        @if(count($conditions) > 0)<div class="list-item">{{ implode(', ', $conditions) }}</div>@endif
+                        @if($c && $c->history)<div class="list-item">{{ $c->history }}</div>@endif
                     @else
-                        <div class="writable-lines">
-                            <div class="line"></div><div class="line"></div>
-                        </div>
+                        <div class="writable-lines"><div class="line"></div><div class="line"></div></div>
                     @endif
                 </div>
 
-                <!-- Investigations -->
-                <div class="tests-section">
+                <div class="right-section">
                     <div class="section-title">Investigations</div>
                     @if($hasTests)
-                        <div style="font-size: 10pt; line-height: 1.6;">
-                            @php
-                                $investigationNames = $visit->labOrders->map(function($order) {
-                                    $name = $order->investigation->name;
-                                    if (preg_match('/\(([^)]+)\)/', $name, $matches)) return $matches[1];
-                                    $parts = explode(' ', $name);
-                                    if (count($parts) > 1) {
-                                        foreach ($parts as $part) { if (strlen($part) <= 5 && strtoupper($part) === $part && ctype_alpha($part)) return $part; }
-                                        return $parts[0];
-                                    }
-                                    return $parts[0];
-                                })->unique()->join(', ');
-                            @endphp
-                            {{ $investigationNames }}
+                        <div style="font-size: 8.5pt;">
+                        @php
+                            echo $visit->labOrders->map(fn($o) => preg_match('/\(([^)]+)\)/', $o->investigation->name, $m) ? $m[1] : explode(' ', $o->investigation->name)[0])->unique()->join(', ');
+                        @endphp
                         </div>
                     @else
-                        <div class="writable-lines">
-                            <div class="line"></div><div class="line"></div>
-                        </div>
+                        <div class="writable-lines"><div class="line"></div><div class="line"></div></div>
                     @endif
                 </div>
             </div>
         </div>
 
-        <!-- Instructions -->
+        <!-- INSTRUCTIONS: 60px -->
         <div class="instructions-section">
-            <div class="section-title">ہدایات</div>
-            <div style="font-size: 8.5pt; line-height: 1.4;">
-                @if($hasConsultation && ($visit->consultation->treatment_plan || $visit->consultation->follow_up_instructions))
-                    @if($visit->consultation->treatment_plan)
-                        <strong>Treatment Plan:</strong><br>{{ $visit->consultation->treatment_plan }}<br><br>
-                    @endif
-                    @if($visit->consultation->follow_up_instructions)
-                        <strong>Follow-up:</strong><br>{{ $visit->consultation->follow_up_instructions }}
-                    @endif
-                @else
-                    <div class="writable-lines">
-                        <div class="line"></div><div class="line"></div><div class="line"></div>
-                    </div>
-                @endif
-            </div>
+            <div class="section-title section-urdu">ہدایات</div>
+            @if($hasInstructions)
+                <div style="font-size: 7.5pt;">
+                    @if($c->treatment_plan){{ $c->treatment_plan }}@endif
+                    @if($c->follow_up_instructions) | {{ $c->follow_up_instructions }}@endif
+                </div>
+            @else
+                <div class="writable-lines"><div class="line"></div><div class="line"></div></div>
+            @endif
         </div>
 
-        <!-- Footer -->
+        <!-- FOOTER: 35px -->
         <div class="footer-section">
             <div class="next-visit">
-                <div class="next-visit-label">آئندہ معائنہ کی تاریخ</div>
-                <div class="next-visit-date">
-                    @if($hasConsultation && $visit->consultation->next_visit_date)
-                        {{ \Carbon\Carbon::parse($visit->consultation->next_visit_date)->format('d F Y') }}
+                <span class="next-visit-label">آئندہ معائنہ کی تاریخ: </span>
+                <span class="next-visit-date">
+                    @if($c && $c->next_visit_date)
+                        {{ \Carbon\Carbon::parse($c->next_visit_date)->format('d F Y') }}
                     @else
                         ___________________
                     @endif
-                </div>
+                </span>
             </div>
         </div>
     </div>
 
     <script>
-        if (window.location.search.includes('auto=1')) {
-            window.onload = function() { window.print(); };
-        }
+        if (window.location.search.includes('auto=1')) { window.onload = function() { window.print(); }; }
     </script>
 </body>
 </html>

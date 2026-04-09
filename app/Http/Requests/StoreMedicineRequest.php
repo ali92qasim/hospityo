@@ -20,7 +20,7 @@ class StoreMedicineRequest extends FormRequest
                 'string',
                 'max:255',
                 'unique:tenant.medicines,sku',
-                'regex:/^[A-Z0-9\-]+$/'
+                'regex:/^[A-Za-z0-9\-]+$/'
             ],
             'generic_name' => 'nullable|string|max:255',
             'brand_id' => 'nullable|exists:tenant.medicine_brands,id',
@@ -64,7 +64,14 @@ class StoreMedicineRequest extends FormRequest
     {
         return [
             'sku.unique' => 'This SKU already exists. The system detected a duplicate medicine.',
-            'sku.regex' => 'SKU must contain only uppercase letters, numbers, and hyphens.',
+            'sku.regex' => 'SKU must contain only letters, numbers, and hyphens.',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'sku' => $this->sku ? strtoupper(trim($this->sku)) : null,
+        ]);
     }
 }

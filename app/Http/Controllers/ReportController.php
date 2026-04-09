@@ -64,7 +64,7 @@ class ReportController extends Controller
         $status = $request->input('status');
         
         // Build query
-        $query = Visit::whereBetween('visit_date', [$startDate, $endDate])
+        $query = Visit::whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->with(['patient', 'doctor']);
         
         if ($doctorId) {
@@ -75,7 +75,7 @@ class ReportController extends Controller
             $query->where('status', $status);
         }
         
-        $visits = $query->orderBy('visit_date', 'desc')
+        $visits = $query->orderBy('visit_datetime', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -104,7 +104,7 @@ class ReportController extends Controller
         
         // Daily trend
         $dailyTrend = $visits->groupBy(function($visit) {
-            return $visit->visit_date->format('Y-m-d');
+            return $visit->visit_datetime->format('Y-m-d');
         })->map(function($dayVisits) {
             return $dayVisits->count();
         })->sortKeys();
@@ -125,7 +125,7 @@ class ReportController extends Controller
         
         // Get bills within date range
         $bills = Bill::whereBetween('created_at', [$startDate, $endDate])
-            ->with(['items.service', 'patient', 'visit.doctor'])
+            ->with(['billItems.service', 'patient', 'visit.doctor'])
             ->get();
         
         // Calculate totals
@@ -208,7 +208,7 @@ class ReportController extends Controller
         $agingPeriod = $request->input('aging', 'all'); // all, 30, 60, 90
         
         // Get bills with outstanding amounts
-        $query = Bill::where('payment_status', '!=', 'paid')
+        $query = Bill::where('status', '!=', 'paid')
             ->with(['patient', 'payments'])
             ->orderBy('created_at', 'desc');
         
@@ -273,8 +273,8 @@ class ReportController extends Controller
                 return $bill->total_amount - $bill->paid_amount;
             }),
             'total_bills' => $bills->count(),
-            'partially_paid' => $bills->where('payment_status', 'partial')->count(),
-            'unpaid' => $bills->where('payment_status', 'unpaid')->count(),
+            'partially_paid' => $bills->where('status', 'partial')->count(),
+            'unpaid' => $bills->where('status', 'pending')->count(),
         ];
         
         // Patient-wise outstanding
@@ -496,7 +496,7 @@ class ReportController extends Controller
             })
             ->sortKeys();
         
-        $medicines = Medicine::where('is_active', true)->orderBy('name')->get();
+        $medicines = Medicine::where('status', 'active')->orderBy('name')->get();
         
         return view('admin.reports.medicine-sales', compact(
             'prescriptions', 'stats', 'medicineBreakdown', 'categoryBreakdown', 'brandBreakdown',
@@ -522,7 +522,9 @@ class ReportController extends Controller
         // Calculate stock levels for each medicine
         $inventory = $medicines->map(function($medicine) {
             $currentStock = $medicine->getCurrentStock();
-            $stockInUnit = $medicine->getCurrentStockInUnit();
+            $stockInUnit = $medicine->dispensing_unit_id 
+                ? $medicine->getCurrentStockInUnit($medicine->dispensing_unit_id) 
+                : $currentStock;
             $isLowStock = $medicine->isLowStock();
             $isOutOfStock = $currentStock <= 0;
             
@@ -594,7 +596,7 @@ class ReportController extends Controller
         $expiryDate = now()->addDays($days);
         
         // Get inventory transactions with expiry dates
-        $query = InventoryTransaction::where('transaction_type', 'in')
+        $query = InventoryTransaction::where('type', 'stock_in')
             ->whereNotNull('expiry_date')
             ->where('expiry_date', '<=', $expiryDate)
             ->where('quantity', '>', 0) // Only items still in stock
@@ -697,7 +699,7 @@ class ReportController extends Controller
         $performance = $doctors->map(function($doctor) use ($startDate, $endDate) {
             // Get visits
             $visits = Visit::where('doctor_id', $doctor->id)
-                ->whereBetween('visit_date', [$startDate, $endDate])
+                ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                 ->get();
             
             // Get appointments
@@ -708,7 +710,7 @@ class ReportController extends Controller
             // Get prescriptions
             $prescriptions = Prescription::whereHas('visit', function($q) use ($doctor, $startDate, $endDate) {
                 $q->where('doctor_id', $doctor->id)
-                  ->whereBetween('visit_date', [$startDate, $endDate]);
+                  ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             })->get();
             
             // Get investigation orders
@@ -719,7 +721,7 @@ class ReportController extends Controller
             // Get bills generated from doctor's visits
             $bills = Bill::whereHas('visit', function($q) use ($doctor, $startDate, $endDate) {
                 $q->where('doctor_id', $doctor->id)
-                  ->whereBetween('visit_date', [$startDate, $endDate]);
+                  ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             })->get();
             
             // Calculate metrics
@@ -1064,7 +1066,7 @@ class ReportController extends Controller
             
             // Get visits
             $visits = Visit::whereIn('doctor_id', $doctorIds)
-                ->whereBetween('visit_date', [$startDate, $endDate])
+                ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                 ->get();
             
             // Get appointments
@@ -1075,13 +1077,13 @@ class ReportController extends Controller
             // Get bills
             $bills = Bill::whereHas('visit', function($q) use ($doctorIds, $startDate, $endDate) {
                 $q->whereIn('doctor_id', $doctorIds)
-                  ->whereBetween('visit_date', [$startDate, $endDate]);
+                  ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             })->get();
             
             // Get prescriptions
             $prescriptions = Prescription::whereHas('visit', function($q) use ($doctorIds, $startDate, $endDate) {
                 $q->whereIn('doctor_id', $doctorIds)
-                  ->whereBetween('visit_date', [$startDate, $endDate]);
+                  ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             })->get();
             
             // Get investigation orders

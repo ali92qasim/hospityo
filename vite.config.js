@@ -13,7 +13,13 @@ export default defineConfig({
                 'resources/js/appointments-calendar.js',
                 'resources/js/doctors-form.js',
                 'resources/js/visits-form.js',
-                'resources/js/visits-index.js'
+                'resources/js/visits-index.js',
+                'resources/js/prescription-form.js',
+                'resources/js/wards-form.js',
+                'resources/js/inventory-form.js',
+                'resources/js/purchases-form.js',
+                'resources/js/investigations-form.js',
+                'resources/js/bills-form.js'
             ],
             refresh: true,
         }),

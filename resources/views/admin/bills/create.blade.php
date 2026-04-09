@@ -42,7 +42,7 @@
 
             <div>
                 <label for="bill_date" class="block text-sm font-medium text-gray-700 mb-2">Bill Date</label>
-                <input type="date" id="bill_date" name="bill_date" value="{{ date('Y-m-d') }}" 
+                <input type="text" id="bill_date" name="bill_date" value="{{ date('Y-m-d') }}" 
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                 @error('bill_date')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -108,65 +108,5 @@
     </form>
 </div>
 
-<script>
-let itemIndex = 1;
-
-document.getElementById('addItem').addEventListener('click', function() {
-    const billItems = document.getElementById('billItems');
-    const newItem = document.querySelector('.bill-item').cloneNode(true);
-    
-    newItem.querySelectorAll('input, select').forEach(input => {
-        input.name = input.name.replace('[0]', `[${itemIndex}]`);
-        if (input.type !== 'button') input.value = input.type === 'number' && input.classList.contains('quantity') ? '1' : '';
-    });
-    
-    billItems.appendChild(newItem);
-    itemIndex++;
-    updateTotal();
-});
-
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('remove-item')) {
-        if (document.querySelectorAll('.bill-item').length > 1) {
-            e.target.closest('.bill-item').remove();
-            updateTotal();
-        }
-    }
-});
-
-document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('service-select')) {
-        const option = e.target.selectedOptions[0];
-        const priceInput = e.target.closest('.bill-item').querySelector('.unit-price');
-        const descInput = e.target.closest('.bill-item').querySelector('input[name*="[description]"]');
-        
-        if (option.dataset.price) {
-            priceInput.value = option.dataset.price;
-            descInput.value = option.text.split(' - ')[0];
-        }
-        updateTotal();
-    }
-    
-    if (e.target.classList.contains('quantity') || e.target.classList.contains('unit-price') || 
-        e.target.id === 'tax_amount' || e.target.id === 'discount_amount') {
-        updateTotal();
-    }
-});
-
-function updateTotal() {
-    let subtotal = 0;
-    
-    document.querySelectorAll('.bill-item').forEach(item => {
-        const qty = parseFloat(item.querySelector('.quantity').value) || 0;
-        const price = parseFloat(item.querySelector('.unit-price').value) || 0;
-        subtotal += qty * price;
-    });
-    
-    const tax = parseFloat(document.getElementById('tax_amount').value) || 0;
-    const discount = parseFloat(document.getElementById('discount_amount').value) || 0;
-    const total = subtotal + tax - discount;
-    
-    document.getElementById('totalAmount').textContent = `₨${total.toFixed(2)}`;
-}
-</script>
+@vite(['resources/js/bills-form.js'])
 @endsection

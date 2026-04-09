@@ -44,6 +44,12 @@ $(function() {
         selectMirror: true,
         dayMaxEvents: true,
         weekends: true,
+        eventContent: function(arg) {
+            const props = arg.event.extendedProps;
+            return {
+                html: `<div class="fc-event-pill">${props.patient || arg.event.title}</div>`
+            };
+        },
         events: function(info, successCallback, failureCallback) {
             const doctorId = $('#doctor-filter').val();
             let url = '/calendar/events?start=' + info.startStr + '&end=' + info.endStr;
@@ -167,6 +173,7 @@ $(function() {
             url: url,
             method: 'POST',
             data: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(response) {
                 closeAppointmentModal();
                 calendar.refetchEvents();
@@ -187,6 +194,21 @@ $(function() {
         });
     });
 
+    // Close modal when clicking the backdrop (outside the white box)
+    $('#appointmentModal').on('click', function(e) {
+        // Only close if the click is directly on the overlay or the flex wrapper, not the form content
+        if (e.target === this || $(e.target).hasClass('flex')) {
+            closeAppointmentModal();
+        }
+    });
+
+    // Close modal on Escape key
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape' && !$('#appointmentModal').hasClass('hidden')) {
+            closeAppointmentModal();
+        }
+    });
+
     // Make functions globally available
     window.openAppointmentModal = openAppointmentModal;
     window.closeAppointmentModal = closeAppointmentModal;
@@ -202,6 +224,11 @@ $(function() {
         $('#status-field').addClass('hidden');
         $('#modal-title').text('Schedule Appointment');
         $('#submit-text').text('Schedule Appointment');
+        // Restore minDate for new appointments
+        if (window.flatpickrInstance) {
+            window.flatpickrInstance.set('minDate', 'today');
+            window.flatpickrInstance.clear();
+        }
     }
 
     function closeAppointmentModal() {
@@ -214,16 +241,19 @@ $(function() {
         $.ajax({
             url: `/appointments/${appointmentId}`,
             method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(appointment) {
                 $('#appointment_id').val(appointment.id);
                 $('#patient_id').val(appointment.patient_id).trigger('change');
                 $('#doctor_id').val(appointment.doctor_id).trigger('change');
-                if (window.flatpickrInstance) {
+                if (window.flatpickrInstance && appointment.appointment_datetime) {
+                    // Remove minDate restriction when editing so past dates can be shown
+                    window.flatpickrInstance.set('minDate', null);
                     window.flatpickrInstance.setDate(appointment.appointment_datetime);
                 }
-                $('#reason').val(appointment.reason);
-                $('#notes').val(appointment.notes);
-                $('#status').val(appointment.status);
+                $('#reason').val(appointment.reason || '');
+                $('#notes').val(appointment.notes || '');
+                $('#status').val(appointment.status || 'scheduled');
                 $('#status-field').removeClass('hidden');
                 $('#modal-title').text('Edit Appointment');
                 $('#submit-text').text('Update Appointment');
@@ -241,6 +271,7 @@ $(function() {
         $.ajax({
             url: `/appointments/${appointmentId}`,
             method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: {
                 _method: 'PUT',
                 appointment_datetime: datetime,

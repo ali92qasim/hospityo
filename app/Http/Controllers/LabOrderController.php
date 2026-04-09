@@ -58,9 +58,12 @@ class LabOrderController extends Controller
     {
         $validated = $request->validated();
 
+        // Eager load investigation if not loaded
+        $labOrder->loadMissing('investigation');
+
         LabSample::create([
             'investigation_order_id' => $labOrder->id,
-            'sample_type' => $labOrder->investigation->sample_type,
+            'sample_type' => $labOrder->investigation->sample_type ?? 'other',
             'status' => 'collected',
             'collected_at' => now(),
             'collected_by' => auth()->id(),

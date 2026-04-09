@@ -13,7 +13,8 @@ class UpdateMedicineRequest extends FormRequest
 
     public function rules(): array
     {
-        $medicineId = $this->route('medicine');
+        $medicine = $this->route('medicine');
+        $medicineId = $medicine instanceof \App\Models\Medicine ? $medicine->id : $medicine;
         
         return [
             'name' => 'required|string|max:255',
@@ -22,7 +23,7 @@ class UpdateMedicineRequest extends FormRequest
                 'string',
                 'max:255',
                 'unique:tenant.medicines,sku,' . $medicineId,
-                'regex:/^[A-Z0-9\-]+$/'
+                'regex:/^[A-Za-z0-9\-]+$/'
             ],
             'generic_name' => 'nullable|string|max:255',
             'brand_id' => 'nullable|exists:tenant.medicine_brands,id',
@@ -42,7 +43,8 @@ class UpdateMedicineRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $medicineId = $this->route('medicine');
+            $medicine = $this->route('medicine');
+            $medicineId = $medicine instanceof \App\Models\Medicine ? $medicine->id : $medicine;
             
             // Check for duplicate medicine based on name, strength, dosage_form, and brand
             $duplicate = \App\Models\Medicine::checkDuplicate(
@@ -69,7 +71,14 @@ class UpdateMedicineRequest extends FormRequest
     {
         return [
             'sku.unique' => 'This SKU already exists. The system detected a duplicate medicine.',
-            'sku.regex' => 'SKU must contain only uppercase letters, numbers, and hyphens.',
+            'sku.regex' => 'SKU must contain only letters, numbers, and hyphens.',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'sku' => $this->sku ? strtoupper(trim($this->sku)) : null,
+        ]);
     }
 }

@@ -203,7 +203,7 @@
                 @forelse($visits as $visit)
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $visit->visit_date->format('M d, Y') }}
+                        {{ $visit->visit_datetime?->format('M d, Y') ?? '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">{{ $visit->patient->name }}</div>
