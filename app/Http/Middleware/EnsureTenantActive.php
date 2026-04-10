@@ -35,6 +35,11 @@ class EnsureTenantActive
             return redirect(config('app.url'));
         }
 
+        // Trial expiry check
+        if ($tenant->trialExpired() && !$tenant->activeSubscription) {
+            return response()->view('errors.trial-expired', ['tenant' => $tenant], 403);
+        }
+
         // Cross-tenant session protection
         if (Auth::check()) {
             $sessionTenantId = $request->session()->get('tenant_id');

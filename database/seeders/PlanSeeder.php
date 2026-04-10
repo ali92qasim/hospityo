@@ -16,6 +16,7 @@ class PlanSeeder extends Seeder
                 'description'   => 'For small clinics getting started',
                 'price'         => 0,
                 'billing_cycle' => 'monthly',
+                'trial_days'    => 14,
                 'modules'       => [
                     'patients', 'doctors', 'appointments', 'visits', 'billing',
                 ],
@@ -32,6 +33,7 @@ class PlanSeeder extends Seeder
                 'description'   => 'For growing hospitals',
                 'price'         => 49.00,
                 'billing_cycle' => 'monthly',
+                'trial_days'    => 14,
                 'modules'       => [
                     'patients', 'doctors', 'appointments', 'visits', 'billing',
                     'pharmacy', 'laboratory', 'ipd', 'reports', 'rbac',
@@ -49,6 +51,7 @@ class PlanSeeder extends Seeder
                 'description'   => 'For hospital networks — everything included',
                 'price'         => 149.00,
                 'billing_cycle' => 'monthly',
+                'trial_days'    => 30,
                 'modules'       => [
                     'patients', 'doctors', 'appointments', 'visits', 'billing',
                     'pharmacy', 'laboratory', 'ipd', 'reports', 'rbac',

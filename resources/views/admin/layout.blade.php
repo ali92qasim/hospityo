@@ -24,6 +24,20 @@
         @include('partials.header')
         
         <main class="p-3 sm:p-4 md:p-6">
+            @php
+                $currentTenant = \App\Models\Tenant::current();
+            @endphp
+            @if($currentTenant && $currentTenant->onTrial())
+                <div class="mb-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div class="flex items-center text-sm text-amber-800">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Trial ends in <span class="font-semibold">{{ $currentTenant->trialDaysRemaining() }} day{{ $currentTenant->trialDaysRemaining() !== 1 ? 's' : '' }}</span> ({{ $currentTenant->trial_ends_at->format('M d, Y') }})</span>
+                    </div>
+                    <a href="{{ config('app.url') }}/#pricing" target="_blank" class="text-sm font-medium text-amber-800 hover:text-amber-900 underline whitespace-nowrap">
+                        Upgrade Now <i class="fas fa-external-link-alt ml-1 text-xs"></i>
+                    </a>
+                </div>
+            @endif
             @include('partials.alerts')
             @yield('content')
         </main>

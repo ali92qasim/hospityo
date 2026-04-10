@@ -110,4 +110,17 @@ class Tenant extends BaseTenant
     {
         return $this->trial_ends_at && $this->trial_ends_at->isPast();
     }
+
+    public function onTrial(): bool
+    {
+        return $this->trial_ends_at && $this->trial_ends_at->isFuture();
+    }
+
+    public function trialDaysRemaining(): int
+    {
+        if (!$this->trial_ends_at || $this->trial_ends_at->isPast()) {
+            return 0;
+        }
+        return (int) now()->diffInDays($this->trial_ends_at);
+    }
 }

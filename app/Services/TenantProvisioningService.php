@@ -45,15 +45,16 @@ class TenantProvisioningService
         $plan = Plan::where('slug', $planSlug)->first();
 
         $tenant = Tenant::create([
-            'name'     => $data['name'],
-            'slug'     => $slug,
-            'domain'   => Tenant::domainFor($slug),
-            'database' => Tenant::databaseNameFor($slug),
-            'email'    => $data['email'] ?? null,
-            'phone'    => $data['phone'] ?? null,
-            'status'   => 'provisioning',
-            'plan_id'  => $plan?->id,
-            'settings' => $this->defaultSettings($data['name']),
+            'name'          => $data['name'],
+            'slug'          => $slug,
+            'domain'        => Tenant::domainFor($slug),
+            'database'      => Tenant::databaseNameFor($slug),
+            'email'         => $data['email'] ?? null,
+            'phone'         => $data['phone'] ?? null,
+            'status'        => 'provisioning',
+            'plan_id'       => $plan?->id,
+            'trial_ends_at' => now()->addDays($plan?->trial_days ?? 14),
+            'settings'      => $this->defaultSettings($data['name']),
         ]);
 
         $adminData = [

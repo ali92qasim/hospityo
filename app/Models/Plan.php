@@ -16,6 +16,7 @@ class Plan extends Model
         'description',
         'price',
         'billing_cycle',
+        'trial_days',
         'modules',
         'limits',
         'is_active',
