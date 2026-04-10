@@ -167,13 +167,13 @@
                             <div>
                                 <div class="text-sm font-medium text-gray-900">{{ $visit->visit_no }}</div>
                                 <div class="text-sm text-gray-500">{{ strtoupper($visit->visit_type) }}</div>
-                                <div class="text-xs text-gray-400">{{ $visit->visit_datetime->format('M d, Y h:i A') }}</div>
+                                <div class="text-xs text-gray-400">{{ $visit->visit_datetime?->format('M d, Y h:i A') ?? '-' }}</div>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-4">
-                        <div class="text-sm text-gray-900">{{ $visit->patient->name }}</div>
-                        <div class="text-xs text-gray-500">{{ $visit->patient->patient_no }}</div>
+                        <div class="text-sm text-gray-900">{{ $visit->patient?->name ?? 'Deleted Patient' }}</div>
+                        <div class="text-xs text-gray-500">{{ $visit->patient?->patient_no ?? '-' }}</div>
                     </td>
                     <td class="px-6 py-4">
                         @if($visit->doctor)
