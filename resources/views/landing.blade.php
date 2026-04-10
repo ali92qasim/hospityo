@@ -301,8 +301,11 @@
 {{-- Footer --}}
 <footer class="py-12 bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
-            <div>
+        @php
+            $site = \App\Models\SiteSetting::getAll();
+        @endphp
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8">
+            <div class="col-span-2 md:col-span-1">
                 <div class="flex items-center space-x-2 mb-4">
                     <div class="h-8 w-8 bg-medical-blue rounded-lg flex items-center justify-center">
                         <i class="fas fa-hospital text-white text-xs"></i>
@@ -310,6 +313,14 @@
                     <span class="text-lg font-bold text-white">Hospityo</span>
                 </div>
                 <p class="text-sm text-gray-400 leading-relaxed">Cloud-based hospital management for modern healthcare providers.</p>
+                @if(!empty($site['facebook_url']) || !empty($site['twitter_url']) || !empty($site['linkedin_url']) || !empty($site['whatsapp_number']))
+                <div class="flex items-center space-x-3 mt-4">
+                    @if(!empty($site['facebook_url']))<a href="{{ $site['facebook_url'] }}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-facebook-f"></i></a>@endif
+                    @if(!empty($site['twitter_url']))<a href="{{ $site['twitter_url'] }}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-x-twitter"></i></a>@endif
+                    @if(!empty($site['linkedin_url']))<a href="{{ $site['linkedin_url'] }}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-linkedin-in"></i></a>@endif
+                    @if(!empty($site['whatsapp_number']))<a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $site['whatsapp_number']) }}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-whatsapp"></i></a>@endif
+                </div>
+                @endif
             </div>
             <div>
                 <h4 class="text-sm font-semibold text-white mb-4">Product</h4>
@@ -322,17 +333,46 @@
             <div>
                 <h4 class="text-sm font-semibold text-white mb-4">Support</h4>
                 <ul class="space-y-2">
-                    <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Documentation</a></li>
-                    <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
-                    <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Status Page</a></li>
+                    <li><a href="{{ route('documentation') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Documentation</a></li>
+                    <li><a href="{{ route('contact') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
+                    <li><a href="{{ route('page.show', 'service-policy') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Service Policy</a></li>
                 </ul>
             </div>
             <div>
                 <h4 class="text-sm font-semibold text-white mb-4">Legal</h4>
                 <ul class="space-y-2">
-                    <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-                    <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
-                    <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">HIPAA Compliance</a></li>
+                    <li><a href="{{ route('page.show', 'privacy-policy') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
+                    <li><a href="{{ route('page.show', 'terms-and-conditions') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
+                    <li><a href="{{ route('page.show', 'refund-policy') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Refund Policy</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold text-white mb-4">Contact</h4>
+                <ul class="space-y-3">
+                    @if(!empty($site['office_address']))
+                    <li class="flex items-start text-sm text-gray-400">
+                        <i class="fas fa-map-marker-alt mt-1 mr-2 text-medical-blue flex-shrink-0"></i>
+                        <span>{{ $site['office_address'] }}@if(!empty($site['office_city'])), {{ $site['office_city'] }}@endif @if(!empty($site['office_country'])), {{ $site['office_country'] }}@endif</span>
+                    </li>
+                    @endif
+                    @if(!empty($site['office_phone']))
+                    <li class="flex items-center text-sm text-gray-400">
+                        <i class="fas fa-phone-alt mr-2 text-medical-blue flex-shrink-0"></i>
+                        <a href="tel:{{ $site['office_phone'] }}" class="hover:text-white transition-colors">{{ $site['office_phone'] }}</a>
+                    </li>
+                    @endif
+                    @if(!empty($site['office_email']))
+                    <li class="flex items-center text-sm text-gray-400">
+                        <i class="fas fa-envelope mr-2 text-medical-blue flex-shrink-0"></i>
+                        <a href="mailto:{{ $site['office_email'] }}" class="hover:text-white transition-colors">{{ $site['office_email'] }}</a>
+                    </li>
+                    @endif
+                    @if(!empty($site['office_hours']))
+                    <li class="flex items-center text-sm text-gray-400">
+                        <i class="fas fa-clock mr-2 text-medical-blue flex-shrink-0"></i>
+                        <span>{{ $site['office_hours'] }}</span>
+                    </li>
+                    @endif
                 </ul>
             </div>
         </div>

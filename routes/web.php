@@ -61,6 +61,35 @@ Route::prefix('register')->name('tenant.')->group(function () {
     Route::get('/{tenant}/status', [TenantRegistrationController::class, 'status'])->name('status');
 });
 
+// Public page route (Terms & Conditions, Privacy Policy, etc.)
+Route::get('/page/{slug}', function ($slug) {
+    $page = \App\Models\Page::where('slug', $slug)->where('is_active', true)->firstOrFail();
+    return view('page', compact('page'));
+})->name('page.show');
+
+// Contact page
+Route::get('/contact', function () {
+    $site = \App\Models\SiteSetting::getAll();
+    return view('contact', compact('site'));
+})->name('contact');
+
+Route::post('/contact', function (\Illuminate\Http\Request $request) {
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'phone' => 'nullable|string|max:50',
+        'subject' => 'required|string|max:255',
+        'message' => 'required|string|max:5000',
+    ]);
+    \App\Models\ContactMessage::create($validated);
+    return back()->with('success', 'Thank you for your message. We will get back to you shortly.');
+})->name('contact.submit');
+
+// Documentation page
+Route::get('/documentation', function () {
+    return view('documentation');
+})->name('documentation');
+
 // Language Switcher Route
 Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
@@ -103,6 +132,23 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::get('/plans/{plan}/edit', [\App\Http\Controllers\SuperAdmin\PlanController::class, 'edit'])->name('plans.edit');
         Route::put('/plans/{plan}', [\App\Http\Controllers\SuperAdmin\PlanController::class, 'update'])->name('plans.update');
         Route::delete('/plans/{plan}', [\App\Http\Controllers\SuperAdmin\PlanController::class, 'destroy'])->name('plans.destroy');
+
+        // Page management
+        Route::get('/pages', [\App\Http\Controllers\SuperAdmin\PageController::class, 'index'])->name('pages.index');
+        Route::get('/pages/create', [\App\Http\Controllers\SuperAdmin\PageController::class, 'create'])->name('pages.create');
+        Route::post('/pages', [\App\Http\Controllers\SuperAdmin\PageController::class, 'store'])->name('pages.store');
+        Route::get('/pages/{page}/edit', [\App\Http\Controllers\SuperAdmin\PageController::class, 'edit'])->name('pages.edit');
+        Route::put('/pages/{page}', [\App\Http\Controllers\SuperAdmin\PageController::class, 'update'])->name('pages.update');
+        Route::delete('/pages/{page}', [\App\Http\Controllers\SuperAdmin\PageController::class, 'destroy'])->name('pages.destroy');
+
+        // Site settings
+        Route::get('/site-settings', [\App\Http\Controllers\SuperAdmin\SiteSettingsController::class, 'edit'])->name('site-settings.edit');
+        Route::put('/site-settings', [\App\Http\Controllers\SuperAdmin\SiteSettingsController::class, 'update'])->name('site-settings.update');
+
+        // Contact messages
+        Route::get('/contact-messages', [\App\Http\Controllers\SuperAdmin\ContactMessageController::class, 'index'])->name('contact-messages.index');
+        Route::get('/contact-messages/{contactMessage}', [\App\Http\Controllers\SuperAdmin\ContactMessageController::class, 'show'])->name('contact-messages.show');
+        Route::delete('/contact-messages/{contactMessage}', [\App\Http\Controllers\SuperAdmin\ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
     });
 });
 

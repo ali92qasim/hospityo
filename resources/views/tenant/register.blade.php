@@ -122,6 +122,13 @@
         </div>
     </div>
 
+    <div class="flex items-start mb-4">
+        <input type="checkbox" name="terms" id="terms" class="h-4 w-4 text-medical-blue border-gray-300 rounded mt-0.5" required>
+        <label for="terms" class="ml-2 text-sm text-gray-600">
+            I agree to the <a href="{{ route('page.show', 'terms-and-conditions') }}" target="_blank" class="text-medical-blue hover:underline">Terms &amp; Conditions</a>
+        </label>
+    </div>
+
     <button type="submit"
             class="w-full bg-medical-blue text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
         <i class="fas fa-rocket mr-2"></i>

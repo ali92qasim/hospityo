@@ -34,8 +34,33 @@
                 </a>
             </li>
 
+            <li>
+                <a href="{{ route('super-admin.pages.index') }}" class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors {{ request()->routeIs('super-admin.pages.*') ? 'bg-gray-800 text-white' : '' }}">
+                    <i class="fas fa-file-alt mr-3 w-5"></i>
+                    <span>Pages</span>
+                </a>
+            </li>
+
+            <li>
+                @php $unreadCount = \App\Models\ContactMessage::where('is_read', false)->count(); @endphp
+                <a href="{{ route('super-admin.contact-messages.index') }}" class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors {{ request()->routeIs('super-admin.contact-messages.*') ? 'bg-gray-800 text-white' : '' }}">
+                    <i class="fas fa-envelope mr-3 w-5"></i>
+                    <span>Messages</span>
+                    @if($unreadCount > 0)
+                    <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ $unreadCount }}</span>
+                    @endif
+                </a>
+            </li>
+
             <li class="pt-4">
                 <p class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Settings</p>
+            </li>
+
+            <li>
+                <a href="{{ route('super-admin.site-settings.edit') }}" class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors {{ request()->routeIs('super-admin.site-settings*') ? 'bg-gray-800 text-white' : '' }}">
+                    <i class="fas fa-globe mr-3 w-5"></i>
+                    <span>Site Settings</span>
+                </a>
             </li>
 
             <li>
