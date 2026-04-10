@@ -58,6 +58,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PlanSeeder::class,
             SuperAdminSeeder::class,
+            PageSeeder::class,
+            SiteSettingsSeeder::class,
         ]);
 
         $this->command->info('✓ Landlord seeders completed.');
