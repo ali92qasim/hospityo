@@ -27,7 +27,12 @@ class SiteSetting extends Model
     public static function getAll(): array
     {
         return Cache::remember('site_settings.all', 3600, function () {
-            return static::pluck('value', 'key')->toArray();
+            $settings = static::pluck('value', 'key')->toArray();
+            // Don't cache empty results — allows retry after seeding
+            if (empty($settings)) {
+                Cache::forget('site_settings.all');
+            }
+            return $settings;
         });
     }
 

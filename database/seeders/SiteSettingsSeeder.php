@@ -22,5 +22,7 @@ class SiteSettingsSeeder extends Seeder
         foreach ($defaults as $key => $value) {
             SiteSetting::firstOrCreate(['key' => $key], ['value' => $value]);
         }
+
+        SiteSetting::clearCache();
     }
 }
