@@ -16,7 +16,7 @@ class UpdateBillRequest extends FormRequest
         return [
             'patient_id' => 'required|exists:tenant.patients,id',
             'bill_date' => 'required|date',
-            'bill_type' => 'required|in:opd,ipd,emergency,lab,pharmacy',
+            'bill_type' => 'required|in:opd,ipd,emergency,investigation,pharmacy',
             'items' => 'required|array|min:1'
         ];
     }

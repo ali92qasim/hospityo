@@ -218,14 +218,14 @@
             @endhasrole
             @endif
 
-            {{-- Upgrade Plan Link --}}
+            {{-- Subscription --}}
             @if($currentTenant && $currentTenant->plan)
             @hasrole('Super Admin|Hospital Administrator')
             <li class="pt-6 mt-4 border-t border-gray-200">
-                <a href="{{ route('billing.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('billing.*') ? 'bg-medical-light text-medical-blue' : '' }}">
+                <a href="{{ route('subscription.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('subscription.*') ? 'bg-medical-light text-medical-blue' : '' }}">
                     <i class="fas fa-crown mr-3 w-5 text-yellow-500"></i>
                     <div class="min-w-0 flex-1">
-                        <span class="block text-sm">Manage Plan</span>
+                        <span class="block text-sm">Subscription</span>
                         <span class="block text-xs text-gray-400 truncate">{{ $currentTenant->plan->name }} Plan</span>
                     </div>
                 </a>
@@ -234,7 +234,7 @@
             @elseif($currentTenant && !$currentTenant->plan)
             @hasrole('Super Admin|Hospital Administrator')
             <li class="pt-6 mt-4 border-t border-gray-200">
-                <a href="{{ route('billing.index') }}" class="flex items-center px-4 py-3 rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors">
+                <a href="{{ route('subscription.index') }}" class="flex items-center px-4 py-3 rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors">
                     <i class="fas fa-arrow-up mr-3 w-5"></i>
                     <div class="min-w-0 flex-1">
                         <span class="block text-sm font-medium">Upgrade Plan</span>

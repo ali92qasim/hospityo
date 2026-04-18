@@ -35,9 +35,11 @@ class EnsureTenantActive
             return redirect(config('app.url'));
         }
 
-        // Trial expiry check
+        // Trial expiry check — allow subscription page so users can upgrade
         if ($tenant->trialExpired() && !$tenant->activeSubscription) {
-            return response()->view('errors.trial-expired', ['tenant' => $tenant], 403);
+            if (!$request->routeIs('subscription.*') && !$request->routeIs('login') && !$request->routeIs('logout')) {
+                return redirect()->route('subscription.index');
+            }
         }
 
         // Cross-tenant session protection

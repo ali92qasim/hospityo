@@ -42,6 +42,7 @@ class PlanController extends Controller
             'max_patients'  => 'nullable|integer|min:1',
             'max_doctors'   => 'nullable|integer|min:1',
             'sort_order'    => 'nullable|integer|min:0',
+            'paddle_price_id' => 'nullable|string|max:255',
             'is_active'     => 'boolean',
         ]);
 
@@ -52,6 +53,7 @@ class PlanController extends Controller
                 'description'   => $validated['description'],
                 'price'         => $validated['price'],
                 'billing_cycle' => $validated['billing_cycle'],
+                'paddle_price_id' => $validated['paddle_price_id'] ?? null,
                 'modules'       => $validated['modules'],
                 'limits'        => array_filter([
                     'max_users'    => $validated['max_users'] ?? null,
@@ -89,6 +91,7 @@ class PlanController extends Controller
             'max_patients'  => 'nullable|integer|min:1',
             'max_doctors'   => 'nullable|integer|min:1',
             'sort_order'    => 'nullable|integer|min:0',
+            'paddle_price_id' => 'nullable|string|max:255',
             'is_active'     => 'boolean',
         ]);
 
@@ -99,6 +102,7 @@ class PlanController extends Controller
                 'description'   => $validated['description'],
                 'price'         => $validated['price'],
                 'billing_cycle' => $validated['billing_cycle'],
+                'paddle_price_id' => $validated['paddle_price_id'] ?? null,
                 'modules'       => $validated['modules'],
                 'limits'        => array_filter([
                     'max_users'    => $validated['max_users'] ?? null,

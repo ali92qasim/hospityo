@@ -114,7 +114,7 @@
                         </div>
                         <div class="flex justify-between py-2 border-b border-gray-100">
                             <span class="text-gray-600">Consultation Fee:</span>
-                            <span class="font-medium">${{ number_format($visit->doctor->consultation_fee, 2) }}</span>
+                            <span class="font-medium">{{ format_currency($visit->doctor->consultation_fee) }}</span>
                         </div>
                     </div>
                 </div>
@@ -168,7 +168,7 @@
                             @if($visit->total_charges > 0)
                             <div class="flex justify-between py-2 border-b border-gray-100">
                                 <span class="text-gray-600">Total Charges:</span>
-                                <span class="font-medium text-green-600">${{ number_format($visit->total_charges, 2) }}</span>
+                                <span class="font-medium text-green-600">{{ format_currency($visit->total_charges) }}</span>
                             </div>
                             @endif
                         </div>

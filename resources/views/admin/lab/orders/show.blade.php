@@ -65,7 +65,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-600">Price:</span>
-                                <span class="font-medium">₨{{ $labOrder->investigation ? number_format($labOrder->investigation->price, 0) : 'N/A' }}</span>
+                                <span class="font-medium">{{ $labOrder->investigation ? currency_symbol() . number_format($labOrder->investigation->price, 0) : 'N/A' }}</span>
                             </div>
                         </div>
                     </div>

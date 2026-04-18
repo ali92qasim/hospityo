@@ -36,7 +36,7 @@
                         <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ ucfirst($bed->bed_type) }}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ₨{{ number_format($bed->daily_rate, 2) }}
+                        {{ format_currency($bed->daily_rate) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @php

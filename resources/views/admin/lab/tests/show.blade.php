@@ -41,7 +41,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                <p class="text-gray-900">₨{{ number_format($labTest->price ?? 0, 2) }}</p>
+                <p class="text-gray-900">{{ format_currency($labTest->price ?? 0) }}</p>
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>

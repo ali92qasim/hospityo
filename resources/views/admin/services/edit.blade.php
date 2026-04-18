@@ -49,7 +49,7 @@
             </div>
 
             <div>
-                <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price (₨)</label>
+                <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price ({{ currency_symbol() }})</label>
                 <input type="number" id="price" name="price" step="0.01" min="0" value="{{ old('price', $service->price) }}" 
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
                        required>

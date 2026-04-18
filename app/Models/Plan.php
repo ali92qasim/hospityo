@@ -17,6 +17,7 @@ class Plan extends Model
         'price',
         'billing_cycle',
         'trial_days',
+        'paddle_price_id',
         'modules',
         'limits',
         'is_active',

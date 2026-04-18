@@ -52,21 +52,10 @@
                 </a>
             </li>
 
-            <li class="pt-4">
-                <p class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Settings</p>
-            </li>
-
             <li>
-                <a href="{{ route('super-admin.site-settings.edit') }}" class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors {{ request()->routeIs('super-admin.site-settings*') ? 'bg-gray-800 text-white' : '' }}">
-                    <i class="fas fa-globe mr-3 w-5"></i>
-                    <span>Site Settings</span>
-                </a>
-            </li>
-
-            <li>
-                <a href="{{ route('super-admin.profile') }}" class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors {{ request()->routeIs('super-admin.profile*') ? 'bg-gray-800 text-white' : '' }}">
-                    <i class="fas fa-user-cog mr-3 w-5"></i>
-                    <span>Profile</span>
+                <a href="{{ route('super-admin.payment-gateways.index') }}" class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors {{ request()->routeIs('super-admin.payment-gateways*') ? 'bg-gray-800 text-white' : '' }}">
+                    <i class="fas fa-credit-card mr-3 w-5"></i>
+                    <span>Payment Gateways</span>
                 </a>
             </li>
         </ul>

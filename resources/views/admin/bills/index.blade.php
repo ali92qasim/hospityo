@@ -38,9 +38,9 @@
                         <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded uppercase">{{ $bill->bill_type }}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">₨{{ number_format($bill->total_amount, 2) }}</div>
+                        <div class="text-sm text-gray-900">{{ format_currency($bill->total_amount) }}</div>
                         @if($bill->due_amount > 0)
-                            <div class="text-sm text-red-500">Due: ₨{{ number_format($bill->due_amount, 2) }}</div>
+                            <div class="text-sm text-red-500">Due: {{ format_currency($bill->due_amount) }}</div>
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">

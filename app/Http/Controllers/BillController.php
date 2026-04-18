@@ -22,8 +22,9 @@ class BillController extends Controller
     {
         $patients = Patient::all();
         $services = Service::active()->get();
+        $investigations = \App\Models\Investigation::active()->orderBy('category')->orderBy('name')->get();
         $visits = Visit::with('patient')->latest()->take(50)->get();
-        return view('admin.bills.create', compact('patients', 'services', 'visits'));
+        return view('admin.bills.create', compact('patients', 'services', 'investigations', 'visits'));
     }
 
     public function store(StoreBillRequest $request)
@@ -45,7 +46,8 @@ class BillController extends Controller
 
             foreach ($request->items as $item) {
                 $bill->billItems()->create([
-                    'service_id' => $item['service_id'],
+                    'service_id' => $item['service_id'] ?? null,
+                    'investigation_id' => $item['investigation_id'] ?? null,
                     'description' => $item['description'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price']
@@ -62,7 +64,7 @@ class BillController extends Controller
 
     public function show(Bill $bill)
     {
-        $bill->load(['patient', 'visit', 'billItems.service', 'payments.receivedBy']);
+        $bill->load(['patient', 'visit', 'billItems.service', 'billItems.investigation', 'payments.receivedBy']);
         return view('admin.bills.show', compact('bill'));
     }
 
@@ -70,9 +72,10 @@ class BillController extends Controller
     {
         $patients = Patient::all();
         $services = Service::active()->get();
+        $investigations = \App\Models\Investigation::active()->orderBy('category')->orderBy('name')->get();
         $visits = Visit::with('patient')->latest()->take(50)->get();
         $bill->load('billItems');
-        return view('admin.bills.edit', compact('bill', 'patients', 'services', 'visits'));
+        return view('admin.bills.edit', compact('bill', 'patients', 'services', 'investigations', 'visits'));
     }
 
     public function update(UpdateBillRequest $request, Bill $bill)
@@ -91,7 +94,8 @@ class BillController extends Controller
 
         foreach ($request->items as $item) {
             $bill->billItems()->create([
-                'service_id' => $item['service_id'],
+                'service_id' => $item['service_id'] ?? null,
+                'investigation_id' => $item['investigation_id'] ?? null,
                 'description' => $item['description'],
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price']

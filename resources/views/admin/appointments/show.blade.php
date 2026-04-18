@@ -91,7 +91,7 @@
                         </div>
                         <div class="flex justify-between py-2 border-b border-gray-100">
                             <span class="text-gray-600">Consultation Fee:</span>
-                            <span class="font-medium">${{ number_format($appointment->doctor->consultation_fee, 2) }}</span>
+                            <span class="font-medium">{{ format_currency($appointment->doctor->consultation_fee) }}</span>
                         </div>
                     </div>
                 </div>

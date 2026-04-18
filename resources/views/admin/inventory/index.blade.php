@@ -77,7 +77,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         @if($transaction->type === 'stock_in')
-                            ₨{{ number_format($transaction->total_cost, 2) }}
+                            {{ format_currency($transaction->total_cost) }}
                         @else
                             -
                         @endif

@@ -56,7 +56,7 @@
                     </td>
                     <td class="px-6 py-4">
                         <div class="text-sm text-gray-900">{{ $doctor->shift_start }} - {{ $doctor->shift_end }}</div>
-                        <div class="text-xs text-gray-500">${{ number_format($doctor->consultation_fee, 2) }}</div>
+                        <div class="text-xs text-gray-500">{{ format_currency($doctor->consultation_fee) }}</div>
                     </td>
                     <td class="px-6 py-4">
                         <span class="px-2 py-1 text-xs rounded-full {{ $doctor->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">

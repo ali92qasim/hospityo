@@ -39,7 +39,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-600">Total Outstanding</p>
-                <p class="text-2xl font-bold text-red-600">₨{{ number_format($summary['total_outstanding'], 2) }}</p>
+                <p class="text-2xl font-bold text-red-600">{{ format_currency($summary['total_outstanding']) }}</p>
             </div>
             <div class="bg-red-100 rounded-full p-3">
                 <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
@@ -88,25 +88,25 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
         <h3 class="text-sm font-medium text-gray-700 mb-2">0-30 Days</h3>
-        <p class="text-2xl font-bold text-gray-800">₨{{ number_format($agingAnalysis['0-30']['amount'], 2) }}</p>
+        <p class="text-2xl font-bold text-gray-800">{{ format_currency($agingAnalysis['0-30']['amount']) }}</p>
         <p class="text-xs text-gray-500 mt-1">{{ $agingAnalysis['0-30']['count'] }} bills</p>
     </div>
 
     <div class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
         <h3 class="text-sm font-medium text-gray-700 mb-2">31-60 Days</h3>
-        <p class="text-2xl font-bold text-gray-800">₨{{ number_format($agingAnalysis['31-60']['amount'], 2) }}</p>
+        <p class="text-2xl font-bold text-gray-800">{{ format_currency($agingAnalysis['31-60']['amount']) }}</p>
         <p class="text-xs text-gray-500 mt-1">{{ $agingAnalysis['31-60']['count'] }} bills</p>
     </div>
 
     <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
         <h3 class="text-sm font-medium text-gray-700 mb-2">61-90 Days</h3>
-        <p class="text-2xl font-bold text-gray-800">₨{{ number_format($agingAnalysis['61-90']['amount'], 2) }}</p>
+        <p class="text-2xl font-bold text-gray-800">{{ format_currency($agingAnalysis['61-90']['amount']) }}</p>
         <p class="text-xs text-gray-500 mt-1">{{ $agingAnalysis['61-90']['count'] }} bills</p>
     </div>
 
     <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-700">
         <h3 class="text-sm font-medium text-gray-700 mb-2">90+ Days</h3>
-        <p class="text-2xl font-bold text-gray-800">₨{{ number_format($agingAnalysis['90+']['amount'], 2) }}</p>
+        <p class="text-2xl font-bold text-gray-800">{{ format_currency($agingAnalysis['90+']['amount']) }}</p>
         <p class="text-xs text-gray-500 mt-1">{{ $agingAnalysis['90+']['count'] }} bills</p>
     </div>
 </div>
@@ -138,7 +138,7 @@
                         {{ $patient['bills'] }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-                        ₨{{ number_format($patient['outstanding'], 2) }}
+                        {{ format_currency($patient['outstanding']) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ $patient['oldest_bill']->created_at->format('M d, Y') }}
@@ -191,13 +191,13 @@
                         <div class="text-xs text-gray-500">{{ $bill->patient->patient_id }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ₨{{ number_format($bill->total_amount, 2) }}
+                        {{ format_currency($bill->total_amount) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                        ₨{{ number_format($bill->paid_amount, 2) }}
+                        {{ format_currency($bill->paid_amount) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-                        ₨{{ number_format($outstanding, 2) }}
+                        {{ format_currency($outstanding) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <span class="px-2 py-1 text-xs rounded-full 
@@ -229,7 +229,7 @@
             <tfoot class="bg-gray-50 font-semibold">
                 <tr>
                     <td colspan="5" class="px-6 py-4 text-right text-sm text-gray-900">Total Outstanding:</td>
-                    <td class="px-6 py-4 text-sm text-red-600">₨{{ number_format($summary['total_outstanding'], 2) }}</td>
+                    <td class="px-6 py-4 text-sm text-red-600">{{ format_currency($summary['total_outstanding']) }}</td>
                     <td colspan="2"></td>
                 </tr>
             </tfoot>

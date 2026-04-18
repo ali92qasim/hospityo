@@ -43,7 +43,7 @@
                         {{ $service->department->name ?? 'N/A' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">₨{{ number_format($service->price, 2) }}</div>
+                        <div class="text-sm font-medium text-gray-900">{{ format_currency($service->price) }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @if($service->is_active)

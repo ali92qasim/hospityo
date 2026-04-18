@@ -52,7 +52,7 @@
                             @foreach($services as $service)
                                 <option value="{{ $service->id }}" data-price="{{ $service->price }}" 
                                         {{ $item->service_id == $service->id ? 'selected' : '' }}>
-                                    {{ $service->name }} - ₨{{ $service->price }}
+                                    {{ $service->name }} - {{ currency_symbol() }}{{ $service->price }}
                                 </option>
                             @endforeach
                         </select>
@@ -91,7 +91,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Total Amount</label>
-                <div id="totalAmount" class="text-2xl font-bold text-medical-blue">₨{{ number_format($bill->total_amount, 2) }}</div>
+                <div id="totalAmount" class="text-2xl font-bold text-medical-blue">{{ format_currency($bill->total_amount) }}</div>
             </div>
         </div>
 
@@ -173,7 +173,7 @@ function updateTotal() {
     const discount = parseFloat(document.getElementById('discount_amount').value) || 0;
     const total = subtotal + tax - discount;
     
-    document.getElementById('totalAmount').textContent = `₨${total.toFixed(2)}`;
+    document.getElementById('totalAmount').textContent = `{{ currency_symbol() }}${total.toFixed(2)}`;
 }
 
 // Initialize total calculation

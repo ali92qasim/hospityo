@@ -13,7 +13,7 @@ class Investigation extends Model
     use Auditable, UsesTenantConnection;
 
     protected $fillable = [
-        'code', 'name', 'type', 'description', 'category', 'sample_type',
+        'code', 'name', 'description', 'category', 'sample_type',
         'price', 'turnaround_time', 'instructions', 'is_active'
     ];
 
@@ -40,10 +40,5 @@ class Investigation extends Model
     public function scopeByCategory(Builder $query, string $category): Builder
     {
         return $query->where('category', '=', $category);
-    }
-
-    public function scopeByType(Builder $query, string $type): Builder
-    {
-        return $query->where('type', '=', $type);
     }
 }

@@ -34,7 +34,7 @@
             <span class="text-xs sm:text-sm text-gray-500 truncate">Monthly Revenue</span>
             <i class="fas fa-chart-line text-purple-400"></i>
         </div>
-        <div class="text-lg sm:text-2xl font-bold text-gray-900 truncate">PKR {{ number_format($stats['monthly_revenue']) }}</div>
+        <div class="text-lg sm:text-2xl font-bold text-gray-900 truncate">{{ currency_symbol('PKR') }} {{ number_format($stats['monthly_revenue']) }}</div>
     </div>
 </div>
 
@@ -47,7 +47,7 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <span class="text-sm font-medium text-gray-700">{{ $plan->name }}</span>
-                    <span class="text-xs text-gray-400">PKR {{ number_format($plan->price) }}/mo</span>
+                    <span class="text-xs text-gray-400">{{ currency_symbol('PKR') }} {{ number_format($plan->price) }}/mo</span>
                 </div>
                 <span class="text-sm font-semibold text-gray-900">{{ $plan->tenants_count }} hospitals</span>
             </div>
@@ -101,7 +101,7 @@
                 <tr>
                     <td class="py-2.5 px-4 sm:px-0 text-gray-700">{{ $payment->tenant?->name ?? 'N/A' }}</td>
                     <td class="py-2.5 text-gray-500">{{ $payment->subscription?->plan?->name ?? 'N/A' }}</td>
-                    <td class="py-2.5 font-medium text-gray-900 whitespace-nowrap">PKR {{ number_format($payment->amount) }}</td>
+                    <td class="py-2.5 font-medium text-gray-900 whitespace-nowrap">{{ currency_symbol('PKR') }} {{ number_format($payment->amount) }}</td>
                     <td class="py-2.5 text-gray-500 hidden sm:table-cell">{{ ucfirst($payment->payment_method ?? '-') }}</td>
                     <td class="py-2.5 text-gray-400 whitespace-nowrap">{{ $payment->paid_at?->format('d M Y') ?? '-' }}</td>
                 </tr>

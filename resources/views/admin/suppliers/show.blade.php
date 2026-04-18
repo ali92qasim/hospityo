@@ -50,7 +50,7 @@
                         <i class="fas fa-dollar-sign text-green-600 text-xl mr-3"></i>
                         <div>
                             <p class="text-sm text-green-600">Total Value</p>
-                            <p class="text-2xl font-semibold text-green-800">₨{{ number_format($totalValue, 2) }}</p>
+                            <p class="text-2xl font-semibold text-green-800">{{ format_currency($totalValue) }}</p>
                         </div>
                     </div>
                 </div>
@@ -138,7 +138,7 @@
                                 {{ $transaction->quantity }} {{ $transaction->medicine->unit }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ₨{{ number_format($transaction->total_cost, 2) }}
+                                {{ format_currency($transaction->total_cost) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ $transaction->reference_no ?: '-' }}

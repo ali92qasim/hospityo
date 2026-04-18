@@ -14,6 +14,7 @@ class BillItem extends Model
     protected $fillable = [
         'bill_id',
         'service_id',
+        'investigation_id',
         'description',
         'quantity',
         'unit_price',
@@ -34,6 +35,11 @@ class BillItem extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function investigation(): BelongsTo
+    {
+        return $this->belongsTo(Investigation::class);
     }
 
     protected static function boot(): void

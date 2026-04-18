@@ -16,7 +16,7 @@
         <textarea name="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('description', $plan->description ?? '') }}</textarea>
     </div>
     <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Price (PKR) *</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Price ({{ currency_symbol('PKR') }}) *</label>
         <input type="number" name="price" value="{{ old('price', $plan->price ?? 0) }}" min="0" step="0.01"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
     </div>
@@ -32,6 +32,12 @@
         <label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
         <input type="number" name="sort_order" value="{{ old('sort_order', $plan->sort_order ?? 0) }}" min="0"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Paddle Price ID</label>
+        <input type="text" name="paddle_price_id" value="{{ old('paddle_price_id', $plan->paddle_price_id ?? '') }}"
+               placeholder="pri_..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+        <p class="text-xs text-gray-400 mt-1">From Paddle Dashboard → Catalog → Prices</p>
     </div>
     <div class="flex items-end">
         <label class="flex items-center">

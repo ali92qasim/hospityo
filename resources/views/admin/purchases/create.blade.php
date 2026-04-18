@@ -66,8 +66,8 @@
                             <tr>
                                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Medicine</th>
                                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Quantity</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit Price (₨)</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Total (₨)</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit Price ({{ currency_symbol() }})</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Total ({{ currency_symbol() }})</th>
                                 <th class="px-4 py-3 text-center text-sm font-medium text-gray-700">Action</th>
                             </tr>
                         </thead>

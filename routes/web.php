@@ -98,6 +98,11 @@ Route::post('/billing/payfast/webhook', [\App\Http\Controllers\BillingController
     ->name('billing.payfast.webhook')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
+// Paddle Webhook (server-to-server, no auth/tenant required)
+Route::post('/paddle/webhook', [\App\Http\Controllers\SubscriptionController::class, 'paddleWebhook'])
+    ->name('paddle.webhook')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
 /*
 |--------------------------------------------------------------------------
 | Super Admin Panel (Landlord Domain — no tenant required)
@@ -149,6 +154,12 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::get('/contact-messages', [\App\Http\Controllers\SuperAdmin\ContactMessageController::class, 'index'])->name('contact-messages.index');
         Route::get('/contact-messages/{contactMessage}', [\App\Http\Controllers\SuperAdmin\ContactMessageController::class, 'show'])->name('contact-messages.show');
         Route::delete('/contact-messages/{contactMessage}', [\App\Http\Controllers\SuperAdmin\ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+
+        // Payment gateways
+        Route::get('/payment-gateways', [\App\Http\Controllers\SuperAdmin\PaymentGatewayController::class, 'index'])->name('payment-gateways.index');
+        Route::get('/payment-gateways/{paymentGateway}/edit', [\App\Http\Controllers\SuperAdmin\PaymentGatewayController::class, 'edit'])->name('payment-gateways.edit');
+        Route::put('/payment-gateways/{paymentGateway}', [\App\Http\Controllers\SuperAdmin\PaymentGatewayController::class, 'update'])->name('payment-gateways.update');
+        Route::patch('/payment-gateways/{paymentGateway}/toggle', [\App\Http\Controllers\SuperAdmin\PaymentGatewayController::class, 'toggle'])->name('payment-gateways.toggle');
     });
 });
 
@@ -229,6 +240,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/payfast/success', [\App\Http\Controllers\BillingController::class, 'success'])->name('payfast.success');
         Route::get('/payfast/cancel', [\App\Http\Controllers\BillingController::class, 'cancel'])->name('payfast.cancel');
     });
+
+    // Subscription management (Paddle)
+    Route::get('/subscription', [\App\Http\Controllers\SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('/subscription/activate', [\App\Http\Controllers\SubscriptionController::class, 'activate'])->name('subscription.activate');
 });
 
 Route::middleware('auth')->group(function () {

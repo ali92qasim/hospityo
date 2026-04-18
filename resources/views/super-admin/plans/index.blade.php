@@ -26,7 +26,7 @@
             </div>
 
             <div class="flex items-baseline mb-3">
-                <span class="text-2xl font-bold text-gray-900">{{ $plan->price > 0 ? 'PKR ' . number_format($plan->price) : 'Free' }}</span>
+                <span class="text-2xl font-bold text-gray-900">{{ $plan->price > 0 ? currency_symbol('PKR') . ' ' . number_format($plan->price) : 'Free' }}</span>
                 @if($plan->price > 0)
                 <span class="ml-1 text-sm text-gray-500">/{{ $plan->billing_cycle }}</span>
                 @endif

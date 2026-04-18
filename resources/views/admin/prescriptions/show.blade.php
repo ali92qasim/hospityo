@@ -93,14 +93,14 @@
                                 <td class="px-4 py-3 text-sm text-gray-500">{{ $item->frequency }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-500">{{ $item->duration }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-500">{{ $item->quantity }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-500">₨{{ number_format($item->total_price, 2) }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">{{ format_currency($item->total_price) }}</td>
                             </tr>
                             @endforeach
                         </tbody>
                         <tfoot class="bg-gray-50">
                             <tr>
                                 <td colspan="5" class="px-4 py-3 text-right font-medium text-gray-800">Total Amount:</td>
-                                <td class="px-4 py-3 font-bold text-gray-900">₨{{ number_format($prescription->total_amount, 2) }}</td>
+                                <td class="px-4 py-3 font-bold text-gray-900">{{ format_currency($prescription->total_amount) }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -132,7 +132,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Total Amount:</span>
-                    <span class="text-sm font-bold text-medical-blue">₨{{ number_format($prescription->total_amount, 2) }}</span>
+                    <span class="text-sm font-bold text-medical-blue">{{ format_currency($prescription->total_amount) }}</span>
                 </div>
                 <hr>
                 <div class="flex justify-between">

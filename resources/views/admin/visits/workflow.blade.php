@@ -224,7 +224,7 @@
                                             <div class="font-medium text-gray-800">{{ $bed->bed_number }}</div>
                                             <div class="text-xs text-gray-500 mb-1">{{ $bed->ward->name }}</div>
                                             <div class="text-xs font-medium text-medical-blue">{{ ucfirst($bed->bed_type) }}</div>
-                                            <div class="text-xs text-gray-600 mt-1">₨{{ number_format($bed->daily_rate, 0) }}/day</div>
+                                            <div class="text-xs text-gray-600 mt-1">{{ currency_symbol() }}{{ number_format($bed->daily_rate, 0) }}/day</div>
                                         </div>
                                     </div>
                                 @endforeach
@@ -918,7 +918,7 @@
                                                                         <optgroup label="{{ $label }}">
                                                                             @foreach($groupedInvestigations[$type] as $investigation)
                                                                             <option value="{{ $investigation->id }}">
-                                                                                {{ $investigation->name }} - ₨{{ number_format($investigation->price, 0) }}
+                                                                                {{ $investigation->name }} - {{ currency_symbol() }}{{ number_format($investigation->price, 0) }}
                                                                             </option>
                                                                             @endforeach
                                                                         </optgroup>

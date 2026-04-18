@@ -284,8 +284,8 @@
                 <tr>
                     <td>{{ $item->description }}</td>
                     <td class="text-right">{{ $item->quantity }}</td>
-                    <td class="text-right">₨{{ number_format($item->unit_price, 2) }}</td>
-                    <td class="text-right">₨{{ number_format($item->total_price, 2) }}</td>
+                    <td class="text-right">{{ format_currency($item->unit_price) }}</td>
+                    <td class="text-right">{{ format_currency($item->total_price) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -296,32 +296,32 @@
             <table>
                 <tr>
                     <td>Subtotal:</td>
-                    <td class="text-right">₨{{ number_format($bill->subtotal, 2) }}</td>
+                    <td class="text-right">{{ format_currency($bill->subtotal) }}</td>
                 </tr>
                 @if($bill->tax_amount > 0)
                 <tr>
                     <td>Tax:</td>
-                    <td class="text-right">₨{{ number_format($bill->tax_amount, 2) }}</td>
+                    <td class="text-right">{{ format_currency($bill->tax_amount) }}</td>
                 </tr>
                 @endif
                 @if($bill->discount_amount > 0)
                 <tr>
                     <td>Discount:</td>
-                    <td class="text-right">-₨{{ number_format($bill->discount_amount, 2) }}</td>
+                    <td class="text-right">-{{ format_currency($bill->discount_amount) }}</td>
                 </tr>
                 @endif
                 <tr class="total-row">
                     <td>Total Amount:</td>
-                    <td class="text-right">₨{{ number_format($bill->total_amount, 2) }}</td>
+                    <td class="text-right">{{ format_currency($bill->total_amount) }}</td>
                 </tr>
                 <tr class="paid-row">
                     <td>Paid Amount:</td>
-                    <td class="text-right">₨{{ number_format($bill->paid_amount, 2) }}</td>
+                    <td class="text-right">{{ format_currency($bill->paid_amount) }}</td>
                 </tr>
                 @if($bill->due_amount > 0)
                 <tr class="due-row">
                     <td>Amount Due:</td>
-                    <td class="text-right">₨{{ number_format($bill->due_amount, 2) }}</td>
+                    <td class="text-right">{{ format_currency($bill->due_amount) }}</td>
                 </tr>
                 @endif
             </table>

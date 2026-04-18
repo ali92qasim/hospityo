@@ -23,7 +23,7 @@ class AuthController extends Controller
         try {
             if (Auth::guard('super_admin')->attempt($credentials, $request->boolean('remember'))) {
                 $request->session()->regenerate();
-                return redirect()->intended(route('super-admin.dashboard'));
+                return redirect()->route('super-admin.dashboard');
             }
 
             return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');

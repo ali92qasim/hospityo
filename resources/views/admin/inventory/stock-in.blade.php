@@ -62,7 +62,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Unit Cost (₨) *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Unit Cost ({{ currency_symbol() }}) *</label>
                         <input type="number" name="unit_cost" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                         @error('unit_cost')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>

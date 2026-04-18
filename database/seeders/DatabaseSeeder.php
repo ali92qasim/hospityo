@@ -60,6 +60,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             PageSeeder::class,
             SiteSettingsSeeder::class,
+            PaymentGatewaySeeder::class,
         ]);
 
         $this->command->info('✓ Landlord seeders completed.');

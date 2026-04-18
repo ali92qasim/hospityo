@@ -34,7 +34,7 @@
                 <select name="investigation_id" id="investigation_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="">Select Investigation</option>
                     @foreach($investigations as $investigation)
-                        <option value="{{ $investigation->id }}">{{ $investigation->name }} - ₨{{ number_format($investigation->price, 0) }}</option>
+                        <option value="{{ $investigation->id }}">{{ $investigation->name }} - {{ currency_symbol() }}{{ number_format($investigation->price, 0) }}</option>
                     @endforeach
                 </select>
             </div>

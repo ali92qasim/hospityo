@@ -55,7 +55,7 @@
                         {{ $prescription->prescribed_date->format('M d, Y') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ₨{{ number_format($prescription->total_amount, 2) }}
+                        {{ format_currency($prescription->total_amount) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @php

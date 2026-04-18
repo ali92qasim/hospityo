@@ -23,8 +23,8 @@
                 Your data is safe and will be retained for 90 days. Subscribe to a plan to regain access.
             </div>
             <div class="space-y-3">
-                <a href="{{ config('app.url') }}" class="block w-full bg-medical-blue text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                    <i class="fas fa-credit-card mr-2"></i>View Plans & Subscribe
+                <a href="{{ route('subscription.index') }}" class="block w-full bg-medical-blue text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                    <i class="fas fa-credit-card mr-2"></i>Subscribe Now
                 </a>
                 <a href="{{ config('app.url') }}/contact" class="block w-full border border-gray-300 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
                     <i class="fas fa-envelope mr-2"></i>Contact Support

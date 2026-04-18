@@ -83,7 +83,7 @@
                     <select name="plan_id" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                         @foreach(\App\Models\Plan::orderBy('sort_order')->get() as $plan)
                         <option value="{{ $plan->id }}" {{ $tenant->plan_id == $plan->id ? 'selected' : '' }}>
-                            {{ $plan->name }} (PKR {{ number_format($plan->price) }})
+                            {{ $plan->name }} ({{ currency_symbol('PKR') }} {{ number_format($plan->price) }})
                         </option>
                         @endforeach
                     </select>
@@ -118,7 +118,7 @@
                 @forelse($tenant->subscriptions->sortByDesc('created_at') as $sub)
                 <tr>
                     <td class="py-2.5 text-gray-700">{{ $sub->plan?->name ?? 'N/A' }}</td>
-                    <td class="py-2.5 font-medium">PKR {{ number_format($sub->amount) }}</td>
+                    <td class="py-2.5 font-medium">{{ currency_symbol('PKR') }} {{ number_format($sub->amount) }}</td>
                     <td class="py-2.5">
                         <span class="text-xs px-2 py-0.5 rounded-full {{ $sub->status === 'active' ? 'bg-green-100 text-green-700' : ($sub->status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700') }}">
                             {{ ucfirst($sub->status) }}

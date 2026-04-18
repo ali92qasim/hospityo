@@ -43,7 +43,7 @@
             <p class="text-sm opacity-90">Total Revenue</p>
             <i class="fas fa-chart-line text-2xl opacity-75"></i>
         </div>
-        <p class="text-3xl font-bold">₨{{ number_format($totals['total_revenue'], 2) }}</p>
+        <p class="text-3xl font-bold">{{ format_currency($totals['total_revenue']) }}</p>
         <p class="text-xs opacity-75 mt-2">{{ $totals['total_bills'] }} bills generated</p>
     </div>
 
@@ -52,7 +52,7 @@
             <p class="text-sm opacity-90">Collected</p>
             <i class="fas fa-money-bill-wave text-2xl opacity-75"></i>
         </div>
-        <p class="text-3xl font-bold">₨{{ number_format($totals['total_collected'], 2) }}</p>
+        <p class="text-3xl font-bold">{{ format_currency($totals['total_collected']) }}</p>
         <p class="text-xs opacity-75 mt-2">{{ $totals['total_revenue'] > 0 ? number_format($totals['total_collected'] / $totals['total_revenue'] * 100, 1) : 0 }}% collection rate</p>
     </div>
 
@@ -61,7 +61,7 @@
             <p class="text-sm opacity-90">Outstanding</p>
             <i class="fas fa-exclamation-triangle text-2xl opacity-75"></i>
         </div>
-        <p class="text-3xl font-bold">₨{{ number_format($totals['total_outstanding'], 2) }}</p>
+        <p class="text-3xl font-bold">{{ format_currency($totals['total_outstanding']) }}</p>
         <p class="text-xs opacity-75 mt-2">{{ $totals['total_revenue'] > 0 ? number_format($totals['total_outstanding'] / $totals['total_revenue'] * 100, 1) : 0 }}% pending</p>
     </div>
 
@@ -70,7 +70,7 @@
             <p class="text-sm opacity-90">Avg Bill Value</p>
             <i class="fas fa-calculator text-2xl opacity-75"></i>
         </div>
-        <p class="text-3xl font-bold">₨{{ $totals['total_bills'] > 0 ? number_format($totals['total_revenue'] / $totals['total_bills'], 2) : 0 }}</p>
+        <p class="text-3xl font-bold">{{ $totals['total_bills'] > 0 ? format_currency($totals['total_revenue'] / $totals['total_bills']) : format_currency(0) }}</p>
         <p class="text-xs opacity-75 mt-2">Per transaction</p>
     </div>
 </div>
@@ -100,7 +100,7 @@
                         {{ $service['quantity'] }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ₨{{ number_format($service['revenue'], 2) }}
+                        {{ format_currency($service['revenue']) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div class="flex items-center">
@@ -124,7 +124,7 @@
                 <tr>
                     <td class="px-6 py-4 text-sm text-gray-900">Total</td>
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $serviceRevenue->sum('quantity') }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">₨{{ number_format($serviceRevenue->sum('revenue'), 2) }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($serviceRevenue->sum('revenue')) }}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">100%</td>
                 </tr>
             </tfoot>
@@ -161,10 +161,10 @@
                         {{ $doctor['bills'] }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ₨{{ number_format($doctor['revenue'], 2) }}
+                        {{ format_currency($doctor['revenue']) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                        ₨{{ number_format($doctor['collected'], 2) }}
+                        {{ format_currency($doctor['collected']) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ $doctor['revenue'] > 0 ? number_format($doctor['collected'] / $doctor['revenue'] * 100, 1) : 0 }}%
@@ -176,8 +176,8 @@
                 <tr>
                     <td class="px-6 py-4 text-sm text-gray-900">Total</td>
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $doctorRevenue->sum('bills') }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">₨{{ number_format($doctorRevenue->sum('revenue'), 2) }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">₨{{ number_format($doctorRevenue->sum('collected'), 2) }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($doctorRevenue->sum('revenue')) }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($doctorRevenue->sum('collected')) }}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">
                         {{ $doctorRevenue->sum('revenue') > 0 ? number_format($doctorRevenue->sum('collected') / $doctorRevenue->sum('revenue') * 100, 1) : 0 }}%
                     </td>
@@ -215,10 +215,10 @@
                             {{ $data['bills'] }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            ₨{{ number_format($data['revenue'], 2) }}
+                            {{ format_currency($data['revenue']) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                            ₨{{ number_format($data['collected'], 2) }}
+                            {{ format_currency($data['collected']) }}
                         </td>
                     </tr>
                     @endforeach

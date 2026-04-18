@@ -23,18 +23,29 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
                 <select name="category" id="category-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="">Select Category</option>
-                    <option value="hematology">Hematology</option>
-                    <option value="biochemistry">Biochemistry</option>
-                    <option value="microbiology">Microbiology</option>
-                    <option value="immunology">Immunology</option>
-                    <option value="pathology">Pathology</option>
-                    <option value="molecular">Molecular</option>
+                    <optgroup label="Pathology (Lab)">
+                        <option value="hematology">Hematology</option>
+                        <option value="biochemistry">Biochemistry</option>
+                        <option value="microbiology">Microbiology</option>
+                        <option value="immunology">Immunology</option>
+                        <option value="histopathology">Histopathology</option>
+                        <option value="molecular">Molecular Biology</option>
+                    </optgroup>
+                    <optgroup label="Radiology (Imaging)">
+                        <option value="x-ray">X-Ray</option>
+                        <option value="ultrasound">Ultrasound</option>
+                        <option value="ct-scan">CT Scan</option>
+                        <option value="mri">MRI</option>
+                    </optgroup>
+                    <optgroup label="Cardiology">
+                        <option value="cardiac-diagnostics">Cardiac Diagnostics</option>
+                    </optgroup>
                 </select>
             </div>
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Sample Type</label>
-                <select name="sample_type" id="sample-type-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                <select name="sample_type" id="sample-type-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                     <option value="">Select Sample Type</option>
                     <option value="blood">Blood</option>
                     <option value="urine">Urine</option>
@@ -48,7 +59,7 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Price (₨)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Price ({{ currency_symbol() }})</label>
                 <input type="number" name="price" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
             </div>
             

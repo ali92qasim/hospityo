@@ -18,10 +18,6 @@ class InvestigationController extends Controller
             $query->byCategory($request->category);
         }
 
-        if ($request->type) {
-            $query->byType($request->type);
-        }
-
         if ($request->search) {
             $searchTerm = '%' . $request->search . '%';
             $query->where(function($q) use ($searchTerm) {

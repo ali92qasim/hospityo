@@ -58,15 +58,15 @@
                     <div class="bg-gray-50 rounded-lg p-4">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm text-gray-600">Subtotal:</span>
-                            <span class="text-gray-900">₨{{ number_format($purchase->subtotal, 2) }}</span>
+                            <span class="text-gray-900">{{ format_currency($purchase->subtotal) }}</span>
                         </div>
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm text-gray-600">Tax (17%):</span>
-                            <span class="text-gray-900">₨{{ number_format($purchase->tax_amount, 2) }}</span>
+                            <span class="text-gray-900">{{ format_currency($purchase->tax_amount) }}</span>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t border-gray-200">
                             <span class="font-medium text-gray-900">Total:</span>
-                            <span class="font-bold text-lg text-gray-900">₨{{ number_format($purchase->total_amount, 2) }}</span>
+                            <span class="font-bold text-lg text-gray-900">{{ format_currency($purchase->total_amount) }}</span>
                         </div>
                     </div>
                     
@@ -144,10 +144,10 @@
                                 {{ $item->quantity }} {{ $item->medicine->unit }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ₨{{ number_format($item->unit_price, 2) }}
+                                {{ format_currency($item->unit_price) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ₨{{ number_format($item->total_price, 2) }}
+                                {{ format_currency($item->total_price) }}
                             </td>
                         </tr>
                     @endforeach

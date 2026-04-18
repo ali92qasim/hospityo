@@ -60,7 +60,7 @@
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ₨{{ number_format($order->total_amount, 2) }}
+                        {{ format_currency($order->total_amount) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @php

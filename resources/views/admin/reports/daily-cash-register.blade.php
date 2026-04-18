@@ -47,7 +47,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-600">Total Amount</p>
-                <p class="text-2xl font-bold text-gray-800">₨{{ number_format($summary['total_amount'], 2) }}</p>
+                <p class="text-2xl font-bold text-gray-800">{{ format_currency($summary['total_amount']) }}</p>
             </div>
             <div class="bg-purple-100 rounded-full p-3">
                 <i class="fas fa-money-bill-wave text-purple-600 text-xl"></i>
@@ -59,7 +59,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-600">Total Collected</p>
-                <p class="text-2xl font-bold text-green-600">₨{{ number_format($summary['total_paid'], 2) }}</p>
+                <p class="text-2xl font-bold text-green-600">{{ format_currency($summary['total_paid']) }}</p>
             </div>
             <div class="bg-green-100 rounded-full p-3">
                 <i class="fas fa-check-circle text-green-600 text-xl"></i>
@@ -71,7 +71,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-600">Outstanding</p>
-                <p class="text-2xl font-bold text-red-600">₨{{ number_format($summary['total_outstanding'], 2) }}</p>
+                <p class="text-2xl font-bold text-red-600">{{ format_currency($summary['total_outstanding']) }}</p>
             </div>
             <div class="bg-red-100 rounded-full p-3">
                 <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
@@ -92,7 +92,7 @@
                     <span class="text-sm text-gray-600">Cash</span>
                     <i class="fas fa-money-bill-wave text-green-600"></i>
                 </div>
-                <p class="text-xl font-bold text-gray-800">₨{{ number_format($summary['cash_payments'], 2) }}</p>
+                <p class="text-xl font-bold text-gray-800">{{ format_currency($summary['cash_payments']) }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ $payments->where('payment_method', 'cash')->count() }} transactions</p>
             </div>
 
@@ -101,7 +101,7 @@
                     <span class="text-sm text-gray-600">Card</span>
                     <i class="fas fa-credit-card text-blue-600"></i>
                 </div>
-                <p class="text-xl font-bold text-gray-800">₨{{ number_format($summary['card_payments'], 2) }}</p>
+                <p class="text-xl font-bold text-gray-800">{{ format_currency($summary['card_payments']) }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ $payments->where('payment_method', 'card')->count() }} transactions</p>
             </div>
 
@@ -110,7 +110,7 @@
                     <span class="text-sm text-gray-600">Insurance</span>
                     <i class="fas fa-shield-alt text-purple-600"></i>
                 </div>
-                <p class="text-xl font-bold text-gray-800">₨{{ number_format($summary['insurance_payments'], 2) }}</p>
+                <p class="text-xl font-bold text-gray-800">{{ format_currency($summary['insurance_payments']) }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ $payments->where('payment_method', 'insurance')->count() }} transactions</p>
             </div>
 
@@ -119,7 +119,7 @@
                     <span class="text-sm text-gray-600">Other</span>
                     <i class="fas fa-ellipsis-h text-gray-600"></i>
                 </div>
-                <p class="text-xl font-bold text-gray-800">₨{{ number_format($summary['other_payments'], 2) }}</p>
+                <p class="text-xl font-bold text-gray-800">{{ format_currency($summary['other_payments']) }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ $payments->whereNotIn('payment_method', ['cash', 'card', 'insurance'])->count() }} transactions</p>
             </div>
         </div>
@@ -167,7 +167,7 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ₨{{ number_format($payment->amount, 2) }}
+                        {{ format_currency($payment->amount) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ $payment->reference_number ?? '-' }}
@@ -186,7 +186,7 @@
             <tfoot class="bg-gray-50 font-semibold">
                 <tr>
                     <td colspan="4" class="px-6 py-4 text-right text-sm text-gray-900">Total Collected:</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">₨{{ number_format($summary['total_paid'], 2) }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($summary['total_paid']) }}</td>
                     <td></td>
                 </tr>
             </tfoot>

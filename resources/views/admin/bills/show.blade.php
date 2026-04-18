@@ -51,8 +51,8 @@
                             <tr>
                                 <td class="px-4 py-2">{{ $item->description }}</td>
                                 <td class="px-4 py-2">{{ $item->quantity }}</td>
-                                <td class="px-4 py-2">₨{{ number_format($item->unit_price, 2) }}</td>
-                                <td class="px-4 py-2">₨{{ number_format($item->total_price, 2) }}</td>
+                                <td class="px-4 py-2">{{ format_currency($item->unit_price) }}</td>
+                                <td class="px-4 py-2">{{ format_currency($item->total_price) }}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -64,32 +64,32 @@
                         <div class="w-64">
                             <div class="flex justify-between py-2">
                                 <span>Subtotal:</span>
-                                <span>₨{{ number_format($bill->subtotal, 2) }}</span>
+                                <span>{{ format_currency($bill->subtotal) }}</span>
                             </div>
                             @if($bill->tax_amount > 0)
                             <div class="flex justify-between py-2">
                                 <span>Tax:</span>
-                                <span>₨{{ number_format($bill->tax_amount, 2) }}</span>
+                                <span>{{ format_currency($bill->tax_amount) }}</span>
                             </div>
                             @endif
                             @if($bill->discount_amount > 0)
                             <div class="flex justify-between py-2">
                                 <span>Discount:</span>
-                                <span>-₨{{ number_format($bill->discount_amount, 2) }}</span>
+                                <span>-{{ format_currency($bill->discount_amount) }}</span>
                             </div>
                             @endif
                             <div class="flex justify-between py-2 border-t font-semibold">
                                 <span>Total:</span>
-                                <span>₨{{ number_format($bill->total_amount, 2) }}</span>
+                                <span>{{ format_currency($bill->total_amount) }}</span>
                             </div>
                             <div class="flex justify-between py-2 text-green-600">
                                 <span>Paid:</span>
-                                <span>₨{{ number_format($bill->paid_amount, 2) }}</span>
+                                <span>{{ format_currency($bill->paid_amount) }}</span>
                             </div>
                             @if($bill->due_amount > 0)
                             <div class="flex justify-between py-2 text-red-600 font-semibold">
                                 <span>Due:</span>
-                                <span>₨{{ number_format($bill->due_amount, 2) }}</span>
+                                <span>{{ format_currency($bill->due_amount) }}</span>
                             </div>
                             @endif
                         </div>
@@ -143,7 +143,7 @@
                 @foreach($bill->payments as $payment)
                 <div class="border-l-4 border-green-500 pl-4">
                     <div class="flex justify-between">
-                        <span class="font-medium">₨{{ number_format($payment->amount, 2) }}</span>
+                        <span class="font-medium">{{ format_currency($payment->amount) }}</span>
                         <span class="text-sm text-gray-500">{{ $payment->payment_date->format('M d, Y') }}</span>
                     </div>
                     <div class="text-sm text-gray-600">

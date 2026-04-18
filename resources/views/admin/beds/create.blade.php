@@ -51,7 +51,7 @@
             </div>
 
             <div>
-                <label for="daily_rate" class="block text-sm font-medium text-gray-700 mb-2">Daily Rate (₨)</label>
+                <label for="daily_rate" class="block text-sm font-medium text-gray-700 mb-2">Daily Rate ({{ currency_symbol() }})</label>
                 <input type="number" id="daily_rate" name="daily_rate" value="{{ old('daily_rate') }}" min="0" step="0.01"
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                 @error('daily_rate')
