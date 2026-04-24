@@ -63,6 +63,9 @@ class TenantProvisioningService
             'password' => $data['admin_password'],
         ];
 
+        // Register admin email → tenant mapping immediately (before async jobs)
+        \App\Models\TenantUser::register($data['admin_email'], $tenant->id);
+
         $jobs = [
             new CreateTenantDatabase($tenant),
             new MigrateTenantDatabase($tenant),

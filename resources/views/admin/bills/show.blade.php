@@ -71,6 +71,14 @@
                                 <span>Tax:</span>
                                 <span>{{ format_currency($bill->tax_amount) }}</span>
                             </div>
+                            @if($bill->tax_details)
+                                @foreach($bill->tax_details as $td)
+                                <div class="flex justify-between py-1 pl-4 text-xs text-gray-500">
+                                    <span>{{ $td['name'] }} ({{ $td['percentage'] }}%)</span>
+                                    <span>{{ format_currency($td['amount']) }}</span>
+                                </div>
+                                @endforeach
+                            @endif
                             @endif
                             @if($bill->discount_amount > 0)
                             <div class="flex justify-between py-2">

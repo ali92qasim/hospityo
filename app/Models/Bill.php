@@ -20,6 +20,7 @@ class Bill extends Model
         'bill_type',
         'subtotal',
         'tax_amount',
+        'tax_details',
         'discount_amount',
         'total_amount',
         'paid_amount',
@@ -37,7 +38,8 @@ class Bill extends Model
         'discount_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
-        'due_amount' => 'decimal:2'
+        'due_amount' => 'decimal:2',
+        'tax_details' => 'array',
     ];
 
     public function patient(): BelongsTo
@@ -70,6 +72,28 @@ class Bill extends Model
         $subtotal = $this->billItems->sum(function ($item) {
             return $item->quantity * $item->unit_price;
         });
+
+        // Auto-calculate tax from tax rules if no manual tax was set
+        $autoTax = 0;
+        $taxDetails = [];
+
+        if ($this->tax_amount == 0) {
+            $taxes = \App\Models\Tax::getApplicableTaxes($this->bill_type);
+
+            foreach ($taxes as $tax) {
+                $taxAmount = $tax->calculateTax($subtotal);
+                $autoTax += $taxAmount;
+                $taxDetails[] = [
+                    'code' => $tax->code,
+                    'name' => $tax->name,
+                    'percentage' => $tax->percentage,
+                    'amount' => $taxAmount,
+                ];
+            }
+
+            $this->tax_amount = round($autoTax, 2);
+            $this->tax_details = !empty($taxDetails) ? $taxDetails : null;
+        }
 
         $this->subtotal = $subtotal;
         $this->total_amount = $subtotal + $this->tax_amount - $this->discount_amount;

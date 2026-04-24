@@ -30,11 +30,11 @@
                    class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-medical-blue border border-medical-blue rounded-lg hover:bg-blue-50 transition-colors">
                     Sign Up Free
                 </a>
-                <button onclick="document.getElementById('login-modal').classList.remove('hidden')"
+                <a href="{{ url('/signin') }}"
                         class="inline-flex items-center px-3 sm:px-4 py-2 text-sm font-medium text-white bg-medical-blue rounded-lg hover:bg-blue-700 transition-colors">
                     <span class="hidden xs:inline">Sign In</span>
                     <i class="fas fa-sign-in-alt xs:hidden"></i>
-                </button>
+                </a>
                 {{-- Mobile menu button --}}
                 <button id="mobile-nav-btn" class="md:hidden inline-flex items-center justify-center p-2 text-gray-500 hover:text-gray-700" aria-label="Toggle menu">
                     <i class="fas fa-bars"></i>
@@ -382,58 +382,7 @@
     </div>
 </footer>
 
-{{-- Login Modal --}}
-<div id="login-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="document.getElementById('login-modal').classList.add('hidden')"></div>
-        <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-8 z-10">
-            <button onclick="document.getElementById('login-modal').classList.add('hidden')"
-                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600" aria-label="Close modal">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="text-center mb-6">
-                <div class="mx-auto h-12 w-12 bg-medical-blue rounded-lg flex items-center justify-center mb-3">
-                    <i class="fas fa-hospital text-white"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900">Sign in to your hospital</h3>
-                <p class="mt-1 text-sm text-gray-500">Enter your hospital's subdomain to continue</p>
-            </div>
-            <form onsubmit="redirectToTenant(event)">
-                <div class="mb-4">
-                    <label for="tenant-slug" class="block text-sm font-medium text-gray-700 mb-1">Your subdomain</label>
-                    <div class="flex items-center">
-                        <input type="text" id="tenant-slug"
-                               class="flex-1 px-3 py-2.5 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
-                               placeholder="your-hospital" required>
-                        <span class="px-3 py-2.5 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-sm text-gray-500">
-                            .{{ parse_url(config('app.url'), PHP_URL_HOST) }}
-                        </span>
-                    </div>
-                </div>
-                <button type="submit"
-                        class="w-full bg-medical-blue text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
-                    <i class="fas fa-sign-in-alt mr-2"></i>
-                    Continue to Login
-                </button>
-            </form>
-            <p class="mt-4 text-center text-sm text-gray-500">
-                Don't have an account?
-                <a href="{{ route('tenant.register') }}" class="text-medical-blue hover:underline">Register your hospital</a>
-            </p>
-        </div>
-    </div>
-</div>
-
 <script>
-function redirectToTenant(e) {
-    e.preventDefault();
-    var slug = document.getElementById('tenant-slug').value.trim().toLowerCase();
-    if (slug) {
-        var base = '{{ parse_url(config("app.url"), PHP_URL_HOST) }}';
-        var protocol = '{{ parse_url(config("app.url"), PHP_URL_SCHEME) ?? "http" }}';
-        window.location.href = protocol + '://' + slug + '.' + base + '/login';
-    }
-}
 // Mobile nav toggle
 (function() {
     var btn = document.getElementById('mobile-nav-btn');

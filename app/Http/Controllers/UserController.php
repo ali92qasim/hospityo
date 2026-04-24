@@ -33,6 +33,12 @@ class UserController extends Controller
 
         $user->syncRoles($request->roles ?? []);
 
+        // Register email → tenant mapping for central login
+        $tenant = \App\Models\Tenant::current();
+        if ($tenant) {
+            \App\Models\TenantUser::register($user->email, $tenant->id);
+        }
+
         return redirect()->route('users.index')->with('success', 'User created successfully');
     }
 

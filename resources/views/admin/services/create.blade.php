@@ -38,8 +38,7 @@
                     <option value="">Select Category</option>
                     <option value="consultation" {{ old('category') == 'consultation' ? 'selected' : '' }}>Consultation</option>
                     <option value="procedure" {{ old('category') == 'procedure' ? 'selected' : '' }}>Procedure</option>
-                    <option value="lab_test" {{ old('category') == 'lab_test' ? 'selected' : '' }}>Lab Test</option>
-                    <option value="imaging" {{ old('category') == 'imaging' ? 'selected' : '' }}>Imaging</option>
+                    <option value="investigation" {{ old('category') == 'investigation' ? 'selected' : '' }}>Investigation</option>
                     <option value="medication" {{ old('category') == 'medication' ? 'selected' : '' }}>Medication</option>
                     <option value="other" {{ old('category') == 'other' ? 'selected' : '' }}>Other</option>
                 </select>

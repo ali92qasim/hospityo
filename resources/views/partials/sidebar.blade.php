@@ -141,16 +141,42 @@
             <li class="pt-4">
                 <button onclick="toggleSubmenu('billing')" class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors">
                     <span>{{ __('messages.billing') }}</span>
-                    <i id="billing-icon" class="fas fa-chevron-down text-xs transition-transform {{ request()->routeIs('bills.*', 'services.*') ? 'rotate-180' : '' }}"></i>
+                    <i id="billing-icon" class="fas fa-chevron-down text-xs transition-transform {{ request()->routeIs('bills.*', 'services.*', 'taxes.*') ? 'rotate-180' : '' }}"></i>
                 </button>
             </li>
             @endcanany
-            <div id="billing-submenu" class="space-y-1 {{ request()->routeIs('bills.*', 'services.*') ? '' : 'hidden' }}">
+            <div id="billing-submenu" class="space-y-1 {{ request()->routeIs('bills.*', 'services.*', 'taxes.*') ? '' : 'hidden' }}">
                 @can('view bills')
                 <li><a href="{{ route('bills.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('bills.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-file-invoice-dollar mr-3 text-xs w-5"></i><span>{{ __('messages.bills') }}</span></a></li>
                 @endcan
                 @can('view services')
                 <li><a href="{{ route('services.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('services.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-concierge-bell mr-3 text-xs w-5"></i><span>{{ __('messages.services') }}</span></a></li>
+                @endcan
+                @can('view bills')
+                <li><a href="{{ route('taxes.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('taxes.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-percentage mr-3 text-xs w-5"></i><span>Tax Configuration</span></a></li>
+                @endcan
+            </div>
+            @endif
+
+            {{-- Accounting --}}
+            @if(!$currentTenant || $currentTenant->hasModule('billing'))
+            @can('view bills')
+            <li class="pt-4">
+                <button onclick="toggleSubmenu('accounting')" class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors">
+                    <span>Accounting</span>
+                    <i id="accounting-icon" class="fas fa-chevron-down text-xs transition-transform {{ request()->routeIs('accounting.*') ? 'rotate-180' : '' }}"></i>
+                </button>
+            </li>
+            @endcan
+            <div id="accounting-submenu" class="space-y-1 {{ request()->routeIs('accounting.*') ? '' : 'hidden' }}">
+                @can('view bills')
+                <li><a href="{{ route('accounting.chart-of-accounts') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('accounting.chart-of-accounts*', 'accounting.create-account*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-sitemap mr-3 text-xs w-5"></i><span>Chart of Accounts</span></a></li>
+                <li><a href="{{ route('accounting.journal-entries') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('accounting.journal-entries') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-book mr-3 text-xs w-5"></i><span>Journal Entries</span></a></li>
+                <li><a href="{{ route('accounting.general-ledger') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('accounting.general-ledger') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-file-alt mr-3 text-xs w-5"></i><span>General Ledger</span></a></li>
+                <li><a href="{{ route('accounting.patient-ledger') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('accounting.patient-ledger') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-user mr-3 text-xs w-5"></i><span>Patient Ledger</span></a></li>
+                <li><a href="{{ route('accounting.vendor-ledger') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('accounting.vendor-ledger') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-truck mr-3 text-xs w-5"></i><span>Vendor Ledger</span></a></li>
+                <li><a href="{{ route('accounting.profit-loss') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('accounting.profit-loss') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-chart-line mr-3 text-xs w-5"></i><span>Profit & Loss</span></a></li>
+                <li><a href="{{ route('accounting.balance-sheet') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('accounting.balance-sheet') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-balance-scale mr-3 text-xs w-5"></i><span>Balance Sheet</span></a></li>
                 @endcan
             </div>
             @endif

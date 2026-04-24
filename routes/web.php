@@ -90,6 +90,10 @@ Route::get('/documentation', function () {
     return view('documentation');
 })->name('documentation');
 
+// Central Login (main domain — finds tenant by email)
+Route::get('/signin', [\App\Http\Controllers\CentralLoginController::class, 'showLogin'])->name('central.login');
+Route::post('/signin', [\App\Http\Controllers\CentralLoginController::class, 'login'])->name('central.login.submit');
+
 // Language Switcher Route
 Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
@@ -169,16 +173,15 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    // If on a tenant subdomain and authenticated, show dashboard
     $tenant = \App\Models\Tenant::current();
     if ($tenant) {
         if (auth()->check()) {
             return redirect()->route('dashboard');
         }
-        return redirect()->route('login');
+        // Redirect to central login instead of tenant login
+        return redirect(config('app.url') . '/signin');
     }
 
-    // Main domain — show SaaS landing page
     return view('landing');
 })->name('home');
 
@@ -273,6 +276,23 @@ Route::middleware('auth')->group(function () {
     Route::resource('bills', BillController::class)->middleware('permission:view bills|create bills|edit bills|delete bills');
     Route::post('bills/{bill}/payment', [BillController::class, 'addPayment'])->name('bills.add-payment')->middleware('permission:create payments');
     Route::get('bills/{bill}/print', [BillController::class, 'print'])->name('bills.print')->middleware('permission:view bills');
+
+    // Tax Configuration
+    Route::resource('taxes', \App\Http\Controllers\TaxController::class)->middleware('permission:view bills|create bills');
+    Route::post('taxes/calculate', [\App\Http\Controllers\TaxController::class, 'calculate'])->name('taxes.calculate');
+
+    // Accounting
+    Route::prefix('accounting')->name('accounting.')->middleware('permission:view bills')->group(function () {
+        Route::get('chart-of-accounts', [\App\Http\Controllers\AccountingController::class, 'chartOfAccounts'])->name('chart-of-accounts');
+        Route::get('chart-of-accounts/create', [\App\Http\Controllers\AccountingController::class, 'createAccount'])->name('create-account');
+        Route::post('chart-of-accounts', [\App\Http\Controllers\AccountingController::class, 'storeAccount'])->name('store-account');
+        Route::get('general-ledger', [\App\Http\Controllers\AccountingController::class, 'generalLedger'])->name('general-ledger');
+        Route::get('journal-entries', [\App\Http\Controllers\AccountingController::class, 'journalEntries'])->name('journal-entries');
+        Route::get('patient-ledger', [\App\Http\Controllers\AccountingController::class, 'patientLedger'])->name('patient-ledger');
+        Route::get('vendor-ledger', [\App\Http\Controllers\AccountingController::class, 'vendorLedger'])->name('vendor-ledger');
+        Route::get('profit-loss', [\App\Http\Controllers\AccountingController::class, 'profitAndLoss'])->name('profit-loss');
+        Route::get('balance-sheet', [\App\Http\Controllers\AccountingController::class, 'balanceSheet'])->name('balance-sheet');
+    });
     Route::resource('services', ServiceController::class)->middleware('permission:view services|create services|edit services|delete services');
     
     // IPD Management Routes
@@ -313,6 +333,7 @@ Route::middleware('auth')->group(function () {
     
     // Laboratory Routes
     Route::resource('investigations', InvestigationController::class)->middleware('permission:view services|create services|edit services|delete services');
+    Route::post('investigations/import', [InvestigationController::class, 'import'])->name('investigations.import')->middleware('permission:create services');
     Route::resource('lab-tests', InvestigationController::class)->middleware('permission:view services|create services|edit services|delete services');
     
     // Investigation Orders (new routes)

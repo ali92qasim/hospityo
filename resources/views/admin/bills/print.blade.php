@@ -337,7 +337,6 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p>Thank you for your business!</p>
             <p>This is a computer-generated bill and does not require a signature.</p>
             <p>Generated on {{ now()->format('M d, Y h:i A') }} by {{ $bill->createdBy->name }}</p>
         </div>

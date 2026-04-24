@@ -18,6 +18,8 @@ class TenantOnboardingSeeder extends Seeder
             InvestigationSeeder::class,
             LabTestParameterSeeder::class,
             AllergySeeder::class,
+            TaxSeeder::class,
+            ChartOfAccountsSeeder::class,
         ];
 
         foreach ($seeders as $seeder) {

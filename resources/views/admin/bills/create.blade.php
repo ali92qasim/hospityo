@@ -110,9 +110,10 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
-                <label for="tax_amount" class="block text-sm font-medium text-gray-700 mb-2">Tax Amount</label>
-                <input type="number" id="tax_amount" name="tax_amount" step="0.01" value="0" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tax</label>
+                <input type="number" id="tax_amount" name="tax_amount" step="0.01" value="0" readonly
+                       class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed">
+                <div id="tax-breakdown" class="mt-1 space-y-0.5"></div>
             </div>
             <div>
                 <label for="discount_amount" class="block text-sm font-medium text-gray-700 mb-2">Discount Amount</label>

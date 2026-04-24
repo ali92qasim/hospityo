@@ -29,10 +29,33 @@
             </optgroup>
         </select>
     </div>
-    <a href="{{ route('investigations.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-        <i class="fas fa-plus mr-2"></i>Add Test
-    </a>
+    <div class="flex items-center space-x-2">
+        <a href="{{ asset('templates/investigations-template.csv') }}" download class="text-gray-500 hover:text-medical-blue px-3 py-2 border border-gray-300 rounded-lg text-sm" title="Download Template">
+            <i class="fas fa-download mr-1"></i>Template
+        </a>
+        <button type="button" onclick="document.getElementById('import-file').click()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+            <i class="fas fa-file-upload mr-2"></i>Import CSV
+        </button>
+        <a href="{{ route('investigations.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <i class="fas fa-plus mr-2"></i>Add Test
+        </a>
+    </div>
+    <form id="import-form" action="{{ route('investigations.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
+        @csrf
+        <input type="file" id="import-file" name="file" accept=".csv" onchange="if(this.files.length){if(confirm('Import '+this.files[0].name+'? Existing tests with same code will be updated.')){this.closest('form').submit();}else{this.value='';}}">
+    </form>
 </div>
+
+@if(session('import_errors') && count(session('import_errors')) > 0)
+<div class="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+    <p class="text-sm font-medium text-yellow-800 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>Some rows had issues:</p>
+    <ul class="text-xs text-yellow-700 space-y-1 max-h-32 overflow-y-auto">
+        @foreach(session('import_errors') as $err)
+            <li>{{ $err }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
 
 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
     <table class="min-w-full divide-y divide-gray-200">

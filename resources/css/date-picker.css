@@ -1,0 +1,10 @@
+@import 'flatpickr/dist/flatpickr.min.css';
+
+.flatpickr-months .flatpickr-month { background: #0066CC; }
+.flatpickr-current-month .flatpickr-monthDropdown-months { background: #0066CC; }
+.flatpickr-current-month input.cur-year { color: #fff; }
+.flatpickr-weekdays { background: #f3f4f6; }
+.flatpickr-day.selected { background: #0066CC; border-color: #0066CC; }
+.flatpickr-day.selected:hover { background: #0052a3; border-color: #0052a3; }
+.flatpickr-day.today { border-color: #0066CC; }
+.flatpickr-calendar { border-radius: 0.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; }

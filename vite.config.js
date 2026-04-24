@@ -19,7 +19,8 @@ export default defineConfig({
                 'resources/js/inventory-form.js',
                 'resources/js/purchases-form.js',
                 'resources/js/investigations-form.js',
-                'resources/js/bills-form.js'
+                'resources/js/bills-form.js',
+                'resources/js/date-picker.js'
             ],
             refresh: true,
         }),

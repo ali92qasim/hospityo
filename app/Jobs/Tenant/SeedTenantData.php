@@ -43,6 +43,9 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
         $this->seedDefaultSettings();
         $this->seedEssentialData();
 
+        // Register admin email → tenant mapping in landlord DB
+        \App\Models\TenantUser::register($this->adminData['email'], $this->tenant->id);
+
         // Mark tenant as active — provisioning complete
         $this->tenant->update(['status' => 'active']);
 

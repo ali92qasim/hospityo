@@ -110,6 +110,9 @@ class PurchaseController extends Controller
             }
 
             $purchase->update(['status' => 'received']);
+
+            // Auto-post accounting journal entry
+            \App\Services\AccountingService::postPurchaseEntry($purchase);
         });
 
         return back()->with('success', 'Purchase order received and stock updated.');

@@ -45,6 +45,12 @@ class DatabaseSeeder extends Seeder
 
             // Medical Data
             AllergySeeder::class,
+
+            // Billing
+            TaxSeeder::class,
+
+            // Accounting
+            ChartOfAccountsSeeder::class,
         ]);
 
         $this->command->info('✓ Tenant seeders completed for: ' . Tenant::current()->name);

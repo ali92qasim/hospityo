@@ -140,8 +140,13 @@ $(function () {
     });
 
     // Recalculate on input changes
-    $(document).on('input change', '.quantity, .unit-price, #tax_amount, #discount_amount', function () {
+    $(document).on('input change', '.quantity, .unit-price, #discount_amount', function () {
         updateTotal();
+    });
+
+    // Recalculate tax when bill type changes
+    $('#bill_type').on('change', function () {
+        calculateTax();
     });
 });
 
@@ -155,16 +160,68 @@ function initSelect2OnRow(row) {
     }
 }
 
-function updateTotal() {
+function getSubtotal() {
     let subtotal = 0;
     $('.bill-item').each(function () {
         const qty = parseFloat($(this).find('.quantity').val()) || 0;
         const price = parseFloat($(this).find('.unit-price').val()) || 0;
-        const lineTotal = qty * price;
-        $(this).find('.total-display').text(lineTotal.toFixed(2));
-        subtotal += lineTotal;
+        subtotal += qty * price;
+    });
+    return subtotal;
+}
+
+var taxTimer = null;
+function calculateTax() {
+    clearTimeout(taxTimer);
+    taxTimer = setTimeout(function () {
+        var subtotal = getSubtotal();
+        var billType = $('#bill_type').val();
+
+        if (subtotal <= 0 || !billType) {
+            $('#tax_amount').val('0');
+            $('#tax-breakdown').html('');
+            updateTotal();
+            return;
+        }
+
+        $.ajax({
+            url: '/taxes/calculate',
+            method: 'POST',
+            data: {
+                _token: $('input[name="_token"]').val(),
+                bill_type: billType,
+                subtotal: subtotal
+            },
+            success: function (res) {
+                $('#tax_amount').val(res.total_tax);
+                var html = '';
+                res.breakdown.forEach(function (t) {
+                    html += '<p class="text-xs text-gray-500">' + t.name + ' (' + t.percentage + '%) = ' + t.amount.toFixed(2) + '</p>';
+                });
+                $('#tax-breakdown').html(html);
+                updateTotal();
+            },
+            error: function () {
+                $('#tax_amount').val('0');
+                $('#tax-breakdown').html('');
+                updateTotal();
+            }
+        });
+    }, 300);
+}
+
+function updateTotal() {
+    let subtotal = getSubtotal();
+    $('.bill-item').each(function () {
+        const qty = parseFloat($(this).find('.quantity').val()) || 0;
+        const price = parseFloat($(this).find('.unit-price').val()) || 0;
+        $(this).find('.total-display').text((qty * price).toFixed(2));
     });
     const tax = parseFloat($('#tax_amount').val()) || 0;
     const discount = parseFloat($('#discount_amount').val()) || 0;
-    $('#totalAmount').text(document.querySelector('#totalAmount').textContent.charAt(0) + (subtotal + tax - discount).toFixed(2));
+    var symbol = $('#totalAmount').text().charAt(0);
+    $('#totalAmount').text(symbol + (subtotal + tax - discount).toFixed(2));
+
+    // Recalculate tax when subtotal changes
+    calculateTax();
 }

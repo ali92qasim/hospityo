@@ -56,6 +56,9 @@ class BillController extends Controller
 
             $bill->calculateTotals();
 
+            // Auto-post accounting journal entry
+            \App\Services\AccountingService::postBillEntry($bill);
+
             return redirect()->route('bills.show', $bill)->with('success', 'Bill created successfully');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to create bill. Please try again.']);
@@ -115,7 +118,7 @@ class BillController extends Controller
 
     public function addPayment(AddBillPaymentRequest $request, Bill $bill)
     {
-        $bill->payments()->create([
+        $payment = $bill->payments()->create([
             'payment_date' => $request->payment_date,
             'amount' => $request->amount,
             'payment_method' => $request->payment_method,
@@ -128,6 +131,9 @@ class BillController extends Controller
         $bill->due_amount = $bill->total_amount - $bill->paid_amount;
         $bill->status = $bill->due_amount <= 0 ? 'paid' : 'partial';
         $bill->save();
+
+        // Auto-post accounting journal entry
+        \App\Services\AccountingService::postPaymentEntry($payment);
 
         return redirect()->route('bills.show', $bill)->with('success', 'Payment added successfully');
     }

@@ -1,152 +1,161 @@
-@extends('auth.layout')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setting Up Your Hospital — Hospityo</title>
+    @vite(['resources/css/app.css'])
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen flex items-center justify-center">
 
-@section('title', 'Setting Up Your Hospital - Hospityo')
-@section('subtitle', 'Please wait while we prepare your workspace')
-
-@section('content')
-<div id="provisioning-status" class="text-center py-6">
-    {{-- Spinner --}}
-    <div id="spinner" class="mb-6">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50">
-            <i class="fas fa-cog fa-spin text-medical-blue text-2xl"></i>
-        </div>
+<div class="max-w-md w-full mx-4">
+    <div class="text-center mb-6">
+        <a href="{{ url('/') }}" class="inline-flex items-center space-x-2">
+            <div class="h-9 w-9 bg-medical-blue rounded-lg flex items-center justify-center">
+                <i class="fas fa-hospital text-white text-sm"></i>
+            </div>
+            <span class="text-xl font-bold text-gray-900">Hospityo</span>
+        </a>
     </div>
 
-    {{-- Success icon (hidden initially) --}}
-    <div id="success-icon" class="mb-6 hidden">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50">
-            <i class="fas fa-check-circle text-green-500 text-3xl"></i>
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+        {{-- Spinner State --}}
+        <div id="state-loading" class="text-center">
+            <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <i class="fas fa-cog fa-spin text-medical-blue text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Setting up {{ $tenant->name }}</h2>
+            <p class="text-sm text-gray-500 mb-8">This usually takes less than a minute</p>
+
+            <div class="text-left space-y-3 mb-4">
+                <div class="flex items-center text-sm" id="step-db">
+                    <i class="fas fa-circle-notch fa-spin text-medical-blue mr-3 w-5 text-center"></i>
+                    <span class="text-gray-600">Creating database</span>
+                </div>
+                <div class="flex items-center text-sm" id="step-migrate">
+                    <i class="fas fa-circle text-gray-300 mr-3 w-5 text-center text-xs"></i>
+                    <span class="text-gray-400">Running migrations</span>
+                </div>
+                <div class="flex items-center text-sm" id="step-seed">
+                    <i class="fas fa-circle text-gray-300 mr-3 w-5 text-center text-xs"></i>
+                    <span class="text-gray-400">Configuring your workspace</span>
+                </div>
+                <div class="flex items-center text-sm" id="step-ready">
+                    <i class="fas fa-circle text-gray-300 mr-3 w-5 text-center text-xs"></i>
+                    <span class="text-gray-400">Finalizing setup</span>
+                </div>
+            </div>
+        </div>
+
+        {{-- Success State (hidden) --}}
+        <div id="state-success" class="text-center hidden">
+            <div class="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <i class="fas fa-check text-green-500 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">You're all set!</h2>
+            <p class="text-sm text-gray-500 mb-2">{{ $tenant->name }} is ready to use.</p>
+            <p class="text-sm text-gray-500 mb-6">Redirecting you to sign in<span id="dots">...</span></p>
+
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+                <div class="flex items-center justify-center text-sm text-medical-blue">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <span>Use your email and password to sign in</span>
+                </div>
+            </div>
+
+            <div class="w-full bg-gray-200 rounded-full h-1 overflow-hidden">
+                <div id="redirect-bar" class="bg-medical-blue h-1 rounded-full transition-all duration-[4000ms] ease-linear" style="width: 0%"></div>
+            </div>
+        </div>
+
+        {{-- Error State (hidden) --}}
+        <div id="state-error" class="text-center hidden">
+            <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Setup failed</h2>
+            <p class="text-sm text-gray-500 mb-6">Something went wrong during provisioning. Please contact support or try again.</p>
+            <a href="{{ url('/contact') }}" class="inline-flex items-center px-6 py-2.5 bg-medical-blue text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-medium">
+                <i class="fas fa-envelope mr-2"></i>Contact Support
+            </a>
         </div>
     </div>
-
-    {{-- Error icon (hidden initially) --}}
-    <div id="error-icon" class="mb-6 hidden">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50">
-            <i class="fas fa-exclamation-circle text-red-500 text-3xl"></i>
-        </div>
-    </div>
-
-    <h3 id="status-title" class="text-lg font-semibold text-gray-800 mb-2">
-        Setting up {{ $tenant->name }}...
-    </h3>
-
-    <p id="status-message" class="text-sm text-gray-500 mb-6">
-        Creating database, running migrations, and seeding default data.
-    </p>
-
-    {{-- Progress steps --}}
-    <div class="text-left max-w-xs mx-auto space-y-3 mb-6">
-        <div class="flex items-center text-sm" id="step-db">
-            <i class="fas fa-circle-notch fa-spin text-blue-400 mr-3 w-4"></i>
-            <span class="text-gray-600">Creating database</span>
-        </div>
-        <div class="flex items-center text-sm" id="step-migrate">
-            <i class="fas fa-circle text-gray-300 mr-3 w-4"></i>
-            <span class="text-gray-400">Running migrations</span>
-        </div>
-        <div class="flex items-center text-sm" id="step-seed">
-            <i class="fas fa-circle text-gray-300 mr-3 w-4"></i>
-            <span class="text-gray-400">Seeding default data</span>
-        </div>
-        <div class="flex items-center text-sm" id="step-ready">
-            <i class="fas fa-circle text-gray-300 mr-3 w-4"></i>
-            <span class="text-gray-400">Ready to go</span>
-        </div>
-    </div>
-
-    {{-- Redirect button (hidden initially) --}}
-    <a id="go-btn" href="#" class="hidden inline-flex items-center px-6 py-2.5 bg-medical-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
-        <i class="fas fa-arrow-right mr-2"></i>
-        Go to Your Dashboard
-    </a>
 </div>
 
 <script>
-    (function () {
-        const statusUrl = "{{ route('tenant.status', $tenant) }}";
-        const steps = ['step-db', 'step-migrate', 'step-seed', 'step-ready'];
-        let currentStep = 0;
-        let pollCount = 0;
-        const maxPolls = 60; // 2 minutes max
+(function () {
+    var statusUrl = "{{ route('tenant.status', $tenant) }}";
+    var signinUrl = "{{ url('/signin') }}";
+    var steps = ['step-db', 'step-migrate', 'step-seed', 'step-ready'];
+    var currentStep = 0;
+    var pollCount = 0;
+    var maxPolls = 60;
 
-        function advanceStep() {
-            if (currentStep < steps.length - 1) {
-                // Mark current as done
-                const el = document.getElementById(steps[currentStep]);
-                el.querySelector('i').className = 'fas fa-check-circle text-green-500 mr-3 w-4';
-                el.querySelector('span').className = 'text-gray-700';
-
-                currentStep++;
-
-                // Mark next as active
-                const next = document.getElementById(steps[currentStep]);
-                next.querySelector('i').className = 'fas fa-circle-notch fa-spin text-blue-400 mr-3 w-4';
-                next.querySelector('span').className = 'text-gray-600';
-            }
+    function advanceStep() {
+        if (currentStep < steps.length - 1) {
+            var el = document.getElementById(steps[currentStep]);
+            el.querySelector('i').className = 'fas fa-check-circle text-green-500 mr-3 w-5 text-center';
+            el.querySelector('span').className = 'text-gray-700';
+            currentStep++;
+            var next = document.getElementById(steps[currentStep]);
+            next.querySelector('i').className = 'fas fa-circle-notch fa-spin text-medical-blue mr-3 w-5 text-center';
+            next.querySelector('span').className = 'text-gray-600';
         }
+    }
 
-        function markAllDone() {
-            steps.forEach(id => {
-                const el = document.getElementById(id);
-                el.querySelector('i').className = 'fas fa-check-circle text-green-500 mr-3 w-4';
-                el.querySelector('span').className = 'text-gray-700';
-            });
-        }
+    function markAllDone() {
+        steps.forEach(function(id) {
+            var el = document.getElementById(id);
+            el.querySelector('i').className = 'fas fa-check-circle text-green-500 mr-3 w-5 text-center';
+            el.querySelector('span').className = 'text-gray-700';
+        });
+    }
 
-        function showSuccess(url) {
-            document.getElementById('spinner').classList.add('hidden');
-            document.getElementById('success-icon').classList.remove('hidden');
-            document.getElementById('status-title').textContent = 'Your hospital is ready!';
-            document.getElementById('status-message').textContent = 'Everything has been set up. You can now sign in.';
-            const btn = document.getElementById('go-btn');
-            btn.href = url;
-            btn.classList.remove('hidden');
-            markAllDone();
-        }
+    function showSuccess() {
+        markAllDone();
+        setTimeout(function() {
+            document.getElementById('state-loading').classList.add('hidden');
+            document.getElementById('state-success').classList.remove('hidden');
 
-        function showError() {
-            document.getElementById('spinner').classList.add('hidden');
-            document.getElementById('error-icon').classList.remove('hidden');
-            document.getElementById('status-title').textContent = 'Something went wrong';
-            document.getElementById('status-message').textContent = 'Provisioning failed. Please contact support.';
-        }
+            // Start progress bar animation
+            setTimeout(function() {
+                document.getElementById('redirect-bar').style.width = '100%';
+            }, 100);
 
-        function poll() {
-            pollCount++;
-            if (pollCount > maxPolls) {
-                showError();
-                return;
-            }
+            // Redirect after 4 seconds
+            setTimeout(function() {
+                window.location.href = signinUrl + '?welcome=1';
+            }, 4000);
+        }, 800);
+    }
 
-            // Simulate step progress while polling
-            if (pollCount % 3 === 0 && currentStep < steps.length - 1) {
-                advanceStep();
-            }
+    function showError() {
+        document.getElementById('state-loading').classList.add('hidden');
+        document.getElementById('state-error').classList.remove('hidden');
+    }
 
-            fetch(statusUrl)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.status === 'active') {
-                        showSuccess(data.url);
-                    } else if (data.status === 'failed') {
-                        showError();
-                    } else {
-                        setTimeout(poll, 2000);
-                    }
-                })
-                .catch(() => setTimeout(poll, 3000));
-        }
+    function poll() {
+        pollCount++;
+        if (pollCount > maxPolls) { showError(); return; }
+        if (pollCount % 3 === 0 && currentStep < steps.length - 1) advanceStep();
 
-        // If already active (sync provisioning), show success immediately
-        var initialStatus = "{{ $tenant->status }}";
-        if (initialStatus === 'active') {
-            showSuccess('http://{{ $tenant->domain }}/login');
-        } else if (initialStatus === 'failed') {
-            showError();
-        } else {
-            // Start polling after a short delay
-            setTimeout(poll, 1500);
-        }
-    })();
+        fetch(statusUrl)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.status === 'active') { showSuccess(); }
+                else if (data.status === 'failed') { showError(); }
+                else { setTimeout(poll, 2000); }
+            })
+            .catch(function() { setTimeout(poll, 3000); });
+    }
+
+    var initialStatus = "{{ $tenant->status }}";
+    if (initialStatus === 'active') { showSuccess(); }
+    else if (initialStatus === 'failed') { showError(); }
+    else { setTimeout(poll, 1500); }
+})();
 </script>
-@endsection
+
+</body>
+</html>

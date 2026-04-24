@@ -14,9 +14,55 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create(Request $request): View|RedirectResponse
     {
-        return view('auth.login');
+        // Handle token-based login from central login
+        if ($request->has('token') && $request->has('email')) {
+            return $this->handleTokenLogin($request);
+        }
+
+        // Redirect to central login — users should not access subdomain login directly
+        $mainDomain = config('app.url');
+        return redirect($mainDomain . '/signin');
+    }
+
+    /**
+     * Auto-login via one-time token from central login.
+     */
+    protected function handleTokenLogin(Request $request): RedirectResponse
+    {
+        $email = $request->input('email');
+        $token = $request->input('token');
+
+        $tenant = \App\Models\Tenant::current();
+        if (!$tenant) {
+            return redirect()->route('login');
+        }
+
+        // Verify token
+        $mapping = \App\Models\TenantUser::where('email', strtolower($email))
+            ->where('tenant_id', $tenant->id)
+            ->where('login_token', $token)
+            ->first();
+
+        if (!$mapping) {
+            return redirect()->route('login')->withErrors(['email' => 'Invalid or expired login link.']);
+        }
+
+        // Clear the token (one-time use)
+        $mapping->update(['login_token' => null]);
+
+        // Find and authenticate the user
+        $user = \App\Models\User::where('email', $email)->first();
+        if (!$user) {
+            return redirect()->route('login')->withErrors(['email' => 'User not found.']);
+        }
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+        $request->session()->put('tenant_id', $tenant->id);
+
+        return redirect()->route('dashboard');
     }
 
     /**
@@ -48,6 +94,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect(config('app.url') . '/signin');
     }
 }
