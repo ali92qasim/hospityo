@@ -207,6 +207,32 @@
             @endif
 
             {{-- RBAC / Access Control --}}
+
+            {{-- HR --}}
+            @hasrole('Super Admin|Hospital Administrator')
+            <li class="pt-4">
+                <button onclick="toggleSubmenu('hr')" class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors">
+                    <span>HR</span>
+                    <i id="hr-icon" class="fas fa-chevron-down text-xs transition-transform {{ request()->routeIs('hr.*') ? 'rotate-180' : '' }}"></i>
+                </button>
+            </li>
+            <div id="hr-submenu" class="space-y-1 {{ request()->routeIs('hr.*') ? '' : 'hidden' }}">
+                <li><a href="{{ route('hr.employees.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.employees.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-users mr-3 text-xs w-5"></i><span>Employees</span></a></li>
+                <li><a href="{{ route('hr.designations.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.designations.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-id-badge mr-3 text-xs w-5"></i><span>Designations</span></a></li>
+                <li><a href="{{ route('hr.attendance.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.attendance.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-clipboard-check mr-3 text-xs w-5"></i><span>Attendance</span></a></li>
+                <li><a href="{{ route('hr.leave.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.leave.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-calendar-minus mr-3 text-xs w-5"></i><span>Leave Requests</span></a></li>
+                <li><a href="{{ route('hr.leave.balances') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.leave.balances') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-balance-scale mr-3 text-xs w-5"></i><span>Leave Balances</span></a></li>
+                <li><a href="{{ route('hr.leave-types.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.leave-types.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-list-alt mr-3 text-xs w-5"></i><span>Leave Types</span></a></li>
+                <li><a href="{{ route('hr.payroll.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.payroll.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-money-check-alt mr-3 text-xs w-5"></i><span>Payroll</span></a></li>
+                <li><a href="{{ route('hr.payroll.components') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.payroll.components', 'hr.payroll.create-component', 'hr.payroll.edit-component') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-cogs mr-3 text-xs w-5"></i><span>Salary Components</span></a></li>
+                <li><a href="{{ route('hr.shifts.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.shifts.index', 'hr.shifts.create', 'hr.shifts.edit') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-clock mr-3 text-xs w-5"></i><span>Shifts</span></a></li>
+                <li><a href="{{ route('hr.shifts.roster') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.shifts.roster') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-calendar-week mr-3 text-xs w-5"></i><span>Duty Roster</span></a></li>
+                <li><a href="{{ route('hr.department-staff.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.department-staff.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-building mr-3 text-xs w-5"></i><span>Department Staff</span></a></li>
+                <li><a href="{{ route('hr.documents.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('hr.documents.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-folder-open mr-3 text-xs w-5"></i><span>Documents</span></a></li>
+            </div>
+            @endhasrole
+
+            {{-- RBAC / Access Control --}}
             @if(!$currentTenant || $currentTenant->hasModule('rbac'))
             @canany(['view roles', 'view permissions', 'manage user roles', 'view users'])
             <li class="pt-4">

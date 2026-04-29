@@ -293,6 +293,95 @@ Route::middleware('auth')->group(function () {
         Route::get('profit-loss', [\App\Http\Controllers\AccountingController::class, 'profitAndLoss'])->name('profit-loss');
         Route::get('balance-sheet', [\App\Http\Controllers\AccountingController::class, 'balanceSheet'])->name('balance-sheet');
     });
+
+    // HR Module
+    Route::prefix('hr')->name('hr.')->group(function () {
+        Route::resource('employees', \App\Http\Controllers\EmployeeController::class);
+        Route::post('employees/{employee}/documents', [\App\Http\Controllers\EmployeeController::class, 'uploadDocument'])->name('employees.upload-document');
+        Route::delete('employees/documents/{document}', [\App\Http\Controllers\EmployeeController::class, 'deleteDocument'])->name('employees.delete-document');
+        Route::resource('designations', \App\Http\Controllers\DesignationController::class);
+
+        // Attendance
+        Route::get('attendance', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('attendance.index');
+        Route::get('attendance/mark', [\App\Http\Controllers\AttendanceController::class, 'markDaily'])->name('attendance.mark');
+        Route::post('attendance/mark', [\App\Http\Controllers\AttendanceController::class, 'storeDaily'])->name('attendance.store-daily');
+        Route::get('attendance/monthly', [\App\Http\Controllers\AttendanceController::class, 'monthly'])->name('attendance.monthly');
+
+        // Leave Requests
+        Route::get('leave', [\App\Http\Controllers\LeaveController::class, 'index'])->name('leave.index');
+        Route::get('leave/create', [\App\Http\Controllers\LeaveController::class, 'create'])->name('leave.create');
+        Route::post('leave', [\App\Http\Controllers\LeaveController::class, 'store'])->name('leave.store');
+        Route::post('leave/{leaveRequest}/approve', [\App\Http\Controllers\LeaveController::class, 'approve'])->name('leave.approve');
+        Route::post('leave/{leaveRequest}/reject', [\App\Http\Controllers\LeaveController::class, 'reject'])->name('leave.reject');
+        Route::post('leave/{leaveRequest}/cancel', [\App\Http\Controllers\LeaveController::class, 'cancel'])->name('leave.cancel');
+        Route::get('leave/balances', [\App\Http\Controllers\LeaveController::class, 'balances'])->name('leave.balances');
+
+        // Leave Types
+        Route::get('leave-types', [\App\Http\Controllers\LeaveController::class, 'types'])->name('leave-types.index');
+        Route::get('leave-types/create', [\App\Http\Controllers\LeaveController::class, 'createType'])->name('leave-types.create');
+        Route::post('leave-types', [\App\Http\Controllers\LeaveController::class, 'storeType'])->name('leave-types.store');
+        Route::get('leave-types/{leaveType}/edit', [\App\Http\Controllers\LeaveController::class, 'editType'])->name('leave-types.edit');
+        Route::put('leave-types/{leaveType}', [\App\Http\Controllers\LeaveController::class, 'updateType'])->name('leave-types.update');
+        Route::delete('leave-types/{leaveType}', [\App\Http\Controllers\LeaveController::class, 'destroyType'])->name('leave-types.destroy');
+
+        // Payroll
+        Route::get('payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
+        Route::post('payroll/generate', [\App\Http\Controllers\PayrollController::class, 'generate'])->name('payroll.generate');
+        Route::get('payroll/{payrollRun}', [\App\Http\Controllers\PayrollController::class, 'show'])->name('payroll.show');
+        Route::post('payroll/{payrollRun}/approve', [\App\Http\Controllers\PayrollController::class, 'approve'])->name('payroll.approve');
+        Route::post('payroll/{payrollRun}/cancel', [\App\Http\Controllers\PayrollController::class, 'cancel'])->name('payroll.cancel');
+
+        // Payslips
+        Route::get('payslip/{payslip}', [\App\Http\Controllers\PayrollController::class, 'payslip'])->name('payroll.payslip');
+        Route::get('payslip/{payslip}/print', [\App\Http\Controllers\PayrollController::class, 'printPayslip'])->name('payroll.print-payslip');
+        Route::post('payslip/{payslip}/mark-paid', [\App\Http\Controllers\PayrollController::class, 'markPaid'])->name('payroll.mark-paid');
+
+        // Salary Components
+        Route::get('payroll-components', [\App\Http\Controllers\PayrollController::class, 'components'])->name('payroll.components');
+        Route::get('payroll-components/create', [\App\Http\Controllers\PayrollController::class, 'createComponent'])->name('payroll.create-component');
+        Route::post('payroll-components', [\App\Http\Controllers\PayrollController::class, 'storeComponent'])->name('payroll.store-component');
+        Route::get('payroll-components/{salaryComponent}/edit', [\App\Http\Controllers\PayrollController::class, 'editComponent'])->name('payroll.edit-component');
+        Route::put('payroll-components/{salaryComponent}', [\App\Http\Controllers\PayrollController::class, 'updateComponent'])->name('payroll.update-component');
+        Route::delete('payroll-components/{salaryComponent}', [\App\Http\Controllers\PayrollController::class, 'destroyComponent'])->name('payroll.destroy-component');
+
+        // Employee Salary Structure
+        Route::get('employees/{employee}/salary', [\App\Http\Controllers\PayrollController::class, 'employeeSalary'])->name('payroll.employee-salary');
+        Route::post('employees/{employee}/salary', [\App\Http\Controllers\PayrollController::class, 'updateEmployeeSalary'])->name('payroll.update-employee-salary');
+
+        // Shifts
+        Route::get('shifts', [\App\Http\Controllers\ShiftController::class, 'shifts'])->name('shifts.index');
+        Route::get('shifts/create', [\App\Http\Controllers\ShiftController::class, 'createShift'])->name('shifts.create');
+        Route::post('shifts', [\App\Http\Controllers\ShiftController::class, 'storeShift'])->name('shifts.store');
+        Route::get('shifts/{shift}/edit', [\App\Http\Controllers\ShiftController::class, 'editShift'])->name('shifts.edit');
+        Route::put('shifts/{shift}', [\App\Http\Controllers\ShiftController::class, 'updateShift'])->name('shifts.update');
+        Route::delete('shifts/{shift}', [\App\Http\Controllers\ShiftController::class, 'destroyShift'])->name('shifts.destroy');
+
+        // Duty Roster
+        Route::get('duty-roster', [\App\Http\Controllers\ShiftController::class, 'roster'])->name('shifts.roster');
+        Route::post('duty-roster', [\App\Http\Controllers\ShiftController::class, 'storeRoster'])->name('shifts.store-roster');
+        Route::post('duty-roster/auto-generate', [\App\Http\Controllers\ShiftController::class, 'autoGenerate'])->name('shifts.auto-generate');
+
+        // Shift Swap Requests
+        Route::get('shift-swaps', [\App\Http\Controllers\ShiftController::class, 'swapRequests'])->name('shifts.swap-requests');
+        Route::post('shift-swaps/{shiftSwapRequest}/approve', [\App\Http\Controllers\ShiftController::class, 'approveSwap'])->name('shifts.approve-swap');
+        Route::post('shift-swaps/{shiftSwapRequest}/reject', [\App\Http\Controllers\ShiftController::class, 'rejectSwap'])->name('shifts.reject-swap');
+
+        // Department Staff Management
+        Route::get('department-staff', [\App\Http\Controllers\DepartmentStaffController::class, 'index'])->name('department-staff.index');
+        Route::get('department-staff/{department}', [\App\Http\Controllers\DepartmentStaffController::class, 'show'])->name('department-staff.show');
+        Route::put('department-staff/{department}/head', [\App\Http\Controllers\DepartmentStaffController::class, 'updateHead'])->name('department-staff.update-head');
+        Route::post('department-staff/transfer', [\App\Http\Controllers\DepartmentStaffController::class, 'transferEmployee'])->name('department-staff.transfer');
+
+        // Document Management
+        Route::get('documents', [\App\Http\Controllers\DocumentManagementController::class, 'index'])->name('documents.index');
+        Route::get('documents/compliance', [\App\Http\Controllers\DocumentManagementController::class, 'compliance'])->name('documents.compliance');
+        Route::post('documents/{document}/verify', [\App\Http\Controllers\DocumentManagementController::class, 'verify'])->name('documents.verify');
+        Route::post('documents/{document}/unverify', [\App\Http\Controllers\DocumentManagementController::class, 'unverify'])->name('documents.unverify');
+        Route::get('documents/requirements', [\App\Http\Controllers\DocumentManagementController::class, 'requirements'])->name('documents.requirements');
+        Route::get('documents/requirements/create', [\App\Http\Controllers\DocumentManagementController::class, 'createRequirement'])->name('documents.create-requirement');
+        Route::post('documents/requirements', [\App\Http\Controllers\DocumentManagementController::class, 'storeRequirement'])->name('documents.store-requirement');
+        Route::delete('documents/requirements/{documentRequirement}', [\App\Http\Controllers\DocumentManagementController::class, 'destroyRequirement'])->name('documents.destroy-requirement');
+    });
     Route::resource('services', ServiceController::class)->middleware('permission:view services|create services|edit services|delete services');
     
     // IPD Management Routes

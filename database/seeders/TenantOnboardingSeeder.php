@@ -20,6 +20,11 @@ class TenantOnboardingSeeder extends Seeder
             AllergySeeder::class,
             TaxSeeder::class,
             ChartOfAccountsSeeder::class,
+            DesignationSeeder::class,
+            LeaveTypeSeeder::class,
+            SalaryComponentSeeder::class,
+            ShiftSeeder::class,
+            DocumentRequirementSeeder::class,
         ];
 
         foreach ($seeders as $seeder) {

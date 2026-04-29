@@ -51,6 +51,13 @@ class DatabaseSeeder extends Seeder
 
             // Accounting
             ChartOfAccountsSeeder::class,
+
+            // HR
+            DesignationSeeder::class,
+            LeaveTypeSeeder::class,
+            SalaryComponentSeeder::class,
+            ShiftSeeder::class,
+            DocumentRequirementSeeder::class,
         ]);
 
         $this->command->info('✓ Tenant seeders completed for: ' . Tenant::current()->name);
