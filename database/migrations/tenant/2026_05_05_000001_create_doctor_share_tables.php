@@ -152,7 +152,6 @@ return new class extends Migration
             // Performance: settlement run processing
             $table->index(['status', 'settlement_id'], 'dsi_status_settlement_idx');
         });
-    }
 
         // ── Doctor Share Allocations ──────────────────────────────────────────
         // Immutable event ledger. One row per payment event that allocates
