@@ -48,7 +48,7 @@ class Attendance extends Model
 
     public function scopeForDate(Builder $q, string $date): Builder
     {
-        return $q->where('date', $date);
+        return $q->whereDate('date', $date);
     }
 
     public function scopeForMonth(Builder $q, int $year, int $month): Builder

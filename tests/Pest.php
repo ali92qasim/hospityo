@@ -17,6 +17,24 @@ pest()->extend(Tests\TestCase::class)
 
 /*
 |--------------------------------------------------------------------------
+| Tenant Test Setup
+|--------------------------------------------------------------------------
+| For tests in Feature/Accounting and Feature/HR, we need tenant tables.
+| RefreshDatabase runs default migrations, but tenant migrations are in a
+| separate path. We run them explicitly here.
+*/
+uses()
+    ->beforeEach(function () {
+        // Run tenant-specific migrations (tables like accounts, employees, etc.)
+        $this->artisan('migrate', [
+            '--path' => 'database/migrations/tenant',
+            '--database' => 'tenant',
+        ]);
+    })
+    ->in('Feature/Accounting', 'Feature/HR');
+
+/*
+|--------------------------------------------------------------------------
 | Expectations
 |--------------------------------------------------------------------------
 |

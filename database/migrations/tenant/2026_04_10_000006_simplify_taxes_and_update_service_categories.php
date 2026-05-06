@@ -9,6 +9,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $driver = Schema::connection($this->getConnection())->getConnection()->getDriverName();
+
         // Remove effective dates from taxes — unnecessary complexity
         Schema::table('taxes', function (Blueprint $table) {
             $table->dropColumn(['effective_from', 'effective_to']);
@@ -19,7 +21,9 @@ return new class extends Migration
         DB::table('services')->where('category', 'imaging')->update(['category' => 'investigation']);
 
         // Change services.category from ENUM to VARCHAR to support new values
-        DB::statement("ALTER TABLE `services` MODIFY `category` VARCHAR(50) NOT NULL DEFAULT 'other'");
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE `services` MODIFY `category` VARCHAR(50) NOT NULL DEFAULT 'other'");
+        }
 
         // Update tax_mappings: lab_test and imaging → investigation
         DB::table('tax_mappings')

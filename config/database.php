@@ -77,6 +77,7 @@ return [
         | For SQLite: switches the file path.
         |
         | The 'database' field is a safe placeholder — never used directly.
+        | In testing, uses :memory: so RefreshDatabase works.
         */
         'tenant' => match ($tenantDriver) {
             'mysql', 'mariadb' => [
@@ -112,7 +113,7 @@ return [
             ],
             default => [ // sqlite
                 'driver'   => 'sqlite',
-                'database' => database_path('.tenant_placeholder'), // safe non-null placeholder
+                'database' => env('APP_ENV') === 'testing' ? ':memory:' : database_path('.tenant_placeholder'),
                 'prefix'   => '',
                 'foreign_key_constraints' => true,
                 'busy_timeout' => null,

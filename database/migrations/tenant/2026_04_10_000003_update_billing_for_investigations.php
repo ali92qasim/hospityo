@@ -9,8 +9,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $driver = Schema::connection($this->getConnection())->getConnection()->getDriverName();
+
         // Change bill_type ENUM to VARCHAR and update 'lab' to 'investigation'
-        DB::statement("ALTER TABLE `bills` MODIFY `bill_type` VARCHAR(30) NOT NULL DEFAULT 'opd'");
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE `bills` MODIFY `bill_type` VARCHAR(30) NOT NULL DEFAULT 'opd'");
+        }
         DB::table('bills')->where('bill_type', 'lab')->update(['bill_type' => 'investigation']);
 
         // Add investigation_id to bill_items
