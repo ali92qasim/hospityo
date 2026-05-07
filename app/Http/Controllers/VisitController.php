@@ -161,7 +161,7 @@ class VisitController extends Controller
                 // Show medicine if stock tracking is disabled OR if it has stock
                 return !$medicine->manage_stock || $medicine->getCurrentStock() > 0;
             });
-        $investigations = Investigation::where('is_active', true)->orderBy('type')->orderBy('name')->get();
+        $investigations = Investigation::where('is_active', true)->orderBy('category')->orderBy('name')->get();
         $allergies = \App\Models\Allergy::orderBy('category')->orderBy('name')->get();
 
         $data = compact('visit', 'doctors', 'medicines', 'investigations', 'allergies');
@@ -177,18 +177,18 @@ class VisitController extends Controller
     public function updateVitals(UpdateVitalsRequest $request, Visit $visit)
     {
         $validated = $request->validated();
-        
+
         // Check if at least one vital sign field is filled
         $vitalFields = ['blood_pressure', 'temperature', 'pulse_rate', 'spo2', 'bsr', 'weight', 'height'];
         $hasAnyValue = false;
-        
+
         foreach ($vitalFields as $field) {
             if (!empty($validated[$field])) {
                 $hasAnyValue = true;
                 break;
             }
         }
-        
+
         if (!$hasAnyValue) {
             return back()->with('warning', 'Please fill in at least one vital sign measurement before saving. All fields are currently empty.');
         }
@@ -227,21 +227,21 @@ class VisitController extends Controller
     public function updateConsultation(UpdateConsultationRequest $request, Visit $visit)
     {
         $validated = $request->validated();
-        
+
         // Extract allergies from validated data
         $allergyNames = $validated['allergies'] ?? [];
         unset($validated['allergies']);
-        
+
         // Update or create consultation
         $consultation = $visit->consultation()->updateOrCreate(
             ['visit_id' => $visit->id],
             $validated
         );
-        
+
         // Handle allergies
         if (!empty($allergyNames)) {
             $allergyIds = [];
-            
+
             foreach ($allergyNames as $allergyName) {
                 if (!empty($allergyName)) {
                     // Find existing allergy or create new one
@@ -252,7 +252,7 @@ class VisitController extends Controller
                     $allergyIds[] = $allergy->id;
                 }
             }
-            
+
             // Sync allergies (this will add new ones and remove unselected ones)
             $consultation->allergies()->sync($allergyIds);
         } else {
@@ -276,7 +276,7 @@ class VisitController extends Controller
 
         $testCount = count($validated['tests']);
         $message = $testCount === 1 ? 'Test added successfully.' : "{$testCount} tests added successfully.";
-        
+
         return back()->with('success', $message);
     }
 
@@ -311,12 +311,12 @@ class VisitController extends Controller
         if (!auth()->user()->hasRole('Doctor')) {
             abort(403);
         }
-        
+
         $doctor = Doctor::where('user_id', auth()->id())->first();
         if (!$doctor || $visit->doctor_id !== $doctor->id) {
             abort(403);
         }
-        
+
         $visit->update(['status' => 'completed']);
         return redirect()->back()->with('success', 'Patient checked successfully.');
     }
@@ -414,7 +414,7 @@ class VisitController extends Controller
                     ->where('type', 'stock_in')
                     ->latest()
                     ->first();
-                
+
                 $unitPrice = $latestTransaction ? $latestTransaction->unit_cost : 0;
                 $totalPrice = $unitPrice * $quantity;
 
@@ -457,7 +457,7 @@ class VisitController extends Controller
                 ]);
                 $orderedCount++;
             }
-            
+
             $message = $orderedCount === 1 ? 'Investigation ordered successfully.' : "{$orderedCount} investigations ordered successfully.";
             return back()->with('success', $message);
         } catch (\Exception $e) {

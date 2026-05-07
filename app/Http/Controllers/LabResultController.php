@@ -20,24 +20,24 @@ class LabResultController extends Controller
         $pendingOrdersQuery = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
             ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
             ->whereDoesntHave('result');
-        
+
         if ($request->patient_search) {
             $pendingOrdersQuery->whereHas('patient', function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->patient_search . '%')
                   ->orWhere('phone', 'like', '%' . $request->patient_search . '%');
             });
         }
-        
+
         $pendingOrders = $pendingOrdersQuery->get()
             ->groupBy(function($order) {
                 return $order->patient_id . '_' . $order->visit_id;
             });
-        
+
         // Get completed results for display
         $completedResults = LabResult::with(['investigationOrder.patient', 'investigationOrder.investigation', 'technician'])
             ->latest()
             ->paginate(10);
-        
+
         return view('admin.lab.results.index', compact('pendingOrders', 'completedResults'));
     }
 
@@ -45,12 +45,12 @@ class LabResultController extends Controller
     {
         $patientId = $request->patient_id;
         $visitId = $request->visit_id;
-        
+
         if (!$patientId) {
             return redirect()->route('lab-results.index')
                 ->with('error', 'Patient ID is required.');
         }
-        
+
         $query = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
             ->where('patient_id', $patientId)
             ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
@@ -59,27 +59,27 @@ class LabResultController extends Controller
         if ($visitId) {
             $query->where('visit_id', $visitId);
         }
-        
+
         $labOrders = $query->get();
-        
+
         return view('admin.lab.results.create-batch', compact('labOrders'));
     }
 
     public function create(InvestigationOrder $labOrder)
     {
         $labOrder->load(['patient', 'visit', 'investigation.parameters']);
-        
+
         // Route radiology/cardiology tests to radiology result form
         if ($labOrder->isRadiology() || $labOrder->investigation->type === 'cardiology') {
             return redirect()->route('radiology-results.create', $labOrder);
         }
-        
+
         // Validate that this is a pathology investigation
         if (!$labOrder->isPathology()) {
             return redirect()->route('lab-results.index')
                 ->withErrors(['error' => 'Invalid investigation type for pathology result entry.']);
         }
-        
+
         return view('admin.lab.results.create', compact('labOrder'));
     }
 
@@ -112,18 +112,18 @@ class LabResultController extends Controller
                 'technician_id' => auth()->id(),
                 'tested_at' => now()
             ]);
-            
+
             // Create parameter results if provided
             if (!empty($validated['parameters'])) {
                 foreach ($validated['parameters'] as $paramData) {
                     if (empty($paramData['parameter_id'])) {
                         continue;
                     }
-                    
+
                     // Get the parameter to calculate flag
                     $parameter = \App\Models\LabTestParameter::find($paramData['parameter_id']);
                     $flag = 'N'; // Default to normal
-                    
+
                     if ($parameter) {
                         $flag = $parameter->calculateFlag(
                             $paramData['value'],
@@ -131,7 +131,7 @@ class LabResultController extends Controller
                             $labOrder->patient->gender ?? null
                         );
                     }
-                    
+
                     $result->resultItems()->create([
                         'lab_test_parameter_id' => $paramData['parameter_id'],
                         'value' => $paramData['value'],
@@ -142,7 +142,7 @@ class LabResultController extends Controller
                     ]);
                 }
             }
-            
+
             // Update investigation order
             $labOrder->update([
                 'status' => 'reported',
@@ -175,16 +175,16 @@ class LabResultController extends Controller
                 // Support both old and new field names
                 $orderId = $orderData['investigation_order_id'] ?? $orderData['lab_order_id'];
                 $investigationOrder = InvestigationOrder::find($orderId);
-                
+
                 if (!$investigationOrder) {
                     continue; // Skip invalid orders
                 }
-                
+
                 // Validate that this is a pathology investigation
                 if (!$investigationOrder->isPathology()) {
                     throw new \Exception('Cannot create pathology result for non-pathology investigation: ' . $investigationOrder->investigation->name);
                 }
-                
+
                 // Create lab result
                 $result = LabResult::create([
                     'investigation_order_id' => $investigationOrder->id,
@@ -194,7 +194,7 @@ class LabResultController extends Controller
                     'technician_id' => auth()->id(),
                     'tested_at' => now()
                 ]);
-                
+
                 // Create parameter results if provided
                 if (!empty($orderData['parameters'])) {
                     foreach ($orderData['parameters'] as $paramData) {
@@ -202,11 +202,11 @@ class LabResultController extends Controller
                         if (empty($paramData['parameter_id'])) {
                             continue;
                         }
-                        
+
                         // Get the parameter to calculate flag
                         $parameter = \App\Models\LabTestParameter::find($paramData['parameter_id']);
                         $flag = 'N'; // Default to normal
-                        
+
                         if ($parameter) {
                             $flag = $parameter->calculateFlag(
                                 $paramData['value'],
@@ -214,7 +214,7 @@ class LabResultController extends Controller
                                 $investigationOrder->patient->gender ?? null
                             );
                         }
-                        
+
                         $result->resultItems()->create([
                             'lab_test_parameter_id' => $paramData['parameter_id'],
                             'value' => $paramData['value'],
@@ -225,7 +225,7 @@ class LabResultController extends Controller
                         ]);
                     }
                 }
-                
+
                 // Update investigation order
                 $investigationOrder->update([
                     'status' => 'reported',
@@ -234,7 +234,7 @@ class LabResultController extends Controller
                 ]);
             }
         });
-        
+
         return redirect()->route('lab-results.index')
             ->with('success', 'Results entered successfully for ' . count($validated['orders']) . ' tests.');
     }
@@ -242,11 +242,11 @@ class LabResultController extends Controller
     public function show(LabResult $labResult)
     {
         $labResult->load([
-            'investigationOrder.patient', 
-            'investigationOrder.investigation', 
+            'investigationOrder.patient',
+            'investigationOrder.investigation',
             'investigationOrder.visit',
             'investigationOrder.doctor',
-            'technician', 
+            'technician',
             'pathologist',
             'resultItems.parameter'
         ]);
@@ -279,11 +279,11 @@ class LabResultController extends Controller
     public function report(LabResult $labResult)
     {
         $labResult->load([
-            'investigationOrder.patient', 
-            'investigationOrder.doctor', 
-            'investigationOrder.investigation', 
+            'investigationOrder.patient',
+            'investigationOrder.doctor',
+            'investigationOrder.investigation',
             'investigationOrder.visit',
-            'technician', 
+            'technician',
             'pathologist',
             'resultItems.parameter'
         ]);

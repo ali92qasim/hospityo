@@ -103,7 +103,14 @@ class InvestigationOrder extends Model
 
     public function isPathology(): bool
     {
-        return $this->investigation->type === 'pathology';
+        return in_array($this->investigation->category, [
+            'hematology',
+            'biochemistry',
+            'microbiology',
+            'immunology',
+            'pathology',
+            'molecular',
+        ]);
     }
 
     public function isRadiology(): bool
