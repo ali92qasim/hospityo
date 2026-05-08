@@ -16,25 +16,21 @@ class LabResultController extends Controller
 {
     public function index(Request $request)
     {
-        // Group pending investigation orders by patient and visit for batch result entry
-        $pendingOrdersQuery = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
+        $pendingOrdersQuery = InvestigationOrder::with(['patient', 'visit', 'items.investigation.parameters'])
             ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
-            ->whereDoesntHave('result');
+            ->whereHas('items', fn($q) => $q->whereNotIn('status', ['reported', 'verified', 'cancelled']));
 
         if ($request->patient_search) {
-            $pendingOrdersQuery->whereHas('patient', function($q) use ($request) {
+            $pendingOrdersQuery->whereHas('patient', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->patient_search . '%')
                   ->orWhere('phone', 'like', '%' . $request->patient_search . '%');
             });
         }
 
         $pendingOrders = $pendingOrdersQuery->get()
-            ->groupBy(function($order) {
-                return $order->patient_id . '_' . $order->visit_id;
-            });
+            ->groupBy(fn($order) => $order->patient_id . '_' . $order->visit_id);
 
-        // Get completed results for display
-        $completedResults = LabResult::with(['investigationOrder.patient', 'investigationOrder.investigation', 'technician'])
+        $completedResults = LabResult::with(['investigationOrder.patient', 'investigationOrder.items.investigation', 'technician'])
             ->latest()
             ->paginate(10);
 
@@ -44,17 +40,16 @@ class LabResultController extends Controller
     public function createBatch(Request $request)
     {
         $patientId = $request->patient_id;
-        $visitId = $request->visit_id;
+        $visitId   = $request->visit_id;
 
         if (!$patientId) {
-            return redirect()->route('lab-results.index')
-                ->with('error', 'Patient ID is required.');
+            return redirect()->route('lab-results.index')->with('error', 'Patient ID is required.');
         }
 
-        $query = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
+        $query = InvestigationOrder::with(['patient', 'visit', 'items.investigation.parameters'])
             ->where('patient_id', $patientId)
             ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
-            ->whereDoesntHave('result');
+            ->whereHas('items', fn($q) => $q->whereNotIn('status', ['reported', 'verified', 'cancelled']));
 
         if ($visitId) {
             $query->where('visit_id', $visitId);
@@ -67,88 +62,66 @@ class LabResultController extends Controller
 
     public function create(InvestigationOrder $labOrder)
     {
-        $labOrder->load(['patient', 'visit', 'investigation.parameters']);
+        $labOrder->load(['patient', 'visit', 'items.investigation.parameters']);
 
-        // Route radiology/cardiology tests to radiology result form
-        if ($labOrder->isRadiology() || $labOrder->investigation->type === 'cardiology') {
-            return redirect()->route('radiology-results.create', $labOrder);
-        }
+        // Pass the first pending item's investigation for single-result entry
+        $item = $labOrder->items->firstWhere('status', '!=', 'reported')
+             ?? $labOrder->items->first();
 
-        // Validate that this is a pathology investigation
-        if (!$labOrder->isPathology()) {
+        if (!$item) {
             return redirect()->route('lab-results.index')
-                ->withErrors(['error' => 'Invalid investigation type for pathology result entry.']);
+                ->with('error', 'No investigations found on this order.');
         }
 
-        return view('admin.lab.results.create', compact('labOrder'));
+        return view('admin.lab.results.create', compact('labOrder', 'item'));
     }
 
     public function store(Request $request, InvestigationOrder $labOrder)
     {
-        // Validate that this is a pathology investigation
-        if (!$labOrder->isPathology()) {
-            return back()->withErrors(['error' => 'Cannot create pathology result for non-pathology investigation: ' . $labOrder->investigation->name]);
-        }
-
         $validated = $request->validate([
-            'test_location' => 'required|in:indoor,outdoor',
-            'result_text' => 'nullable|string',
-            'parameters' => 'nullable|array',
-            'parameters.*.parameter_id' => 'nullable|integer',
-            'parameters.*.value' => 'required_with:parameters.*.parameter_id|string',
-            'parameters.*.unit' => 'nullable|string',
-            'interpretation' => 'nullable|string',
-            'comments' => 'nullable|string',
+            'test_location'                    => 'required|in:indoor,outdoor',
+            'result_text'                      => 'nullable|string',
+            'parameters'                       => 'nullable|array',
+            'parameters.*.parameter_id'        => 'nullable|integer',
+            'parameters.*.value'               => 'required_with:parameters.*.parameter_id|string',
+            'parameters.*.unit'                => 'nullable|string',
+            'interpretation'                   => 'nullable|string',
+            'comments'                         => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($validated, $labOrder) {
-            // Create lab result
             $result = LabResult::create([
                 'investigation_order_id' => $labOrder->id,
-                'results' => [],
-                'interpretation' => $validated['interpretation'] ?? null,
-                'comments' => $validated['comments'] ?? null,
-                'status' => 'preliminary',
-                'technician_id' => auth()->id(),
-                'tested_at' => now()
+                'results'                => [],
+                'interpretation'         => $validated['interpretation'] ?? null,
+                'comments'               => $validated['comments'] ?? null,
+                'status'                 => 'preliminary',
+                'technician_id'          => auth()->id(),
+                'tested_at'              => now(),
             ]);
 
-            // Create parameter results if provided
             if (!empty($validated['parameters'])) {
                 foreach ($validated['parameters'] as $paramData) {
-                    if (empty($paramData['parameter_id'])) {
-                        continue;
-                    }
+                    if (empty($paramData['parameter_id'])) continue;
 
-                    // Get the parameter to calculate flag
                     $parameter = \App\Models\LabTestParameter::find($paramData['parameter_id']);
-                    $flag = 'N'; // Default to normal
-
-                    if ($parameter) {
-                        $flag = $parameter->calculateFlag(
-                            $paramData['value'],
-                            $labOrder->patient->age ?? null,
-                            $labOrder->patient->gender ?? null
-                        );
-                    }
+                    $flag = $parameter
+                        ? $parameter->calculateFlag($paramData['value'], $labOrder->patient->age ?? null, $labOrder->patient->gender ?? null)
+                        : 'N';
 
                     $result->resultItems()->create([
                         'lab_test_parameter_id' => $paramData['parameter_id'],
-                        'value' => $paramData['value'],
-                        'unit' => $paramData['unit'] ?? null,
-                        'flag' => $flag,
-                        'entered_by' => auth()->id(),
-                        'entered_at' => now()
+                        'value'                 => $paramData['value'],
+                        'unit'                  => $paramData['unit'] ?? null,
+                        'flag'                  => $flag,
+                        'entered_by'            => auth()->id(),
+                        'entered_at'            => now(),
                     ]);
                 }
             }
 
-            // Update investigation order
-            $labOrder->update([
-                'status' => 'reported',
-                'test_location' => $validated['test_location'],
-                'completed_at' => now()
-            ]);
+            $labOrder->update(['status' => 'reported', 'completed_at' => now()]);
+            $labOrder->items()->whereNotIn('status', ['cancelled'])->update(['status' => 'reported']);
         });
 
         return redirect()->route('lab-results.index')
@@ -172,66 +145,42 @@ class LabResultController extends Controller
 
         DB::transaction(function () use ($validated) {
             foreach ($validated['orders'] as $orderData) {
-                // Support both old and new field names
                 $orderId = $orderData['investigation_order_id'] ?? $orderData['lab_order_id'];
-                $investigationOrder = InvestigationOrder::find($orderId);
+                $investigationOrder = InvestigationOrder::with('items.investigation.parameters', 'patient')->find($orderId);
 
-                if (!$investigationOrder) {
-                    continue; // Skip invalid orders
-                }
+                if (!$investigationOrder) continue;
 
-                // Validate that this is a pathology investigation
-                if (!$investigationOrder->isPathology()) {
-                    throw new \Exception('Cannot create pathology result for non-pathology investigation: ' . $investigationOrder->investigation->name);
-                }
-
-                // Create lab result
                 $result = LabResult::create([
                     'investigation_order_id' => $investigationOrder->id,
-                    'results' => [],
-                    'comments' => $orderData['notes'] ?? null,
-                    'status' => 'preliminary',
-                    'technician_id' => auth()->id(),
-                    'tested_at' => now()
+                    'results'                => [],
+                    'comments'               => $orderData['notes'] ?? null,
+                    'status'                 => 'preliminary',
+                    'technician_id'          => auth()->id(),
+                    'tested_at'              => now(),
                 ]);
 
-                // Create parameter results if provided
                 if (!empty($orderData['parameters'])) {
                     foreach ($orderData['parameters'] as $paramData) {
-                        // Skip if parameter_id is empty
-                        if (empty($paramData['parameter_id'])) {
-                            continue;
-                        }
+                        if (empty($paramData['parameter_id'])) continue;
 
-                        // Get the parameter to calculate flag
                         $parameter = \App\Models\LabTestParameter::find($paramData['parameter_id']);
-                        $flag = 'N'; // Default to normal
-
-                        if ($parameter) {
-                            $flag = $parameter->calculateFlag(
-                                $paramData['value'],
-                                $investigationOrder->patient->age ?? null,
-                                $investigationOrder->patient->gender ?? null
-                            );
-                        }
+                        $flag = $parameter
+                            ? $parameter->calculateFlag($paramData['value'], $investigationOrder->patient->age ?? null, $investigationOrder->patient->gender ?? null)
+                            : 'N';
 
                         $result->resultItems()->create([
                             'lab_test_parameter_id' => $paramData['parameter_id'],
-                            'value' => $paramData['value'],
-                            'unit' => $paramData['unit'] ?? null,
-                            'flag' => $flag,
-                            'entered_by' => auth()->id(),
-                            'entered_at' => now()
+                            'value'                 => $paramData['value'],
+                            'unit'                  => $paramData['unit'] ?? null,
+                            'flag'                  => $flag,
+                            'entered_by'            => auth()->id(),
+                            'entered_at'            => now(),
                         ]);
                     }
                 }
 
-                // Update investigation order
-                $investigationOrder->update([
-                    'status' => 'reported',
-                    'test_location' => $orderData['test_location'],
-                    'completed_at' => now()
-                ]);
+                $investigationOrder->update(['status' => 'reported', 'completed_at' => now()]);
+                $investigationOrder->items()->whereNotIn('status', ['cancelled'])->update(['status' => 'reported']);
             }
         });
 

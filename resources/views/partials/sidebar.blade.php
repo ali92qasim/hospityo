@@ -44,6 +44,16 @@
             </li>
             @endif
 
+            {{-- Departments --}}
+            @can('view departments')
+            <li>
+                <a href="{{ route('departments.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('departments.*') ? 'bg-medical-light text-medical-blue' : '' }}">
+                    <i class="fas fa-building mr-3 w-5"></i>
+                    <span>{{ __('messages.departments') }}</span>
+                </a>
+            </li>
+            @endcan
+
             {{-- Visits --}}
             @if((!$currentTenant || $currentTenant->hasModule('visits')) && auth()->user()->can('view visits'))
             <li>
@@ -157,6 +167,22 @@
                 @endcan
             </div>
             @endif
+
+            {{-- Doctor Share --}}
+            @can('manage doctor shares')
+            <li class="pt-4">
+                <button onclick="toggleSubmenu('doctor-share')" class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors">
+                    <span>Doctor Share</span>
+                    <i id="doctor-share-icon" class="fas fa-chevron-down text-xs transition-transform {{ request()->routeIs('doctor-share.*') ? 'rotate-180' : '' }}"></i>
+                </button>
+            </li>
+            <div id="doctor-share-submenu" class="space-y-1 {{ request()->routeIs('doctor-share.*') ? '' : 'hidden' }}">
+                <li><a href="{{ route('doctor-share.rules.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('doctor-share.rules.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-list-alt mr-3 text-xs w-5"></i><span>Share Rules</span></a></li>
+                <li><a href="{{ route('doctor-share.items.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('doctor-share.items.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-hand-holding-usd mr-3 text-xs w-5"></i><span>Share Items</span></a></li>
+                <li><a href="{{ route('doctor-share.settlements.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('doctor-share.settlements.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-check-circle mr-3 text-xs w-5"></i><span>Settlements</span></a></li>
+                <li><a href="{{ route('doctor-share.reports.index') }}" class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ request()->routeIs('doctor-share.reports.*') ? 'bg-medical-light text-medical-blue' : '' }}"><i class="fas fa-chart-bar mr-3 text-xs w-5"></i><span>Share Reports</span></a></li>
+            </div>
+            @endcan
 
             {{-- Accounting --}}
             @if(!$currentTenant || $currentTenant->hasModule('billing'))

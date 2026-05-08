@@ -17,7 +17,15 @@
 @else
 @php
     $patient = $labOrders->first()->patient;
-    $visit = $labOrders->first()->visit;
+    $visit   = $labOrders->first()->visit;
+
+    // Flatten all pending items across all orders into a single indexed list
+    $allItems = collect();
+    foreach ($labOrders as $order) {
+        foreach ($order->items->whereNotIn('status', ['reported', 'verified', 'cancelled']) as $item) {
+            $allItems->push(['order' => $order, 'item' => $item]);
+        }
+    }
 @endphp
 
 <!-- Patient Header -->
@@ -29,14 +37,12 @@
                 <div class="flex items-center space-x-4 text-sm text-blue-700 mt-1">
                     <span><i class="fas fa-phone mr-1"></i>{{ $patient->phone }}</span>
                     <span><i class="fas fa-calendar mr-1"></i>{{ $patient->date_of_birth?->format('M d, Y') ?? 'N/A' }}</span>
-                    <span><i class="fas fa-clipboard-list mr-1"></i>{{ $visit?->visit_no }}</span>
+                    @if($visit)<span><i class="fas fa-clipboard-list mr-1"></i>{{ $visit->visit_no }}</span>@endif
                 </div>
             </div>
-            <div class="text-right">
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                    {{ $labOrders->count() }} test{{ $labOrders->count() > 1 ? 's' : '' }}
-                </span>
-            </div>
+            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium self-start sm:self-auto">
+                {{ $allItems->count() }} test{{ $allItems->count() !== 1 ? 's' : '' }}
+            </span>
         </div>
     </div>
 </div>
@@ -44,194 +50,156 @@
 <!-- Results Entry Form -->
 <form action="{{ route('lab-results.store-batch') }}" method="POST" id="batch-results-form">
     @csrf
-    
+
     <div class="space-y-6">
-        @foreach($labOrders as $index => $labOrder)
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <!-- Test Header -->
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                        <div>
-                            <h4 class="text-lg font-semibold text-gray-900">{{ $labOrder->investigation->name }}</h4>
-                            <div class="flex items-center space-x-3 mt-1">
-                                <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
-                                    {{ $labOrder->priority === 'stat' ? 'bg-red-100 text-red-800' : 
-                                       ($labOrder->priority === 'urgent' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800') }}">
-                                    {{ strtoupper($labOrder->priority) }}
+        @foreach($allItems as $index => $entry)
+        @php
+            $order = $entry['order'];
+            $item  = $entry['item'];
+            $hasParameters = $item->hasParameters();
+        @endphp
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+
+            <!-- Test Header -->
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900">{{ $item->investigation?->name }}</h4>
+                        <div class="flex items-center space-x-3 mt-1">
+                            <span class="text-xs text-gray-500 font-mono">{{ $order->order_number }}</span>
+                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
+                                {{ $item->priority === 'stat' ? 'bg-red-100 text-red-800' :
+                                   ($item->priority === 'urgent' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800') }}">
+                                {{ strtoupper($item->priority) }}
+                            </span>
+                            @if($hasParameters)
+                                <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium bg-purple-100 text-purple-800">
+                                    <i class="fas fa-list mr-1"></i>{{ $item->investigation->parameters->count() }} parameters
                                 </span>
-                                <span class="text-sm text-gray-600">
-                                    <i class="fas fa-calendar mr-1"></i>{{ $labOrder->ordered_at->format('M d, H:i') }}
+                            @else
+                                <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium bg-gray-100 text-gray-600">
+                                    <i class="fas fa-align-left mr-1"></i>Text result
                                 </span>
-                            </div>
+                            @endif
+                            <span class="text-sm text-gray-500">
+                                <i class="fas fa-calendar mr-1"></i>{{ $order->ordered_at->format('M d, H:i') }}
+                            </span>
                         </div>
-                        <button type="button" onclick="toggleTest({{ $index }})" class="text-gray-500 hover:text-gray-700">
-                            <i id="toggle-icon-{{ $index }}" class="fas fa-chevron-down"></i>
-                        </button>
                     </div>
-                    @if($labOrder->clinical_notes)
-                        <div class="mt-3 p-3 bg-blue-50 rounded-lg">
-                            <p class="text-sm text-blue-800"><strong>Clinical Notes:</strong> {{ $labOrder->clinical_notes }}</p>
-                        </div>
-                    @endif
+                    <button type="button" onclick="toggleTest({{ $index }})" class="text-gray-500 hover:text-gray-700 flex-shrink-0">
+                        <i id="toggle-icon-{{ $index }}" class="fas fa-chevron-down"></i>
+                    </button>
                 </div>
-                
-                <!-- Test Content -->
-                <div id="test-content-{{ $index }}" class="px-6 py-4">
-                    <input type="hidden" name="orders[{{ $index }}][lab_order_id]" value="{{ $labOrder->id }}">
-                    
-                    <!-- Test Location -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Test Location *</label>
-                        <div class="flex space-x-4">
-                            <label class="flex items-center">
-                                <input type="radio" name="orders[{{ $index }}][test_location]" value="indoor" 
-                                       class="mr-2 text-medical-blue" checked required>
-                                <span class="text-sm">Indoor Lab</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="orders[{{ $index }}][test_location]" value="outdoor" 
-                                       class="mr-2 text-medical-blue" required>
-                                <span class="text-sm">External Lab</span>
-                            </label>
-                        </div>
+                @if($item->clinical_notes)
+                    <div class="mt-3 p-3 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-blue-800"><strong>Clinical Notes:</strong> {{ $item->clinical_notes }}</p>
                     </div>
-                    
-                    @if($labOrder->investigation->parameters && is_object($labOrder->investigation->parameters) && $labOrder->investigation->parameters->count() > 0)
-                        <!-- Parameter-based Results -->
-                        <div class="mb-4">
-                            <h5 class="text-sm font-medium text-gray-700 mb-3">Test Parameters</h5>
-                            <div class="overflow-x-auto">
-                                <table class="w-full border border-gray-200 rounded-lg">
-                                    <thead class="bg-gray-50">
+                @endif
+            </div>
+
+            <!-- Test Content -->
+            <div id="test-content-{{ $index }}" class="px-6 py-4">
+                <input type="hidden" name="orders[{{ $index }}][lab_order_id]" value="{{ $order->id }}">
+                <input type="hidden" name="orders[{{ $index }}][investigation_order_id]" value="{{ $order->id }}">
+
+                <!-- Test Location -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Test Location *</label>
+                    <div class="flex space-x-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="orders[{{ $index }}][test_location]" value="indoor"
+                                   class="mr-2 text-medical-blue" {{ $item->test_location === 'indoor' ? 'checked' : '' }} required>
+                            <span class="text-sm"><i class="fas fa-building mr-1 text-gray-400"></i>Indoor Lab</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="orders[{{ $index }}][test_location]" value="outdoor"
+                                   class="mr-2 text-medical-blue" {{ $item->test_location === 'outdoor' ? 'checked' : '' }} required>
+                            <span class="text-sm"><i class="fas fa-external-link-alt mr-1 text-gray-400"></i>External Lab</span>
+                        </label>
+                    </div>
+                </div>
+
+                @if($hasParameters)
+                    <!-- Parameter-based Results -->
+                    <div class="mb-4">
+                        <h5 class="text-sm font-medium text-gray-700 mb-3">Test Parameters</h5>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border border-gray-200 rounded-lg">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Parameter</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value *</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reference Range</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    @foreach($item->investigation->parameters as $paramIndex => $parameter)
                                         <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Parameter</th>
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value *</th>
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reference Range</th>
+                                            <td class="px-4 py-2 font-medium text-gray-900">{{ $parameter->parameter_name }}</td>
+                                            <td class="px-4 py-2">
+                                                <input type="hidden" name="orders[{{ $index }}][parameters][{{ $paramIndex }}][parameter_id]" value="{{ $parameter->id }}">
+                                                <input type="text" name="orders[{{ $index }}][parameters][{{ $paramIndex }}][value]"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-medical-blue"
+                                                       required>
+                                            </td>
+                                            <td class="px-4 py-2">
+                                                <input type="text" name="orders[{{ $index }}][parameters][{{ $paramIndex }}][unit]"
+                                                       value="{{ $parameter->unit }}"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-medical-blue"
+                                                       readonly>
+                                            </td>
+                                            <td class="px-4 py-2 text-sm text-gray-600">
+                                                {{ is_array($parameter->reference_ranges) ? ($parameter->reference_ranges['range'] ?? '-') : ($parameter->reference_ranges ?? '-') }}
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-200">
-                                        @foreach($labOrder->investigation->parameters as $paramIndex => $parameter)
-                                            <tr>
-                                                <td class="px-4 py-2 font-medium text-gray-900">{{ $parameter->parameter_name }}</td>
-                                                <td class="px-4 py-2">
-                                                    <input type="hidden" name="orders[{{ $index }}][parameters][{{ $paramIndex }}][parameter_id]" value="{{ $parameter->id }}">
-                                                    <input type="text" name="orders[{{ $index }}][parameters][{{ $paramIndex }}][value]" 
-                                                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-medical-blue" 
-                                                           required>
-                                                </td>
-                                                <td class="px-4 py-2">
-                                                    <input type="text" name="orders[{{ $index }}][parameters][{{ $paramIndex }}][unit]" 
-                                                           value="{{ $parameter->unit }}" 
-                                                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-medical-blue" 
-                                                           readonly>
-                                                </td>
-                                                <td class="px-4 py-2 text-sm text-gray-600">
-                                                    {{ is_array($parameter->reference_ranges) ? ($parameter->reference_ranges['range'] ?? '-') : ($parameter->reference_ranges ?? '-') }}
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
-                    @else
-                        <!-- Text-based Results -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Test Result *</label>
-                            <textarea name="orders[{{ $index }}][result_text]" rows="4" 
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" 
-                                      placeholder="Enter test results..." required></textarea>
-                        </div>
-                    @endif
-                    
-                    <!-- Notes -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
-                        <textarea name="orders[{{ $index }}][notes]" rows="2" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" 
-                                  placeholder="Optional notes or interpretation..."></textarea>
                     </div>
+                @else
+                    <!-- Text-based Results -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Test Result *</label>
+                        <textarea name="orders[{{ $index }}][result_text]" rows="4"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue"
+                                  placeholder="Enter test results..." required></textarea>
+                    </div>
+                @endif
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                    <textarea name="orders[{{ $index }}][notes]" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue"
+                              placeholder="Optional notes or interpretation..."></textarea>
                 </div>
             </div>
+        </div>
         @endforeach
     </div>
-    
+
     <!-- Submit Actions -->
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-8 p-6 bg-white rounded-lg shadow-sm">
         <a href="{{ route('lab-results.index') }}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
             <i class="fas fa-arrow-left mr-2"></i>Back to Results
         </a>
-        <div class="flex space-x-4">
-            <button type="button" onclick="resetForm()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                <i class="fas fa-undo mr-2"></i>Reset Form
-            </button>
-            <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700">
-                <i class="fas fa-save mr-2"></i>Save All Results
-            </button>
-        </div>
+        <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700">
+            <i class="fas fa-save mr-2"></i>Save All Results
+        </button>
     </div>
 </form>
 
 <script>
 function toggleTest(index) {
     const content = document.getElementById(`test-content-${index}`);
-    const icon = document.getElementById(`toggle-icon-${index}`);
-    
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-        icon.classList.remove('fa-chevron-right');
-        icon.classList.add('fa-chevron-down');
-    } else {
-        content.style.display = 'none';
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-right');
-    }
+    const icon    = document.getElementById(`toggle-icon-${index}`);
+    const hidden  = content.style.display === 'none';
+    content.style.display = hidden ? 'block' : 'none';
+    icon.classList.toggle('fa-chevron-down', hidden);
+    icon.classList.toggle('fa-chevron-right', !hidden);
 }
-
-function resetForm() {
-    if (confirm('Reset all entered data?')) {
-        document.getElementById('batch-results-form').reset();
-    }
-}
-
-// Auto-save functionality (optional)
-let autoSaveTimer;
-function autoSave() {
-    clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-        const formData = new FormData(document.getElementById('batch-results-form'));
-        localStorage.setItem('lab-results-draft', JSON.stringify(Object.fromEntries(formData)));
-    }, 2000);
-}
-
-// Add auto-save listeners
-document.querySelectorAll('input, textarea, select').forEach(element => {
-    element.addEventListener('input', autoSave);
-});
-
-// Load draft on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const draft = localStorage.getItem('lab-results-draft');
-    if (draft && confirm('Load previously saved draft?')) {
-        const data = JSON.parse(draft);
-        Object.keys(data).forEach(key => {
-            const element = document.querySelector(`[name="${key}"]`);
-            if (element) {
-                if (element.type === 'radio') {
-                    document.querySelector(`[name="${key}"][value="${data[key]}"]`).checked = true;
-                } else {
-                    element.value = data[key];
-                }
-            }
-        });
-    }
-});
-
-// Clear draft on successful submit
-document.getElementById('batch-results-form').addEventListener('submit', function() {
-    localStorage.removeItem('lab-results-draft');
-});
 </script>
 @endif
 @endsection

@@ -15,8 +15,8 @@ class InvestigationOrder extends Model
     use Auditable, UsesTenantConnection;
 
     protected $fillable = [
-        'order_number', 'patient_id', 'visit_id', 'doctor_id', 'investigation_id', 'quantity',
-        'priority', 'status', 'test_location', 'ordered_at', 'sample_collected_at', 'completed_at',
+        'order_number', 'patient_id', 'visit_id', 'doctor_id',
+        'priority', 'status', 'ordered_at', 'sample_collected_at', 'completed_at',
         'clinical_notes', 'special_instructions'
     ];
 
@@ -66,9 +66,9 @@ class InvestigationOrder extends Model
         return $this->belongsTo(Investigation::class);
     }
 
-    public function labTest(): BelongsTo
+    public function items(): HasMany
     {
-        return $this->belongsTo(Investigation::class, 'investigation_id');
+        return $this->hasMany(InvestigationOrderItem::class);
     }
 
     public function sample(): HasOne

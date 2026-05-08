@@ -37,13 +37,15 @@ class DoctorShareItem extends Model
         'void_reason',
         'voided_at',
         'settlement_id',
+        'collected_at_settlement',
     ];
 
     protected $casts = [
-        'rule_snapshot' => 'array',
-        'base_amount'   => 'decimal:2',
-        'share_amount'  => 'decimal:2',
-        'voided_at'     => 'datetime',
+        'rule_snapshot'           => 'array',
+        'base_amount'             => 'decimal:2',
+        'share_amount'            => 'decimal:2',
+        'collected_at_settlement' => 'decimal:2',
+        'voided_at'               => 'datetime',
     ];
 
     // ── Relationships ─────────────────────────────────────────────────────────

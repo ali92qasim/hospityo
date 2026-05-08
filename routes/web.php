@@ -30,6 +30,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\DoctorShareController;
 use App\Http\Controllers\LanguageController;
 use App\Models\Patient;
 use Illuminate\Http\Request;
@@ -451,6 +452,31 @@ Route::middleware('auth')->group(function () {
     Route::resource('radiology-results', RadiologyResultController::class)->except(['create', 'store'])->middleware('permission:view visits|create visits|edit visits|delete visits');
 
     
+    // Doctor Share Routes
+    Route::prefix('doctor-share')->name('doctor-share.')->middleware('permission:manage doctor shares')->group(function () {
+        // Share Rules
+        Route::get('rules', [DoctorShareController::class, 'rulesIndex'])->name('rules.index');
+        Route::get('rules/create', [DoctorShareController::class, 'rulesCreate'])->name('rules.create');
+        Route::post('rules', [DoctorShareController::class, 'rulesStore'])->name('rules.store');
+        Route::get('rules/{rule}/edit', [DoctorShareController::class, 'rulesEdit'])->name('rules.edit');
+        Route::put('rules/{rule}', [DoctorShareController::class, 'rulesUpdate'])->name('rules.update');
+        Route::delete('rules/{rule}', [DoctorShareController::class, 'rulesDestroy'])->name('rules.destroy');
+        Route::patch('rules/{rule}/toggle', [DoctorShareController::class, 'toggleRule'])->name('rules.toggle');
+
+        // Share Items
+        Route::get('items', [DoctorShareController::class, 'itemsIndex'])->name('items.index');
+
+        // Settlements
+        Route::get('settlements', [DoctorShareController::class, 'settlementsIndex'])->name('settlements.index');
+        Route::get('settlements/preview', [DoctorShareController::class, 'settlementsPreview'])->name('settlements.preview');
+        Route::post('settlements', [DoctorShareController::class, 'settlementsStore'])->name('settlements.store');
+        Route::get('settlements/{settlement}', [DoctorShareController::class, 'settlementsShow'])->name('settlements.show');
+
+        // Reports
+        Route::get('reports', [DoctorShareController::class, 'reportsIndex'])->name('reports.index');
+        Route::get('reports/print', [DoctorShareController::class, 'reportsPrint'])->name('reports.print');
+    });
+
     // RBAC Routes
     Route::resource('users', UserController::class)->middleware('role:Super Admin|Hospital Administrator');
     Route::resource('roles', RoleController::class)->middleware('permission:view roles|create roles|edit roles|delete roles');

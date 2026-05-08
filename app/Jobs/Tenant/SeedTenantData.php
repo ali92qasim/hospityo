@@ -77,6 +77,7 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
             'view bills', 'create bills', 'edit bills', 'delete bills',
             'create payments',
             'view services', 'create services', 'edit services', 'delete services',
+            'manage doctor shares',
             // RBAC
             'view roles', 'create roles', 'edit roles', 'delete roles',
             'view permissions', 'create permissions', 'edit permissions', 'delete permissions',
@@ -102,6 +103,7 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
             'view medical records', 'create medical records', 'edit medical records',
             'view bills', 'create bills', 'edit bills', 'create payments',
             'view services', 'create services', 'edit services',
+            'manage doctor shares',
             'manage user roles',
         ]);
 

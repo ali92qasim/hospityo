@@ -8,8 +8,8 @@
 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
     <div class="flex space-x-4">
         <form method="GET" class="flex space-x-2">
-            <input type="text" name="patient_search" value="{{ request('patient_search') }}" 
-                   placeholder="Search patient name or phone..." 
+            <input type="text" name="patient_search" value="{{ request('patient_search') }}"
+                   placeholder="Search patient name or phone..."
                    class="px-3 py-2 border border-gray-300 rounded-lg">
             <button type="submit" class="px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700">
                 <i class="fas fa-search"></i>
@@ -44,95 +44,82 @@
                         </div>
                         <div class="text-right">
                             <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                {{ count($orders) }} test{{ count($orders) > 1 ? 's' : '' }}
+                                {{ $orders->sum(fn($o) => $o->items->count()) }} test{{ $orders->sum(fn($o) => $o->items->count()) > 1 ? 's' : '' }}
                             </span>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Tests Table -->
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-gray-50">
                             <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test Name</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Type</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Priority</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Location</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clinical Notes</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             @foreach($orders as $order)
+                                @foreach($order->items->whereNotIn('status', ['reported','verified','cancelled']) as $item)
                                 <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3 text-xs text-gray-500 font-mono">{{ $order->order_number }}</td>
                                     <td class="px-4 py-3">
-                                        <div class="font-medium text-gray-900">{{ $order->investigation->name }}</div>
-                                        @if($order->investigation && $order->investigation->parameters && is_object($order->investigation->parameters) && $order->investigation->parameters->count() > 0)
+                                        <div class="font-medium text-gray-900">{{ $item->investigation?->name }}</div>
+                                        @if($item->investigation?->parameters?->count() > 0)
                                             <div class="text-xs text-gray-500 mt-1">
-                                                {{ $order->investigation->parameters->count() }} parameter{{ $order->investigation->parameters->count() > 1 ? 's' : '' }}
+                                                {{ $item->investigation->parameters->count() }} parameter{{ $item->investigation->parameters->count() > 1 ? 's' : '' }}
                                             </div>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-center">
-                                        @php
-                                            $typeConfig = [
-                                                'pathology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                'radiology' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                'cardiology' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
-                                            ];
-                                            $type = $order->investigation->type ?? 'pathology';
-                                            $typeStyle = $typeConfig[$type] ?? $typeConfig['pathology'];
-                                        @endphp
-                                        <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $typeStyle['bg'] }} {{ $typeStyle['text'] }}">
-                                            <i class="fas {{ $typeStyle['icon'] }} mr-1"></i>
-                                            {{ ucfirst($type) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
                                         <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
-                                            {{ $order->priority === 'stat' ? 'bg-red-100 text-red-800' : 
-                                               ($order->priority === 'urgent' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800') }}">
-                                            {{ strtoupper($order->priority) }}
+                                            {{ $item->priority === 'stat' ? 'bg-red-100 text-red-800' :
+                                               ($item->priority === 'urgent' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800') }}">
+                                            {{ strtoupper($item->priority) }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         @php
                                             $statusConfig = [
-                                                'ordered' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-800', 'label' => 'Ordered'],
-                                                'sample_collected' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'label' => 'Sample Collected'],
-                                                'in_progress' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'label' => 'In Progress']
+                                                'ordered'   => ['bg' => 'bg-gray-100',   'text' => 'text-gray-800',   'label' => 'Ordered'],
+                                                'collected' => ['bg' => 'bg-blue-100',   'text' => 'text-blue-800',   'label' => 'Sample Collected'],
+                                                'testing'   => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'label' => 'In Progress'],
                                             ];
-                                            $config = $statusConfig[$order->status] ?? $statusConfig['ordered'];
+                                            $config = $statusConfig[$item->status] ?? $statusConfig['ordered'];
                                         @endphp
                                         <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $config['bg'] }} {{ $config['text'] }}">
                                             {{ $config['label'] }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-gray-600">
-                                        {{ $order->ordered_at->format('M d, H:i') }}
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
+                                            {{ $item->test_location === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
+                                            <i class="fas {{ $item->test_location === 'indoor' ? 'fa-building' : 'fa-external-link-alt' }} mr-1"></i>
+                                            {{ $item->test_location === 'indoor' ? 'Indoor' : 'External' }}
+                                        </span>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-gray-600">
-                                        {{ $order->clinical_notes ? Str::limit($order->clinical_notes, 50) : '-' }}
-                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">{{ $order->ordered_at->format('M d, H:i') }}</td>
                                 </tr>
+                                @endforeach
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- Action Button -->
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
                     @php
                         $batchParams = ['patient_id' => $patient->id];
-                        if ($visit) {
-                            $batchParams['visit_id'] = $visit->id;
-                        }
+                        if ($visit) $batchParams['visit_id'] = $visit->id;
                     @endphp
-                    <a href="{{ route('lab-results.create-batch', $batchParams) }}" 
+                    <a href="{{ route('lab-results.create-batch', $batchParams) }}"
                        class="inline-flex items-center px-4 py-2 bg-medical-blue text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-flask mr-2"></i>
-                        Enter Results for All Tests
+                        <i class="fas fa-flask mr-2"></i>Enter Results for All Tests
                     </a>
                 </div>
             </div>
@@ -157,9 +144,7 @@
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tests</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reported</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-32">Actions</th>
@@ -170,34 +155,14 @@
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $result->labOrder?->order_number ?? 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $result->labOrder?->patient?->name ?? 'Unknown Patient' }}</td>
-                        <td class="px-6 py-4">{{ $result->labOrder?->investigation?->name ?? 'Unknown Test' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @php
-                                $typeConfig = [
-                                    'pathology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                    'radiology' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                    'cardiology' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
-                                ];
-                                $type = $result->labOrder?->investigation?->type ?? 'pathology';
-                                $typeStyle = $typeConfig[$type] ?? $typeConfig['pathology'];
-                            @endphp
-                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $typeStyle['bg'] }} {{ $typeStyle['text'] }}">
-                                <i class="fas {{ $typeStyle['icon'] }} mr-1"></i>
-                                {{ ucfirst($type) }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
-                                {{ ($result->labOrder?->test_location ?? 'indoor') === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
-                                <i class="fas {{ ($result->labOrder?->test_location ?? 'indoor') === 'indoor' ? 'fa-building' : 'fa-external-link-alt' }} mr-1"></i>
-                                {{ ($result->labOrder?->test_location ?? 'indoor') === 'indoor' ? 'Indoor' : 'External' }}
-                            </span>
+                        <td class="px-6 py-4 text-sm text-gray-700">
+                            {{ $result->labOrder?->items->map(fn($i) => $i->investigation?->name)->filter()->join(', ') ?? 'Unknown Test' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php
                                 $statusConfig = [
                                     'preliminary' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'label' => 'Preliminary'],
-                                    'final' => ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'label' => 'Final']
+                                    'final'       => ['bg' => 'bg-green-100',  'text' => 'text-green-800',  'label' => 'Final'],
                                 ];
                                 $config = $statusConfig[$result->status] ?? $statusConfig['preliminary'];
                             @endphp
@@ -226,7 +191,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">No completed results found</td>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No completed results found</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -241,9 +206,7 @@ function verifyResult(resultId) {
     if (confirm('Verify and finalize this result?')) {
         fetch(`/lab-results/${resultId}/verify`, {
             method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
         }).then(() => location.reload());
     }
 }
