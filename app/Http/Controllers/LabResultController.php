@@ -2,13 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreLabResultRequest;
 use App\Http\Requests\UpdateLabResultRequest;
 use App\Models\LabResult;
-use App\Models\LabOrder;
 use App\Models\InvestigationOrder;
-use App\Models\Patient;
-use App\Models\Visit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,9 +12,9 @@ class LabResultController extends Controller
 {
     public function index(Request $request)
     {
-        $pendingOrdersQuery = InvestigationOrder::with(['patient', 'visit', 'items.investigation.parameters'])
+        $pendingOrdersQuery = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
             ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
-            ->whereHas('items', fn($q) => $q->whereNotIn('status', ['reported', 'verified', 'cancelled']));
+            ->whereDoesntHave('result');
 
         if ($request->patient_search) {
             $pendingOrdersQuery->whereHas('patient', function ($q) use ($request) {
@@ -28,9 +24,11 @@ class LabResultController extends Controller
         }
 
         $pendingOrders = $pendingOrdersQuery->get()
-            ->groupBy(fn($order) => $order->patient_id . '_' . $order->visit_id);
+            ->groupBy(function ($order) {
+                return $order->patient_id . '_' . $order->visit_id;
+            });
 
-        $completedResults = LabResult::with(['investigationOrder.patient', 'investigationOrder.items.investigation', 'technician'])
+        $completedResults = LabResult::with(['investigationOrder.patient', 'investigationOrder.investigation', 'technician'])
             ->latest()
             ->paginate(10);
 
@@ -43,13 +41,14 @@ class LabResultController extends Controller
         $visitId   = $request->visit_id;
 
         if (!$patientId) {
-            return redirect()->route('lab-results.index')->with('error', 'Patient ID is required.');
+            return redirect()->route('lab-results.index')
+                ->with('error', 'Patient ID is required.');
         }
 
-        $query = InvestigationOrder::with(['patient', 'visit', 'items.investigation.parameters'])
+        $query = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
             ->where('patient_id', $patientId)
             ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
-            ->whereHas('items', fn($q) => $q->whereNotIn('status', ['reported', 'verified', 'cancelled']));
+            ->whereDoesntHave('result');
 
         if ($visitId) {
             $query->where('visit_id', $visitId);
@@ -62,31 +61,35 @@ class LabResultController extends Controller
 
     public function create(InvestigationOrder $labOrder)
     {
-        $labOrder->load(['patient', 'visit', 'items.investigation.parameters']);
+        $labOrder->load(['patient', 'visit', 'investigation.parameters']);
 
-        // Pass the first pending item's investigation for single-result entry
-        $item = $labOrder->items->firstWhere('status', '!=', 'reported')
-             ?? $labOrder->items->first();
-
-        if (!$item) {
-            return redirect()->route('lab-results.index')
-                ->with('error', 'No investigations found on this order.');
+        if ($labOrder->isRadiology()) {
+            return redirect()->route('radiology-results.create', $labOrder);
         }
 
-        return view('admin.lab.results.create', compact('labOrder', 'item'));
+        if (!$labOrder->isPathology()) {
+            return redirect()->route('lab-results.index')
+                ->withErrors(['error' => 'Invalid investigation type for pathology result entry.']);
+        }
+
+        return view('admin.lab.results.create', compact('labOrder'));
     }
 
     public function store(Request $request, InvestigationOrder $labOrder)
     {
+        if (!$labOrder->isPathology()) {
+            return back()->withErrors(['error' => 'Cannot create pathology result for non-pathology investigation: ' . $labOrder->investigation->name]);
+        }
+
         $validated = $request->validate([
-            'test_location'                    => 'required|in:indoor,outdoor',
-            'result_text'                      => 'nullable|string',
-            'parameters'                       => 'nullable|array',
-            'parameters.*.parameter_id'        => 'nullable|integer',
-            'parameters.*.value'               => 'required_with:parameters.*.parameter_id|string',
-            'parameters.*.unit'                => 'nullable|string',
-            'interpretation'                   => 'nullable|string',
-            'comments'                         => 'nullable|string',
+            'test_location'                      => 'required|in:indoor,outdoor',
+            'result_text'                        => 'nullable|string',
+            'parameters'                         => 'nullable|array',
+            'parameters.*.parameter_id'          => 'nullable|integer',
+            'parameters.*.value'                 => 'required_with:parameters.*.parameter_id|string',
+            'parameters.*.unit'                  => 'nullable|string',
+            'interpretation'                     => 'nullable|string',
+            'comments'                           => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($validated, $labOrder) {
@@ -102,12 +105,20 @@ class LabResultController extends Controller
 
             if (!empty($validated['parameters'])) {
                 foreach ($validated['parameters'] as $paramData) {
-                    if (empty($paramData['parameter_id'])) continue;
+                    if (empty($paramData['parameter_id'])) {
+                        continue;
+                    }
 
                     $parameter = \App\Models\LabTestParameter::find($paramData['parameter_id']);
-                    $flag = $parameter
-                        ? $parameter->calculateFlag($paramData['value'], $labOrder->patient->age ?? null, $labOrder->patient->gender ?? null)
-                        : 'N';
+                    $flag = 'N';
+
+                    if ($parameter) {
+                        $flag = $parameter->calculateFlag(
+                            $paramData['value'],
+                            $labOrder->patient->age ?? null,
+                            $labOrder->patient->gender ?? null
+                        );
+                    }
 
                     $result->resultItems()->create([
                         'lab_test_parameter_id' => $paramData['parameter_id'],
@@ -120,8 +131,11 @@ class LabResultController extends Controller
                 }
             }
 
-            $labOrder->update(['status' => 'reported', 'completed_at' => now()]);
-            $labOrder->items()->whereNotIn('status', ['cancelled'])->update(['status' => 'reported']);
+            $labOrder->update([
+                'status'        => 'reported',
+                'test_location' => $validated['test_location'],
+                'completed_at'  => now(),
+            ]);
         });
 
         return redirect()->route('lab-results.index')
@@ -131,24 +145,28 @@ class LabResultController extends Controller
     public function storeBatch(Request $request)
     {
         $validated = $request->validate([
-            'orders' => 'required|array',
-            'orders.*.lab_order_id' => 'required|integer',
-            'orders.*.investigation_order_id' => 'nullable|integer',
-            'orders.*.test_location' => 'required|in:indoor,outdoor',
-            'orders.*.result_text' => 'nullable|string',
-            'orders.*.parameters' => 'nullable|array',
-            'orders.*.parameters.*.parameter_id' => 'nullable|integer',
-            'orders.*.parameters.*.value' => 'required_with:orders.*.parameters.*.parameter_id|string',
-            'orders.*.parameters.*.unit' => 'nullable|string',
-            'orders.*.notes' => 'nullable|string',
+            'orders'                                    => 'required|array',
+            'orders.*.investigation_order_id'           => 'required|integer',
+            'orders.*.test_location'                    => 'required|in:indoor,outdoor',
+            'orders.*.result_text'                      => 'nullable|string',
+            'orders.*.parameters'                       => 'nullable|array',
+            'orders.*.parameters.*.parameter_id'        => 'nullable|integer',
+            'orders.*.parameters.*.value'               => 'required_with:orders.*.parameters.*.parameter_id|string',
+            'orders.*.parameters.*.unit'                => 'nullable|string',
+            'orders.*.notes'                            => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($validated) {
             foreach ($validated['orders'] as $orderData) {
-                $orderId = $orderData['investigation_order_id'] ?? $orderData['lab_order_id'];
-                $investigationOrder = InvestigationOrder::with('items.investigation.parameters', 'patient')->find($orderId);
+                $investigationOrder = InvestigationOrder::find($orderData['investigation_order_id']);
 
-                if (!$investigationOrder) continue;
+                if (!$investigationOrder) {
+                    continue;
+                }
+
+                if (!$investigationOrder->isPathology()) {
+                    throw new \Exception('Cannot create pathology result for non-pathology investigation: ' . $investigationOrder->investigation->name);
+                }
 
                 $result = LabResult::create([
                     'investigation_order_id' => $investigationOrder->id,
@@ -161,12 +179,20 @@ class LabResultController extends Controller
 
                 if (!empty($orderData['parameters'])) {
                     foreach ($orderData['parameters'] as $paramData) {
-                        if (empty($paramData['parameter_id'])) continue;
+                        if (empty($paramData['parameter_id'])) {
+                            continue;
+                        }
 
                         $parameter = \App\Models\LabTestParameter::find($paramData['parameter_id']);
-                        $flag = $parameter
-                            ? $parameter->calculateFlag($paramData['value'], $investigationOrder->patient->age ?? null, $investigationOrder->patient->gender ?? null)
-                            : 'N';
+                        $flag = 'N';
+
+                        if ($parameter) {
+                            $flag = $parameter->calculateFlag(
+                                $paramData['value'],
+                                $investigationOrder->patient->age ?? null,
+                                $investigationOrder->patient->gender ?? null
+                            );
+                        }
 
                         $result->resultItems()->create([
                             'lab_test_parameter_id' => $paramData['parameter_id'],
@@ -179,8 +205,11 @@ class LabResultController extends Controller
                     }
                 }
 
-                $investigationOrder->update(['status' => 'reported', 'completed_at' => now()]);
-                $investigationOrder->items()->whereNotIn('status', ['cancelled'])->update(['status' => 'reported']);
+                $investigationOrder->update([
+                    'status'        => 'reported',
+                    'test_location' => $orderData['test_location'],
+                    'completed_at'  => now(),
+                ]);
             }
         });
 
@@ -197,8 +226,9 @@ class LabResultController extends Controller
             'investigationOrder.doctor',
             'technician',
             'pathologist',
-            'resultItems.parameter'
+            'resultItems.parameter',
         ]);
+
         return view('admin.lab.results.show', compact('labResult'));
     }
 
@@ -210,16 +240,18 @@ class LabResultController extends Controller
     public function update(UpdateLabResultRequest $request, LabResult $labResult)
     {
         $labResult->update($request->validated());
-        return redirect()->route('lab-results.show', $labResult)->with('success', 'Results updated successfully.');
+
+        return redirect()->route('lab-results.show', $labResult)
+            ->with('success', 'Results updated successfully.');
     }
 
     public function verify(LabResult $labResult)
     {
         $labResult->update([
-            'status' => 'final',
+            'status'         => 'final',
             'pathologist_id' => auth()->id(),
-            'verified_at' => now(),
-            'reported_at' => now()
+            'verified_at'    => now(),
+            'reported_at'    => now(),
         ]);
 
         return back()->with('success', 'Results verified and finalized.');
@@ -234,8 +266,9 @@ class LabResultController extends Controller
             'investigationOrder.visit',
             'technician',
             'pathologist',
-            'resultItems.parameter'
+            'resultItems.parameter',
         ]);
+
         return view('admin.lab.results.report', compact('labResult'));
     }
 }

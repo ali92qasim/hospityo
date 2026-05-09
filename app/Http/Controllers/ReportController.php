@@ -326,10 +326,10 @@ class ReportController extends Controller
             'sample_collected' => $orders->where('status', 'sample_collected')->count(),
             'in_progress' => $orders->where('status', 'in_progress')->count(),
             'lab_tests' => $orders->filter(function($order) {
-                return $order->investigation && $order->investigation->type === 'lab';
+                return $order->investigation && $order->isPathology();
             })->count(),
             'radiology_tests' => $orders->filter(function($order) {
-                return $order->investigation && $order->investigation->type === 'radiology';
+                return $order->investigation && $order->isRadiology();
             })->count(),
         ];
         

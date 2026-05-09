@@ -115,6 +115,13 @@ class InvestigationOrder extends Model
 
     public function isRadiology(): bool
     {
-        return $this->investigation->type === 'radiology';
+        return in_array($this->investigation->category, [
+            'x-ray',
+            'ultrasound',
+            'ct-scan',
+            'mri',
+            'radiology',
+            'cardiology',
+        ]);
     }
 }

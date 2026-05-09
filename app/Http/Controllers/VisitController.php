@@ -152,7 +152,19 @@ class VisitController extends Controller
 
     public function workflow(Visit $visit)
     {
-        $visit->load(['patient', 'doctor.department', 'vitalSigns', 'allVitalSigns.user', 'consultation.allergies', 'testOrders', 'labOrders.labTest', 'labOrders.result', 'admission.bed.ward', 'triage', 'prescriptions.items.medicine']);
+        $visit->load([
+            'patient',
+            'doctor.department',
+            'vitalSigns',
+            'allVitalSigns.user',
+            'consultation.allergies',
+            'testOrders',
+            'labOrders.items.investigation',
+            'labOrders.items.result',
+            'admission.bed.ward',
+            'triage',
+            'prescriptions.items.medicine',
+        ]);
         $doctors = Doctor::where('status', 'active')->get();
         $medicines = Medicine::where('status', 'active')
             ->orderBy('name')
@@ -441,24 +453,37 @@ class VisitController extends Controller
     {
         try {
             $validated = $request->validated();
-            $orderedCount = 0;
+
+            // Derive the overall priority from the highest-priority item
+            $priorities = array_column($validated['tests'], 'priority');
+            $overallPriority = in_array('stat', $priorities)
+                ? 'stat'
+                : (in_array('urgent', $priorities) ? 'urgent' : 'routine');
+
+            $order = $visit->labOrders()->create([
+                'patient_id'  => $visit->patient_id,
+                'doctor_id'   => $visit->doctor_id,
+                'priority'    => $overallPriority,
+                'status'      => 'ordered',
+                'ordered_at'  => now(),
+            ]);
 
             foreach ($validated['tests'] as $testData) {
-                $visit->labOrders()->create([
-                    'patient_id' => $visit->patient_id,
-                    'doctor_id' => $visit->doctor_id,
-                    'investigation_id' => $testData['lab_test_id'], // Map lab_test_id to investigation_id
-                    'quantity' => $testData['quantity'],
-                    'test_location' => 'indoor', // Default to indoor since field removed
-                    'priority' => $testData['priority'],
-                    'clinical_notes' => $testData['clinical_notes'] ?? null,
-                    'status' => 'ordered',
-                    'ordered_at' => now()
+                $order->items()->create([
+                    'investigation_id' => $testData['lab_test_id'],
+                    'quantity'         => $testData['quantity'],
+                    'priority'         => $testData['priority'],
+                    'clinical_notes'   => $testData['clinical_notes'] ?? null,
+                    'test_location'    => 'indoor',
+                    'status'           => 'ordered',
                 ]);
-                $orderedCount++;
             }
 
-            $message = $orderedCount === 1 ? 'Investigation ordered successfully.' : "{$orderedCount} investigations ordered successfully.";
+            $orderedCount = count($validated['tests']);
+            $message = $orderedCount === 1
+                ? 'Investigation ordered successfully.'
+                : "{$orderedCount} investigations ordered successfully.";
+
             return back()->with('success', $message);
         } catch (\Exception $e) {
             \Log::error('Failed to order investigations: ' . $e->getMessage());
@@ -474,12 +499,12 @@ class VisitController extends Controller
             'vitalSigns',
             'allVitalSigns.user',
             'consultation',
-            'labOrders.labTest',
-            'labOrders.result.resultItems',
+            'labOrders.items.investigation',
+            'labOrders.items.result.resultItems',
             'admission.bed.ward',
             'triage',
             'prescriptions.items.medicine',
-            'prescriptions.items.prescriptionInstruction'
+            'prescriptions.items.prescriptionInstruction',
         ]);
 
         // Get hospital settings

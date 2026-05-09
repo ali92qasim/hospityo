@@ -60,8 +60,8 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
-                            {{ $result->investigationOrder->investigation->type === 'radiology' ? 'bg-purple-100 text-purple-800' : 'bg-red-100 text-red-800' }}">
-                            {{ ucfirst($result->investigationOrder->investigation->type) }}
+                            {{ $result->investigationOrder->isRadiology() ? 'bg-purple-100 text-purple-800' : 'bg-red-100 text-red-800' }}">
+                            {{ ucfirst($result->investigationOrder->investigation->category) }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

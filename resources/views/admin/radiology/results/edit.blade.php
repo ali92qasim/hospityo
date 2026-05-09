@@ -10,7 +10,7 @@
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Edit {{ ucfirst($radiologyResult->investigationOrder->investigation->type) }} Result</h3>
+                    <h3 class="text-lg font-semibold text-gray-800">Edit {{ ucfirst($radiologyResult->investigationOrder->investigation->category) }} Result</h3>
                     <p class="text-sm text-gray-600">{{ $radiologyResult->investigationOrder->investigation?->name ?? 'Unknown Test' }} - {{ $radiologyResult->investigationOrder->patient?->name ?? 'Unknown Patient' }}</p>
                 </div>
                 <a href="{{ route('radiology-results.show', $radiologyResult) }}" class="text-gray-600 hover:text-gray-800">

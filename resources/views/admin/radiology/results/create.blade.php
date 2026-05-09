@@ -10,7 +10,7 @@
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Add {{ ucfirst($investigationOrder->investigation->type) }} Result</h3>
+                    <h3 class="text-lg font-semibold text-gray-800">Add {{ ucfirst($investigationOrder->investigation->category) }} Result</h3>
                     <p class="text-sm text-gray-600">{{ $investigationOrder->investigation?->name ?? 'Unknown Test' }} - {{ $investigationOrder->patient?->name ?? 'Unknown Patient' }}</p>
                 </div>
                 <a href="{{ route('lab-results.index') }}" class="text-gray-600 hover:text-gray-800">
@@ -29,8 +29,8 @@
                         <div><span class="text-blue-600">Test:</span> {{ $investigationOrder->investigation?->name ?? 'Unknown Test' }}</div>
                         <div><span class="text-blue-600">Type:</span> 
                             <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full font-medium
-                                {{ $investigationOrder->investigation->type === 'radiology' ? 'bg-purple-100 text-purple-800' : 'bg-red-100 text-red-800' }}">
-                                {{ ucfirst($investigationOrder->investigation->type) }}
+                                {{ $investigationOrder->isRadiology() ? 'bg-purple-100 text-purple-800' : 'bg-red-100 text-red-800' }}">
+                                {{ ucfirst($investigationOrder->investigation->category) }}
                             </span>
                         </div>
                         <div><span class="text-blue-600">Priority:</span> {{ strtoupper($investigationOrder->priority) }}</div>
@@ -67,7 +67,7 @@
                         <textarea name="report_text" rows="8" 
                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
                                   placeholder="Enter detailed findings and observations..." required></textarea>
-                        <p class="text-xs text-gray-500 mt-1">Describe the findings from the {{ $investigationOrder->investigation->type }} examination</p>
+                        <p class="text-xs text-gray-500 mt-1">Describe the findings from the {{ $investigationOrder->investigation->category }} examination</p>
                     </div>
 
                     <!-- Impression -->

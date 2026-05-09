@@ -911,12 +911,25 @@
                                                             <select name="tests[0][lab_test_id]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
                                                                 <option value="">Select investigation...</option>
                                                                 @php
-                                                                    $groupedInvestigations = $investigations->groupBy('type');
+                                                                    $groupedInvestigations = $investigations->groupBy('category');
+                                                                    $categoryLabels = [
+                                                                        'hematology'  => 'Hematology',
+                                                                        'biochemistry'=> 'Biochemistry',
+                                                                        'microbiology'=> 'Microbiology',
+                                                                        'immunology'  => 'Immunology',
+                                                                        'pathology'   => 'Pathology',
+                                                                        'molecular'   => 'Molecular',
+                                                                        'x-ray'       => 'X-Ray',
+                                                                        'ultrasound'  => 'Ultrasound',
+                                                                        'ct-scan'     => 'CT Scan',
+                                                                        'mri'         => 'MRI',
+                                                                        'cardiology'  => 'Cardiology',
+                                                                    ];
                                                                 @endphp
-                                                                @foreach(['pathology' => 'Pathology', 'radiology' => 'Radiology', 'cardiology' => 'Cardiology'] as $type => $label)
-                                                                    @if($groupedInvestigations->has($type))
+                                                                @foreach($categoryLabels as $cat => $label)
+                                                                    @if($groupedInvestigations->has($cat))
                                                                         <optgroup label="{{ $label }}">
-                                                                            @foreach($groupedInvestigations[$type] as $investigation)
+                                                                            @foreach($groupedInvestigations[$cat] as $investigation)
                                                                             <option value="{{ $investigation->id }}">
                                                                                 {{ $investigation->name }} - {{ currency_symbol() }}{{ number_format($investigation->price, 0) }}
                                                                             </option>
@@ -981,15 +994,17 @@
 
                     <!-- Display All Investigation Orders -->
                     <div class="mt-8">
+                        @php
+                            // Flatten all items across all orders for this visit
+                            $allOrderItems = $visit->labOrders->flatMap(fn($order) => $order->items->map(fn($item) => $item->setRelation('order', $order)));
+                            $pendingOrders   = $allOrderItems->whereIn('status', ['ordered', 'collected', 'testing']);
+                            $completedOrders = $allOrderItems->whereIn('status', ['verified', 'reported']);
+                        @endphp
+
                         <div class="flex justify-between items-center mb-4">
                             <h4 class="text-lg font-medium text-gray-800">Ordered Investigations</h4>
-                            <span class="text-sm text-gray-500">{{ $visit->labOrders->count() }} orders</span>
+                            <span class="text-sm text-gray-500">{{ $allOrderItems->count() }} {{ Str::plural('investigation', $allOrderItems->count()) }}</span>
                         </div>
-                        
-                        @php
-                            $pendingOrders = $visit->labOrders->whereIn('status', ['ordered', 'collected', 'testing']);
-                            $completedOrders = $visit->labOrders->whereIn('status', ['verified', 'reported']);
-                        @endphp
                         
                         <div class="space-y-6">
                             <!-- Pending Investigations -->
@@ -1011,11 +1026,20 @@
                                                         <div class="flex flex-wrap items-center gap-2 mb-2">
                                                             @php
                                                                 $typeConfig = [
-                                                                    'pathology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'radiology' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'cardiology' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
+                                                                    'hematology'   => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'biochemistry' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'microbiology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'immunology'   => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'pathology'    => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'molecular'    => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'x-ray'        => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'ultrasound'   => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'ct-scan'      => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'mri'          => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'radiology'    => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'cardiology'   => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
                                                                 ];
-                                                                $type = $labOrder->investigation->type ?? 'pathology';
+                                                                $type = $labOrder->investigation->category ?? 'pathology';
                                                                 $typeStyle = $typeConfig[$type] ?? $typeConfig['pathology'];
                                                             @endphp
                                                             <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $typeStyle['bg'] }} {{ $typeStyle['text'] }}">
@@ -1030,7 +1054,7 @@
                                                         </div>
                                                         <p class="text-xs text-gray-600">
                                                             <i class="fas fa-calendar-alt mr-1"></i>
-                                                            {{ $labOrder->ordered_at->format('M d, h:i A') }}
+                                                            {{ $labOrder->order->ordered_at->format('M d, h:i A') }}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1043,7 +1067,7 @@
                                                 
                                                 @if($labOrder->test_location === 'indoor')
                                                     <div class="mt-3 pt-3 border-t border-yellow-200">
-                                                        <a href="{{ route('lab-orders.results.create', $labOrder) }}" 
+                                                        <a href="{{ route('lab-orders.results.create', $labOrder->order) }}" 
                                                            class="inline-flex items-center px-3 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all w-full justify-center">
                                                             <i class="fas fa-plus mr-2"></i>
                                                             Add Result
@@ -1075,11 +1099,20 @@
                                                         <div class="flex flex-wrap items-center gap-2 mb-2">
                                                             @php
                                                                 $typeConfig = [
-                                                                    'pathology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'radiology' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'cardiology' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
+                                                                    'hematology'   => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'biochemistry' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'microbiology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'immunology'   => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'pathology'    => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'molecular'    => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
+                                                                    'x-ray'        => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'ultrasound'   => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'ct-scan'      => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'mri'          => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'radiology'    => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
+                                                                    'cardiology'   => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
                                                                 ];
-                                                                $type = $labOrder->investigation->type ?? 'pathology';
+                                                                $type = $labOrder->investigation->category ?? 'pathology';
                                                                 $typeStyle = $typeConfig[$type] ?? $typeConfig['pathology'];
                                                             @endphp
                                                             <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $typeStyle['bg'] }} {{ $typeStyle['text'] }}">
@@ -1093,7 +1126,7 @@
                                                         </div>
                                                         <p class="text-xs text-gray-600">
                                                             <i class="fas fa-calendar-alt mr-1"></i>
-                                                            {{ $labOrder->ordered_at->format('M d, h:i A') }}
+                                                            {{ $labOrder->order->ordered_at->format('M d, h:i A') }}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1118,7 +1151,7 @@
                             @endif
                             
                             <!-- Empty State -->
-                            @if($visit->labOrders->count() === 0)
+                            @if($allOrderItems->count() === 0)
                                 <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
                                     <i class="fas fa-clipboard-list text-gray-400 text-3xl mb-3"></i>
                                     <p class="text-gray-500">No investigations ordered yet</p>
