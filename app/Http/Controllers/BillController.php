@@ -32,18 +32,33 @@ class BillController extends Controller
     {
         try {
             $bill = DB::connection('tenant')->transaction(function () use ($request) {
+                $discountType       = $request->discount_type ?? 'fixed';
+                $discountPercentage = $request->discount_percentage ?? 0;
+
+                // Compute subtotal from submitted items so we can derive the
+                // monetary discount server-side (prevents client-side manipulation).
+                $subtotal = collect($request->items)->sum(
+                    fn($item) => ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0)
+                );
+
+                $discountAmount = $discountType === 'percentage'
+                    ? round(($discountPercentage / 100) * $subtotal, 2)
+                    : ($request->discount_amount ?? 0);
+
                 $bill = Bill::create([
-                    'patient_id'      => $request->patient_id,
-                    'visit_id'        => $request->visit_id,
-                    'bill_number'     => 'BILL-' . date('Y') . '-' . str_pad(Bill::count() + 1, 6, '0', STR_PAD_LEFT),
-                    'bill_date'       => $request->bill_date,
-                    'bill_type'       => $request->bill_type,
-                    'tax_amount'      => $request->tax_amount ?? 0,
-                    'discount_amount' => $request->discount_amount ?? 0,
-                    'total_amount'    => 0,
-                    'due_amount'      => 0,
-                    'notes'           => $request->notes,
-                    'created_by'      => auth()->id(),
+                    'patient_id'          => $request->patient_id,
+                    'visit_id'            => $request->visit_id,
+                    'bill_number'         => 'BILL-' . date('Y') . '-' . str_pad(Bill::count() + 1, 6, '0', STR_PAD_LEFT),
+                    'bill_date'           => $request->bill_date,
+                    'bill_type'           => $request->bill_type,
+                    'tax_amount'          => $request->tax_amount ?? 0,
+                    'discount_type'       => $discountType,
+                    'discount_percentage' => $discountPercentage,
+                    'discount_amount'     => $discountAmount,
+                    'total_amount'        => 0,
+                    'due_amount'          => 0,
+                    'notes'               => $request->notes,
+                    'created_by'          => auth()->id(),
                 ]);
 
                 foreach ($request->items as $item) {
@@ -109,14 +124,28 @@ class BillController extends Controller
 
         // All bill writes in a single transaction — no partial update state
         DB::connection('tenant')->transaction(function () use ($request, $bill) {
+            $discountType       = $request->discount_type ?? 'fixed';
+            $discountPercentage = $request->discount_percentage ?? 0;
+
+            // Recompute monetary discount server-side when type is percentage.
+            $subtotal = collect($request->items)->sum(
+                fn($item) => ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0)
+            );
+
+            $discountAmount = $discountType === 'percentage'
+                ? round(($discountPercentage / 100) * $subtotal, 2)
+                : ($request->discount_amount ?? 0);
+
             $bill->update([
-                'patient_id'      => $request->patient_id,
-                'visit_id'        => $request->visit_id,
-                'bill_date'       => $request->bill_date,
-                'bill_type'       => $request->bill_type,
-                'tax_amount'      => $request->tax_amount ?? 0,
-                'discount_amount' => $request->discount_amount ?? 0,
-                'notes'           => $request->notes,
+                'patient_id'          => $request->patient_id,
+                'visit_id'            => $request->visit_id,
+                'bill_date'           => $request->bill_date,
+                'bill_type'           => $request->bill_type,
+                'tax_amount'          => $request->tax_amount ?? 0,
+                'discount_type'       => $discountType,
+                'discount_percentage' => $discountPercentage,
+                'discount_amount'     => $discountAmount,
+                'notes'               => $request->notes,
             ]);
 
             $bill->billItems()->delete();

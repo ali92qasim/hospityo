@@ -13,10 +13,13 @@ class TenantOnboardingSeeder extends Seeder
     public function run(): void
     {
         $seeders = [
+            // RBAC — must run first so other seeders can reference roles/permissions
+            RolePermissionSeeder::class,
+
+            // Reference / operational data
             DepartmentSeeder::class,
             PrescriptionInstructionSeeder::class,
             InvestigationSeeder::class,
-            LabTestParameterSeeder::class,
             AllergySeeder::class,
             TaxSeeder::class,
             ChartOfAccountsSeeder::class,

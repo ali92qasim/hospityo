@@ -288,21 +288,15 @@ $(function() {
     }
 
     function showNotification(title, message, type) {
-        // Simple notification - you can replace with a better notification library
-        const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-        const notification = `
-            <div class="fixed top-4 right-4 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg z-50" id="notification">
-                <div class="font-bold">${title}</div>
-                <div>${message}</div>
-            </div>
-        `;
-        
-        $('body').append(notification);
-        
-        setTimeout(() => {
-            $('#notification').fadeOut(300, function() {
-                $(this).remove();
-            });
-        }, 3000);
+        const text = title ? title + ': ' + message : message;
+        if (type === 'success') {
+            window.Toast?.success(text);
+        } else if (type === 'error') {
+            window.Toast?.error(text);
+        } else if (type === 'warning') {
+            window.Toast?.warning(text);
+        } else {
+            window.Toast?.info(text);
+        }
     }
 });

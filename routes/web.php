@@ -424,6 +424,7 @@ Route::middleware('auth')->group(function () {
     // Laboratory Routes
     Route::resource('investigations', InvestigationController::class)->middleware('permission:view services|create services|edit services|delete services');
     Route::post('investigations/import', [InvestigationController::class, 'import'])->name('investigations.import')->middleware('permission:create services');
+    Route::get('investigations/import-status', [InvestigationController::class, 'importStatus'])->name('investigations.import-status')->middleware('permission:create services');
     Route::resource('lab-tests', InvestigationController::class)->middleware('permission:view services|create services|edit services|delete services');
     
     // Investigation Orders (new routes)
@@ -439,8 +440,8 @@ Route::middleware('auth')->group(function () {
     // Lab Results - Custom routes BEFORE resource route
     Route::get('lab-results/create-batch', [LabResultController::class, 'createBatch'])->name('lab-results.create-batch')->middleware('permission:edit visits');
     Route::post('lab-results/store-batch', [LabResultController::class, 'storeBatch'])->name('lab-results.store-batch')->middleware('permission:edit visits');
-    Route::get('lab-orders/{labOrder}/results/create', [LabResultController::class, 'create'])->name('lab-orders.results.create')->middleware('permission:edit visits');
-    Route::post('lab-orders/{labOrder}/results', [LabResultController::class, 'store'])->name('lab-orders.results.store')->middleware('permission:edit visits');
+    Route::get('lab-orders/{orderItem}/results/create', [LabResultController::class, 'create'])->name('lab-orders.results.create')->middleware('permission:edit visits');
+    Route::post('lab-orders/{orderItem}/results', [LabResultController::class, 'store'])->name('lab-orders.results.store')->middleware('permission:edit visits');
     Route::post('lab-results/{labResult}/verify', [LabResultController::class, 'verify'])->name('lab-results.verify')->middleware('permission:edit visits');
     Route::get('lab-results/{labResult}/report', [LabResultController::class, 'report'])->name('lab-results.report')->middleware('permission:view visits');
     

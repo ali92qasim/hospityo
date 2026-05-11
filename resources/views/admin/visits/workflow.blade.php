@@ -913,29 +913,30 @@
                                                                 @php
                                                                     $groupedInvestigations = $investigations->groupBy('category');
                                                                     $categoryLabels = [
-                                                                        'hematology'  => 'Hematology',
-                                                                        'biochemistry'=> 'Biochemistry',
-                                                                        'microbiology'=> 'Microbiology',
-                                                                        'immunology'  => 'Immunology',
-                                                                        'pathology'   => 'Pathology',
-                                                                        'molecular'   => 'Molecular',
-                                                                        'x-ray'       => 'X-Ray',
-                                                                        'ultrasound'  => 'Ultrasound',
-                                                                        'ct-scan'     => 'CT Scan',
-                                                                        'mri'         => 'MRI',
-                                                                        'cardiology'  => 'Cardiology',
+                                                                        'hematology'        => 'Hematology',
+                                                                        'biochemistry'      => 'Biochemistry',
+                                                                        'microbiology'      => 'Microbiology',
+                                                                        'immunology'        => 'Immunology',
+                                                                        'pathology'         => 'Pathology',
+                                                                        'histopathology'    => 'Histopathology',
+                                                                        'molecular'         => 'Molecular Biology',
+                                                                        'x-ray'             => 'X-Ray',
+                                                                        'ultrasound'        => 'Ultrasound',
+                                                                        'ct-scan'           => 'CT Scan',
+                                                                        'mri'               => 'MRI',
+                                                                        'cardiology'        => 'Cardiology',
+                                                                        'cardiac-diagnostics' => 'Cardiac Diagnostics',
+                                                                        'radiology'         => 'Radiology',
                                                                     ];
                                                                 @endphp
-                                                                @foreach($categoryLabels as $cat => $label)
-                                                                    @if($groupedInvestigations->has($cat))
-                                                                        <optgroup label="{{ $label }}">
-                                                                            @foreach($groupedInvestigations[$cat] as $investigation)
-                                                                            <option value="{{ $investigation->id }}">
-                                                                                {{ $investigation->name }} - {{ currency_symbol() }}{{ number_format($investigation->price, 0) }}
-                                                                            </option>
-                                                                            @endforeach
-                                                                        </optgroup>
-                                                                    @endif
+                                                                @foreach($groupedInvestigations as $cat => $catInvestigations)
+                                                                    <optgroup label="{{ $categoryLabels[$cat] ?? ucwords(str_replace('-', ' ', $cat)) }}">
+                                                                        @foreach($catInvestigations as $investigation)
+                                                                        <option value="{{ $investigation->id }}">
+                                                                            {{ $investigation->name }} - {{ currency_symbol() }}{{ number_format($investigation->price, 0) }}
+                                                                        </option>
+                                                                        @endforeach
+                                                                    </optgroup>
                                                                 @endforeach
                                                             </select>
                                                         </td>
@@ -1067,7 +1068,7 @@
                                                 
                                                 @if($labOrder->test_location === 'indoor')
                                                     <div class="mt-3 pt-3 border-t border-yellow-200">
-                                                        <a href="{{ route('lab-orders.results.create', $labOrder->order) }}" 
+                                                        <a href="{{ route('lab-orders.results.create', $labOrder) }}" 
                                                            class="inline-flex items-center px-3 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all w-full justify-center">
                                                             <i class="fas fa-plus mr-2"></i>
                                                             Add Result

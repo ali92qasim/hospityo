@@ -153,10 +153,10 @@
             <tbody class="divide-y divide-gray-200">
                 @forelse($completedResults as $result)
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $result->labOrder?->order_number ?? 'N/A' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ $result->labOrder?->patient?->name ?? 'Unknown Patient' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $result->investigationOrder?->order_number ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ $result->investigationOrder?->patient?->name ?? 'Unknown Patient' }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">
-                            {{ $result->labOrder?->items->map(fn($i) => $i->investigation?->name)->filter()->join(', ') ?? 'Unknown Test' }}
+                            {{ $result->investigationOrder?->items->map(fn($i) => $i->investigation?->name)->filter()->join(', ') ?? 'Unknown Test' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php

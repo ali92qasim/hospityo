@@ -45,6 +45,20 @@
     
     @stack('scripts')
     
+    {{-- Fire toast notifications for server-side flash messages --}}
+    @if(session('success'))
+    <script>document.addEventListener('DOMContentLoaded', () => window.Toast?.success(@json(session('success'))));</script>
+    @endif
+    @if(session('error'))
+    <script>document.addEventListener('DOMContentLoaded', () => window.Toast?.error(@json(session('error'))));</script>
+    @endif
+    @if(session('warning'))
+    <script>document.addEventListener('DOMContentLoaded', () => window.Toast?.warning(@json(session('warning'))));</script>
+    @endif
+    @if(session('info'))
+    <script>document.addEventListener('DOMContentLoaded', () => window.Toast?.info(@json(session('info'))));</script>
+    @endif
+
     <script>
         // Mobile menu functionality
         (function() {

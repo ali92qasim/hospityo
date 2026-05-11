@@ -5,6 +5,14 @@
 @section('page-description', 'View comprehensive test result analysis')
 
 @section('content')
+@php
+    // InvestigationOrder no longer has a direct investigation — it lives on items.
+    // Derive display values from the first item for backward-compatible rendering.
+    $order        = $labResult->investigationOrder;
+    $firstItem    = $order?->items?->first();
+    $testName     = $firstItem?->investigation?->name ?? 'Investigation';
+    $testLocation = $firstItem?->test_location ?? 'indoor';
+@endphp
 <div class="max-w-7xl mx-auto">
     <!-- Enhanced Header Actions -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 bg-white rounded-lg shadow-sm p-6">
@@ -13,7 +21,7 @@
                 <i class="fas fa-arrow-left mr-2"></i>Back to Results
             </a>
             <div class="border-l border-gray-300 pl-4">
-                <h1 class="text-xl font-bold text-gray-800">{{ $labResult->labOrder->investigation->name }}</h1>
+                <h1 class="text-xl font-bold text-gray-800">{{ $testName }}</h1>
                 <p class="text-sm text-gray-600">Order #{{ $labResult->labOrder->order_number }} • {{ $labResult->labOrder->patient->name }}</p>
             </div>
         </div>
@@ -86,7 +94,7 @@
                                 </div>
                                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                     <span class="text-gray-600 w-28 text-sm font-medium">Test Name:</span>
-                                    <span class="text-gray-900">{{ $labResult->labOrder->investigation->name }}</span>
+                                    <span class="text-gray-900">{{ $testName }}</span>
                                 </div>
                                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                     <span class="text-gray-600 w-28 text-sm font-medium">Priority:</span>
@@ -99,8 +107,8 @@
                                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                     <span class="text-gray-600 w-28 text-sm font-medium">Location:</span>
                                     <span class="px-3 py-1 text-xs rounded-full font-bold
-                                        {{ $labResult->labOrder->test_location === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
-                                        {{ $labResult->labOrder->test_location === 'indoor' ? 'In-House Lab' : 'External Lab' }}
+                                        {{ $testLocation === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
+                                        {{ $testLocation === 'indoor' ? 'In-House Lab' : 'External Lab' }}
                                     </span>
                                 </div>
                             </div>
@@ -296,23 +304,30 @@
                             </div>
                         </div>
                     @else
-                        <!-- Enhanced Text-based Results -->
-                        <div class="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-                            <i class="fas fa-file-alt text-gray-400 text-4xl mb-4"></i>
-                            @if($labResult->results && is_array($labResult->results) && count($labResult->results) > 0)
-                                <div class="text-left max-w-2xl mx-auto space-y-4">
-                                    @foreach($labResult->results as $key => $value)
-                                        <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                                            <span class="font-bold text-gray-700 text-lg block mb-2">{{ ucfirst(str_replace('_', ' ', $key)) }}</span>
-                                            <div class="text-gray-800 text-base">{{ $value }}</div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <h4 class="text-xl font-semibold text-gray-600 mb-2">No Detailed Results Available</h4>
-                                <p class="text-gray-500">Please contact the laboratory for additional information.</p>
-                            @endif
-                        </div>
+                        <!-- No parameter-based results — show text results or informative empty state -->
+                        @if($labResult->results && is_array($labResult->results) && count($labResult->results) > 0)
+                            <div class="text-left max-w-2xl mx-auto space-y-4">
+                                @foreach($labResult->results as $key => $value)
+                                    <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                                        <span class="font-bold text-gray-700 text-lg block mb-2">{{ ucfirst(str_replace('_', ' ', $key)) }}</span>
+                                        <div class="text-gray-800 text-base">{{ $value }}</div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+                                <i class="fas fa-info-circle text-blue-400 text-3xl mb-3"></i>
+                                <h4 class="text-lg font-semibold text-blue-700 mb-1">Result Recorded</h4>
+                                <p class="text-blue-600 text-sm">
+                                    This investigation ({{ $testName }}) does not have defined parameters.
+                                    The result has been recorded — any findings are noted in the
+                                    <strong>Clinical Information</strong> section below.
+                                </p>
+                                @if(!$labResult->comments && !$labResult->interpretation)
+                                    <p class="text-blue-500 text-xs mt-2">No comments or interpretation have been added yet.</p>
+                                @endif
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -422,26 +437,27 @@
                     </div>
                 </div>
                 <div class="p-6">
+                    @if($labResult->labOrder->visit)
                     <div class="space-y-4">
                         <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                             <i class="fas fa-hashtag text-emerald-600 mr-3"></i>
                             <div>
                                 <span class="text-xs text-gray-600 block">Visit Number</span>
-                                <span class="font-mono text-gray-900">{{ $labResult->labOrder->visit?->visit_no }}</span>
+                                <span class="font-mono text-gray-900">{{ $labResult->labOrder->visit->visit_no }}</span>
                             </div>
                         </div>
                         <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                             <i class="fas fa-hospital text-emerald-600 mr-3"></i>
                             <div>
                                 <span class="text-xs text-gray-600 block">Visit Type</span>
-                                <span class="uppercase text-gray-900 font-medium">{{ $labResult->labOrder->visit?->visit_type }}</span>
+                                <span class="uppercase text-gray-900 font-medium">{{ $labResult->labOrder->visit->visit_type }}</span>
                             </div>
                         </div>
                         <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                             <i class="fas fa-calendar text-emerald-600 mr-3"></i>
                             <div>
                                 <span class="text-xs text-gray-600 block">Visit Date</span>
-                                <span class="text-gray-900">{{ $labResult->labOrder->visit?->visit_datetime->format('M d, Y H:i') }}</span>
+                                <span class="text-gray-900">{{ $labResult->labOrder->visit->visit_datetime->format('M d, Y H:i') }}</span>
                             </div>
                         </div>
                         @if($labResult->labOrder->doctor)
@@ -454,6 +470,42 @@
                             </div>
                         @endif
                     </div>
+                    @else
+                    {{-- Order was created directly from the lab module — no visit attached --}}
+                    <div class="space-y-4">
+                        <div class="flex items-center p-3 bg-amber-50 rounded-lg border border-amber-200">
+                            <i class="fas fa-flask text-amber-600 mr-3"></i>
+                            <div>
+                                <span class="text-xs text-amber-700 block font-medium">Direct Lab Order</span>
+                                <span class="text-amber-800 text-sm">This order was placed directly from the laboratory module, not linked to a patient visit.</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <i class="fas fa-calendar-plus text-emerald-600 mr-3"></i>
+                            <div>
+                                <span class="text-xs text-gray-600 block">Order Date</span>
+                                <span class="text-gray-900">{{ $labResult->labOrder->ordered_at?->format('M d, Y H:i') ?? '—' }}</span>
+                            </div>
+                        </div>
+                        @if($labResult->labOrder->doctor)
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <i class="fas fa-user-md text-emerald-600 mr-3"></i>
+                                <div>
+                                    <span class="text-xs text-gray-600 block">Ordering Doctor</span>
+                                    <span class="text-gray-900 font-medium">Dr. {{ $labResult->labOrder->doctor->name }}</span>
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <i class="fas fa-user-md text-gray-400 mr-3"></i>
+                                <div>
+                                    <span class="text-xs text-gray-600 block">Ordering Doctor</span>
+                                    <span class="text-gray-500 italic">Not specified</span>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                    @endif
                 </div>
             </div>
 

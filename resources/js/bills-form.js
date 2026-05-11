@@ -140,7 +140,47 @@ $(function () {
     });
 
     // Recalculate on input changes
-    $(document).on('input change', '.quantity, .unit-price, #discount_amount', function () {
+    $(document).on('input change', '.quantity, .unit-price', function () {
+        updateTotal();
+    });
+
+    // Discount type select → update hint text and sync hidden radio + recompute
+    $(document).on('change', '#discount_type_select', function () {
+        const isPercentage = $(this).val() === 'percentage';
+
+        // Keep hidden radios in sync (used by updateTotal / computeDiscountFromPercentage)
+        $('#discount_type_fixed').prop('checked', !isPercentage);
+        $('#discount_type_percentage').prop('checked', isPercentage);
+
+        // Update hint
+        $('#discount_input_hint').text(
+            isPercentage ? 'Enter percentage (0–100)' : 'Enter fixed amount'
+        );
+
+        // Show/hide computed amount row
+        $('#discount_computed_wrap').toggleClass('hidden', !isPercentage);
+
+        // Reset the visible input
+        $('#discount_input_value').val('0').attr('max', isPercentage ? 100 : '');
+
+        if (isPercentage) {
+            computeDiscountFromPercentage();
+        } else {
+            $('#discount_amount').val('0');
+            $('#discount_percentage').val('0');
+        }
+        updateTotal();
+    });
+
+    // Visible discount input changed
+    $(document).on('input', '#discount_input_value', function () {
+        const isPercentage = $('#discount_type_select').val() === 'percentage';
+        if (isPercentage) {
+            $('#discount_percentage').val($(this).val());
+            computeDiscountFromPercentage();
+        } else {
+            $('#discount_amount').val($(this).val());
+        }
         updateTotal();
     });
 
@@ -168,6 +208,17 @@ function getSubtotal() {
         subtotal += qty * price;
     });
     return subtotal;
+}
+
+function computeDiscountFromPercentage() {
+    const percentage = parseFloat($('#discount_percentage').val()) || 0;
+    const subtotal = getSubtotal();
+    const discountAmount = (percentage / 100) * subtotal;
+    $('#discount_amount').val(discountAmount.toFixed(2));
+
+    // Update the computed display
+    const symbol = window._currencySymbol || '';
+    $('#discount_computed_amount').text(symbol + discountAmount.toFixed(2));
 }
 
 var taxTimer = null;
@@ -217,6 +268,13 @@ function updateTotal() {
         const price = parseFloat($(this).find('.unit-price').val()) || 0;
         $(this).find('.total-display').text((qty * price).toFixed(2));
     });
+
+    // If percentage mode, recompute discount_amount from current subtotal
+    const discountType = $('#discount_type_select').val() || $('input[name="discount_type"]:checked').val();
+    if (discountType === 'percentage') {
+        computeDiscountFromPercentage();
+    }
+
     const tax = parseFloat($('#tax_amount').val()) || 0;
     const discount = parseFloat($('#discount_amount').val()) || 0;
     var symbol = $('#totalAmount').text().charAt(0);

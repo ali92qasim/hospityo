@@ -31,6 +31,16 @@ class InvestigationOrderItem extends Model
         return $this->belongsTo(Investigation::class);
     }
 
+    public function hasResult(): bool
+    {
+        return $this->status === 'reported';
+    }
+
+    /**
+     * The lab result for this item's parent order.
+     * LabResult is stored per-order (investigation_order_id), not per-item,
+     * so this relationship proxies through the parent order's FK.
+     */
     public function result(): HasOne
     {
         return $this->hasOne(LabResult::class, 'investigation_order_id', 'investigation_order_id');
@@ -50,6 +60,18 @@ class InvestigationOrderItem extends Model
             'immunology',
             'pathology',
             'molecular',
+        ]);
+    }
+
+    public function isRadiology(): bool
+    {
+        return in_array($this->investigation?->category, [
+            'x-ray',
+            'ultrasound',
+            'ct-scan',
+            'mri',
+            'radiology',
+            'cardiology',
         ]);
     }
 

@@ -30,7 +30,7 @@
 </div>
 
 <!-- Summary Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between">
             <div>
@@ -58,6 +58,18 @@
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between">
             <div>
+                <p class="text-sm text-gray-600">Total Discount</p>
+                <p class="text-2xl font-bold text-yellow-600">{{ format_currency($summary['total_discount']) }}</p>
+            </div>
+            <div class="bg-yellow-100 rounded-full p-3">
+                <i class="fas fa-tag text-yellow-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+            <div>
                 <p class="text-sm text-gray-600">Total Collected</p>
                 <p class="text-2xl font-bold text-green-600">{{ format_currency($summary['total_paid']) }}</p>
             </div>
@@ -77,6 +89,82 @@
                 <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Bills Table -->
+<div class="bg-white rounded-lg shadow mb-6">
+    <div class="p-6 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">Bills</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bill #</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paid</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Outstanding</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                @forelse($bills as $bill)
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <a href="{{ route('bills.show', $bill) }}" class="text-medical-blue hover:underline">
+                            #{{ str_pad($bill->id, 6, '0', STR_PAD_LEFT) }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ $bill->patient->name }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ format_currency($bill->total_amount) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-700">
+                        {{ format_currency($bill->discount_amount) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-700">
+                        {{ format_currency($bill->paid_amount) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-700">
+                        {{ format_currency($bill->total_amount - $bill->paid_amount) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <span class="px-2 py-1 text-xs rounded-full
+                            {{ $bill->status === 'paid' ? 'bg-green-100 text-green-800' : '' }}
+                            {{ $bill->status === 'partial' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                            {{ $bill->status === 'unpaid' ? 'bg-red-100 text-red-800' : '' }}
+                            {{ !in_array($bill->status, ['paid', 'partial', 'unpaid']) ? 'bg-gray-100 text-gray-800' : '' }}">
+                            {{ ucfirst($bill->status) }}
+                        </span>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                        <p>No bills recorded for this date</p>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+            @if($bills->count() > 0)
+            <tfoot class="bg-gray-50 font-semibold">
+                <tr>
+                    <td colspan="2" class="px-6 py-4 text-right text-sm text-gray-900">Totals:</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($summary['total_amount']) }}</td>
+                    <td class="px-6 py-4 text-sm text-yellow-700">{{ format_currency($summary['total_discount']) }}</td>
+                    <td class="px-6 py-4 text-sm text-green-700">{{ format_currency($summary['total_paid']) }}</td>
+                    <td class="px-6 py-4 text-sm text-red-700">{{ format_currency($summary['total_outstanding']) }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+            @endif
+        </table>
     </div>
 </div>
 

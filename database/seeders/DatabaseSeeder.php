@@ -39,9 +39,8 @@ class DatabaseSeeder extends Seeder
             // Hospital Structure
             DepartmentSeeder::class,
 
-            // Diagnostics
+            // Diagnostics — investigations + parameters seeded from CSV template
             InvestigationSeeder::class,
-            LabTestParameterSeeder::class,
 
             // Medical Data
             AllergySeeder::class,

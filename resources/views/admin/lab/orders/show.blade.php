@@ -162,9 +162,9 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-center">
-                                @if($item->result)
-                                    <a href="{{ route('lab-results.show', $item->result) }}" class="text-green-600 hover:text-green-800 text-xs font-medium">
-                                        <i class="fas fa-file-medical mr-1"></i>View
+                                @if($item->hasResult())
+                                    <a href="{{ route('lab-results.report', $investigationOrder->result) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700" target="_blank">
+                                        <i class="fas fa-print mr-1"></i>View Report
                                     </a>
                                 @else
                                     @if(in_array($investigationOrder->status, ['testing', 'collected']))

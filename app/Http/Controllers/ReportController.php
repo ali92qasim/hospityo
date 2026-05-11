@@ -47,6 +47,7 @@ class ReportController extends Controller
             'total_amount' => $bills->sum('total_amount'),
             'total_paid' => $payments->sum('amount'),
             'total_outstanding' => $bills->sum('total_amount') - $bills->sum('paid_amount'),
+            'total_discount' => $bills->sum('discount_amount'),
             'cash_payments' => $payments->where('payment_method', 'cash')->sum('amount'),
             'card_payments' => $payments->where('payment_method', 'card')->sum('amount'),
             'insurance_payments' => $payments->where('payment_method', 'insurance')->sum('amount'),

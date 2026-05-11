@@ -115,11 +115,40 @@
                        class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed">
                 <div id="tax-breakdown" class="mt-1 space-y-0.5"></div>
             </div>
+
             <div>
-                <label for="discount_amount" class="block text-sm font-medium text-gray-700 mb-2">Discount Amount</label>
-                <input type="number" id="discount_amount" name="discount_amount" step="0.01" value="0" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Discount</label>
+
+                {{-- Type + value on one row --}}
+                <div class="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-medical-blue focus-within:border-transparent">
+                    {{-- Type selector --}}
+                    <select id="discount_type_select" name="discount_type"
+                            class="px-3 py-2 bg-gray-50 border-r border-gray-300 text-sm text-gray-700 focus:outline-none cursor-pointer">
+                        <option value="fixed">{{ currency_symbol() }} Fixed</option>
+                        <option value="percentage">% Percent</option>
+                    </select>
+                    {{-- Hidden radios kept for JS compatibility --}}
+                    <input type="radio" name="discount_type" id="discount_type_fixed" value="fixed" checked class="sr-only">
+                    <input type="radio" name="discount_type" id="discount_type_percentage" value="percentage" class="sr-only">
+                    {{-- Value input --}}
+                    <input type="number" id="discount_input_value" step="0.01" min="0"
+                           value="0" placeholder="0"
+                           class="flex-1 px-3 py-2 text-sm focus:outline-none min-w-0">
+                </div>
+                <p id="discount_input_hint" class="text-xs text-gray-400 mt-1">Enter fixed amount</p>
+
+                {{-- Hidden fields submitted to server --}}
+                <input type="hidden" id="discount_amount" name="discount_amount" value="0">
+                <input type="hidden" id="discount_percentage" name="discount_percentage" value="0">
+
+                {{-- Computed amount shown when percentage mode --}}
+                <div id="discount_computed_wrap" class="hidden mt-1 flex items-center gap-1 text-xs text-gray-500">
+                    <i class="fas fa-equals"></i>
+                    <span>Discount amount: </span>
+                    <span id="discount_computed_amount" class="font-medium text-gray-700">{{ currency_symbol() }}0.00</span>
+                </div>
             </div>
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Total Amount</label>
                 <div id="totalAmount" class="text-2xl font-bold text-medical-blue">{{ currency_symbol() }}0.00</div>

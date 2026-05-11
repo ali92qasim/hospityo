@@ -46,6 +46,25 @@
     </form>
 </div>
 
+@if(session('success'))
+<div class="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
+    <p class="text-sm font-medium text-green-800"><i class="fas fa-check-circle mr-1"></i>{{ session('success') }}</p>
+</div>
+@endif
+
+@if(session('import_pending'))
+<script>
+(function () {
+    // Write import tracking keys — poller in import-poller.js picks these up
+    localStorage.setItem('investigationImportKey',       @json(session('import_cache_key')));
+    localStorage.setItem('investigationImportStatusUrl', @json(route('investigations.import-status')));
+    localStorage.setItem('investigationImportIndexUrl',  window.location.href);
+    // Expiry: 25 min — shorter than the 30-min server cache TTL
+    localStorage.setItem('investigationImportExpiry',    String(Date.now() + 25 * 60 * 1000));
+})();
+</script>
+@endif
+
 @if(session('import_errors') && count(session('import_errors')) > 0)
 <div class="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
     <p class="text-sm font-medium text-yellow-800 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>Some rows had issues:</p>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateLabResultRequest;
 use App\Models\LabResult;
 use App\Models\InvestigationOrder;
+use App\Models\InvestigationOrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,9 +13,15 @@ class LabResultController extends Controller
 {
     public function index(Request $request)
     {
-        $pendingOrdersQuery = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
-            ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
-            ->whereDoesntHave('result');
+        // Query InvestigationOrders that have at least one pending item
+        $pendingOrdersQuery = InvestigationOrder::with([
+                'patient',
+                'visit',
+                'items.investigation.parameters',
+            ])
+            ->whereHas('items', function ($q) {
+                $q->whereNotIn('status', ['reported', 'verified', 'cancelled']);
+            });
 
         if ($request->patient_search) {
             $pendingOrdersQuery->whereHas('patient', function ($q) use ($request) {
@@ -23,12 +30,17 @@ class LabResultController extends Controller
             });
         }
 
+        // Group by patient + visit so the view can render one card per patient/visit
         $pendingOrders = $pendingOrdersQuery->get()
             ->groupBy(function ($order) {
                 return $order->patient_id . '_' . $order->visit_id;
             });
 
-        $completedResults = LabResult::with(['investigationOrder.patient', 'investigationOrder.investigation', 'technician'])
+        $completedResults = LabResult::with([
+                'investigationOrder.patient',
+                'investigationOrder.items.investigation',
+                'technician',
+            ])
             ->latest()
             ->paginate(10);
 
@@ -45,10 +57,13 @@ class LabResultController extends Controller
                 ->with('error', 'Patient ID is required.');
         }
 
-        $query = InvestigationOrder::with(['patient', 'visit', 'investigation.parameters'])
+        // Load the InvestigationOrders (headers) for this patient/visit,
+        // the create-batch view iterates order->items internally.
+        $query = InvestigationOrder::with(['patient', 'visit', 'items.investigation.parameters'])
             ->where('patient_id', $patientId)
-            ->whereIn('status', ['ordered', 'sample_collected', 'in_progress', 'collected', 'testing'])
-            ->whereDoesntHave('result');
+            ->whereHas('items', function ($q) {
+                $q->whereNotIn('status', ['reported', 'verified', 'cancelled']);
+            });
 
         if ($visitId) {
             $query->where('visit_id', $visitId);
@@ -59,42 +74,54 @@ class LabResultController extends Controller
         return view('admin.lab.results.create-batch', compact('labOrders'));
     }
 
-    public function create(InvestigationOrder $labOrder)
+    /**
+     * Show the result entry form for a single investigation order item.
+     * Route: GET lab-orders/{orderItem}/results/create
+     */
+    public function create(InvestigationOrderItem $orderItem)
     {
-        $labOrder->load(['patient', 'visit', 'investigation.parameters']);
+        $orderItem->load(['order.patient', 'order.visit', 'investigation.parameters']);
 
-        if ($labOrder->isRadiology()) {
-            return redirect()->route('radiology-results.create', $labOrder);
+        if ($orderItem->isRadiology()) {
+            // Radiology results are entered via the radiology controller
+            return redirect()->route('radiology-results.create', $orderItem->order)
+                ->with('info', 'This investigation requires a radiology result form.');
         }
 
-        if (!$labOrder->isPathology()) {
+        if (!$orderItem->isPathology()) {
             return redirect()->route('lab-results.index')
                 ->withErrors(['error' => 'Invalid investigation type for pathology result entry.']);
         }
 
+        // Pass as $labOrder for view compatibility
+        $labOrder = $orderItem;
         return view('admin.lab.results.create', compact('labOrder'));
     }
 
-    public function store(Request $request, InvestigationOrder $labOrder)
+    /**
+     * Store a result for a single investigation order item.
+     * Route: POST lab-orders/{orderItem}/results
+     */
+    public function store(Request $request, InvestigationOrderItem $orderItem)
     {
-        if (!$labOrder->isPathology()) {
-            return back()->withErrors(['error' => 'Cannot create pathology result for non-pathology investigation: ' . $labOrder->investigation->name]);
+        if (!$orderItem->isPathology()) {
+            return back()->withErrors(['error' => 'Cannot create pathology result for non-pathology investigation: ' . $orderItem->investigation->name]);
         }
 
         $validated = $request->validate([
-            'test_location'                      => 'required|in:indoor,outdoor',
-            'result_text'                        => 'nullable|string',
-            'parameters'                         => 'nullable|array',
-            'parameters.*.parameter_id'          => 'nullable|integer',
-            'parameters.*.value'                 => 'required_with:parameters.*.parameter_id|string',
-            'parameters.*.unit'                  => 'nullable|string',
-            'interpretation'                     => 'nullable|string',
-            'comments'                           => 'nullable|string',
+            'test_location'             => 'required|in:indoor,outdoor',
+            'result_text'               => 'nullable|string',
+            'parameters'                => 'nullable|array',
+            'parameters.*.parameter_id' => 'nullable|integer',
+            'parameters.*.value'        => 'required_with:parameters.*.parameter_id|string',
+            'parameters.*.unit'         => 'nullable|string',
+            'interpretation'            => 'nullable|string',
+            'comments'                  => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($validated, $labOrder) {
+        DB::transaction(function () use ($validated, $orderItem) {
             $result = LabResult::create([
-                'investigation_order_id' => $labOrder->id,
+                'investigation_order_id' => $orderItem->investigation_order_id,
                 'results'                => [],
                 'interpretation'         => $validated['interpretation'] ?? null,
                 'comments'               => $validated['comments'] ?? null,
@@ -115,8 +142,8 @@ class LabResultController extends Controller
                     if ($parameter) {
                         $flag = $parameter->calculateFlag(
                             $paramData['value'],
-                            $labOrder->patient->age ?? null,
-                            $labOrder->patient->gender ?? null
+                            $orderItem->order->patient->age ?? null,
+                            $orderItem->order->patient->gender ?? null
                         );
                     }
 
@@ -131,41 +158,61 @@ class LabResultController extends Controller
                 }
             }
 
-            $labOrder->update([
+            // Update the item status
+            $orderItem->update([
                 'status'        => 'reported',
                 'test_location' => $validated['test_location'],
-                'completed_at'  => now(),
             ]);
+
+            // Update the parent order status if all items are reported
+            $order = $orderItem->order;
+            $allReported = $order->items()->whereNotIn('status', ['reported', 'verified', 'cancelled'])->doesntExist();
+            if ($allReported) {
+                $order->update([
+                    'status'       => 'reported',
+                    'completed_at' => now(),
+                ]);
+            }
         });
 
         return redirect()->route('lab-results.index')
             ->with('success', 'Investigation result entered successfully.');
     }
 
+    /**
+     * Store results for multiple items at once (batch entry).
+     * Route: POST lab-results/store-batch
+     * The create-batch view submits orders[n][investigation_order_id] = InvestigationOrder id
+     * and iterates items inside each order.
+     */
     public function storeBatch(Request $request)
     {
         $validated = $request->validate([
-            'orders'                                    => 'required|array',
-            'orders.*.investigation_order_id'           => 'required|integer',
-            'orders.*.test_location'                    => 'required|in:indoor,outdoor',
-            'orders.*.result_text'                      => 'nullable|string',
-            'orders.*.parameters'                       => 'nullable|array',
-            'orders.*.parameters.*.parameter_id'        => 'nullable|integer',
-            'orders.*.parameters.*.value'               => 'required_with:orders.*.parameters.*.parameter_id|string',
-            'orders.*.parameters.*.unit'                => 'nullable|string',
-            'orders.*.notes'                            => 'nullable|string',
+            'orders'                             => 'required|array',
+            'orders.*.investigation_order_id'    => 'required|integer',
+            'orders.*.item_id'                   => 'required|integer',
+            'orders.*.test_location'             => 'required|in:indoor,outdoor',
+            'orders.*.result_text'               => 'nullable|string',
+            'orders.*.parameters'                => 'nullable|array',
+            'orders.*.parameters.*.parameter_id' => 'nullable|integer',
+            'orders.*.parameters.*.value'        => 'required_with:orders.*.parameters.*.parameter_id|string',
+            'orders.*.parameters.*.unit'         => 'nullable|string',
+            'orders.*.notes'                     => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($validated) {
             foreach ($validated['orders'] as $orderData) {
-                $investigationOrder = InvestigationOrder::find($orderData['investigation_order_id']);
+                // Look up the specific item submitted by the form.
+                $item = InvestigationOrderItem::find($orderData['item_id']);
 
-                if (!$investigationOrder) {
+                if (!$item) {
                     continue;
                 }
 
-                if (!$investigationOrder->isPathology()) {
-                    throw new \Exception('Cannot create pathology result for non-pathology investigation: ' . $investigationOrder->investigation->name);
+                $investigationOrder = $item->order;
+
+                if (!$investigationOrder) {
+                    continue;
                 }
 
                 $result = LabResult::create([
@@ -205,11 +252,20 @@ class LabResultController extends Controller
                     }
                 }
 
-                $investigationOrder->update([
+                // Mark the item as reported
+                $item->update([
                     'status'        => 'reported',
                     'test_location' => $orderData['test_location'],
-                    'completed_at'  => now(),
                 ]);
+
+                // Mark the order as reported if all items are done
+                $allReported = $investigationOrder->items()->whereNotIn('status', ['reported', 'verified', 'cancelled'])->doesntExist();
+                if ($allReported) {
+                    $investigationOrder->update([
+                        'status'       => 'reported',
+                        'completed_at' => now(),
+                    ]);
+                }
             }
         });
 
@@ -221,13 +277,19 @@ class LabResultController extends Controller
     {
         $labResult->load([
             'investigationOrder.patient',
-            'investigationOrder.investigation',
+            'investigationOrder.items.investigation',
             'investigationOrder.visit',
             'investigationOrder.doctor',
             'technician',
             'pathologist',
             'resultItems.parameter',
         ]);
+
+        // Alias so the view can use either $labResult->labOrder or ->investigationOrder
+        // and both have items loaded.
+        if ($labResult->relationLoaded('investigationOrder')) {
+            $labResult->setRelation('labOrder', $labResult->investigationOrder);
+        }
 
         return view('admin.lab.results.show', compact('labResult'));
     }
@@ -263,6 +325,7 @@ class LabResultController extends Controller
             'investigationOrder.patient',
             'investigationOrder.doctor',
             'investigationOrder.investigation',
+            'investigationOrder.items.investigation',
             'investigationOrder.visit',
             'technician',
             'pathologist',

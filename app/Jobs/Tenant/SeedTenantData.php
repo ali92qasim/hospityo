@@ -14,14 +14,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Spatie\Multitenancy\Jobs\NotTenantAware;
-use App\Models\Permission;
-use App\Models\Role;
 
 class SeedTenantData implements ShouldQueue, NotTenantAware
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    public int $tries   = 3;
     public int $backoff = 10;
 
     public function __construct(
@@ -38,10 +36,13 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
         // Reset Spatie permission cache for this tenant's connection
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $this->seedRolesAndPermissions();
+        // Seed all reference data + RBAC via TenantOnboardingSeeder.
+        // RolePermissionSeeder is the single source of truth for permissions/roles
+        // and is called first inside TenantOnboardingSeeder.
+        $this->seedEssentialData();
+
         $this->seedAdminUser();
         $this->seedDefaultSettings();
-        $this->seedEssentialData();
 
         // Register admin email → tenant mapping in landlord DB
         \App\Models\TenantUser::register($this->adminData['email'], $this->tenant->id);
@@ -55,98 +56,8 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
     }
 
     /**
-     * Seed the core RBAC structure every hospital needs.
-     */
-    protected function seedRolesAndPermissions(): void
-    {
-        $permissions = [
-            // Patient Management
-            'view patients', 'create patients', 'edit patients', 'delete patients',
-            // Doctor Management
-            'view doctors', 'create doctors', 'edit doctors', 'delete doctors',
-            // Department Management
-            'view departments', 'create departments', 'edit departments', 'delete departments',
-            // Visit Management
-            'view visits', 'create visits', 'edit visits', 'delete visits',
-            // Appointment Management
-            'view appointments', 'create appointments', 'edit appointments', 'delete appointments',
-            // Medical Records
-            'view medical records', 'create medical records', 'edit medical records',
-            'delete medical records', 'sign medical records',
-            // Billing
-            'view bills', 'create bills', 'edit bills', 'delete bills',
-            'create payments',
-            'view services', 'create services', 'edit services', 'delete services',
-            'manage doctor shares',
-            // RBAC
-            'view roles', 'create roles', 'edit roles', 'delete roles',
-            'view permissions', 'create permissions', 'edit permissions', 'delete permissions',
-            'manage user roles',
-        ];
-
-        foreach ($permissions as $perm) {
-            Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
-        }
-
-        // Super Admin — full access
-        $superAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
-        $superAdmin->syncPermissions(Permission::all());
-
-        // Hospital Administrator
-        $admin = Role::firstOrCreate(['name' => 'Hospital Administrator', 'guard_name' => 'web']);
-        $admin->syncPermissions([
-            'view patients', 'create patients', 'edit patients',
-            'view doctors', 'create doctors', 'edit doctors',
-            'view departments', 'create departments', 'edit departments',
-            'view visits', 'create visits', 'edit visits',
-            'view appointments', 'create appointments', 'edit appointments',
-            'view medical records', 'create medical records', 'edit medical records',
-            'view bills', 'create bills', 'edit bills', 'create payments',
-            'view services', 'create services', 'edit services',
-            'manage doctor shares',
-            'manage user roles',
-        ]);
-
-        // Doctor
-        $doctor = Role::firstOrCreate(['name' => 'Doctor', 'guard_name' => 'web']);
-        $doctor->syncPermissions([
-            'view patients', 'edit patients',
-            'view visits', 'create visits', 'edit visits',
-            'view appointments', 'create appointments', 'edit appointments',
-            'view medical records', 'create medical records', 'edit medical records', 'sign medical records',
-            'view bills', 'create bills',
-        ]);
-
-        // Nurse
-        $nurse = Role::firstOrCreate(['name' => 'Nurse', 'guard_name' => 'web']);
-        $nurse->syncPermissions([
-            'view patients', 'edit patients',
-            'view visits', 'edit visits',
-            'view appointments',
-            'view medical records', 'create medical records', 'edit medical records',
-            'view bills',
-        ]);
-
-        // Receptionist
-        $receptionist = Role::firstOrCreate(['name' => 'Receptionist', 'guard_name' => 'web']);
-        $receptionist->syncPermissions([
-            'view patients', 'create patients', 'edit patients',
-            'view appointments', 'create appointments', 'edit appointments',
-            'view visits', 'create visits',
-            'view bills', 'create bills', 'create payments',
-        ]);
-
-        // Medical Records Clerk
-        $clerk = Role::firstOrCreate(['name' => 'Medical Records Clerk', 'guard_name' => 'web']);
-        $clerk->syncPermissions([
-            'view patients',
-            'view medical records', 'create medical records', 'edit medical records',
-            'view bills',
-        ]);
-    }
-
-    /**
      * Create the tenant's first admin user with Super Admin role.
+     * Must run after seedEssentialData() so the Super Admin role exists.
      */
     protected function seedAdminUser(): void
     {
@@ -177,8 +88,8 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
     }
 
     /**
-     * Seed essential operational data via existing seeders.
-     * Only structural/reference data — no demo patients or doctors.
+     * Seed all essential operational data via TenantOnboardingSeeder.
+     * RolePermissionSeeder (RBAC) runs first inside that seeder.
      */
     protected function seedEssentialData(): void
     {

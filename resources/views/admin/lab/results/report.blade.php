@@ -256,7 +256,7 @@
                     <span>Dr. {{ $labResult->labOrder->doctor->name ?? 'N/A' }}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">{{ $labResult->labOrder->visit->visit_type === 'ipd' ? 'IPD' : ($labResult->labOrder->visit->visit_type === 'opd' ? 'OPD' : 'Lab') }} #:</span>
+                    <span class="detail-label">{{ ($labResult->labOrder->visit->visit_type ?? null) === 'ipd' ? 'IPD' : (($labResult->labOrder->visit->visit_type ?? null) === 'opd' ? 'OPD' : 'Lab') }} #:</span>
                     <span>{{ $labResult->labOrder->patient->patient_no }}</span>
                 </div>
                 <div class="detail-item">

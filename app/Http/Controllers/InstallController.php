@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use App\Models\User;
 use App\Models\Role;
+use App\Services\InvestigationImportService;
 
 class InstallController extends Controller
 {
@@ -116,7 +117,12 @@ class InstallController extends Controller
             if ($request->seed_sample_data) {
                 Artisan::call('db:seed', ['--class' => 'ServiceSeeder', '--force' => true]);
                 Artisan::call('db:seed', ['--class' => 'UnitSeeder', '--force' => true]);
-                Artisan::call('db:seed', ['--class' => 'InvestigationSeeder', '--force' => true]);
+
+                // Seed investigations from the bundled CSV template
+                $csvPath = public_path('templates/investigations.csv');
+                if (file_exists($csvPath)) {
+                    (new InvestigationImportService())->importFromFile($csvPath);
+                }
             }
             
             $this->markAsInstalled();

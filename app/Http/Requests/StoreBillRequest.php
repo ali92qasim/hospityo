@@ -22,7 +22,9 @@ class StoreBillRequest extends FormRequest
             'items.*.investigation_id' => 'nullable|exists:tenant.investigations,id',
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0'
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'discount_type' => 'nullable|in:fixed,percentage',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100'
         ];
     }
 }

@@ -39,6 +39,9 @@ class DoctorController extends Controller
             'email_verified_at' => now()
         ]);
 
+        // Register in tenant_users so central login can find this user
+        \App\Models\TenantUser::register($user->email, \App\Models\Tenant::current()->id);
+
         // Assign Doctor role
         $doctorRole = Role::firstOrCreate(['name' => 'Doctor']);
         $user->assignRole($doctorRole);
@@ -67,10 +70,19 @@ class DoctorController extends Controller
 
         // Update associated user if exists
         if ($doctor->user) {
+            $oldEmail = $doctor->user->email;
+
             $doctor->user->update([
                 'name' => $validated['name'],
                 'email' => $validated['email']
             ]);
+
+            if ($doctor->user->wasChanged('email')) {
+                $tenant = \App\Models\Tenant::current();
+                \App\Models\TenantUser::where('email', $oldEmail)
+                    ->where('tenant_id', $tenant->id)->delete();
+                \App\Models\TenantUser::register($doctor->user->email, $tenant->id);
+            }
         }
 
         $doctor->update($validated);

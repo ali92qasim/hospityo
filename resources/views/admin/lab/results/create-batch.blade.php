@@ -101,6 +101,7 @@
             <div id="test-content-{{ $index }}" class="px-6 py-4">
                 <input type="hidden" name="orders[{{ $index }}][lab_order_id]" value="{{ $order->id }}">
                 <input type="hidden" name="orders[{{ $index }}][investigation_order_id]" value="{{ $order->id }}">
+                <input type="hidden" name="orders[{{ $index }}][item_id]" value="{{ $item->id }}">
 
                 <!-- Test Location -->
                 <div class="mb-4">

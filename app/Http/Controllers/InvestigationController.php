@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreLabTestRequest;
 use App\Http\Requests\UpdateLabTestRequest;
+use App\Jobs\Tenant\ImportInvestigationsJob;
 use App\Models\Investigation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class InvestigationController extends Controller
 {
@@ -40,17 +44,16 @@ class InvestigationController extends Controller
     {
         $investigation = Investigation::create($request->validated());
 
-        // Handle parameters
         if ($request->has('parameters')) {
             foreach ($request->parameters as $index => $paramData) {
                 if (!empty($paramData['name'])) {
                     $investigation->parameters()->create([
-                        'parameter_name' => $paramData['name'],
-                        'unit' => $paramData['unit'] ?? null,
-                        'data_type' => 'numeric',
+                        'parameter_name'   => $paramData['name'],
+                        'unit'             => $paramData['unit'] ?? null,
+                        'data_type'        => 'numeric',
                         'reference_ranges' => !empty($paramData['reference_range']) ? ['range' => $paramData['reference_range']] : null,
-                        'display_order' => $index + 1,
-                        'is_active' => true
+                        'display_order'    => $index + 1,
+                        'is_active'        => true,
                     ]);
                 }
             }
@@ -62,14 +65,14 @@ class InvestigationController extends Controller
     public function show($id)
     {
         $investigation = Investigation::with('parameters')->findOrFail($id);
-        $labTest = $investigation; // Backward compatibility for views
+        $labTest = $investigation;
         return view('admin.lab.tests.show', compact('investigation', 'labTest'));
     }
 
     public function edit($id)
     {
         $investigation = Investigation::with('parameters')->findOrFail($id);
-        $labTest = $investigation; // Backward compatibility for views
+        $labTest = $investigation;
         return view('admin.lab.tests.edit', compact('investigation', 'labTest'));
     }
 
@@ -78,21 +81,18 @@ class InvestigationController extends Controller
         $investigation = Investigation::findOrFail($id);
         $investigation->update($request->validated());
 
-        // Handle parameters
         if ($request->has('parameters')) {
-            // Delete existing parameters
             $investigation->parameters()->delete();
 
-            // Create new parameters
             foreach ($request->parameters as $index => $paramData) {
                 if (!empty($paramData['name'])) {
                     $investigation->parameters()->create([
-                        'parameter_name' => $paramData['name'],
-                        'unit' => $paramData['unit'] ?? null,
-                        'data_type' => 'numeric',
+                        'parameter_name'   => $paramData['name'],
+                        'unit'             => $paramData['unit'] ?? null,
+                        'data_type'        => 'numeric',
                         'reference_ranges' => !empty($paramData['reference_range']) ? ['range' => $paramData['reference_range']] : null,
-                        'display_order' => $index + 1,
-                        'is_active' => true
+                        'display_order'    => $index + 1,
+                        'is_active'        => true,
                     ]);
                 }
             }
@@ -111,117 +111,77 @@ class InvestigationController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:2048',
+            'file' => 'required|file|mimes:csv,txt|max:10240',
         ]);
 
-        try {
-            $file = $request->file('file');
-            $handle = fopen($file->getRealPath(), 'r');
+        $path     = $request->file('file')->store('imports/investigations', 'local');
+        $cacheKey = 'investigation_import_' . auth()->id() . '_' . Str::random(8);
 
-            if (!$handle) {
-                return back()->with('error', 'Could not read the file.');
-            }
+        // Mark as pending immediately so the poller has something to find
+        Cache::put($cacheKey, ['status' => 'pending'], now()->addMinutes(30));
 
-            // Read header row
-            $header = fgetcsv($handle);
-            if (!$header || !in_array('code', $header) || !in_array('name', $header)) {
-                fclose($handle);
-                return back()->with('error', 'Invalid file format. Please use the provided template.');
-            }
+        ImportInvestigationsJob::dispatch($path, $cacheKey, auth()->id());
 
-            $header = array_map('trim', $header);
-            $created = 0;
-            $updated = 0;
-            $errors = [];
-            $rowNum = 1;
+        return redirect()->route('investigations.index')
+            ->with('import_pending', true)
+            ->with('import_cache_key', $cacheKey);
+    }
 
-            while (($row = fgetcsv($handle)) !== false) {
-                $rowNum++;
+    /**
+     * AJAX endpoint polled by the browser to check background import progress.
+     *
+     * Returns one of:
+     *   { status: 'pending' }                          — job still running
+     *   { status: 'done', created, updated, errors[] } — job finished OK
+     *   { status: 'failed', message }                  — job threw
+     *   { status: 'not_found' }                        — key missing/expired;
+     *                                                    client must stop polling
+     */
+    public function importStatus(Request $request)
+    {
+        $key = $request->query('key');
 
-                // Skip empty rows
-                if (!array_filter($row)) continue;
-
-                // Pad row to match header length
-                $row = array_pad($row, count($header), '');
-                $data = array_combine($header, $row);
-
-                // Validate required fields
-                $code = trim($data['code'] ?? '');
-                $name = trim($data['name'] ?? '');
-
-                if (empty($code) || empty($name)) {
-                    $errors[] = "Row {$rowNum}: code and name are required.";
-                    continue;
-                }
-
-                try {
-                    // Create or update investigation
-                    $investigation = Investigation::updateOrCreate(
-                        ['code' => $code],
-                        [
-                            'name' => $name,
-                            'category' => trim($data['category'] ?? 'hematology'),
-                            'sample_type' => trim($data['sample_type'] ?? '') ?: null,
-                            'price' => (float) ($data['price'] ?? 0),
-                            'turnaround_time' => trim($data['turnaround_time'] ?? '') ?: null,
-                            'description' => trim($data['description'] ?? '') ?: null,
-                            'instructions' => trim($data['instructions'] ?? '') ?: null,
-                            'is_active' => true,
-                        ]
-                    );
-
-                    if ($investigation->wasRecentlyCreated) {
-                        $created++;
-                    } else {
-                        $updated++;
-                    }
-
-                    // Process parameters (param_1 through param_10)
-                    $hasParams = false;
-                    $params = [];
-
-                    for ($i = 1; $i <= 10; $i++) {
-                        $paramName = trim($data["param_{$i}_name"] ?? '');
-                        if (empty($paramName)) continue;
-
-                        $hasParams = true;
-                        $params[] = [
-                            'parameter_name' => $paramName,
-                            'unit' => trim($data["param_{$i}_unit"] ?? '') ?: null,
-                            'data_type' => 'numeric',
-                            'reference_ranges' => !empty(trim($data["param_{$i}_reference_range"] ?? ''))
-                                ? ['range' => trim($data["param_{$i}_reference_range"])]
-                                : null,
-                            'display_order' => $i,
-                            'is_active' => true,
-                        ];
-                    }
-
-                    // Replace parameters if any were provided
-                    if ($hasParams) {
-                        $investigation->parameters()->delete();
-                        foreach ($params as $param) {
-                            $investigation->parameters()->create($param);
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    $errors[] = "Row {$rowNum} ({$code}): {$e->getMessage()}";
-                }
-            }
-
-            fclose($handle);
-
-            $message = "{$created} investigations created, {$updated} updated.";
-            if (!empty($errors)) {
-                $message .= ' ' . count($errors) . ' row(s) had errors.';
-                Log::warning('[Investigation Import] Errors', ['errors' => $errors]);
-            }
-
-            return back()->with('success', $message)
-                         ->with('import_errors', $errors);
-        } catch (\Throwable $e) {
-            Log::error('[Investigation Import] Failed', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Import failed: ' . $e->getMessage());
+        if (!$key) {
+            return response()->json(['status' => 'not_found']);
         }
+
+        $result = Cache::get($key);
+
+        // Key doesn't exist — expired or never written.
+        // Return 'not_found' so the poller cleans up and stops.
+        if ($result === null) {
+            return response()->json(['status' => 'not_found']);
+        }
+
+        // Job still running
+        if ($result['status'] === 'pending') {
+            return response()->json(['status' => 'pending']);
+        }
+
+        // Job finished (done or failed) — consume the key so it isn't re-read
+        Cache::forget($key);
+
+        return response()->json($result);
+    }
+
+    // -------------------------------------------------------------------------
+
+    private function toUtf8(string $value): string
+    {
+        if (mb_check_encoding($value, 'UTF-8')) {
+            return $value;
+        }
+
+        $converted = mb_convert_encoding($value, 'UTF-8', 'Windows-1252');
+
+        return mb_check_encoding($converted, 'UTF-8')
+            ? $converted
+            : mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+    }
+
+    private function sanitizeString(string $value, string $default = ''): string
+    {
+        $clean = trim($this->toUtf8($value));
+        return $clean !== '' ? $clean : $default;
     }
 }

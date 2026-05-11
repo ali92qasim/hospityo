@@ -5,13 +5,19 @@
 @section('page-description', 'Enter test results')
 
 @section('content')
+@php
+    /** @var \App\Models\InvestigationOrderItem $labOrder */
+    $order       = $labOrder->order;
+    $patient     = $order->patient;
+    $investigation = $labOrder->investigation;
+@endphp
 <div class="max-w-4xl mx-auto">
     <div class="bg-white rounded-lg shadow-sm">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-800">Add Test Result</h3>
-                    <p class="text-sm text-gray-600">{{ $item->investigation?->name ?? 'Unknown Test' }} — {{ $labOrder->patient?->name ?? 'Unknown Patient' }}</p>
+                    <p class="text-sm text-gray-600">{{ $investigation?->name ?? 'Unknown Test' }} — {{ $patient?->name ?? 'Unknown Patient' }}</p>
                 </div>
                 <a href="{{ route('lab-results.index') }}" class="text-gray-600 hover:text-gray-800">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Investigation Results
@@ -24,33 +30,33 @@
                 <div class="bg-blue-50 rounded-lg p-4">
                     <h4 class="font-medium text-blue-800 mb-2">Order Information</h4>
                     <div class="space-y-1 text-sm">
-                        <div><span class="text-blue-600">Order #:</span> {{ $labOrder->order_number }}</div>
-                        <div><span class="text-blue-600">Test:</span> {{ $item->investigation?->name ?? 'Unknown Test' }}</div>
-                        <div><span class="text-blue-600">Priority:</span> {{ strtoupper($item->priority) }}</div>
+                        <div><span class="text-blue-600">Order #:</span> {{ $order->order_number }}</div>
+                        <div><span class="text-blue-600">Test:</span> {{ $investigation?->name ?? 'Unknown Test' }}</div>
+                        <div><span class="text-blue-600">Priority:</span> {{ strtoupper($labOrder->priority) }}</div>
                     </div>
                 </div>
 
                 <div class="bg-green-50 rounded-lg p-4">
                     <h4 class="font-medium text-green-800 mb-2">Patient Information</h4>
                     <div class="space-y-1 text-sm">
-                        <div><span class="text-green-600">Name:</span> {{ $labOrder->patient?->name ?? 'Unknown Patient' }}</div>
-                        <div><span class="text-green-600">Age:</span> {{ $labOrder->patient?->age ?? 'N/A' }} years</div>
-                        <div><span class="text-green-600">Gender:</span> {{ $labOrder->patient ? ucfirst($labOrder->patient->gender) : 'N/A' }}</div>
+                        <div><span class="text-green-600">Name:</span> {{ $patient?->name ?? 'Unknown Patient' }}</div>
+                        <div><span class="text-green-600">Age:</span> {{ $patient?->age ?? 'N/A' }} years</div>
+                        <div><span class="text-green-600">Gender:</span> {{ $patient ? ucfirst($patient->gender) : 'N/A' }}</div>
                     </div>
                 </div>
 
                 <div class="bg-purple-50 rounded-lg p-4">
                     <h4 class="font-medium text-purple-800 mb-2">Test Information</h4>
                     <div class="space-y-1 text-sm">
-                        <div><span class="text-purple-600">Category:</span> {{ $item->investigation ? ucfirst($item->investigation->category) : 'N/A' }}</div>
-                        <div><span class="text-purple-600">Sample:</span> {{ $item->investigation ? ucfirst($item->investigation->sample_type) : 'N/A' }}</div>
+                        <div><span class="text-purple-600">Category:</span> {{ $investigation ? ucfirst($investigation->category) : 'N/A' }}</div>
+                        <div><span class="text-purple-600">Sample:</span> {{ $investigation ? ucfirst($investigation->sample_type ?? 'N/A') : 'N/A' }}</div>
                         <div><span class="text-purple-600">Location:</span>
-                            <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full font-medium {{ $item->test_location === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
-                                <i class="fas {{ $item->test_location === 'indoor' ? 'fa-building' : 'fa-external-link-alt' }} mr-1"></i>
-                                {{ $item->test_location === 'indoor' ? 'Indoor Lab' : 'External Lab' }}
+                            <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full font-medium {{ $labOrder->test_location === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
+                                <i class="fas {{ $labOrder->test_location === 'indoor' ? 'fa-building' : 'fa-external-link-alt' }} mr-1"></i>
+                                {{ $labOrder->test_location === 'indoor' ? 'Indoor Lab' : 'External Lab' }}
                             </span>
                         </div>
-                        <div><span class="text-purple-600">Ordered:</span> {{ $labOrder->ordered_at ? $labOrder->ordered_at->format('M d, Y') : 'N/A' }}</div>
+                        <div><span class="text-purple-600">Ordered:</span> {{ $order->ordered_at ? $order->ordered_at->format('M d, Y') : 'N/A' }}</div>
                     </div>
                 </div>
             </div>
@@ -64,8 +70,8 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Processing Location</label>
                             <select name="test_location" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                                <option value="indoor" {{ $item->test_location === 'indoor' ? 'selected' : '' }}>Indoor Lab</option>
-                                <option value="outdoor" {{ $item->test_location === 'outdoor' ? 'selected' : '' }}>External Lab</option>
+                                <option value="indoor" {{ $labOrder->test_location === 'indoor' ? 'selected' : '' }}>Indoor Lab</option>
+                                <option value="outdoor" {{ $labOrder->test_location === 'outdoor' ? 'selected' : '' }}>External Lab</option>
                             </select>
                             <p class="text-xs text-gray-500 mt-1">Select where this test was processed</p>
                         </div>
@@ -74,7 +80,7 @@
                     <div class="bg-gray-50 rounded-lg p-4">
                         <h4 class="font-medium text-gray-800 mb-4">Test Results</h4>
 
-                        @if($item->investigation && $item->investigation->parameters && $item->investigation->parameters->count() > 0)
+                        @if($investigation && $investigation->parameters && $investigation->parameters->count() > 0)
                             <div class="overflow-x-auto">
                                 <table class="w-full border border-gray-200 rounded-lg">
                                     <thead class="bg-gray-50">
@@ -86,7 +92,7 @@
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-200">
-                                        @foreach($item->investigation->parameters as $paramIndex => $parameter)
+                                        @foreach($investigation->parameters as $paramIndex => $parameter)
                                             <tr>
                                                 <td class="px-4 py-2 font-medium text-gray-900">{{ $parameter->parameter_name }}</td>
                                                 <td class="px-4 py-2">
@@ -135,10 +141,10 @@
                                   placeholder="Additional comments or notes..."></textarea>
                     </div>
 
-                    @if($item->clinical_notes)
+                    @if($labOrder->clinical_notes)
                     <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <h5 class="font-medium text-yellow-800 mb-2">Clinical Notes from Doctor</h5>
-                        <p class="text-sm text-yellow-700">{{ $item->clinical_notes }}</p>
+                        <p class="text-sm text-yellow-700">{{ $labOrder->clinical_notes }}</p>
                     </div>
                     @endif
                 </div>

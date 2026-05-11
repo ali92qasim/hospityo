@@ -85,9 +85,43 @@
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
             </div>
             <div>
-                <label for="discount_amount" class="block text-sm font-medium text-gray-700 mb-2">Discount Amount</label>
-                <input type="number" id="discount_amount" name="discount_amount" step="0.01" value="{{ $bill->discount_amount }}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Discount</label>
+
+                @php $discountType = $bill->discount_type ?? 'fixed'; @endphp
+
+                {{-- Type + value on one row --}}
+                <div class="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-medical-blue focus-within:border-transparent">
+                    {{-- Type selector --}}
+                    <select id="discount_type_select" name="discount_type"
+                            class="px-3 py-2 bg-gray-50 border-r border-gray-300 text-sm text-gray-700 focus:outline-none cursor-pointer">
+                        <option value="fixed" {{ $discountType === 'fixed' ? 'selected' : '' }}>{{ currency_symbol() }} Fixed</option>
+                        <option value="percentage" {{ $discountType === 'percentage' ? 'selected' : '' }}>% Percent</option>
+                    </select>
+                    {{-- Hidden radios kept for JS compatibility --}}
+                    <input type="radio" name="discount_type" id="discount_type_fixed" value="fixed"
+                           {{ $discountType === 'fixed' ? 'checked' : '' }} class="sr-only">
+                    <input type="radio" name="discount_type" id="discount_type_percentage" value="percentage"
+                           {{ $discountType === 'percentage' ? 'checked' : '' }} class="sr-only">
+                    {{-- Value input --}}
+                    <input type="number" id="discount_input_value" step="0.01" min="0"
+                           value="{{ $discountType === 'percentage' ? ($bill->discount_percentage ?? 0) : $bill->discount_amount }}"
+                           placeholder="0"
+                           class="flex-1 px-3 py-2 text-sm focus:outline-none min-w-0">
+                </div>
+                <p id="discount_input_hint" class="text-xs text-gray-400 mt-1">
+                    {{ $discountType === 'percentage' ? 'Enter percentage (0–100)' : 'Enter fixed amount' }}
+                </p>
+
+                {{-- Hidden fields submitted to server --}}
+                <input type="hidden" id="discount_amount" name="discount_amount" value="{{ $bill->discount_amount }}">
+                <input type="hidden" id="discount_percentage" name="discount_percentage" value="{{ $bill->discount_percentage ?? 0 }}">
+
+                {{-- Computed amount shown when percentage mode --}}
+                <div id="discount_computed_wrap" class="{{ $discountType === 'percentage' ? '' : 'hidden' }} mt-1 flex items-center gap-1 text-xs text-gray-500">
+                    <i class="fas fa-equals"></i>
+                    <span>Discount amount: </span>
+                    <span id="discount_computed_amount" class="font-medium text-gray-700">{{ currency_symbol() }}{{ number_format($bill->discount_amount, 2) }}</span>
+                </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Total Amount</label>
@@ -113,7 +147,7 @@ let itemIndex = {{ $bill->billItems->count() }};
 document.getElementById('addItem').addEventListener('click', function() {
     const billItems = document.getElementById('billItems');
     const newItem = document.querySelector('.bill-item').cloneNode(true);
-    
+
     newItem.querySelectorAll('input, select').forEach(input => {
         const oldName = input.name;
         if (oldName) {
@@ -126,7 +160,7 @@ document.getElementById('addItem').addEventListener('click', function() {
             input.selectedIndex = 0;
         }
     });
-    
+
     billItems.appendChild(newItem);
     itemIndex++;
     updateTotal();
@@ -146,33 +180,94 @@ document.addEventListener('change', function(e) {
         const option = e.target.selectedOptions[0];
         const priceInput = e.target.closest('.bill-item').querySelector('.unit-price');
         const descInput = e.target.closest('.bill-item').querySelector('input[name*="[description]"]');
-        
+
         if (option.dataset.price) {
             priceInput.value = option.dataset.price;
             descInput.value = option.text.split(' - ')[0];
         }
         updateTotal();
     }
-    
-    if (e.target.classList.contains('quantity') || e.target.classList.contains('unit-price') || 
-        e.target.id === 'tax_amount' || e.target.id === 'discount_amount') {
+
+    if (e.target.classList.contains('quantity') || e.target.classList.contains('unit-price') ||
+        e.target.id === 'tax_amount') {
         updateTotal();
     }
 });
 
-function updateTotal() {
+// Discount type select → update hint, sync hidden radios, recompute
+document.getElementById('discount_type_select').addEventListener('change', function () {
+    const isPercentage = this.value === 'percentage';
+
+    document.getElementById('discount_type_fixed').checked = !isPercentage;
+    document.getElementById('discount_type_percentage').checked = isPercentage;
+
+    document.getElementById('discount_input_hint').textContent =
+        isPercentage ? 'Enter percentage (0–100)' : 'Enter fixed amount';
+
+    const computedWrap = document.getElementById('discount_computed_wrap');
+    computedWrap.classList.toggle('hidden', !isPercentage);
+
+    const inputVal = document.getElementById('discount_input_value');
+    inputVal.value = '0';
+    inputVal.max = isPercentage ? '100' : '';
+
+    if (isPercentage) {
+        document.getElementById('discount_percentage').value = '0';
+        computeDiscountFromPercentage();
+    } else {
+        document.getElementById('discount_amount').value = '0';
+        document.getElementById('discount_percentage').value = '0';
+    }
+    updateTotal();
+});
+
+// Visible discount input changed
+document.getElementById('discount_input_value').addEventListener('input', function () {
+    const isPercentage = document.getElementById('discount_type_select').value === 'percentage';
+    if (isPercentage) {
+        document.getElementById('discount_percentage').value = this.value;
+        computeDiscountFromPercentage();
+    } else {
+        document.getElementById('discount_amount').value = this.value;
+    }
+    updateTotal();
+});
+
+function computeDiscountFromPercentage() {
+    const percentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
+    const subtotal = getSubtotal();
+    const discountAmount = (percentage / 100) * subtotal;
+    document.getElementById('discount_amount').value = discountAmount.toFixed(2);
+
+    const computedEl = document.getElementById('discount_computed_amount');
+    if (computedEl) {
+        computedEl.textContent = document.getElementById('totalAmount').textContent.charAt(0) + discountAmount.toFixed(2);
+    }
+}
+
+function getSubtotal() {
     let subtotal = 0;
-    
     document.querySelectorAll('.bill-item').forEach(item => {
         const qty = parseFloat(item.querySelector('.quantity').value) || 0;
         const price = parseFloat(item.querySelector('.unit-price').value) || 0;
         subtotal += qty * price;
     });
-    
+    return subtotal;
+}
+
+function updateTotal() {
+    const subtotal = getSubtotal();
+
+    // If percentage mode, recompute discount_amount from current subtotal
+    const discountTypeEl = document.getElementById('discount_type_select');
+    if (discountTypeEl && discountTypeEl.value === 'percentage') {
+        computeDiscountFromPercentage();
+    }
+
     const tax = parseFloat(document.getElementById('tax_amount').value) || 0;
     const discount = parseFloat(document.getElementById('discount_amount').value) || 0;
     const total = subtotal + tax - discount;
-    
+
     document.getElementById('totalAmount').textContent = `{{ currency_symbol() }}${total.toFixed(2)}`;
 }
 
