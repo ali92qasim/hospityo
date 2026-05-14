@@ -249,7 +249,7 @@
                     @if($hasTests)
                         <div style="font-size: 8.5pt;">
                         @php
-                            echo $visit->labOrders->map(fn($o) => preg_match('/\(([^)]+)\)/', $o->investigation->name, $m) ? $m[1] : explode(' ', $o->investigation->name)[0])->unique()->join(', ');
+                            echo $visit->labOrders->map(fn($o) => preg_match('/\(([^)]+)\)/', $o->investigation?->name, $m) ? $m[1] : explode(' ', $o->investigation?->name)[0])->unique()->join(', ');
                         @endphp
                         </div>
                     @else
