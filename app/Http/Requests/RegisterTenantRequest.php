@@ -21,7 +21,18 @@ class RegisterTenantRequest extends FormRequest
             'admin_name'     => ['required', 'string', 'max:255'],
             'admin_email'    => ['required', 'email', 'max:255'],
             'admin_password' => ['required', 'confirmed', 'min:8'],
-            'plan'           => ['nullable', 'string', 'exists:plans,slug'],
+            'plan'           => [
+                'nullable',
+                'string',
+                'exists:plans,slug',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if ($value === null) return;
+                    $plan = \App\Models\Plan::where('slug', $value)->first();
+                    if ($plan && $plan->isCustomPricing()) {
+                        $fail('This plan requires a custom arrangement. Please contact sales to subscribe.');
+                    }
+                },
+            ],
         ];
     }
 

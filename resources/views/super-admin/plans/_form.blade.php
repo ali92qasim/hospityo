@@ -47,6 +47,16 @@
             <span class="ml-2 text-sm text-gray-700">Active</span>
         </label>
     </div>
+    <div class="flex items-end">
+        <label class="flex items-center">
+            <input type="hidden" name="is_custom_pricing" value="0">
+            <input type="checkbox" name="is_custom_pricing" value="1"
+                   {{ old('is_custom_pricing', $plan->is_custom_pricing ?? false) ? 'checked' : '' }}
+                   class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue">
+            <span class="ml-2 text-sm text-gray-700">Custom Pricing</span>
+        </label>
+        <p class="ml-3 text-xs text-gray-400">Hides price and shows "Contact Sales" on public pages</p>
+    </div>
 </div>
 
 <hr class="my-6 border-gray-200">
@@ -70,6 +80,16 @@
                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">
     </div>
 </div>
+
+<hr class="my-6 border-gray-200">
+
+{{-- MDR Note --}}
+<h3 class="text-sm font-semibold text-gray-700 mb-1">Payment Gateway MDR Note</h3>
+<p class="text-xs text-gray-400 mb-3">Displayed on the landing page pricing section. Update whenever gateway rates change.</p>
+<textarea name="mdr_note" rows="4"
+          placeholder="e.g. RAAST QR 0.60% · RAAST RTP 0.95% · Bank Transfer 2.20% · Wallets 2.20% · Local Cards 2.95% · Intl. Cards 3.50%. Exclusive of service tax."
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('mdr_note', $plan->getLimit('mdr_note') ?? '') }}</textarea>
+@error('mdr_note')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
 
 <hr class="my-6 border-gray-200">
 

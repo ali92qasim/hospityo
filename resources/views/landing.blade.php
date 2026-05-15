@@ -222,64 +222,86 @@
             <h2 class="text-3xl sm:text-4xl font-bold text-gray-900">Simple, transparent pricing</h2>
             <p class="mt-4 text-lg text-gray-600">Start free. Upgrade when you're ready.</p>
         </div>
-        <div class="grid md:grid-cols-3 gap-8">
-            {{-- Free --}}
-            <div class="rounded-2xl border border-gray-200 p-8">
-                <h3 class="text-lg font-semibold text-gray-900">Starter</h3>
-                <div class="mt-4 flex items-baseline">
-                    <span class="text-4xl font-bold text-gray-900">Free</span>
+        @if($landingPlans === null)
+            <p class="text-center text-gray-500">Unable to load plans. Please try again later.</p>
+        @elseif($landingPlans->isEmpty())
+            <p class="text-center text-gray-500">No plans are currently available.</p>
+        @else
+            @php $popularPlan = $landingPlans->count() >= 2 ? $landingPlans->get(1) : null; @endphp
+            <div class="grid md:grid-cols-3 gap-8">
+                @foreach($landingPlans as $landingPlan)
+                @php $isPopular = $popularPlan && $landingPlan->id === $popularPlan->id; @endphp
+                <div class="rounded-2xl p-8 relative
+                    {{ $isPopular ? 'border-2 border-medical-blue shadow-lg shadow-blue-100' : 'border border-gray-200' }}">
+
+                    @if($isPopular)
+                    <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-medical-blue text-white text-xs font-medium rounded-full whitespace-nowrap">
+                        Most Popular
+                    </span>
+                    @endif
+
+                    <h3 class="text-lg font-semibold text-gray-900">{{ $landingPlan->name }}</h3>
+
+                    <div class="mt-4 flex items-baseline">
+                        @if($landingPlan->isCustomPricing())
+                            <span class="text-4xl font-bold text-gray-900">Custom</span>
+                        @elseif($landingPlan->price == 0)
+                            <span class="text-4xl font-bold text-gray-900">Free</span>
+                        @else
+                            <span class="text-4xl font-bold text-gray-900">
+                                {{ currency_symbol('PKR') }}{{ number_format($landingPlan->price, 2) }}
+                            </span>
+                            <span class="ml-1 text-gray-500">/{{ $landingPlan->billing_cycle }}</span>
+                        @endif
+                    </div>
+
+                    <p class="mt-2 text-sm text-gray-500">{{ $landingPlan->description }}</p>
+
+                    {{-- Module feature list --}}
+                    @if(!empty($landingPlan->modules))
+                    <ul class="mt-6 space-y-2.5">
+                        @foreach($landingPlan->modules as $moduleSlug)
+                        <li class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check text-medical-green mr-2.5 text-xs flex-shrink-0"></i>
+                            {{ \App\Models\ModuleRegistry::nameFor($moduleSlug) }}
+                        </li>
+                        @endforeach
+                    </ul>
+                    @endif
+
+                    <div class="mt-8">
+                        @if($landingPlan->isCustomPricing())
+                            @if($salesEmail)
+                                <a href="mailto:{{ $salesEmail }}"
+                                   class="block w-full text-center px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                    Contact Sales
+                                </a>
+                            @else
+                                <button type="button" disabled
+                                        class="block w-full text-center px-4 py-2.5 text-sm font-medium text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed opacity-60">
+                                    Contact Sales
+                                </button>
+                            @endif
+                        @else
+                            <a href="{{ route('tenant.register') }}"
+                               class="block w-full text-center px-4 py-2.5 text-sm font-medium
+                               {{ $isPopular ? 'text-white bg-medical-blue hover:bg-blue-700' : 'text-medical-blue border border-medical-blue hover:bg-blue-50' }}
+                               rounded-lg transition-colors">
+                                Get Started
+                            </a>
+                        @endif
+
+                        {{-- MDR / payment gateway note --}}
+                        @if($landingPlan->getLimit('mdr_note'))
+                        <p class="mt-3 text-xs text-gray-400 leading-relaxed">
+                            {{ $landingPlan->getLimit('mdr_note') }}
+                        </p>
+                        @endif
+                    </div>
                 </div>
-                <p class="mt-2 text-sm text-gray-500">For small clinics getting started</p>
-                <ul class="mt-6 space-y-3">
-                    @foreach(['Up to 100 patients', '1 doctor account', 'Basic billing', 'Patient records', 'Email support'] as $f)
-                    <li class="flex items-center text-sm text-gray-600">
-                        <i class="fas fa-check text-medical-green mr-2.5 text-xs"></i>{{ $f }}
-                    </li>
-                    @endforeach
-                </ul>
-                <a href="{{ route('tenant.register') }}" class="mt-8 block w-full text-center px-4 py-2.5 text-sm font-medium text-medical-blue border border-medical-blue rounded-lg hover:bg-blue-50 transition-colors">
-                    Start Free
-                </a>
+                @endforeach
             </div>
-            {{-- Pro --}}
-            <div class="rounded-2xl border-2 border-medical-blue p-8 relative shadow-lg shadow-blue-100">
-                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-medical-blue text-white text-xs font-medium rounded-full whitespace-nowrap">Most Popular</span>
-                <h3 class="text-lg font-semibold text-gray-900">Professional</h3>
-                <div class="mt-4 flex items-baseline">
-                    <span class="text-4xl font-bold text-gray-900">$49</span>
-                    <span class="ml-1 text-gray-500">/month</span>
-                </div>
-                <p class="mt-2 text-sm text-gray-500">For growing hospitals</p>
-                <ul class="mt-6 space-y-3">
-                    @foreach(['Unlimited patients', 'Up to 10 doctors', 'Full billing & reports', 'Pharmacy & inventory', 'Lab management', 'Priority support'] as $f)
-                    <li class="flex items-center text-sm text-gray-600">
-                        <i class="fas fa-check text-medical-green mr-2.5 text-xs"></i>{{ $f }}
-                    </li>
-                    @endforeach
-                </ul>
-                <a href="{{ route('tenant.register') }}" class="mt-8 block w-full text-center px-4 py-2.5 text-sm font-medium text-white bg-medical-blue rounded-lg hover:bg-blue-700 transition-colors">
-                    Start Free Trial
-                </a>
-            </div>
-            {{-- Enterprise --}}
-            <div class="rounded-2xl border border-gray-200 p-8">
-                <h3 class="text-lg font-semibold text-gray-900">Enterprise</h3>
-                <div class="mt-4 flex items-baseline">
-                    <span class="text-4xl font-bold text-gray-900">Custom</span>
-                </div>
-                <p class="mt-2 text-sm text-gray-500">For hospital networks</p>
-                <ul class="mt-6 space-y-3">
-                    @foreach(['Everything in Pro', 'Unlimited doctors', 'Custom domain', 'Dedicated database', 'SLA guarantee', 'Dedicated account manager'] as $f)
-                    <li class="flex items-center text-sm text-gray-600">
-                        <i class="fas fa-check text-medical-green mr-2.5 text-xs"></i>{{ $f }}
-                    </li>
-                    @endforeach
-                </ul>
-                <a href="mailto:sales@hospityo.com" class="mt-8 block w-full text-center px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Contact Sales
-                </a>
-            </div>
-        </div>
+        @endif
     </div>
 </section>
 

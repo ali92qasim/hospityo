@@ -249,7 +249,15 @@
                     @if($hasTests)
                         <div style="font-size: 8.5pt;">
                         @php
-                            echo $visit->labOrders->map(fn($o) => preg_match('/\(([^)]+)\)/', $o->investigation?->name, $m) ? $m[1] : explode(' ', $o->investigation?->name)[0])->unique()->join(', ');
+                            // InvestigationOrder has no direct investigation — names live on items.
+                            // Walk: labOrders → items → investigation->name
+                            $testNames = $visit->labOrders
+                                ->flatMap(fn($o) => $o->items ?? collect())
+                                ->map(fn($item) => $item->investigation?->name)
+                                ->filter()
+                                ->unique()
+                                ->values();
+                            echo $testNames->join(', ');
                         @endphp
                         </div>
                     @else

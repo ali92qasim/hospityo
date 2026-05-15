@@ -177,22 +177,40 @@
 
                 <div class="space-y-3 mb-6">
                     @foreach($plans as $plan)
-                    <label class="group flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200
-                        {{ old('plan', 'starter') === $plan->slug ? 'border-medical-blue bg-blue-50/50' : 'border-gray-200 hover:border-gray-300' }}"
+                    @php $isCustom = $plan->isCustomPricing(); @endphp
+                    <label class="group flex items-center p-4 border-2 rounded-xl transition-all duration-200
+                        {{ $isCustom
+                            ? 'border-gray-200 opacity-50 cursor-not-allowed'
+                            : (old('plan', 'starter') === $plan->slug
+                                ? 'border-medical-blue bg-blue-50/50'
+                                : 'border-gray-200 hover:border-gray-300 cursor-pointer') }}"
                         id="plan-label-{{ $plan->slug }}">
                         <input type="radio" name="plan" value="{{ $plan->slug }}"
                                class="text-medical-blue focus:ring-medical-blue h-4 w-4 flex-shrink-0"
-                               {{ old('plan', 'starter') === $plan->slug ? 'checked' : '' }}
-                               onchange="document.querySelectorAll('[id^=plan-label-]').forEach(l=>{l.classList.remove('border-medical-blue','bg-blue-50/50');l.classList.add('border-gray-200')});this.closest('label').classList.remove('border-gray-200');this.closest('label').classList.add('border-medical-blue','bg-blue-50/50');">
+                               {{ old('plan', 'starter') === $plan->slug && !$isCustom ? 'checked' : '' }}
+                               {{ $isCustom ? 'disabled' : '' }}
+                               @if(!$isCustom)
+                               onchange="document.querySelectorAll('[id^=plan-label-]').forEach(l=>{l.classList.remove('border-medical-blue','bg-blue-50/50');l.classList.add('border-gray-200')});this.closest('label').classList.remove('border-gray-200');this.closest('label').classList.add('border-medical-blue','bg-blue-50/50');"
+                               @endif>
                         <div class="flex-1 ml-4 min-w-0">
                             <div class="flex items-center justify-between">
                                 <span class="text-sm font-semibold text-gray-900">{{ $plan->name }}</span>
-                                <span class="text-sm font-bold {{ $plan->price > 0 ? 'text-medical-blue' : 'text-green-600' }}">
-                                    {{ $plan->price > 0 ? currency_symbol('PKR') . ' ' . number_format($plan->price) . '/mo' : 'Free' }}
+                                <span class="text-sm font-bold {{ $isCustom ? 'text-gray-400' : ($plan->price > 0 ? 'text-medical-blue' : 'text-green-600') }}">
+                                    @if($isCustom)
+                                        Custom
+                                    @elseif($plan->price > 0)
+                                        {{ currency_symbol('PKR') }} {{ number_format($plan->price, 2) }}/mo
+                                    @else
+                                        Free
+                                    @endif
                                 </span>
                             </div>
                             <p class="text-xs text-gray-500 mt-0.5">{{ $plan->description }}</p>
-                            @if($plan->trial_days)
+                            @if($isCustom)
+                            <span class="inline-flex items-center mt-1.5 text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                                <i class="fas fa-phone mr-1"></i>Contact sales to subscribe
+                            </span>
+                            @elseif($plan->trial_days)
                             <span class="inline-flex items-center mt-1.5 text-xs text-medical-blue bg-blue-50 px-2 py-0.5 rounded-full">
                                 <i class="fas fa-clock mr-1"></i>{{ $plan->trial_days }}-day free trial
                             </span>

@@ -22,16 +22,26 @@ class Plan extends Model
         'limits',
         'is_active',
         'sort_order',
+        'is_custom_pricing',
     ];
 
     protected function casts(): array
     {
         return [
-            'modules'   => 'array',
-            'limits'    => 'array',
-            'price'     => 'decimal:2',
-            'is_active' => 'boolean',
+            'modules'           => 'array',
+            'limits'            => 'array',
+            'price'             => 'decimal:2',
+            'is_active'         => 'boolean',
+            'is_custom_pricing' => 'boolean',
         ];
+    }
+
+    /**
+     * Check if this plan uses custom pricing.
+     */
+    public function isCustomPricing(): bool
+    {
+        return (bool) $this->is_custom_pricing;
     }
 
     /**

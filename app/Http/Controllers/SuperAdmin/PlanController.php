@@ -43,7 +43,9 @@ class PlanController extends Controller
             'max_doctors'   => 'nullable|integer|min:1',
             'sort_order'    => 'nullable|integer|min:0',
             'paddle_price_id' => 'nullable|string|max:255',
-            'is_active'     => 'boolean',
+            'is_active'          => 'boolean',
+            'mdr_note'           => 'nullable|string|max:1000',
+            'is_custom_pricing'  => 'boolean',
         ]);
 
         try {
@@ -59,9 +61,11 @@ class PlanController extends Controller
                     'max_users'    => $validated['max_users'] ?? null,
                     'max_patients' => $validated['max_patients'] ?? null,
                     'max_doctors'  => $validated['max_doctors'] ?? null,
+                    'mdr_note'     => $validated['mdr_note'] ?? null,
                 ]),
-                'sort_order'    => $validated['sort_order'] ?? 0,
-                'is_active'     => $request->boolean('is_active', true),
+                'sort_order'        => $validated['sort_order'] ?? 0,
+                'is_active'         => $request->boolean('is_active', true),
+                'is_custom_pricing' => $request->boolean('is_custom_pricing', false),
             ]);
 
             return redirect()->route('super-admin.plans.index')->with('success', 'Plan created.');
@@ -92,7 +96,9 @@ class PlanController extends Controller
             'max_doctors'   => 'nullable|integer|min:1',
             'sort_order'    => 'nullable|integer|min:0',
             'paddle_price_id' => 'nullable|string|max:255',
-            'is_active'     => 'boolean',
+            'is_active'          => 'boolean',
+            'mdr_note'           => 'nullable|string|max:1000',
+            'is_custom_pricing'  => 'boolean',
         ]);
 
         try {
@@ -108,9 +114,11 @@ class PlanController extends Controller
                     'max_users'    => $validated['max_users'] ?? null,
                     'max_patients' => $validated['max_patients'] ?? null,
                     'max_doctors'  => $validated['max_doctors'] ?? null,
+                    'mdr_note'     => $validated['mdr_note'] ?? null,
                 ]),
-                'sort_order'    => $validated['sort_order'] ?? 0,
-                'is_active'     => $request->boolean('is_active', true),
+                'sort_order'        => $validated['sort_order'] ?? 0,
+                'is_active'         => $request->boolean('is_active', true),
+                'is_custom_pricing' => $request->boolean('is_custom_pricing', false),
             ]);
 
             return redirect()->route('super-admin.plans.index')->with('success', 'Plan updated.');

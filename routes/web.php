@@ -179,11 +179,21 @@ Route::get('/', function () {
         if (auth()->check()) {
             return redirect()->route('dashboard');
         }
-        // Redirect to central login instead of tenant login
         return redirect(config('app.url') . '/signin');
     }
 
-    return view('landing');
+    try {
+        $landingPlans = \App\Models\Plan::active()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+    } catch (\Throwable $e) {
+        $landingPlans = null;
+    }
+
+    $salesEmail = \App\Models\SiteSetting::get('sales_contact_email');
+
+    return view('landing', compact('landingPlans', 'salesEmail'));
 })->name('home');
 
 /*
