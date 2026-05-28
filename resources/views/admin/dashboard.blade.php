@@ -5,6 +5,24 @@
 @section('page-description', 'Hospityo Overview')
 
 @section('content')
+
+{{-- Near-expiry medicine alert banner --}}
+@if(isset($nearExpiryCount) && $nearExpiryCount > 0)
+<div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="flex items-center">
+        <i class="fas fa-exclamation-triangle text-amber-500 mr-3 flex-shrink-0"></i>
+        <span class="text-sm text-amber-800 font-medium">
+            <strong>{{ $nearExpiryCount }}</strong> medicine batch{{ $nearExpiryCount > 1 ? 'es are' : ' is' }}
+            expiring within 6 months and {{ $nearExpiryCount > 1 ? 'need' : 'needs' }} to be returned to the supplier.
+        </span>
+    </div>
+    <a href="{{ route('inventory.expiring') }}"
+       class="inline-flex items-center text-xs font-medium text-amber-700 border border-amber-300 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+        <i class="fas fa-arrow-right mr-1.5"></i> View Details
+    </a>
+</div>
+@endif
+
 @if(auth()->user()->hasRole('Doctor') && isset($assignedPatients))
 <!-- Doctor Dashboard -->
 <div class="bg-white rounded-lg shadow-sm p-3 sm:p-4 md:p-6 mb-4 md:mb-6">

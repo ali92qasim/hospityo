@@ -30,6 +30,17 @@ class SyncTenantPermissions extends Command
 
             app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
+            // Fix any permissions/roles created via the UI with the wrong guard_name
+            \Illuminate\Support\Facades\DB::connection('tenant')
+                ->table('permissions')
+                ->where('guard_name', '!=', 'web')
+                ->update(['guard_name' => 'web']);
+
+            \Illuminate\Support\Facades\DB::connection('tenant')
+                ->table('roles')
+                ->where('guard_name', '!=', 'web')
+                ->update(['guard_name' => 'web']);
+
             Artisan::call('db:seed', [
                 '--class'    => 'Database\\Seeders\\RolePermissionSeeder',
                 '--database' => 'tenant',

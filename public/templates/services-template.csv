@@ -1,0 +1,11 @@
+code,name,category,description,price,department_name,is_active
+CONS001,General Consultation,consultation,Standard outpatient consultation with doctor,500,,1
+CONS002,Specialist Consultation,consultation,Consultation with a specialist doctor,1000,Cardiology,1
+DRESS001,Wound Dressing,procedure,Basic wound dressing and bandaging,300,Surgery,1
+DRESS002,Suture Removal,procedure,Removal of surgical sutures,200,Surgery,1
+ECG001,Electrocardiogram (ECG),diagnostic,12-lead ECG recording and interpretation report,800,Cardiology,1
+XRAY001,X-Ray (Single View),diagnostic,Standard single-view radiograph,1500,,1
+USS001,Ultrasound Abdomen,diagnostic,Abdominal ultrasound scan,2500,Radiology,1
+INJ001,Injection Administration,nursing,Administration of prescribed injection,150,,1
+IV001,IV Cannula Insertion,nursing,Insertion of intravenous cannula,200,,1
+SURG001,Minor Surgical Procedure,surgical,Minor surgical procedure under local anaesthesia,5000,Surgery,1

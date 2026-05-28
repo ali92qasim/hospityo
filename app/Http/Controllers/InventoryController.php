@@ -45,31 +45,40 @@ class InventoryController extends Controller
         $validated = $request->validated();
 
         $medicine = Medicine::findOrFail($validated['medicine_id']);
-        
-        // Check if stock management is enabled for this medicine
+
         if (!$medicine->manage_stock) {
             return back()->withErrors(['medicine_id' => 'Stock management is not enabled for this medicine.']);
         }
-        
+
         $unit = Unit::findOrFail($validated['unit_id']);
-        
+
         // Convert to base unit for storage
         $baseQuantity = $unit->convertToBaseUnit($validated['quantity']);
-        $totalCost = $validated['quantity'] * $validated['unit_cost'];
+        $baseUnitCost = $validated['unit_cost'] / $unit->conversion_factor;
+        $totalCost    = $validated['quantity'] * $validated['unit_cost'];
 
-        InventoryTransaction::create([
-            'medicine_id' => $validated['medicine_id'],
-            'type' => 'stock_in',
-            'quantity' => $baseQuantity,
-            'unit_cost' => $validated['unit_cost'] / $unit->conversion_factor,
-            'total_cost' => $totalCost,
-            'supplier' => $validated['supplier'],
-            'batch_no' => $validated['batch_no'],
-            'expiry_date' => $validated['expiry_date'],
-            'reference_no' => $validated['reference_no'],
-            'notes' => $validated['notes'],
-            'created_by' => auth()->id()
-        ]);
+        try {
+            InventoryTransaction::create([
+                'medicine_id'        => $validated['medicine_id'],
+                'type'               => 'stock_in',
+                'quantity'           => $baseQuantity,
+                'remaining_quantity' => $baseQuantity, // FIFO: starts fully available
+                'unit_cost'          => $baseUnitCost,
+                'total_cost'         => $totalCost,
+                'supplier'           => $validated['supplier'],
+                'batch_no'           => $validated['batch_no'] ?? null,
+                'expiry_date'        => $validated['expiry_date'] ?? null,
+                'reference_no'       => $validated['reference_no'] ?? null,
+                'notes'              => $validated['notes'] ?? null,
+                'created_by'         => auth()->id(),
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('[Inventory] Stock-in failed', [
+                'medicine_id' => $validated['medicine_id'],
+                'error'       => $e->getMessage(),
+            ]);
+            return back()->withInput()->with('error', 'Failed to record stock. Please try again.');
+        }
 
         return redirect()->route('inventory.index')
             ->with('success', 'Stock added successfully.');
@@ -92,29 +101,60 @@ class InventoryController extends Controller
         $validated = $request->validated();
 
         $medicine = Medicine::findOrFail($validated['medicine_id']);
-        
-        // Check if stock management is enabled for this medicine
+
         if (!$medicine->manage_stock) {
             return back()->withErrors(['medicine_id' => 'Stock management is not enabled for this medicine.']);
         }
-        
-        $currentStock = $medicine->getCurrentStock();
 
-        if ($currentStock < $validated['quantity']) {
-            return back()->withErrors(['quantity' => 'Insufficient stock available.']);
+        $available = $medicine->getTotalAvailableStock();
+
+        if ($available < $validated['quantity']) {
+            return back()->withErrors([
+                'quantity' => "Insufficient stock. Available: {$available}, requested: {$validated['quantity']}.",
+            ]);
         }
 
-        InventoryTransaction::create([
-            'medicine_id' => $validated['medicine_id'],
-            'type' => 'stock_out',
-            'quantity' => $validated['quantity'],
-            'unit_cost' => 0,
-            'total_cost' => 0,
-            'supplier' => $validated['reason'],
-            'reference_no' => $validated['reference_no'],
-            'notes' => $validated['notes'],
-            'created_by' => auth()->id()
-        ]);
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $medicine) {
+                $remaining = $validated['quantity'];
+                $batches   = $medicine->getAvailableBatches();
+
+                foreach ($batches as $batch) {
+                    if ($remaining <= 0) break;
+
+                    $consume = min($batch->remaining_quantity, $remaining);
+
+                    $batch->decrement('remaining_quantity', $consume);
+
+                    InventoryTransaction::create([
+                        'medicine_id'  => $medicine->id,
+                        'type'         => 'stock_out',
+                        'quantity'     => $consume,
+                        'unit_cost'    => $batch->unit_cost,
+                        'total_cost'   => $consume * $batch->unit_cost,
+                        'batch_no'     => $batch->batch_no,
+                        'supplier'     => $validated['reason'],
+                        'reference_no' => $validated['reference_no'] ?? null,
+                        'notes'        => $validated['notes'] ?? null,
+                        'created_by'   => auth()->id(),
+                    ]);
+
+                    $remaining -= $consume;
+                }
+
+                if ($remaining > 0) {
+                    throw new \RuntimeException(
+                        "Stock exhausted mid-operation for {$medicine->name}. Transaction rolled back."
+                    );
+                }
+            });
+        } catch (\Throwable $e) {
+            \Log::error('[Inventory] Stock-out failed', [
+                'medicine_id' => $medicine->id,
+                'error'       => $e->getMessage(),
+            ]);
+            return back()->withInput()->with('error', 'Failed to remove stock. Please try again.');
+        }
 
         return redirect()->route('inventory.index')
             ->with('success', 'Stock removed successfully.');
@@ -135,13 +175,12 @@ class InventoryController extends Controller
 
     public function expiring()
     {
-        $expiringStock = InventoryTransaction::with(['medicine'])
-            ->where('type', 'stock_in')
-            ->whereNotNull('expiry_date')
-            ->where('expiry_date', '<=', now()->addMonths(3))
-            ->where('expiry_date', '>', now())
-            ->orderBy('expiry_date')
-            ->get();
+        try {
+            $expiringStock = InventoryTransaction::nearExpiry(6)->get();
+        } catch (\Throwable $e) {
+            \Log::error('[Inventory] Failed to load near-expiry stock', ['error' => $e->getMessage()]);
+            $expiringStock = collect();
+        }
 
         return view('admin.inventory.expiring', compact('expiringStock'));
     }

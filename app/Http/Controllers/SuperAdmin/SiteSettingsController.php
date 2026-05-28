@@ -19,6 +19,7 @@ class SiteSettingsController extends Controller
         'twitter_url' => 'Twitter / X URL',
         'linkedin_url' => 'LinkedIn URL',
         'whatsapp_number' => 'WhatsApp Number',
+        'sales_contact_email' => 'Sales Contact Email',
     ];
 
     public function edit()

@@ -21,6 +21,7 @@ class Medicine extends Model
         'category_id',
         'dosage_form',
         'strength',
+        'selling_price',
         'base_unit_id',
         'purchase_unit_id',
         'dispensing_unit_id',
@@ -188,26 +189,72 @@ class Medicine extends Model
         return $this->belongsTo(Unit::class, 'dispensing_unit_id');
     }
 
-    public function getCurrentStock(): int
+    /**
+     * Total available stock computed from remaining_quantity on stock_in transactions.
+     * This is the FIFO-aware stock figure — single source of truth.
+     */
+    public function getTotalAvailableStock(): int
     {
-        // If manage_stock is disabled, return 0
         if (!$this->manage_stock) {
             return 0;
         }
 
+        return (int) ($this->inventoryTransactions()
+            ->where('type', 'stock_in')
+            ->sum('remaining_quantity') ?? 0);
+    }
+
+    /**
+     * Returns stock_in batches ordered by expiry_date ASC (FEFO), then created_at ASC.
+     * Batches with no expiry date are consumed last.
+     * Only returns batches that still have remaining stock.
+     */
+    public function getAvailableBatches()
+    {
         return $this->inventoryTransactions()
-            ->selectRaw('SUM(CASE WHEN type = "stock_in" THEN quantity ELSE -quantity END) as current_stock')
-            ->value('current_stock') ?? 0;
+            ->where('type', 'stock_in')
+            ->where('remaining_quantity', '>', 0)
+            ->orderByRaw('CASE WHEN expiry_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('expiry_date', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->get();
+    }
+
+    /**
+     * Get the effective selling price per base unit.
+     * Uses the clinic-set selling_price if available, otherwise falls back
+     * to the unit_cost of the most recent stock_in transaction.
+     */
+    public function getSellingPrice(): float
+    {
+        if (!is_null($this->selling_price)) {
+            return (float) $this->selling_price;
+        }
+
+        $latestCost = $this->inventoryTransactions()
+            ->where('type', 'stock_in')
+            ->orderBy('created_at', 'desc')
+            ->value('unit_cost');
+
+        return (float) ($latestCost ?? 0);
+    }
+
+    /**
+     * Legacy alias — delegates to getTotalAvailableStock() so existing
+     * code calling getCurrentStock() continues to work without changes.
+     */
+    public function getCurrentStock(): int
+    {
+        return $this->getTotalAvailableStock();
     }
 
     public function getCurrentStockInUnit($unitId): int
     {
-        // If manage_stock is disabled, return 0
         if (!$this->manage_stock) {
             return 0;
         }
 
-        $baseStock = $this->getCurrentStock();
+        $baseStock = $this->getTotalAvailableStock();
         $unit = Unit::find($unitId);
 
         if (!$unit || $unit->base_unit_id !== $this->base_unit_id) {
@@ -219,11 +266,10 @@ class Medicine extends Model
 
     public function isLowStock(): bool
     {
-        // If manage_stock is disabled, never show as low stock
         if (!$this->manage_stock) {
             return false;
         }
 
-        return $this->getCurrentStock() <= $this->reorder_level;
+        return $this->getTotalAvailableStock() <= ($this->reorder_level ?? 0);
     }
 }

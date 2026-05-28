@@ -16,6 +16,7 @@ class InventoryTransaction extends Model
         'medicine_id',
         'type',
         'quantity',
+        'remaining_quantity',
         'unit_cost',
         'total_cost',
         'reference_no',
@@ -27,9 +28,11 @@ class InventoryTransaction extends Model
     ];
 
     protected $casts = [
-        'expiry_date' => 'date',
-        'unit_cost' => 'decimal:2',
-        'total_cost' => 'decimal:2'
+        'expiry_date'        => 'date',
+        'unit_cost'          => 'decimal:2',
+        'total_cost'         => 'decimal:2',
+        'quantity'           => 'integer',
+        'remaining_quantity' => 'integer',
     ];
 
     public function medicine(): BelongsTo
@@ -40,5 +43,22 @@ class InventoryTransaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Query stock_in batches expiring within the given number of months
+     * that still have remaining stock available.
+     *
+     * Ordered by expiry_date ASC so the most urgent batches appear first.
+     */
+    public static function nearExpiry(int $months = 6)
+    {
+        return static::with(['medicine'])
+            ->where('type', 'stock_in')
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '<=', now()->addMonths($months))
+            ->where('expiry_date', '>', now())
+            ->where('remaining_quantity', '>', 0)
+            ->orderBy('expiry_date', 'asc');
     }
 }

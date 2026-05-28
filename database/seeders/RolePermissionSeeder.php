@@ -83,6 +83,10 @@ class RolePermissionSeeder extends Seeder
         'edit permissions',
         'delete permissions',
         'manage user roles',
+
+        // ── Pharmacy ──────────────────────────────────────────────────────────
+        'view inventory',
+        'manage inventory',
     ];
 
     /**
@@ -126,6 +130,18 @@ class RolePermissionSeeder extends Seeder
             'view patients',
             'view medical records', 'create medical records', 'edit medical records',
             'view bills',
+        ],
+
+        // ── Pharmacist ────────────────────────────────────────────────────────
+        'Pharmacist' => [
+            'view patients',
+            'view visits',
+            'view bills',
+            'create bills',
+            'create payments',
+            'view services',
+            'view inventory',
+            'manage inventory',
         ],
     ];
 

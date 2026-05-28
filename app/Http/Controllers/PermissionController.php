@@ -24,7 +24,10 @@ class PermissionController extends Controller
             'name' => 'required|unique:tenant.permissions,name'
         ]);
 
-        Permission::create(['name' => $request->name]);
+        Permission::create([
+            'name'       => $request->name,
+            'guard_name' => 'web',
+        ]);
 
         return redirect()->route('permissions.index')->with('success', 'Permission created successfully');
     }
@@ -40,7 +43,10 @@ class PermissionController extends Controller
             'name' => 'required|unique:tenant.permissions,name,' . $permission->id
         ]);
 
-        $permission->update(['name' => $request->name]);
+        $permission->update([
+            'name'       => $request->name,
+            'guard_name' => 'web',
+        ]);
 
         return redirect()->route('permissions.index')->with('success', 'Permission updated successfully');
     }

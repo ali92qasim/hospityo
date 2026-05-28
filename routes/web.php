@@ -209,18 +209,28 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/dashboard', function () {
         $user = auth()->user();
-        
+
+        // Near-expiry count for the dashboard banner (admins and pharmacists)
+        $nearExpiryCount = 0;
+        try {
+            if ($user->hasAnyRole(['Super Admin', 'Hospital Administrator', 'Pharmacist'])) {
+                $nearExpiryCount = \App\Models\InventoryTransaction::nearExpiry(6)->count();
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('[Dashboard] Failed to load near-expiry count', ['error' => $e->getMessage()]);
+        }
+
         // Check if user is a doctor
         if ($user->hasRole('Doctor')) {
             $doctor = \App\Models\Doctor::where('user_id', $user->id)->first();
             if ($doctor) {
                 $assignedPatients = $doctor->assignedPatients()->limit(5)->get();
                 $totalAssigned = $doctor->assignedPatients()->count();
-                return view('admin.dashboard', compact('assignedPatients', 'totalAssigned'));
+                return view('admin.dashboard', compact('assignedPatients', 'totalAssigned', 'nearExpiryCount'));
             }
         }
-        
-        return view('admin.dashboard');
+
+        return view('admin.dashboard', compact('nearExpiryCount'));
     })->name('dashboard');
     
     // Doctor assignments route
@@ -393,6 +403,11 @@ Route::middleware('auth')->group(function () {
         Route::post('documents/requirements', [\App\Http\Controllers\DocumentManagementController::class, 'storeRequirement'])->name('documents.store-requirement');
         Route::delete('documents/requirements/{documentRequirement}', [\App\Http\Controllers\DocumentManagementController::class, 'destroyRequirement'])->name('documents.destroy-requirement');
     });
+    // Service import routes — must be BEFORE the resource route to avoid
+    // the resource route capturing 'import' as a {service} parameter
+    Route::post('services/import', [ServiceController::class, 'import'])->name('services.import')->middleware('permission:create services');
+    Route::get('services/import-status', [ServiceController::class, 'importStatus'])->name('services.import-status')->middleware('permission:create services');
+
     Route::resource('services', ServiceController::class)->middleware('permission:view services|create services|edit services|delete services');
     
     // IPD Management Routes
