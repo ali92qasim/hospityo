@@ -70,6 +70,16 @@ class RolePermissionSeeder extends Seeder
         'edit services',
         'delete services',
 
+        // ── Laboratory / Diagnostics ──────────────────────────────────────────
+        'view investigations',
+        'create investigations',
+        'edit investigations',
+        'delete investigations',
+
+        // ── Pharmacy / Inventory ──────────────────────────────────────────────
+        'view pharmacy',
+        'manage pharmacy',
+
         // ── Doctor Share ──────────────────────────────────────────────────────
         'manage doctor shares',
 
@@ -103,6 +113,8 @@ class RolePermissionSeeder extends Seeder
             'view medical records', 'create medical records', 'edit medical records',
             'view bills', 'create bills', 'edit bills', 'create payments',
             'view services', 'create services', 'edit services',
+            'view investigations', 'create investigations', 'edit investigations',
+            'view pharmacy', 'manage pharmacy',
             'manage doctor shares',
             'manage user roles',
         ],
@@ -112,6 +124,7 @@ class RolePermissionSeeder extends Seeder
             'view appointments', 'create appointments', 'edit appointments',
             'view medical records', 'create medical records', 'edit medical records', 'sign medical records',
             'view bills', 'create bills',
+            'view investigations',
         ],
         'Nurse' => [
             'view patients', 'edit patients',
@@ -119,6 +132,7 @@ class RolePermissionSeeder extends Seeder
             'view appointments',
             'view medical records', 'create medical records', 'edit medical records',
             'view bills',
+            'view investigations',
         ],
         'Receptionist' => [
             'view patients', 'create patients', 'edit patients',
@@ -140,6 +154,8 @@ class RolePermissionSeeder extends Seeder
             'create bills',
             'create payments',
             'view services',
+            'view pharmacy',
+            'manage pharmacy',
             'view inventory',
             'manage inventory',
         ],

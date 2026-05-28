@@ -447,10 +447,10 @@ Route::middleware('auth')->group(function () {
     Route::post('purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel')->middleware('permission:edit services');
     
     // Laboratory Routes
-    Route::resource('investigations', InvestigationController::class)->middleware('permission:view services|create services|edit services|delete services');
-    Route::post('investigations/import', [InvestigationController::class, 'import'])->name('investigations.import')->middleware('permission:create services');
-    Route::get('investigations/import-status', [InvestigationController::class, 'importStatus'])->name('investigations.import-status')->middleware('permission:create services');
-    Route::resource('lab-tests', InvestigationController::class)->middleware('permission:view services|create services|edit services|delete services');
+    Route::resource('investigations', InvestigationController::class)->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+    Route::post('investigations/import', [InvestigationController::class, 'import'])->name('investigations.import')->middleware('permission:create investigations');
+    Route::get('investigations/import-status', [InvestigationController::class, 'importStatus'])->name('investigations.import-status')->middleware('permission:create investigations');
+    Route::resource('lab-tests', InvestigationController::class)->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
     
     // Investigation Orders (new routes)
     Route::resource('investigation-orders', InvestigationOrderController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
