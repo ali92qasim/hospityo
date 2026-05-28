@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\PermissionRegistrar;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureTenantActive
@@ -34,6 +35,11 @@ class EnsureTenantActive
         if ($tenant->status !== 'active') {
             return redirect(config('app.url'));
         }
+
+        // Scope Spatie's permission cache key to this tenant so that
+        // permission changes in one tenant never affect another tenant's cache.
+        app(PermissionRegistrar::class)->cacheKey =
+            'spatie.permission.cache.tenant.' . $tenant->id;
 
         // Trial expiry check — allow subscription page so users can upgrade
         if ($tenant->trialExpired() && !$tenant->activeSubscription) {
