@@ -48,7 +48,7 @@ class BillController extends Controller
                 $bill = Bill::create([
                     'patient_id'          => $request->patient_id,
                     'visit_id'            => $request->visit_id,
-                    'bill_number'         => 'BILL-' . date('Y') . '-' . str_pad(Bill::count() + 1, 6, '0', STR_PAD_LEFT),
+                    'bill_number'         => $this->generateBillNumber(),
                     'bill_date'           => $request->bill_date,
                     'bill_type'           => $request->bill_type,
                     'tax_amount'          => $request->tax_amount ?? 0,
@@ -222,5 +222,24 @@ class BillController extends Controller
             'hospital_logo'    => setting('hospital_logo', ''),
         ];
         return view('admin.bills.print', compact('bill', 'settings'));
+    }
+
+    /**
+     * Generate a unique bill number using the highest existing sequence number.
+     * Uses MAX on the numeric suffix rather than COUNT to avoid collisions
+     * caused by deleted bills or concurrent requests.
+     */
+    private function generateBillNumber(): string
+    {
+        $prefix = 'BILL-' . date('Y') . '-';
+
+        // Extract the highest numeric suffix for this year's bills
+        $lastNumber = Bill::where('bill_number', 'like', $prefix . '%')
+            ->selectRaw("MAX(CAST(SUBSTRING(bill_number, ?) AS UNSIGNED)) as max_num", [strlen($prefix) + 1])
+            ->value('max_num');
+
+        $nextNumber = ($lastNumber ?? 0) + 1;
+
+        return $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 }
