@@ -58,10 +58,12 @@ class SidebarService
         }
 
         // ── IPD Management ────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'ipd') && $user->can('view departments')) {
+        if ($this->hasModule($tenant, 'ipd') && ($user->can('view wards') || $user->can('view beds'))) {
             $items = [];
-            if ($user->can('view departments')) {
+            if ($user->can('view wards')) {
                 $items[] = $this->item('Wards', 'fa-hospital', 'wards.index', ['wards.*']);
+            }
+            if ($user->can('view beds')) {
                 $items[] = $this->item('Beds', 'fa-bed', 'beds.index', ['beds.*']);
             }
             if (!empty($items)) {
@@ -89,16 +91,23 @@ class SidebarService
         }
 
         // ── Diagnostics / Laboratory ──────────────────────────────────────────
-        if ($this->hasModule($tenant, 'laboratory') && ($user->can('view services') || $user->can('view investigations'))) {
-            $items = [
-                $this->item('Investigations', 'fa-flask', 'investigations.index', ['investigations.*', 'lab-tests.*']),
-                $this->item('Investigation Orders', 'fa-clipboard-list', 'investigation-orders.index', ['investigation-orders.*', 'lab-orders.*']),
-                $this->item('Results', 'fa-file-medical-alt', 'lab-results.index', ['lab-results.*', 'radiology-results.*']),
-            ];
-            $menu[] = $this->group('diagnostics', 'Diagnostics', $items, [
-                'investigations.*', 'investigation-orders.*', 'lab-results.*',
-                'lab-tests.*', 'lab-orders.*', 'radiology-results.*',
-            ]);
+        if ($this->hasModule($tenant, 'laboratory') && ($user->can('view investigations') || $user->can('view investigation orders') || $user->can('view lab results'))) {
+            $items = [];
+            if ($user->can('view investigations')) {
+                $items[] = $this->item('Investigations', 'fa-flask', 'investigations.index', ['investigations.*', 'lab-tests.*']);
+            }
+            if ($user->can('view investigation orders') || $user->can('view lab orders')) {
+                $items[] = $this->item('Investigation Orders', 'fa-clipboard-list', 'investigation-orders.index', ['investigation-orders.*', 'lab-orders.*']);
+            }
+            if ($user->can('view lab results') || $user->can('view radiology results')) {
+                $items[] = $this->item('Results', 'fa-file-medical-alt', 'lab-results.index', ['lab-results.*', 'radiology-results.*']);
+            }
+            if (!empty($items)) {
+                $menu[] = $this->group('diagnostics', 'Diagnostics', $items, [
+                    'investigations.*', 'investigation-orders.*', 'lab-results.*',
+                    'lab-tests.*', 'lab-orders.*', 'radiology-results.*',
+                ]);
+            }
         }
 
         // ── Billing ───────────────────────────────────────────────────────────
@@ -130,7 +139,7 @@ class SidebarService
         }
 
         // ── Accounting ────────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'billing') && $user->can('view bills')) {
+        if ($this->hasModule($tenant, 'billing') && $user->can('view accounting')) {
             $items = [
                 $this->item('Chart of Accounts', 'fa-sitemap', 'accounting.chart-of-accounts', ['accounting.chart-of-accounts*', 'accounting.create-account*']),
                 $this->item('Journal Entries', 'fa-book', 'accounting.journal-entries', ['accounting.journal-entries']),
@@ -144,7 +153,7 @@ class SidebarService
         }
 
         // ── Reports ───────────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'reports') && $user->can('view bills')) {
+        if ($this->hasModule($tenant, 'reports') && $user->can('view reports')) {
             $items = [
                 $this->item('Daily Cash Register', 'fa-cash-register', 'reports.daily-cash-register', ['reports.daily-cash-register']),
                 $this->item('Patient Visits', 'fa-user-clock', 'reports.patient-visits', ['reports.patient-visits']),
@@ -164,7 +173,7 @@ class SidebarService
         }
 
         // ── HR ────────────────────────────────────────────────────────────────
-        if ($user->hasAnyRole(['Super Admin', 'Hospital Administrator'])) {
+        if ($user->can('view hr')) {
             $items = [
                 $this->item('Employees', 'fa-users', 'hr.employees.index', ['hr.employees.*']),
                 $this->item('Designations', 'fa-id-badge', 'hr.designations.index', ['hr.designations.*']),

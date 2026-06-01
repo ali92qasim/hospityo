@@ -52,13 +52,6 @@ class RolePermissionSeeder extends Seeder
         'edit appointments',
         'delete appointments',
 
-        // ── Medical Records ───────────────────────────────────────────────────
-        'view medical records',
-        'create medical records',
-        'edit medical records',
-        'delete medical records',
-        'sign medical records',
-
         // ── Billing ───────────────────────────────────────────────────────────
         'view bills',
         'create bills',
@@ -70,15 +63,52 @@ class RolePermissionSeeder extends Seeder
         'edit services',
         'delete services',
 
+        // ── IPD (Wards & Beds) ────────────────────────────────────────────────
+        'view wards',
+        'create wards',
+        'edit wards',
+        'delete wards',
+        'view beds',
+        'create beds',
+        'edit beds',
+        'delete beds',
+
+        // ── Pharmacy / Inventory ──────────────────────────────────────────────
+        'view pharmacy',
+        'manage pharmacy',
+        'view inventory',
+        'manage inventory',
+
         // ── Laboratory / Diagnostics ──────────────────────────────────────────
         'view investigations',
         'create investigations',
         'edit investigations',
         'delete investigations',
+        'view investigation orders',
+        'create investigation orders',
+        'edit investigation orders',
+        'delete investigation orders',
+        'view lab results',
+        'create lab results',
+        'edit lab results',
+        'delete lab results',
+        'view lab orders',
+        'create lab orders',
+        'edit lab orders',
+        'delete lab orders',
+        'view radiology results',
+        'create radiology results',
+        'edit radiology results',
+        'delete radiology results',
 
-        // ── Pharmacy / Inventory ──────────────────────────────────────────────
-        'view pharmacy',
-        'manage pharmacy',
+        // ── Accounting ────────────────────────────────────────────────────────
+        'view accounting',
+
+        // ── Reports ───────────────────────────────────────────────────────────
+        'view reports',
+
+        // ── HR ────────────────────────────────────────────────────────────────
+        'view hr',
 
         // ── Doctor Share ──────────────────────────────────────────────────────
         'manage doctor shares',
@@ -93,10 +123,6 @@ class RolePermissionSeeder extends Seeder
         'edit permissions',
         'delete permissions',
         'manage user roles',
-
-        // ── Pharmacy ──────────────────────────────────────────────────────────
-        'view inventory',
-        'manage inventory',
     ];
 
     /**
@@ -110,11 +136,20 @@ class RolePermissionSeeder extends Seeder
             'view departments', 'create departments', 'edit departments',
             'view visits', 'create visits', 'edit visits',
             'view appointments', 'create appointments', 'edit appointments',
-            'view medical records', 'create medical records', 'edit medical records',
             'view bills', 'create bills', 'edit bills', 'create payments',
             'view services', 'create services', 'edit services',
-            'view investigations', 'create investigations', 'edit investigations',
+            'view wards', 'create wards', 'edit wards',
+            'view beds', 'create beds', 'edit beds',
             'view pharmacy', 'manage pharmacy',
+            'view inventory', 'manage inventory',
+            'view investigations', 'create investigations', 'edit investigations',
+            'view investigation orders', 'create investigation orders', 'edit investigation orders',
+            'view lab results', 'create lab results', 'edit lab results',
+            'view lab orders', 'create lab orders', 'edit lab orders',
+            'view radiology results', 'create radiology results', 'edit radiology results',
+            'view accounting',
+            'view reports',
+            'view hr',
             'manage doctor shares',
             'manage user roles',
         ],
@@ -122,17 +157,20 @@ class RolePermissionSeeder extends Seeder
             'view patients', 'edit patients',
             'view visits', 'create visits', 'edit visits',
             'view appointments', 'create appointments', 'edit appointments',
-            'view medical records', 'create medical records', 'edit medical records', 'sign medical records',
             'view bills', 'create bills',
             'view investigations',
+            'view investigation orders', 'create investigation orders',
+            'view lab results',
         ],
         'Nurse' => [
             'view patients', 'edit patients',
             'view visits', 'edit visits',
             'view appointments',
-            'view medical records', 'create medical records', 'edit medical records',
             'view bills',
             'view investigations',
+            'view investigation orders',
+            'view lab results',
+            'view wards', 'view beds',
         ],
         'Receptionist' => [
             'view patients', 'create patients', 'edit patients',
@@ -140,24 +178,21 @@ class RolePermissionSeeder extends Seeder
             'view visits', 'create visits',
             'view bills', 'create bills', 'create payments',
         ],
-        'Medical Records Clerk' => [
+        'Lab Technician' => [
             'view patients',
-            'view medical records', 'create medical records', 'edit medical records',
-            'view bills',
+            'view investigations',
+            'view investigation orders', 'edit investigation orders',
+            'view lab orders', 'edit lab orders',
+            'view lab results', 'create lab results', 'edit lab results',
+            'view radiology results', 'create radiology results', 'edit radiology results',
         ],
-
-        // ── Pharmacist ────────────────────────────────────────────────────────
         'Pharmacist' => [
             'view patients',
             'view visits',
-            'view bills',
-            'create bills',
-            'create payments',
+            'view bills', 'create bills', 'create payments',
             'view services',
-            'view pharmacy',
-            'manage pharmacy',
-            'view inventory',
-            'manage inventory',
+            'view pharmacy', 'manage pharmacy',
+            'view inventory', 'manage inventory',
         ],
     ];
 

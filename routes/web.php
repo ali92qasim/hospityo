@@ -303,7 +303,7 @@ Route::middleware('auth')->group(function () {
     Route::post('taxes/calculate', [\App\Http\Controllers\TaxController::class, 'calculate'])->name('taxes.calculate');
 
     // Accounting
-    Route::prefix('accounting')->name('accounting.')->middleware('permission:view bills')->group(function () {
+    Route::prefix('accounting')->name('accounting.')->middleware('permission:view accounting')->group(function () {
         Route::get('chart-of-accounts', [\App\Http\Controllers\AccountingController::class, 'chartOfAccounts'])->name('chart-of-accounts');
         Route::get('chart-of-accounts/create', [\App\Http\Controllers\AccountingController::class, 'createAccount'])->name('create-account');
         Route::post('chart-of-accounts', [\App\Http\Controllers\AccountingController::class, 'storeAccount'])->name('store-account');
@@ -316,7 +316,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // HR Module
-    Route::prefix('hr')->name('hr.')->group(function () {
+    Route::prefix('hr')->name('hr.')->middleware('permission:view hr')->group(function () {
         Route::resource('employees', \App\Http\Controllers\EmployeeController::class);
         Route::post('employees/{employee}/documents', [\App\Http\Controllers\EmployeeController::class, 'uploadDocument'])->name('employees.upload-document');
         Route::delete('employees/documents/{document}', [\App\Http\Controllers\EmployeeController::class, 'deleteDocument'])->name('employees.delete-document');
@@ -411,8 +411,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('services', ServiceController::class)->middleware('permission:view services|create services|edit services|delete services');
     
     // IPD Management Routes
-    Route::resource('wards', WardController::class)->middleware('permission:view departments|create departments|edit departments|delete departments');
-    Route::resource('beds', BedController::class)->middleware('permission:view departments|create departments|edit departments|delete departments');
+    Route::resource('wards', WardController::class)->middleware('permission:view wards|create wards|edit wards|delete wards');
+    Route::resource('beds', BedController::class)->middleware('permission:view beds|create beds|edit beds|delete beds');
     
     // Pharmacy Routes
     Route::resource('medicine-categories', MedicineCategoryController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
@@ -453,29 +453,29 @@ Route::middleware('auth')->group(function () {
     Route::resource('lab-tests', InvestigationController::class)->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
     
     // Investigation Orders (new routes)
-    Route::resource('investigation-orders', InvestigationOrderController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
-    Route::post('investigation-orders/{investigationOrder}/collect-sample', [InvestigationOrderController::class, 'collectSample'])->name('investigation-orders.collect-sample')->middleware('permission:edit visits');
-    Route::post('investigation-orders/{investigationOrder}/receive-sample', [InvestigationOrderController::class, 'receiveSample'])->name('investigation-orders.receive-sample')->middleware('permission:edit visits');
+    Route::resource('investigation-orders', InvestigationOrderController::class)->middleware('permission:view investigation orders|create investigation orders|edit investigation orders|delete investigation orders');
+    Route::post('investigation-orders/{investigationOrder}/collect-sample', [InvestigationOrderController::class, 'collectSample'])->name('investigation-orders.collect-sample')->middleware('permission:edit investigation orders');
+    Route::post('investigation-orders/{investigationOrder}/receive-sample', [InvestigationOrderController::class, 'receiveSample'])->name('investigation-orders.receive-sample')->middleware('permission:edit investigation orders');
     
     // Lab Orders (legacy routes - kept for backward compatibility)
-    Route::resource('lab-orders', LabOrderController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
-    Route::post('lab-orders/{labOrder}/collect-sample', [LabOrderController::class, 'collectSample'])->name('lab-orders.collect-sample')->middleware('permission:edit visits');
-    Route::post('lab-orders/{labOrder}/receive-sample', [LabOrderController::class, 'receiveSample'])->name('lab-orders.receive-sample')->middleware('permission:edit visits');
+    Route::resource('lab-orders', LabOrderController::class)->middleware('permission:view lab orders|create lab orders|edit lab orders|delete lab orders');
+    Route::post('lab-orders/{labOrder}/collect-sample', [LabOrderController::class, 'collectSample'])->name('lab-orders.collect-sample')->middleware('permission:edit lab orders');
+    Route::post('lab-orders/{labOrder}/receive-sample', [LabOrderController::class, 'receiveSample'])->name('lab-orders.receive-sample')->middleware('permission:edit lab orders');
     
     // Lab Results - Custom routes BEFORE resource route
-    Route::get('lab-results/create-batch', [LabResultController::class, 'createBatch'])->name('lab-results.create-batch')->middleware('permission:edit visits');
-    Route::post('lab-results/store-batch', [LabResultController::class, 'storeBatch'])->name('lab-results.store-batch')->middleware('permission:edit visits');
-    Route::get('lab-orders/{orderItem}/results/create', [LabResultController::class, 'create'])->name('lab-orders.results.create')->middleware('permission:edit visits');
-    Route::post('lab-orders/{orderItem}/results', [LabResultController::class, 'store'])->name('lab-orders.results.store')->middleware('permission:edit visits');
-    Route::post('lab-results/{labResult}/verify', [LabResultController::class, 'verify'])->name('lab-results.verify')->middleware('permission:edit visits');
-    Route::get('lab-results/{labResult}/report', [LabResultController::class, 'report'])->name('lab-results.report')->middleware('permission:view visits');
+    Route::get('lab-results/create-batch', [LabResultController::class, 'createBatch'])->name('lab-results.create-batch')->middleware('permission:create lab results');
+    Route::post('lab-results/store-batch', [LabResultController::class, 'storeBatch'])->name('lab-results.store-batch')->middleware('permission:create lab results');
+    Route::get('lab-orders/{orderItem}/results/create', [LabResultController::class, 'create'])->name('lab-orders.results.create')->middleware('permission:create lab results');
+    Route::post('lab-orders/{orderItem}/results', [LabResultController::class, 'store'])->name('lab-orders.results.store')->middleware('permission:create lab results');
+    Route::post('lab-results/{labResult}/verify', [LabResultController::class, 'verify'])->name('lab-results.verify')->middleware('permission:edit lab results');
+    Route::get('lab-results/{labResult}/report', [LabResultController::class, 'report'])->name('lab-results.report')->middleware('permission:view lab results');
     
-    Route::resource('lab-results', LabResultController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
+    Route::resource('lab-results', LabResultController::class)->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
     
     // Radiology Results Routes
-    Route::get('investigation-orders/{investigationOrder}/radiology-results/create', [RadiologyResultController::class, 'create'])->name('radiology-results.create')->middleware('permission:edit visits');
-    Route::post('investigation-orders/{investigationOrder}/radiology-results', [RadiologyResultController::class, 'store'])->name('radiology-results.store')->middleware('permission:edit visits');
-    Route::resource('radiology-results', RadiologyResultController::class)->except(['create', 'store'])->middleware('permission:view visits|create visits|edit visits|delete visits');
+    Route::get('investigation-orders/{investigationOrder}/radiology-results/create', [RadiologyResultController::class, 'create'])->name('radiology-results.create')->middleware('permission:create radiology results');
+    Route::post('investigation-orders/{investigationOrder}/radiology-results', [RadiologyResultController::class, 'store'])->name('radiology-results.store')->middleware('permission:create radiology results');
+    Route::resource('radiology-results', RadiologyResultController::class)->except(['create', 'store'])->middleware('permission:view radiology results|edit radiology results|delete radiology results');
 
     
     // Doctor Share Routes
@@ -509,7 +509,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('permissions', PermissionController::class)->middleware('permission:view permissions|create permissions|edit permissions|delete permissions');
     
     // Reports Routes
-    Route::prefix('reports')->name('reports.')->group(function () {
+    Route::prefix('reports')->name('reports.')->middleware('permission:view reports')->group(function () {
         Route::get('daily-cash-register', [ReportController::class, 'dailyCashRegister'])->name('daily-cash-register');
         Route::get('patient-visits', [ReportController::class, 'patientVisits'])->name('patient-visits');
         Route::get('revenue', [ReportController::class, 'revenue'])->name('revenue');
