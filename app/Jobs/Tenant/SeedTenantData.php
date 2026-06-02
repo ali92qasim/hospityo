@@ -76,14 +76,15 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
     }
 
     /**
-     * Push default settings into the tenant's cache store.
+     * Store default settings in the tenant database.
+     * Settings persist in DB — cache is just a performance layer.
      */
     protected function seedDefaultSettings(): void
     {
         $settings = $this->tenant->settings ?? [];
 
         foreach ($settings as $key => $value) {
-            Cache::put("settings.{$key}", $value);
+            \App\Models\TenantSetting::set($key, $value);
         }
     }
 

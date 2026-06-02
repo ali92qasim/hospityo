@@ -2,7 +2,9 @@
 
 if (!function_exists('setting')) {
     /**
-     * Get a setting value from cache with fallback to default
+     * Get a tenant setting value.
+     * Reads from DB (via TenantSetting model) with cache layer.
+     * Settings persist across cache clears.
      *
      * @param string $key
      * @param mixed $default
@@ -10,7 +12,12 @@ if (!function_exists('setting')) {
      */
     function setting(string $key, $default = null)
     {
-        return cache("settings.{$key}", $default);
+        try {
+            return \App\Models\Setting::get($key, $default);
+        } catch (\Throwable $e) {
+            // If DB is not available (e.g. during provisioning), fall back to default
+            return $default;
+        }
     }
 }
 
