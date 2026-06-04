@@ -7,9 +7,16 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Role;
+use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
+    public function data()
+    {
+        $query = User::query();
+
+        return DataTables::eloquent($query)->toJson();
+    }
     public function index()
     {
         $users = User::with('roles')->paginate(10);

@@ -41,4 +41,32 @@ class Investigation extends Model
     {
         return $query->where('category', '=', $category);
     }
+
+    public function getFormattedCategoryAttribute(): string
+    {
+        return ucwords(str_replace('-', ' ', $this->category));
+    }
+
+    public function getCategoryColorAttribute(): string
+    {
+        return match ($this->category) {
+            'hematology' => 'red',
+            'biochemistry' => 'yellow',
+            'microbiology' => 'green',
+            'immunology' => 'indigo',
+            'histopathology' => 'pink',
+            'molecular' => 'cyan',
+            'x-ray' => 'purple',
+            'ultrasound' => 'blue',
+            'ct-scan' => 'orange',
+            'mri' => 'teal',
+            'cardiac-diagnostics' => 'rose',
+            default => 'gray',
+        };
+    }
+
+    public function isActive(): bool
+    {
+        return (bool) $this->is_active;
+    }
 }

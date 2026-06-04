@@ -8,33 +8,22 @@ use App\Jobs\Tenant\ImportInvestigationsJob;
 use App\Models\Investigation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Yajra\DataTables\Facades\DataTables;
 
 class InvestigationController extends Controller
 {
     public function index(Request $request)
     {
+        return view('admin.lab.tests.index');
+    }
+    public function data()
+    {
         $query = Investigation::query();
 
-        if ($request->category) {
-            $query->byCategory($request->category);
-        }
-
-        if ($request->search) {
-            $searchTerm = '%' . $request->search . '%';
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('name', 'like', $searchTerm)
-                  ->orWhere('code', 'like', $searchTerm);
-            });
-        }
-
-        $investigations = $query->latest()->paginate(15);
-        $tests = $investigations; // Backward compatibility for views
-        return view('admin.lab.tests.index', compact('investigations', 'tests'));
+        return DataTables::eloquent($query)
+            ->toJson();
     }
-
     public function create()
     {
         return view('admin.lab.tests.create');

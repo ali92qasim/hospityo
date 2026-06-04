@@ -1,7 +1,7 @@
+@import "./dataTables.tailwindcss.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 [x-cloak] {
     display: none !important;
 }
@@ -11,12 +11,23 @@
     .no-print {
         display: none !important;
     }
-    
+
     aside, header {
         display: none !important;
     }
-    
+
     main {
         margin-left: 0 !important;
+    }
+
+    /* Hide the default processing text, keep only our custom HTML */
+    .dt-processing p {
+        display: none !important;
+    }
+
+    .dt-processing {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 }

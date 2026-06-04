@@ -206,7 +206,7 @@ Route::get('/', function () {
 Route::middleware('tenant')->group(function () {
 
 Route::middleware('auth')->group(function () {
-    
+
     Route::get('/dashboard', function () {
         $user = auth()->user();
 
@@ -232,28 +232,28 @@ Route::middleware('auth')->group(function () {
 
         return view('admin.dashboard', compact('nearExpiryCount'));
     })->name('dashboard');
-    
+
     // Doctor assignments route
     Route::get('/doctor/assignments', function () {
         $user = auth()->user();
-        
+
         if (!$user->hasRole('Doctor')) {
             abort(403);
         }
-        
+
         $doctor = \App\Models\Doctor::where('user_id', $user->id)->first();
         if (!$doctor) {
             abort(404);
         }
-        
+
         $assignedPatients = $doctor->assignedPatients()->paginate(8);
         return view('admin.doctor.assignments', compact('assignedPatients'));
     })->name('doctor.assignments');
-    
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
@@ -292,7 +292,7 @@ Route::middleware('auth')->group(function () {
     Route::post('visits/{visit}/triage', [VisitController::class, 'triagePatient'])->name('visits.triage')->middleware('permission:edit visits');
     Route::resource('appointments', AppointmentController::class)->middleware('permission:view appointments|create appointments|edit appointments|delete appointments');
     Route::get('calendar/events', [AppointmentController::class, 'getCalendarEvents'])->name('calendar.events')->middleware('permission:view appointments');
-    
+
     // Billing Routes
     Route::resource('bills', BillController::class)->middleware('permission:view bills|create bills|edit bills|delete bills');
     Route::post('bills/{bill}/payment', [BillController::class, 'addPayment'])->name('bills.add-payment')->middleware('permission:create payments');
@@ -409,11 +409,11 @@ Route::middleware('auth')->group(function () {
     Route::get('services/import-status', [ServiceController::class, 'importStatus'])->name('services.import-status')->middleware('permission:create services');
 
     Route::resource('services', ServiceController::class)->middleware('permission:view services|create services|edit services|delete services');
-    
+
     // IPD Management Routes
     Route::resource('wards', WardController::class)->middleware('permission:view wards|create wards|edit wards|delete wards');
     Route::resource('beds', BedController::class)->middleware('permission:view beds|create beds|edit beds|delete beds');
-    
+
     // Pharmacy Routes
     Route::resource('medicine-categories', MedicineCategoryController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
     Route::resource('medicine-brands', MedicineBrandController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
@@ -445,23 +445,25 @@ Route::middleware('auth')->group(function () {
     Route::post('purchases/{purchase}/approve', [PurchaseController::class, 'approve'])->name('purchases.approve')->middleware('permission:view services|manage pharmacy');
     Route::post('purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive')->middleware('permission:view services|manage pharmacy');
     Route::post('purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel')->middleware('permission:view services|manage pharmacy');
-    
+
     // Laboratory Routes
+    Route::get('/investigations/data', [InvestigationController::class, 'data'])
+        ->name('investigations.data')
+        ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
     Route::resource('investigations', InvestigationController::class)->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
     Route::post('investigations/import', [InvestigationController::class, 'import'])->name('investigations.import')->middleware('permission:create investigations');
     Route::get('investigations/import-status', [InvestigationController::class, 'importStatus'])->name('investigations.import-status')->middleware('permission:create investigations');
     Route::resource('lab-tests', InvestigationController::class)->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
-    
     // Investigation Orders (new routes)
     Route::resource('investigation-orders', InvestigationOrderController::class)->middleware('permission:view investigation orders|create investigation orders|edit investigation orders|delete investigation orders');
     Route::post('investigation-orders/{investigationOrder}/collect-sample', [InvestigationOrderController::class, 'collectSample'])->name('investigation-orders.collect-sample')->middleware('permission:edit investigation orders');
     Route::post('investigation-orders/{investigationOrder}/receive-sample', [InvestigationOrderController::class, 'receiveSample'])->name('investigation-orders.receive-sample')->middleware('permission:edit investigation orders');
-    
+
     // Lab Orders (legacy routes - kept for backward compatibility)
     Route::resource('lab-orders', LabOrderController::class)->middleware('permission:view lab orders|create lab orders|edit lab orders|delete lab orders');
     Route::post('lab-orders/{labOrder}/collect-sample', [LabOrderController::class, 'collectSample'])->name('lab-orders.collect-sample')->middleware('permission:edit lab orders');
     Route::post('lab-orders/{labOrder}/receive-sample', [LabOrderController::class, 'receiveSample'])->name('lab-orders.receive-sample')->middleware('permission:edit lab orders');
-    
+
     // Lab Results - Custom routes BEFORE resource route
     Route::get('lab-results/create-batch', [LabResultController::class, 'createBatch'])->name('lab-results.create-batch')->middleware('permission:create lab results');
     Route::post('lab-results/store-batch', [LabResultController::class, 'storeBatch'])->name('lab-results.store-batch')->middleware('permission:create lab results');
@@ -469,15 +471,15 @@ Route::middleware('auth')->group(function () {
     Route::post('lab-orders/{orderItem}/results', [LabResultController::class, 'store'])->name('lab-orders.results.store')->middleware('permission:create lab results');
     Route::post('lab-results/{labResult}/verify', [LabResultController::class, 'verify'])->name('lab-results.verify')->middleware('permission:edit lab results');
     Route::get('lab-results/{labResult}/report', [LabResultController::class, 'report'])->name('lab-results.report')->middleware('permission:view lab results');
-    
+
     Route::resource('lab-results', LabResultController::class)->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
-    
+
     // Radiology Results Routes
     Route::get('investigation-orders/{investigationOrder}/radiology-results/create', [RadiologyResultController::class, 'create'])->name('radiology-results.create')->middleware('permission:create radiology results');
     Route::post('investigation-orders/{investigationOrder}/radiology-results', [RadiologyResultController::class, 'store'])->name('radiology-results.store')->middleware('permission:create radiology results');
     Route::resource('radiology-results', RadiologyResultController::class)->except(['create', 'store'])->middleware('permission:view radiology results|edit radiology results|delete radiology results');
 
-    
+
     // Doctor Share Routes
     Route::prefix('doctor-share')->name('doctor-share.')->middleware('permission:manage doctor shares')->group(function () {
         // Share Rules
@@ -504,10 +506,11 @@ Route::middleware('auth')->group(function () {
     });
 
     // RBAC Routes
+    Route::get('/users/data', [UserController::class, 'data']);
     Route::resource('users', UserController::class)->middleware('role:Super Admin|Hospital Administrator');
     Route::resource('roles', RoleController::class)->middleware('permission:view roles|create roles|edit roles|delete roles');
     Route::resource('permissions', PermissionController::class)->middleware('permission:view permissions|create permissions|edit permissions|delete permissions');
-    
+
     // Reports Routes
     Route::prefix('reports')->name('reports.')->middleware('permission:view reports')->group(function () {
         Route::get('daily-cash-register', [ReportController::class, 'dailyCashRegister'])->name('daily-cash-register');
@@ -524,10 +527,10 @@ Route::middleware('auth')->group(function () {
         Route::get('department-performance', [ReportController::class, 'departmentPerformance'])->name('department-performance');
         Route::get('patient-demographics', [ReportController::class, 'patientDemographics'])->name('patient-demographics');
     });
-    
+
     // Audit Logs
     Route::resource('audit-logs', AuditLogController::class)->only(['index', 'show'])->middleware('role:Super Admin|Hospital Administrator');
-    
+
     // Backup & Restore Routes
     Route::prefix('backup')->name('backup.')->middleware('role:Super Admin|Hospital Administrator')->group(function () {
         Route::get('/', [\App\Http\Controllers\BackupController::class, 'index'])->name('index');
@@ -536,17 +539,17 @@ Route::middleware('auth')->group(function () {
         Route::delete('/delete/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('destroy');
         Route::post('/restore/{filename}', [\App\Http\Controllers\BackupController::class, 'restore'])->name('restore');
     });
-    
+
     // Patient Search API
     Route::get('api/patients/search', function (Request $request) {
         $phone = $request->query('phone');
-        
+
         if (!$phone || strlen($phone) < 3) {
             return response()->json(['found' => false]);
         }
-        
+
         $patient = Patient::where('phone', 'like', "%{$phone}%")->first();
-        
+
         if ($patient) {
             return response()->json([
                 'found' => true,
@@ -558,7 +561,7 @@ Route::middleware('auth')->group(function () {
                 ]
             ]);
         }
-        
+
         return response()->json(['found' => false]);
     })->name('api.patients.search');
 });
