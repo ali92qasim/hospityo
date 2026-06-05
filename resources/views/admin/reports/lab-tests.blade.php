@@ -20,7 +20,7 @@
     <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-            <input type="date" name="start_date" value="{{ $startDate }}" 
+            <input type="date" name="start_date" value="{{ $startDate }}"
                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
         </div>
         <div>
@@ -185,7 +185,7 @@
                 @forelse($testBreakdown as $test)
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ $test['investigation']->name }}
+                        {{ $test['investigation']?->name }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <span class="px-2 py-1 text-xs rounded-full {{ $test['investigation']->type === 'lab' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800' }}">
@@ -269,7 +269,7 @@
     button {
         display: none !important;
     }
-    
+
     /* Reset body and main container for print */
     body {
         margin: 0 !important;
@@ -277,12 +277,12 @@
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
     }
-    
+
     main {
         margin: 0 !important;
         padding: 20px !important;
     }
-    
+
     /* Show only the report content */
     @page {
         margin: 1cm;

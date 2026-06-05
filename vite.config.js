@@ -21,13 +21,19 @@ export default defineConfig({
                 'resources/js/purchases-form.js',
                 'resources/js/investigations-form.js',
                 'resources/js/bills-form.js',
-                'resources/js/date-picker.js'
+                'resources/js/date-picker.js',
+                'resources/js/datatable.js',
+                'resources/js/pagination.js',
             ],
             refresh: true,
         }),
         inject({
             $: 'jquery',
             jQuery: 'jquery',
+            exclude: [
+                '**/select2/**',
+                '**/node_modules/select2/**',
+            ]
         }),
     ],
 });

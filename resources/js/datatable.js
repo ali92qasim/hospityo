@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import DataTable from 'datatables.net';
 import 'datatables.net-responsive';
-import '../js/dataTables.tailwindcss.js'; // ← the vendored Tailwind renderer
+import '../js/dataTables.tailwindcss.js';
 
 window.$ = window.jQuery = $;
 
