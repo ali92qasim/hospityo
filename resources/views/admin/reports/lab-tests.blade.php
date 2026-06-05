@@ -188,8 +188,8 @@
                         {{ $test['investigation']?->name }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 text-xs rounded-full {{ $test['investigation']->type === 'lab' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800' }}">
-                            {{ ucfirst($test['investigation']->type) }}
+                        <span class="px-2 py-1 text-xs rounded-full {{ $test['investigation']?->type === 'lab' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800' }}">
+                            {{ ucfirst($test['investigation']?->type) }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

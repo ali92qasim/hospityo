@@ -20,7 +20,7 @@
     <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-            <input type="date" name="start_date" value="{{ $startDate }}" 
+            <input type="date" name="start_date" value="{{ $startDate }}"
                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
         </div>
         <div>
@@ -34,7 +34,7 @@
                 <option value="">All Doctors</option>
                 @foreach($doctors as $doctor)
                     <option value="{{ $doctor->id }}" {{ $doctorId == $doctor->id ? 'selected' : '' }}>
-                        {{ $doctor->name }}
+                        {{ $doctor?->name }}
                     </option>
                 @endforeach
             </select>
@@ -163,8 +163,8 @@
                 @foreach($doctorStats as $stat)
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ $stat['doctor']->name }}</div>
-                        <div class="text-xs text-gray-500">{{ $stat['doctor']->specialization }}</div>
+                        <div class="text-sm font-medium text-gray-900">{{ $stat['doctor']?->name }}</div>
+                        <div class="text-xs text-gray-500">{{ $stat['doctor']?->specialization }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ $stat['count'] }}
@@ -203,26 +203,26 @@
                 @forelse($visits as $visit)
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $visit->visit_datetime?->format('M d, Y') ?? '-' }}
+                        {{ $visit?->visit_datetime?->format('M d, Y') ?? '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ $visit->patient->name }}</div>
-                        <div class="text-xs text-gray-500">{{ $visit->patient->patient_id }}</div>
+                        <div class="text-sm font-medium text-gray-900">{{ $visit?->patient?->name }}</div>
+                        <div class="text-xs text-gray-500">{{ $visit?->patient?->patient_id }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $visit->doctor?->name ?? 'Not Assigned' }}
+                        {{ $visit?->doctor?->name ?? 'Not Assigned' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 text-xs rounded-full {{ $visit->visit_type === 'opd' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
-                            {{ strtoupper($visit->visit_type) }}
+                        <span class="px-2 py-1 text-xs rounded-full {{ $visit?->visit_type === 'opd' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
+                            {{ strtoupper($visit?->visit_type) }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 text-xs rounded-full 
-                            {{ $visit->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
-                            {{ $visit->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : '' }}
-                            {{ $visit->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
-                            {{ ucfirst(str_replace('_', ' ', $visit->status)) }}
+                        <span class="px-2 py-1 text-xs rounded-full
+                            {{ $visit?->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
+                            {{ $visit?->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : '' }}
+                            {{ $visit?->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
+                            {{ ucfirst(str_replace('_', ' ', $visit?->status)) }}
                         </span>
                     </td>
                 </tr>
@@ -251,7 +251,7 @@
     button {
         display: none !important;
     }
-    
+
     /* Reset body and main container for print */
     body {
         margin: 0 !important;
@@ -259,12 +259,12 @@
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
     }
-    
+
     main {
         margin: 0 !important;
         padding: 20px !important;
     }
-    
+
     /* Show only the report content */
     @page {
         margin: 1cm;
