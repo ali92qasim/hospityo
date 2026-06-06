@@ -311,6 +311,10 @@ Route::middleware('auth')->group(function () {
         Route::put('chart-of-accounts/{account}', [\App\Http\Controllers\AccountingController::class, 'updateAccount'])->name('update-account');
         Route::get('general-ledger', [\App\Http\Controllers\AccountingController::class, 'generalLedger'])->name('general-ledger');
         Route::get('journal-entries', [\App\Http\Controllers\AccountingController::class, 'journalEntries'])->name('journal-entries');
+        Route::get('journal-entries/create', [\App\Http\Controllers\AccountingController::class, 'createJournalEntry'])->name('create-journal-entry');
+        Route::post('journal-entries', [\App\Http\Controllers\AccountingController::class, 'storeJournalEntry'])->name('store-journal-entry');
+        Route::get('journal-entries/{journalEntry}/edit', [\App\Http\Controllers\AccountingController::class, 'editJournalEntry'])->name('edit-journal-entry');
+        Route::put('journal-entries/{journalEntry}', [\App\Http\Controllers\AccountingController::class, 'updateJournalEntry'])->name('update-journal-entry');
         Route::get('patient-ledger', [\App\Http\Controllers\AccountingController::class, 'patientLedger'])->name('patient-ledger');
         Route::get('vendor-ledger', [\App\Http\Controllers\AccountingController::class, 'vendorLedger'])->name('vendor-ledger');
         Route::get('profit-loss', [\App\Http\Controllers\AccountingController::class, 'profitAndLoss'])->name('profit-loss');

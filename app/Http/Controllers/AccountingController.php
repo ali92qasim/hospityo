@@ -118,6 +118,157 @@ class AccountingController extends Controller
         return view('admin.accounting.journal-entries', compact('entries'));
     }
 
+    public function createJournalEntry()
+    {
+        $accounts = Account::active()->orderBy('code')->get();
+        return view('admin.accounting.create-journal-entry', compact('accounts'));
+    }
+
+    public function storeJournalEntry(Request $request)
+    {
+        $request->validate([
+            'entry_date'          => 'required|date',
+            'description'         => 'required|string|max:500',
+            'lines'               => 'required|array|min:2',
+            'lines.*.account_id'  => 'required|exists:tenant.accounts,id',
+            'lines.*.debit'       => 'nullable|numeric|min:0',
+            'lines.*.credit'      => 'nullable|numeric|min:0',
+            'lines.*.narration'   => 'nullable|string|max:255',
+        ]);
+
+        // Validate that total debits = total credits
+        $totalDebit  = collect($request->lines)->sum(fn($l) => (float) ($l['debit'] ?? 0));
+        $totalCredit = collect($request->lines)->sum(fn($l) => (float) ($l['credit'] ?? 0));
+
+        if (round($totalDebit, 2) !== round($totalCredit, 2)) {
+            return back()->withInput()->withErrors([
+                'lines' => 'Journal entry is not balanced. Total debits (' . number_format($totalDebit, 2) . ') must equal total credits (' . number_format($totalCredit, 2) . ').',
+            ]);
+        }
+
+        if ($totalDebit == 0) {
+            return back()->withInput()->withErrors([
+                'lines' => 'Journal entry cannot have zero amounts.',
+            ]);
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::connection('tenant')->transaction(function () use ($request) {
+                $entry = JournalEntry::create([
+                    'entry_date'  => $request->entry_date,
+                    'description' => $request->description,
+                    'created_by'  => auth()->id(),
+                    'is_auto'     => false,
+                ]);
+
+                foreach ($request->lines as $line) {
+                    $debit  = (float) ($line['debit'] ?? 0);
+                    $credit = (float) ($line['credit'] ?? 0);
+
+                    // Skip lines with no amount
+                    if ($debit == 0 && $credit == 0) {
+                        continue;
+                    }
+
+                    $entry->lines()->create([
+                        'account_id' => $line['account_id'],
+                        'debit'      => $debit,
+                        'credit'     => $credit,
+                        'narration'  => $line['narration'] ?? null,
+                    ]);
+                }
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[Accounting] Journal entry creation failed', [
+                'error' => $e->getMessage(),
+            ]);
+            return back()->withInput()->with('error', 'Failed to create journal entry. Please try again.');
+        }
+
+        return redirect()->route('accounting.journal-entries')->with('success', 'Journal entry created successfully.');
+    }
+
+    public function editJournalEntry(JournalEntry $journalEntry)
+    {
+        // Only allow editing manual entries — auto entries are system-generated
+        if ($journalEntry->is_auto) {
+            return back()->with('error', 'Auto-generated journal entries cannot be edited.');
+        }
+
+        $journalEntry->load('lines.account');
+        $accounts = Account::active()->orderBy('code')->get();
+
+        return view('admin.accounting.edit-journal-entry', compact('journalEntry', 'accounts'));
+    }
+
+    public function updateJournalEntry(Request $request, JournalEntry $journalEntry)
+    {
+        if ($journalEntry->is_auto) {
+            return back()->with('error', 'Auto-generated journal entries cannot be edited.');
+        }
+
+        $request->validate([
+            'entry_date'          => 'required|date',
+            'description'         => 'required|string|max:500',
+            'lines'               => 'required|array|min:2',
+            'lines.*.account_id'  => 'required|exists:tenant.accounts,id',
+            'lines.*.debit'       => 'nullable|numeric|min:0',
+            'lines.*.credit'      => 'nullable|numeric|min:0',
+            'lines.*.narration'   => 'nullable|string|max:255',
+        ]);
+
+        $totalDebit  = collect($request->lines)->sum(fn($l) => (float) ($l['debit'] ?? 0));
+        $totalCredit = collect($request->lines)->sum(fn($l) => (float) ($l['credit'] ?? 0));
+
+        if (round($totalDebit, 2) !== round($totalCredit, 2)) {
+            return back()->withInput()->withErrors([
+                'lines' => 'Journal entry is not balanced. Total debits (' . number_format($totalDebit, 2) . ') must equal total credits (' . number_format($totalCredit, 2) . ').',
+            ]);
+        }
+
+        if ($totalDebit == 0) {
+            return back()->withInput()->withErrors([
+                'lines' => 'Journal entry cannot have zero amounts.',
+            ]);
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::connection('tenant')->transaction(function () use ($request, $journalEntry) {
+                $journalEntry->update([
+                    'entry_date'  => $request->entry_date,
+                    'description' => $request->description,
+                ]);
+
+                // Delete old lines and recreate
+                $journalEntry->lines()->delete();
+
+                foreach ($request->lines as $line) {
+                    $debit  = (float) ($line['debit'] ?? 0);
+                    $credit = (float) ($line['credit'] ?? 0);
+
+                    if ($debit == 0 && $credit == 0) {
+                        continue;
+                    }
+
+                    $journalEntry->lines()->create([
+                        'account_id' => $line['account_id'],
+                        'debit'      => $debit,
+                        'credit'     => $credit,
+                        'narration'  => $line['narration'] ?? null,
+                    ]);
+                }
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[Accounting] Journal entry update failed', [
+                'entry_id' => $journalEntry->id,
+                'error'    => $e->getMessage(),
+            ]);
+            return back()->withInput()->with('error', 'Failed to update journal entry. Please try again.');
+        }
+
+        return redirect()->route('accounting.journal-entries')->with('success', 'Journal entry updated successfully.');
+    }
+
     // ── Sub-Ledgers ────────────────────────────────
 
     public function patientLedger(Request $request)

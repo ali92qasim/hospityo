@@ -7,6 +7,12 @@
 <div class="bg-white rounded-lg shadow-sm">
     {{-- Filter Bar --}}
     <div class="p-4 sm:p-6 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Journal Entries</h3>
+            <a href="{{ route('accounting.create-journal-entry') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
+                <i class="fas fa-plus mr-2"></i> New Entry
+            </a>
+        </div>
         <form method="GET" action="{{ route('accounting.journal-entries') }}" class="flex flex-col sm:flex-row gap-3 items-end">
             <div class="flex-1 w-full sm:w-auto">
                 <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
@@ -42,6 +48,7 @@
                     <th class="px-4 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Credit</th>
                     <th class="px-4 lg:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                     <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
+                    <th class="px-4 lg:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -60,10 +67,19 @@
                         @endif
                     </td>
                     <td class="px-4 lg:px-6 py-3 text-sm text-gray-600">{{ $entry->createdBy?->name ?? '—' }}</td>
+                    <td class="px-4 lg:px-6 py-3 text-sm text-center">
+                        @if(!$entry->is_auto)
+                        <a href="{{ route('accounting.edit-journal-entry', $entry) }}" class="text-medical-blue hover:text-blue-700" title="Edit" onclick="event.stopPropagation()">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        @else
+                        <span class="text-gray-300" title="Auto entries cannot be edited"><i class="fas fa-lock"></i></span>
+                        @endif
+                    </td>
                 </tr>
                 {{-- Expandable Lines --}}
                 <tr id="lines-{{ $entry->id }}" class="hidden">
-                    <td colspan="7" class="px-4 lg:px-6 py-3 bg-gray-50">
+                    <td colspan="8" class="px-4 lg:px-6 py-3 bg-gray-50">
                         <table class="w-full text-sm">
                             <thead>
                                 <tr>
@@ -88,7 +104,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                    <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                         <i class="fas fa-journal-whills text-4xl mb-4 text-gray-300"></i>
                         <p>No journal entries found.</p>
                     </td>
