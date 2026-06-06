@@ -307,6 +307,8 @@ Route::middleware('auth')->group(function () {
         Route::get('chart-of-accounts', [\App\Http\Controllers\AccountingController::class, 'chartOfAccounts'])->name('chart-of-accounts');
         Route::get('chart-of-accounts/create', [\App\Http\Controllers\AccountingController::class, 'createAccount'])->name('create-account');
         Route::post('chart-of-accounts', [\App\Http\Controllers\AccountingController::class, 'storeAccount'])->name('store-account');
+        Route::get('chart-of-accounts/{account}/edit', [\App\Http\Controllers\AccountingController::class, 'editAccount'])->name('edit-account');
+        Route::put('chart-of-accounts/{account}', [\App\Http\Controllers\AccountingController::class, 'updateAccount'])->name('update-account');
         Route::get('general-ledger', [\App\Http\Controllers\AccountingController::class, 'generalLedger'])->name('general-ledger');
         Route::get('journal-entries', [\App\Http\Controllers\AccountingController::class, 'journalEntries'])->name('journal-entries');
         Route::get('patient-ledger', [\App\Http\Controllers\AccountingController::class, 'patientLedger'])->name('patient-ledger');

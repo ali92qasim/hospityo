@@ -39,6 +39,44 @@ class AccountingController extends Controller
         return redirect()->route('accounting.chart-of-accounts')->with('success', 'Account created.');
     }
 
+    public function editAccount(Account $account)
+    {
+        $parents = Account::active()
+            ->where('id', '!=', $account->id)
+            ->orderBy('code')
+            ->get();
+
+        return view('admin.accounting.edit-account', compact('account', 'parents'));
+    }
+
+    public function updateAccount(Request $request, Account $account)
+    {
+        $request->validate([
+            'code' => 'required|string|max:20|unique:tenant.accounts,code,' . $account->id,
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:asset,liability,equity,revenue,expense',
+            'parent_id' => 'nullable|exists:tenant.accounts,id',
+            'description' => 'nullable|string|max:500',
+            'is_active' => 'boolean',
+        ]);
+
+        // Prevent setting parent to self or to a child account
+        if ($request->parent_id == $account->id) {
+            return back()->withInput()->withErrors(['parent_id' => 'An account cannot be its own parent.']);
+        }
+
+        $account->update([
+            'code'        => $request->code,
+            'name'        => $request->name,
+            'type'        => $request->type,
+            'parent_id'   => $request->parent_id,
+            'description' => $request->description,
+            'is_active'   => $request->boolean('is_active', true),
+        ]);
+
+        return redirect()->route('accounting.chart-of-accounts')->with('success', 'Account updated.');
+    }
+
     // ── General Ledger ─────────────────────────────
 
     public function generalLedger(Request $request)

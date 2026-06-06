@@ -67,7 +67,7 @@
                                 @endif
                             </td>
                             <td class="px-4 lg:px-6 py-3 text-center">
-                                <a href="#" class="text-medical-blue hover:text-blue-700 text-sm" title="Edit">
+                                <a href="{{ route('accounting.edit-account', $account) }}" class="text-medical-blue hover:text-blue-700 text-sm" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
                             </td>
