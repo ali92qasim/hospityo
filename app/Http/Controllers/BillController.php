@@ -45,9 +45,23 @@ class BillController extends Controller
                     ? round(($discountPercentage / 100) * $subtotal, 2)
                     : ($request->discount_amount ?? 0);
 
+                // Auto-resolve visit from the patient's most recent visit matching bill type.
+                // This provides the doctor link for doctor share calculation.
+                $visitId = $request->visit_id;
+                if (!$visitId) {
+                    $visitQuery = Visit::where('patient_id', $request->patient_id);
+
+                    // bill_type maps directly to visit_type for opd/ipd/emergency
+                    if (in_array($request->bill_type, ['opd', 'ipd', 'emergency'])) {
+                        $visitQuery->where('visit_type', $request->bill_type);
+                    }
+
+                    $visitId = $visitQuery->latest('visit_datetime')->value('id');
+                }
+
                 $bill = Bill::create([
                     'patient_id'          => $request->patient_id,
-                    'visit_id'            => $request->visit_id,
+                    'visit_id'            => $visitId,
                     'bill_number'         => $this->generateBillNumber(),
                     'bill_date'           => $request->bill_date,
                     'bill_type'           => $request->bill_type,

@@ -28,9 +28,6 @@
                 <div>
                     <h3 class="font-medium text-gray-700 mb-2">Bill Details</h3>
                     <p class="text-gray-900">Type: <span class="uppercase">{{ $bill->bill_type }}</span></p>
-                    @if($bill->visit)
-                        <p class="text-gray-600">Visit: {{ $bill->visit->visit_date->format('M d, Y') }}</p>
-                    @endif
                 </div>
             </div>
 
@@ -115,7 +112,7 @@
                 @csrf
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                    <input type="number" name="amount" step="0.01" max="{{ $bill->due_amount }}" 
+                    <input type="number" name="amount" step="0.01" max="{{ $bill->due_amount }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                 </div>
                 <div class="mb-4">
@@ -131,12 +128,12 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Payment Date</label>
-                    <input type="date" name="payment_date" value="{{ date('Y-m-d') }}" 
+                    <input type="date" name="payment_date" value="{{ date('Y-m-d') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Reference Number</label>
-                    <input type="text" name="reference_number" 
+                    <input type="text" name="reference_number"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 </div>
                 <button type="submit" class="w-full bg-medical-blue text-white py-2 px-4 rounded-lg hover:bg-blue-700">Add Payment</button>
