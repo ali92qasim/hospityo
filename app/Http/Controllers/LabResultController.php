@@ -334,4 +334,72 @@ class LabResultController extends Controller
 
         return view('admin.lab.results.report', compact('labResult'));
     }
+
+    /**
+     * Public report view accessible via signed URL (no authentication required).
+     * Used for WhatsApp sharing — patient opens the link and sees the report.
+     * The signed URL expires after the configured time (default 72 hours).
+     */
+    public function publicReport(LabResult $labResult)
+    {
+        $labResult->load([
+            'investigationOrder.patient',
+            'investigationOrder.doctor',
+            'investigationOrder.investigation',
+            'investigationOrder.items.investigation',
+            'investigationOrder.visit',
+            'technician',
+            'pathologist',
+            'resultItems.parameter',
+        ]);
+
+        return view('admin.lab.results.report', compact('labResult'));
+    }
+
+    /**
+     * Generate a signed URL for sharing the lab report via WhatsApp.
+     * Returns the WhatsApp wa.me URL with the signed link as the message body.
+     */
+    public function shareWhatsApp(LabResult $labResult)
+    {
+        $labResult->load('investigationOrder.patient');
+
+        $patient = $labResult->investigationOrder?->patient;
+        $phone   = $patient?->phone;
+
+        // Generate a signed URL valid for 72 hours
+        $signedUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'lab-results.public-report',
+            now()->addHours(72),
+            ['labResult' => $labResult->id]
+        );
+
+        // Build the WhatsApp message
+        $patientName = $patient?->name ?? 'Patient';
+        $message = "Dear {$patientName},\n\n"
+                 . "Your laboratory report is ready. You can view it using the link below:\n\n"
+                 . $signedUrl . "\n\n"
+                 . "This link is valid for 72 hours.\n\n"
+                 . "— " . setting('hospital_name', 'Hospital');
+
+        // Format phone for WhatsApp (remove spaces, dashes, leading 0, add country code)
+        $whatsappPhone = '';
+        if ($phone) {
+            $cleaned = preg_replace('/[^0-9+]/', '', $phone);
+            // If starts with 0, replace with 92 (Pakistan)
+            if (str_starts_with($cleaned, '0')) {
+                $cleaned = '92' . substr($cleaned, 1);
+            }
+            // If doesn't start with +, don't add one (wa.me handles both)
+            $whatsappPhone = ltrim($cleaned, '+');
+        }
+
+        $whatsappUrl = 'https://wa.me/' . $whatsappPhone . '?text=' . urlencode($message);
+
+        return response()->json([
+            'whatsapp_url' => $whatsappUrl,
+            'signed_url'   => $signedUrl,
+            'phone'        => $whatsappPhone,
+        ]);
+    }
 }

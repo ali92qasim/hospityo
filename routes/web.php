@@ -477,6 +477,7 @@ Route::middleware('auth')->group(function () {
     Route::post('lab-orders/{orderItem}/results', [LabResultController::class, 'store'])->name('lab-orders.results.store')->middleware('permission:create lab results');
     Route::post('lab-results/{labResult}/verify', [LabResultController::class, 'verify'])->name('lab-results.verify')->middleware('permission:edit lab results');
     Route::get('lab-results/{labResult}/report', [LabResultController::class, 'report'])->name('lab-results.report')->middleware('permission:view lab results');
+    Route::get('lab-results/{labResult}/share-whatsapp', [LabResultController::class, 'shareWhatsApp'])->name('lab-results.share-whatsapp')->middleware('permission:view lab results');
 
     Route::resource('lab-results', LabResultController::class)->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
 
@@ -573,5 +574,10 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Public signed URL route for sharing lab reports via WhatsApp (no auth required)
+Route::get('lab-report/{labResult}', [\App\Http\Controllers\LabResultController::class, 'publicReport'])
+    ->name('lab-results.public-report')
+    ->middleware('signed');
 
 }); // end tenant middleware group

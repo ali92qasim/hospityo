@@ -42,6 +42,9 @@
             <button onclick="shareResult()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md">
                 <i class="fas fa-share mr-2"></i>Share
             </button>
+            <button onclick="shareViaWhatsApp()" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md">
+                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+            </button>
         </div>
     </div>
 
@@ -590,6 +593,28 @@ function shareResult() {
             alert('Link copied to clipboard!');
         });
     }
+}
+
+function shareViaWhatsApp() {
+    // Fetch the signed URL from the server
+    fetch('{{ route("lab-results.share-whatsapp", $labResult) }}', {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.whatsapp_url) {
+            window.open(data.whatsapp_url, '_blank');
+        } else {
+            alert('Could not generate share link. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Share error:', error);
+        alert('Failed to generate share link. Please try again.');
+    });
 }
 </script>
 @endsection
