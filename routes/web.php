@@ -309,6 +309,10 @@ Route::middleware('auth')->group(function () {
         Route::post('chart-of-accounts', [\App\Http\Controllers\AccountingController::class, 'storeAccount'])->name('store-account');
         Route::get('chart-of-accounts/{account}/edit', [\App\Http\Controllers\AccountingController::class, 'editAccount'])->name('edit-account');
         Route::put('chart-of-accounts/{account}', [\App\Http\Controllers\AccountingController::class, 'updateAccount'])->name('update-account');
+        Route::get('deposit', [\App\Http\Controllers\AccountingController::class, 'deposit'])->name('deposit');
+        Route::post('deposit', [\App\Http\Controllers\AccountingController::class, 'processDeposit'])->name('process-deposit');
+        Route::get('transfer', [\App\Http\Controllers\AccountingController::class, 'transfer'])->name('transfer');
+        Route::post('transfer', [\App\Http\Controllers\AccountingController::class, 'processTransfer'])->name('process-transfer');
         Route::get('general-ledger', [\App\Http\Controllers\AccountingController::class, 'generalLedger'])->name('general-ledger');
         Route::get('journal-entries', [\App\Http\Controllers\AccountingController::class, 'journalEntries'])->name('journal-entries');
         Route::get('journal-entries/create', [\App\Http\Controllers\AccountingController::class, 'createJournalEntry'])->name('create-journal-entry');

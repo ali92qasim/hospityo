@@ -271,6 +271,103 @@ class AccountingController extends Controller
 
     // ── Sub-Ledgers ────────────────────────────────
 
+    public function deposit()
+    {
+        $cashAccounts = Account::active()->where('code', 'like', '11%')->orderBy('code')->get();
+        $sourceAccounts = Account::active()->orderBy('code')->get();
+        return view('admin.accounting.deposit', compact('cashAccounts', 'sourceAccounts'));
+    }
+
+    public function processDeposit(Request $request)
+    {
+        $request->validate([
+            'to_account_id'   => 'required|exists:tenant.accounts,id',
+            'from_account_id' => 'required|exists:tenant.accounts,id|different:to_account_id',
+            'amount'          => 'required|numeric|min:0.01',
+            'date'            => 'required|date',
+            'description'     => 'required|string|max:500',
+        ]);
+
+        try {
+            \Illuminate\Support\Facades\DB::connection('tenant')->transaction(function () use ($request) {
+                $entry = JournalEntry::create([
+                    'entry_date'  => $request->date,
+                    'description' => $request->description,
+                    'created_by'  => auth()->id(),
+                    'is_auto'     => false,
+                ]);
+
+                $entry->lines()->create([
+                    'account_id' => $request->to_account_id,
+                    'debit'      => $request->amount,
+                    'credit'     => 0,
+                    'narration'  => 'Deposit received',
+                ]);
+
+                $entry->lines()->create([
+                    'account_id' => $request->from_account_id,
+                    'debit'      => 0,
+                    'credit'     => $request->amount,
+                    'narration'  => 'Source of deposit',
+                ]);
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[Accounting] Deposit failed', ['error' => $e->getMessage()]);
+            return back()->withInput()->with('error', 'Failed to record deposit. Please try again.');
+        }
+
+        return redirect()->route('accounting.chart-of-accounts')->with('success', 'Deposit recorded successfully.');
+    }
+
+    public function transfer()
+    {
+        $accounts = Account::active()->orderBy('code')->get();
+        return view('admin.accounting.transfer', compact('accounts'));
+    }
+
+    public function processTransfer(Request $request)
+    {
+        $request->validate([
+            'from_account_id' => 'required|exists:tenant.accounts,id',
+            'to_account_id'   => 'required|exists:tenant.accounts,id|different:from_account_id',
+            'amount'          => 'required|numeric|min:0.01',
+            'date'            => 'required|date',
+            'description'     => 'required|string|max:500',
+        ]);
+
+        try {
+            \Illuminate\Support\Facades\DB::connection('tenant')->transaction(function () use ($request) {
+                $entry = JournalEntry::create([
+                    'entry_date'  => $request->date,
+                    'description' => $request->description,
+                    'created_by'  => auth()->id(),
+                    'is_auto'     => false,
+                ]);
+
+                $entry->lines()->create([
+                    'account_id' => $request->to_account_id,
+                    'debit'      => $request->amount,
+                    'credit'     => 0,
+                    'narration'  => 'Funds received (transfer)',
+                ]);
+
+                $entry->lines()->create([
+                    'account_id' => $request->from_account_id,
+                    'debit'      => 0,
+                    'credit'     => $request->amount,
+                    'narration'  => 'Funds sent (transfer)',
+                ]);
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[Accounting] Transfer failed', ['error' => $e->getMessage()]);
+            return back()->withInput()->with('error', 'Failed to record transfer. Please try again.');
+        }
+
+        return redirect()->route('accounting.chart-of-accounts')->with('success', 'Funds transfer recorded successfully.');
+    }
+
+    // ── Sub-Ledgers ────────────────────────────────
+
     public function patientLedger(Request $request)
     {
         $patientId = $request->input('patient_id');
