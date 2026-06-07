@@ -585,12 +585,14 @@ function shareResult() {
             ['labResult' => $labResult->id]
         );
         $patientName = $labResult->investigationOrder?->patient?->name ?? 'Patient';
+        $patientPhone = $labResult->investigationOrder?->patient?->phone ?? '';
         $hospitalName = setting('hospital_name', 'Hospital');
     @endphp
 
     var shareUrl = @json($signedUrl);
     var patientName = @json($patientName);
     var hospitalName = @json($hospitalName);
+    var patientPhone = @json($patientPhone);
 
     var message = 'Dear ' + patientName + ',\n\n'
                 + 'Your laboratory report is ready. You can view it using the link below:\n\n'
@@ -598,15 +600,22 @@ function shareResult() {
                 + 'This link is valid for 72 hours.\n\n'
                 + '— ' + hospitalName;
 
-    if (navigator.share) {
+    // Check if mobile (where native share shows WhatsApp)
+    var isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    if (isMobile && navigator.share) {
         navigator.share({
             title: 'Lab Report - ' + patientName,
             text: message
         });
     } else {
-        navigator.clipboard.writeText(message).then(() => {
-            alert('Report message copied to clipboard! Valid for 72 hours.');
-        });
+        // Desktop: open WhatsApp Web directly
+        var phone = patientPhone.replace(/[^0-9]/g, '');
+        if (phone.startsWith('0')) {
+            phone = '92' + phone.substring(1);
+        }
+        var waUrl = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(message);
+        window.open(waUrl, '_blank');
     }
 }
 </script>
