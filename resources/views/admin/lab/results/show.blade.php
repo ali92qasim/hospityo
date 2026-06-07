@@ -42,9 +42,6 @@
             <button onclick="shareResult()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md">
                 <i class="fas fa-share mr-2"></i>Share
             </button>
-            <button onclick="shareViaWhatsApp()" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md">
-                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
-            </button>
         </div>
     </div>
 
@@ -581,40 +578,29 @@
 
 <script>
 function shareResult() {
+    @php
+        $signedUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'lab-results.public-report',
+            now()->addHours(72),
+            ['labResult' => $labResult->id]
+        );
+    @endphp
+
+    var shareUrl = @json($signedUrl);
+    var title = 'Lab Report - {{ $labResult->investigationOrder?->order_number ?? "Report" }}';
+    var text = 'Laboratory report for {{ $labResult->investigationOrder?->patient?->name ?? "Patient" }}';
+
     if (navigator.share) {
         navigator.share({
-            title: 'Lab Result - {{ $labResult->labOrder->order_number }}',
-            text: 'Laboratory test result for {{ $labResult->labOrder->patient->name }}',
-            url: window.location.href
+            title: title,
+            text: text,
+            url: shareUrl
         });
     } else {
-        // Fallback - copy to clipboard
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            alert('Link copied to clipboard!');
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert('Report link copied to clipboard! Valid for 72 hours.');
         });
     }
-}
-
-function shareViaWhatsApp() {
-    // Fetch the signed URL from the server
-    fetch('{{ route("lab-results.share-whatsapp", $labResult) }}', {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.whatsapp_url) {
-            window.open(data.whatsapp_url, '_blank');
-        } else {
-            alert('Could not generate share link. Please try again.');
-        }
-    })
-    .catch(error => {
-        console.error('Share error:', error);
-        alert('Failed to generate share link. Please try again.');
-    });
 }
 </script>
 @endsection
