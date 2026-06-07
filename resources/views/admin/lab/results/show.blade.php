@@ -601,8 +601,7 @@ function shareResult() {
     if (navigator.share) {
         navigator.share({
             title: 'Lab Report - ' + patientName,
-            text: message,
-            url: shareUrl
+            text: message
         });
     } else {
         navigator.clipboard.writeText(message).then(() => {
