@@ -584,21 +584,29 @@ function shareResult() {
             now()->addHours(72),
             ['labResult' => $labResult->id]
         );
+        $patientName = $labResult->investigationOrder?->patient?->name ?? 'Patient';
+        $hospitalName = setting('hospital_name', 'Hospital');
     @endphp
 
     var shareUrl = @json($signedUrl);
-    var title = 'Lab Report - {{ $labResult->investigationOrder?->order_number ?? "Report" }}';
-    var text = 'Laboratory report for {{ $labResult->investigationOrder?->patient?->name ?? "Patient" }}';
+    var patientName = @json($patientName);
+    var hospitalName = @json($hospitalName);
+
+    var message = 'Dear ' + patientName + ',\n\n'
+                + 'Your laboratory report is ready. You can view it using the link below:\n\n'
+                + shareUrl + '\n\n'
+                + 'This link is valid for 72 hours.\n\n'
+                + '— ' + hospitalName;
 
     if (navigator.share) {
         navigator.share({
-            title: title,
-            text: text,
+            title: 'Lab Report - ' + patientName,
+            text: message,
             url: shareUrl
         });
     } else {
-        navigator.clipboard.writeText(shareUrl).then(() => {
-            alert('Report link copied to clipboard! Valid for 72 hours.');
+        navigator.clipboard.writeText(message).then(() => {
+            alert('Report message copied to clipboard! Valid for 72 hours.');
         });
     }
 }
