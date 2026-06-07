@@ -4,7 +4,13 @@
 @section('page-title', 'Chart of Accounts')
 
 @section('content')
-<div class="mb-4 flex justify-end">
+<div class="mb-4 flex flex-wrap justify-end gap-2">
+    <a href="{{ route('accounting.deposit') }}" class="bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm">
+        <i class="fas fa-arrow-down mr-2"></i> Deposit
+    </a>
+    <a href="{{ route('accounting.transfer') }}" class="bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition-colors flex items-center text-sm">
+        <i class="fas fa-exchange-alt mr-2"></i> Transfer
+    </a>
     <a href="{{ route('accounting.create-account') }}" class="bg-medical-blue text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
         <i class="fas fa-plus mr-2"></i> Add Account
     </a>
