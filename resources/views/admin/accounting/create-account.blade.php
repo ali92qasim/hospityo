@@ -64,6 +64,15 @@
                 @error('description') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
+            <div>
+                <label for="opening_balance" class="block text-sm font-medium text-gray-700 mb-1">Opening Balance</label>
+                <input type="number" name="opening_balance" id="opening_balance" step="0.01" min="0" value="{{ old('opening_balance', 0) }}"
+                    class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-medical-blue focus:border-medical-blue text-sm"
+                    placeholder="0.00">
+                <p class="text-xs text-gray-400 mt-1">Leave as 0 if no opening balance. Creates a journal entry against Opening Balance Equity.</p>
+                @error('opening_balance') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
+
             <div class="flex items-center gap-3 pt-2">
                 <button type="submit" class="bg-medical-blue text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm">
                     <i class="fas fa-save mr-2"></i> Save Account

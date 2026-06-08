@@ -33,9 +33,17 @@ class AccountingController extends Controller
             'type' => 'required|in:asset,liability,equity,revenue,expense',
             'parent_id' => 'nullable|exists:tenant.accounts,id',
             'description' => 'nullable|string|max:500',
+            'opening_balance' => 'nullable|numeric|min:0',
         ]);
 
-        Account::create($request->only('code', 'name', 'type', 'parent_id', 'description'));
+        $account = Account::create($request->only('code', 'name', 'type', 'parent_id', 'description'));
+
+        // Record opening balance as a journal entry if provided
+        $openingBalance = (float) ($request->opening_balance ?? 0);
+        if ($openingBalance > 0) {
+            $this->recordOpeningBalance($account, $openingBalance);
+        }
+
         return redirect()->route('accounting.chart-of-accounts')->with('success', 'Account created.');
     }
 
@@ -273,7 +281,8 @@ class AccountingController extends Controller
 
     public function deposit()
     {
-        $cashAccounts = Account::active()->where('code', 'like', '11%')->orderBy('code')->get();
+        // Target: all asset accounts (cash, bank, receivables, etc.)
+        $cashAccounts = Account::active()->where('type', 'asset')->orderBy('code')->get();
         $sourceAccounts = Account::active()->orderBy('code')->get();
         return view('admin.accounting.deposit', compact('cashAccounts', 'sourceAccounts'));
     }
@@ -453,5 +462,47 @@ class AccountingController extends Controller
             'assets', 'liabilities', 'equity', 'retainedEarnings',
             'totalAssets', 'totalLiabilities', 'totalEquity', 'asOf'
         ));
+    }
+
+    // ── Private Helpers ────────────────────────────
+
+    /**
+     * Record an opening balance for a new account.
+     * Creates a journal entry: 
+     *   Asset/Expense accounts: DR Account, CR Opening Balance Equity
+     *   Liability/Revenue/Equity accounts: DR Opening Balance Equity, CR Account
+     */
+    private function recordOpeningBalance(Account $account, float $amount): void
+    {
+        // Get or create the Opening Balance Equity account
+        $equityAccount = Account::firstOrCreate(
+            ['code' => '3100'],
+            [
+                'name'        => 'Opening Balance Equity',
+                'type'        => 'equity',
+                'description' => 'System account for recording opening balances',
+                'is_system'   => true,
+                'is_active'   => true,
+            ]
+        );
+
+        $isDebitNature = in_array($account->type, ['asset', 'expense']);
+
+        $entry = JournalEntry::create([
+            'entry_date'  => now()->format('Y-m-d'),
+            'description' => "Opening balance for {$account->code} — {$account->name}",
+            'created_by'  => auth()->id(),
+            'is_auto'     => true,
+        ]);
+
+        if ($isDebitNature) {
+            // DR the account, CR equity
+            $entry->lines()->create(['account_id' => $account->id, 'debit' => $amount, 'credit' => 0, 'narration' => 'Opening balance']);
+            $entry->lines()->create(['account_id' => $equityAccount->id, 'debit' => 0, 'credit' => $amount, 'narration' => 'Opening balance contra']);
+        } else {
+            // DR equity, CR the account
+            $entry->lines()->create(['account_id' => $equityAccount->id, 'debit' => $amount, 'credit' => 0, 'narration' => 'Opening balance contra']);
+            $entry->lines()->create(['account_id' => $account->id, 'debit' => 0, 'credit' => $amount, 'narration' => 'Opening balance']);
+        }
     }
 }
