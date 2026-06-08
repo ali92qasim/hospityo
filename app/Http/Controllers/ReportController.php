@@ -13,6 +13,7 @@ use App\Models\Investigation;
 use App\Models\LabResult;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
+use App\Models\Account;
 use App\Models\Medicine;
 use App\Models\InventoryTransaction;
 use App\Models\Appointment;
@@ -28,58 +29,90 @@ class ReportController extends Controller
 {
     public function dailyCashRegister(Request $request)
     {
-        $date = $request->input('date', today()->format('Y-m-d'));
-        
-        // Get all payments for the selected date
-        $payments = Payment::whereDate('created_at', $date)
+        $startDate = $request->input('start_date', today()->format('Y-m-d'));
+        $endDate   = $request->input('end_date', today()->format('Y-m-d'));
+
+        // ── Cash Inflows (Payments received from patients) ────────────────────
+        $payments = Payment::whereBetween('payment_date', [$startDate, $endDate])
             ->with('bill.patient')
+            ->orderBy('payment_date')
             ->orderBy('created_at')
             ->get();
-        
-        // Get bills created on this date
-        $bills = Bill::whereDate('created_at', $date)
-            ->with('patient', 'payments')
+
+        // ── Cash Outflows (Expenses — purchase orders received/paid in period) ─
+        $purchases = \App\Models\PurchaseOrder::whereBetween('order_date', [$startDate, $endDate])
+            ->where('status', 'received')
+            ->with('supplier')
+            ->orderBy('order_date')
             ->get();
-        
-        // Calculate summary
+
+        // ── Bills created in the period (for reference) ──────────────────────
+        $bills = Bill::whereBetween('bill_date', [$startDate, $endDate])
+            ->with('patient', 'payments')
+            ->orderBy('bill_date')
+            ->get();
+
+        // ── Opening balance (cash accounts balance before start date) ─────────
+        $cashAccounts = Account::where('type', 'asset')
+            ->where(function ($q) {
+                $q->where('code', 'like', '11%') // Cash and Bank accounts
+                  ->orWhere('code', '1100')
+                  ->orWhere('code', '1110');
+            })->active()->get();
+
+        $openingBalance = $cashAccounts->sum(function ($account) use ($startDate) {
+            return $account->getBalance(null, \Carbon\Carbon::parse($startDate)->subDay()->format('Y-m-d'));
+        });
+
+        // ── Calculate summaries ───────────────────────────────────────────────
+        $totalInflows  = $payments->sum('amount');
+        $totalOutflows = $purchases->sum('total_amount');
+        $closingBalance = $openingBalance + $totalInflows - $totalOutflows;
+
         $summary = [
-            'total_bills' => $bills->count(),
-            'total_amount' => $bills->sum('total_amount'),
-            'total_paid' => $payments->sum('amount'),
-            'total_outstanding' => $bills->sum('total_amount') - $bills->sum('paid_amount'),
-            'total_discount' => $bills->sum('discount_amount'),
-            'cash_payments' => $payments->where('payment_method', 'cash')->sum('amount'),
-            'card_payments' => $payments->where('payment_method', 'card')->sum('amount'),
+            'opening_balance'    => $openingBalance,
+            'total_inflows'      => $totalInflows,
+            'total_outflows'     => $totalOutflows,
+            'closing_balance'    => $closingBalance,
+            'total_bills'        => $bills->count(),
+            'total_billed'       => $bills->sum('total_amount'),
+            'total_collected'    => $totalInflows,
+            'total_outstanding'  => $bills->sum('due_amount'),
+            'total_discount'     => $bills->sum('discount_amount'),
+            'cash_payments'      => $payments->where('payment_method', 'cash')->sum('amount'),
+            'card_payments'      => $payments->where('payment_method', 'card')->sum('amount'),
             'insurance_payments' => $payments->where('payment_method', 'insurance')->sum('amount'),
-            'other_payments' => $payments->whereNotIn('payment_method', ['cash', 'card', 'insurance'])->sum('amount'),
+            'other_payments'     => $payments->whereNotIn('payment_method', ['cash', 'card', 'insurance'])->sum('amount'),
         ];
-        
-        return view('admin.reports.daily-cash-register', compact('payments', 'bills', 'summary', 'date'));
+
+        return view('admin.reports.daily-cash-register', compact(
+            'payments', 'purchases', 'bills', 'summary', 'startDate', 'endDate'
+        ));
     }
-    
+
     public function patientVisits(Request $request)
     {
         $startDate = $request->input('start_date', today()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $doctorId = $request->input('doctor_id');
         $status = $request->input('status');
-        
+
         // Build query
         $query = Visit::whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->with(['patient', 'doctor']);
-        
+
         if ($doctorId) {
             $query->where('doctor_id', $doctorId);
         }
-        
+
         if ($status) {
             $query->where('status', $status);
         }
-        
+
         $visits = $query->orderBy('visit_datetime', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         // Calculate statistics
         $stats = [
             'total_visits' => $visits->count(),
@@ -93,7 +126,7 @@ class ReportController extends Controller
                     ->count() === 0;
             })->count(),
         ];
-        
+
         // Doctor-wise breakdown
         $doctorStats = $visits->groupBy('doctor_id')->map(function($doctorVisits) {
             return [
@@ -102,33 +135,33 @@ class ReportController extends Controller
                 'completed' => $doctorVisits->where('status', 'completed')->count(),
             ];
         })->sortByDesc('count');
-        
+
         // Daily trend
         $dailyTrend = $visits->groupBy(function($visit) {
             return $visit->visit_datetime->format('Y-m-d');
         })->map(function($dayVisits) {
             return $dayVisits->count();
         })->sortKeys();
-        
+
         $doctors = Doctor::orderBy('name')->get();
-        
+
         return view('admin.reports.patient-visits', compact(
             'visits', 'stats', 'doctorStats', 'dailyTrend', 'doctors',
             'startDate', 'endDate', 'doctorId', 'status'
         ));
     }
-    
+
     public function revenue(Request $request)
     {
         $startDate = $request->input('start_date', today()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $groupBy = $request->input('group_by', 'service');
-        
+
         // Get bills within date range
         $bills = Bill::whereBetween('created_at', [$startDate, $endDate])
             ->with(['billItems.service', 'patient', 'visit.doctor'])
             ->get();
-        
+
         // Calculate totals
         $totals = [
             'total_revenue' => $bills->sum('total_amount'),
@@ -136,7 +169,7 @@ class ReportController extends Controller
             'total_outstanding' => $bills->sum('total_amount') - $bills->sum('paid_amount'),
             'total_bills' => $bills->count(),
         ];
-        
+
         // Revenue by service type
         $serviceRevenue = BillItem::whereHas('bill', function($query) use ($startDate, $endDate) {
                 $query->whereBetween('created_at', [$startDate, $endDate]);
@@ -153,7 +186,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('revenue')
             ->values();
-        
+
         // Revenue by doctor
         $doctorRevenue = $bills->filter(function($bill) {
                 return $bill->visit && $bill->visit->doctor;
@@ -170,7 +203,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('revenue')
             ->values();
-        
+
         // Daily revenue trend
         $dailyRevenue = $bills->groupBy(function($bill) {
                 return $bill->created_at->format('Y-m-d');
@@ -183,7 +216,7 @@ class ReportController extends Controller
                 ];
             })
             ->sortKeys();
-        
+
         // Monthly comparison (if date range spans multiple months)
         $monthlyRevenue = $bills->groupBy(function($bill) {
                 return $bill->created_at->format('Y-m');
@@ -196,31 +229,31 @@ class ReportController extends Controller
                 ];
             })
             ->sortKeys();
-        
+
         return view('admin.reports.revenue', compact(
             'totals', 'serviceRevenue', 'doctorRevenue', 'dailyRevenue', 'monthlyRevenue',
             'startDate', 'endDate', 'groupBy'
         ));
     }
 
-    
+
     public function outstandingBills(Request $request)
     {
         $agingPeriod = $request->input('aging', 'all'); // all, 30, 60, 90
-        
+
         // Get bills with outstanding amounts
         $query = Bill::where('status', '!=', 'paid')
             ->with(['patient', 'payments'])
             ->orderBy('created_at', 'desc');
-        
+
         // Apply aging filter
         if ($agingPeriod !== 'all') {
             $days = (int) $agingPeriod;
             $query->where('created_at', '<=', now()->subDays($days));
         }
-        
+
         $bills = $query->get();
-        
+
         // Calculate aging buckets
         $agingAnalysis = [
             '0-30' => [
@@ -244,11 +277,11 @@ class ReportController extends Controller
                 'bills' => collect(),
             ],
         ];
-        
+
         foreach ($bills as $bill) {
             $daysOld = $bill->created_at->diffInDays(now());
             $outstanding = $bill->total_amount - $bill->paid_amount;
-            
+
             if ($daysOld <= 30) {
                 $agingAnalysis['0-30']['count']++;
                 $agingAnalysis['0-30']['amount'] += $outstanding;
@@ -267,7 +300,7 @@ class ReportController extends Controller
                 $agingAnalysis['90+']['bills']->push($bill);
             }
         }
-        
+
         // Summary statistics
         $summary = [
             'total_outstanding' => $bills->sum(function($bill) {
@@ -277,7 +310,7 @@ class ReportController extends Controller
             'partially_paid' => $bills->where('status', 'partial')->count(),
             'unpaid' => $bills->where('status', 'pending')->count(),
         ];
-        
+
         // Patient-wise outstanding
         $patientOutstanding = $bills->groupBy('patient_id')
             ->map(function($patientBills) {
@@ -294,31 +327,31 @@ class ReportController extends Controller
             })
             ->sortByDesc('outstanding')
             ->take(10);
-        
+
         return view('admin.reports.outstanding-bills', compact(
             'bills', 'agingAnalysis', 'summary', 'patientOutstanding', 'agingPeriod'
         ));
     }
 
-    
+
     public function labTests(Request $request)
     {
         $startDate = $request->input('start_date', today()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $testType = $request->input('test_type'); // lab or radiology
-        
+
         // Get investigation orders within date range
         $query = InvestigationOrder::whereBetween('created_at', [$startDate, $endDate])
             ->with(['investigation', 'patient', 'doctor']);
-        
+
         if ($testType) {
             $query->whereHas('investigation', function($q) use ($testType) {
                 $q->where('type', $testType);
             });
         }
-        
+
         $orders = $query->get();
-        
+
         // Calculate statistics
         $stats = [
             'total_orders' => $orders->count(),
@@ -333,7 +366,7 @@ class ReportController extends Controller
                 return $order->investigation && $order->isRadiology();
             })->count(),
         ];
-        
+
         // Test-wise breakdown
         $testBreakdown = $orders->groupBy('investigation_id')
             ->map(function($testOrders) {
@@ -347,7 +380,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('count')
             ->values();
-        
+
         // Doctor-wise orders
         $doctorOrders = $orders->filter(function($order) {
                 return $order->doctor;
@@ -362,7 +395,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('orders')
             ->values();
-        
+
         // Daily trend
         $dailyTrend = $orders->groupBy(function($order) {
                 return $order->created_at->format('Y-m-d');
@@ -374,18 +407,18 @@ class ReportController extends Controller
                 ];
             })
             ->sortKeys();
-        
+
         // Turnaround time analysis (for completed tests)
         $completedOrders = $orders->where('status', 'completed')->filter(function($order) {
             return $order->result_date;
         });
-        
-        $avgTurnaroundTime = $completedOrders->count() > 0 
+
+        $avgTurnaroundTime = $completedOrders->count() > 0
             ? $completedOrders->avg(function($order) {
                 return $order->created_at->diffInHours($order->result_date);
             })
             : 0;
-        
+
         return view('admin.reports.lab-tests', compact(
             'orders', 'stats', 'testBreakdown', 'doctorOrders', 'dailyTrend', 'avgTurnaroundTime',
             'startDate', 'endDate', 'testType'
@@ -397,22 +430,22 @@ class ReportController extends Controller
         $startDate = $request->input('start_date', today()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $medicineId = $request->input('medicine_id');
-        
+
         // Get prescriptions within date range
         $query = Prescription::whereBetween('created_at', [$startDate, $endDate])
             ->with(['items.medicine.brand', 'items.medicine.category', 'visit.patient', 'visit.doctor']);
-        
+
         $prescriptions = $query->get();
-        
+
         // Get all prescription items
         $items = $prescriptions->flatMap(function($prescription) {
             return $prescription->items;
         });
-        
+
         if ($medicineId) {
             $items = $items->where('medicine_id', $medicineId);
         }
-        
+
         // Calculate statistics
         $stats = [
             'total_prescriptions' => $prescriptions->count(),
@@ -420,7 +453,7 @@ class ReportController extends Controller
             'total_quantity' => $items->sum('quantity'),
             'unique_medicines' => $items->pluck('medicine_id')->unique()->count(),
         ];
-        
+
         // Medicine-wise breakdown
         $medicineBreakdown = $items->groupBy('medicine_id')
             ->map(function($medicineItems) {
@@ -433,7 +466,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('quantity')
             ->values();
-        
+
         // Category-wise breakdown
         $categoryBreakdown = $items->filter(function($item) {
                 return $item->medicine && $item->medicine->category;
@@ -449,7 +482,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('quantity')
             ->values();
-        
+
         // Brand-wise breakdown
         $brandBreakdown = $items->filter(function($item) {
                 return $item->medicine && $item->medicine->brand;
@@ -465,7 +498,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('quantity')
             ->values();
-        
+
         // Doctor-wise prescriptions
         $doctorPrescriptions = $prescriptions->filter(function($prescription) {
                 return $prescription->visit && $prescription->visit->doctor;
@@ -483,7 +516,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('prescriptions')
             ->values();
-        
+
         // Daily trend
         $dailyTrend = $prescriptions->groupBy(function($prescription) {
                 return $prescription->created_at->format('Y-m-d');
@@ -496,9 +529,9 @@ class ReportController extends Controller
                 ];
             })
             ->sortKeys();
-        
+
         $medicines = Medicine::where('status', 'active')->orderBy('name')->get();
-        
+
         return view('admin.reports.medicine-sales', compact(
             'prescriptions', 'stats', 'medicineBreakdown', 'categoryBreakdown', 'brandBreakdown',
             'doctorPrescriptions', 'dailyTrend', 'medicines', 'startDate', 'endDate', 'medicineId'
@@ -509,35 +542,35 @@ class ReportController extends Controller
     {
         $categoryId = $request->input('category_id');
         $stockStatus = $request->input('stock_status'); // all, low, out
-        
+
         // Get all medicines with manage_stock enabled
         $query = Medicine::where('manage_stock', true)
             ->with(['category', 'brand', 'baseUnit', 'dispensingUnit']);
-        
+
         if ($categoryId) {
             $query->where('category_id', $categoryId);
         }
-        
+
         $medicines = $query->get();
-        
+
         // Calculate stock levels for each medicine
         $inventory = $medicines->map(function($medicine) {
             $currentStock = $medicine->getCurrentStock();
-            $stockInUnit = $medicine->dispensing_unit_id 
-                ? $medicine->getCurrentStockInUnit($medicine->dispensing_unit_id) 
+            $stockInUnit = $medicine->dispensing_unit_id
+                ? $medicine->getCurrentStockInUnit($medicine->dispensing_unit_id)
                 : $currentStock;
             $isLowStock = $medicine->isLowStock();
             $isOutOfStock = $currentStock <= 0;
-            
+
             // Get recent transactions
             $recentTransactions = InventoryTransaction::where('medicine_id', $medicine->id)
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
-            
+
             // Calculate stock value (if you have cost price)
             $stockValue = 0;
-            
+
             return [
                 'medicine' => $medicine,
                 'current_stock' => $currentStock,
@@ -549,7 +582,7 @@ class ReportController extends Controller
                 'stock_value' => $stockValue,
             ];
         });
-        
+
         // Apply stock status filter
         if ($stockStatus === 'low') {
             $inventory = $inventory->filter(function($item) {
@@ -560,7 +593,7 @@ class ReportController extends Controller
                 return $item['is_out_of_stock'];
             });
         }
-        
+
         // Calculate statistics
         $stats = [
             'total_medicines' => $medicines->count(),
@@ -568,7 +601,7 @@ class ReportController extends Controller
             'out_of_stock' => $inventory->filter(fn($i) => $i['is_out_of_stock'])->count(),
             'adequate_stock' => $inventory->filter(fn($i) => !$i['is_low_stock'] && !$i['is_out_of_stock'])->count(),
         ];
-        
+
         // Category-wise stock status
         $categoryStats = $inventory->groupBy('medicine.category_id')
             ->map(function($categoryItems) {
@@ -581,9 +614,9 @@ class ReportController extends Controller
                 ];
             })
             ->values();
-        
+
         $categories = \App\Models\MedicineCategory::where('is_active', true)->orderBy('name')->get();
-        
+
         return view('admin.reports.inventory-status', compact(
             'inventory', 'stats', 'categoryStats', 'categories', 'categoryId', 'stockStatus'
         ));
@@ -593,37 +626,37 @@ class ReportController extends Controller
     {
         $days = $request->input('days', 90); // Default to 90 days
         $categoryId = $request->input('category_id');
-        
+
         $expiryDate = now()->addDays($days);
-        
+
         // Get inventory transactions with expiry dates
         $query = InventoryTransaction::where('type', 'stock_in')
             ->whereNotNull('expiry_date')
             ->where('expiry_date', '<=', $expiryDate)
             ->where('quantity', '>', 0) // Only items still in stock
             ->with(['medicine.category', 'medicine.brand', 'medicine.baseUnit']);
-        
+
         if ($categoryId) {
             $query->whereHas('medicine', function($q) use ($categoryId) {
                 $q->where('category_id', $categoryId);
             });
         }
-        
+
         $transactions = $query->orderBy('expiry_date')->get();
-        
+
         // Group by expiry status
         $expired = $transactions->filter(function($t) {
             return $t->expiry_date < now();
         });
-        
+
         $expiringSoon = $transactions->filter(function($t) {
             return $t->expiry_date >= now() && $t->expiry_date <= now()->addDays(30);
         });
-        
+
         $expiringLater = $transactions->filter(function($t) {
             return $t->expiry_date > now()->addDays(30);
         });
-        
+
         // Calculate statistics
         $stats = [
             'total_items' => $transactions->count(),
@@ -633,14 +666,14 @@ class ReportController extends Controller
             'total_quantity_expired' => $expired->sum('quantity'),
             'total_quantity_expiring' => $expiringSoon->sum('quantity'),
         ];
-        
+
         // Medicine-wise expiry breakdown
         $medicineExpiry = $transactions->groupBy('medicine_id')
             ->map(function($medicineTransactions) {
                 $medicine = $medicineTransactions->first()->medicine;
                 $expired = $medicineTransactions->filter(fn($t) => $t->expiry_date < now());
                 $expiringSoon = $medicineTransactions->filter(fn($t) => $t->expiry_date >= now() && $t->expiry_date <= now()->addDays(30));
-                
+
                 return [
                     'medicine' => $medicine,
                     'total_batches' => $medicineTransactions->count(),
@@ -653,7 +686,7 @@ class ReportController extends Controller
             })
             ->sortBy('earliest_expiry')
             ->values();
-        
+
         // Category-wise expiry
         $categoryExpiry = $transactions->filter(function($t) {
                 return $t->medicine && $t->medicine->category;
@@ -663,7 +696,7 @@ class ReportController extends Controller
                 $category = $categoryTransactions->first()->medicine->category;
                 $expired = $categoryTransactions->filter(fn($t) => $t->expiry_date < now());
                 $expiringSoon = $categoryTransactions->filter(fn($t) => $t->expiry_date >= now() && $t->expiry_date <= now()->addDays(30));
-                
+
                 return [
                     'category' => $category,
                     'total' => $categoryTransactions->count(),
@@ -672,9 +705,9 @@ class ReportController extends Controller
                 ];
             })
             ->values();
-        
+
         $categories = \App\Models\MedicineCategory::where('is_active', true)->orderBy('name')->get();
-        
+
         return view('admin.reports.expiry-report', compact(
             'transactions', 'expired', 'expiringSoon', 'expiringLater', 'stats',
             'medicineExpiry', 'categoryExpiry', 'categories', 'days', 'categoryId'
@@ -686,57 +719,57 @@ class ReportController extends Controller
         $startDate = $request->input('start_date', today()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $doctorId = $request->input('doctor_id');
-        
+
         // Get doctors with their performance data
         $query = Doctor::with(['department']);
-        
+
         if ($doctorId) {
             $query->where('id', $doctorId);
         }
-        
+
         $doctors = $query->get();
-        
+
         // Calculate performance metrics for each doctor
         $performance = $doctors->map(function($doctor) use ($startDate, $endDate) {
             // Get visits
             $visits = Visit::where('doctor_id', $doctor->id)
                 ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                 ->get();
-            
+
             // Get appointments
             $appointments = \App\Models\Appointment::where('doctor_id', $doctor->id)
                 ->whereBetween('appointment_datetime', [$startDate, $endDate])
                 ->get();
-            
+
             // Get prescriptions
             $prescriptions = Prescription::whereHas('visit', function($q) use ($doctor, $startDate, $endDate) {
                 $q->where('doctor_id', $doctor->id)
                   ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             })->get();
-            
+
             // Get investigation orders
             $investigationOrders = InvestigationOrder::where('doctor_id', $doctor->id)
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
-            
+
             // Get bills generated from doctor's visits
             $bills = Bill::whereHas('visit', function($q) use ($doctor, $startDate, $endDate) {
                 $q->where('doctor_id', $doctor->id)
                   ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             })->get();
-            
+
             // Calculate metrics
             $totalVisits = $visits->count();
             $completedVisits = $visits->where('status', 'completed')->count();
             $totalAppointments = $appointments->count();
             $completedAppointments = $appointments->where('status', 'completed')->count();
             $cancelledAppointments = $appointments->where('status', 'cancelled')->count();
-            
+
             $totalRevenue = $bills->sum('total_amount');
             $totalCollected = $bills->sum('paid_amount');
-            
+
             $avgVisitsPerDay = $totalVisits > 0 ? $totalVisits / max(1, now()->parse($startDate)->diffInDays(now()->parse($endDate)) + 1) : 0;
-            
+
             return [
                 'doctor' => $doctor,
                 'total_visits' => $totalVisits,
@@ -754,7 +787,7 @@ class ReportController extends Controller
                 'unique_patients' => $visits->pluck('patient_id')->unique()->count(),
             ];
         })->sortByDesc('total_visits');
-        
+
         // Overall statistics
         $stats = [
             'total_doctors' => $doctors->count(),
@@ -764,7 +797,7 @@ class ReportController extends Controller
             'total_investigations' => $performance->sum('total_investigations'),
             'avg_visits_per_doctor' => $doctors->count() > 0 ? $performance->sum('total_visits') / $doctors->count() : 0,
         ];
-        
+
         // Department-wise performance
         $departmentPerformance = $performance->filter(function($p) {
                 return $p['doctor']->department;
@@ -782,9 +815,9 @@ class ReportController extends Controller
             })
             ->sortByDesc('visits')
             ->values();
-        
+
         $allDoctors = Doctor::orderBy('name')->get();
-        
+
         return view('admin.reports.doctor-performance', compact(
             'performance', 'stats', 'departmentPerformance', 'allDoctors',
             'startDate', 'endDate', 'doctorId'
@@ -797,21 +830,21 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $doctorId = $request->input('doctor_id');
         $status = $request->input('status');
-        
+
         // Get appointments within date range
         $query = Appointment::whereBetween('appointment_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->with(['patient', 'doctor']);
-        
+
         if ($doctorId) {
             $query->where('doctor_id', $doctorId);
         }
-        
+
         if ($status) {
             $query->where('status', $status);
         }
-        
+
         $appointments = $query->orderBy('appointment_datetime', 'desc')->get();
-        
+
         // Calculate statistics
         $stats = [
             'total_appointments' => $appointments->count(),
@@ -823,7 +856,7 @@ class ReportController extends Controller
             'cancellation_rate' => $appointments->count() > 0 ? ($appointments->where('status', 'cancelled')->count() / $appointments->count() * 100) : 0,
             'no_show_rate' => $appointments->count() > 0 ? ($appointments->where('status', 'no_show')->count() / $appointments->count() * 100) : 0,
         ];
-        
+
         // Doctor-wise appointment breakdown
         $doctorAppointments = $appointments->groupBy('doctor_id')
             ->map(function($doctorAppts) {
@@ -840,7 +873,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('total')
             ->values();
-        
+
         // Daily appointment trend
         $dailyTrend = $appointments->groupBy(function($appointment) {
                 return \Carbon\Carbon::parse($appointment->appointment_datetime)->format('Y-m-d');
@@ -854,7 +887,7 @@ class ReportController extends Controller
                 ];
             })
             ->sortKeys();
-        
+
         // Time slot analysis (hour of day)
         $timeSlotAnalysis = $appointments->groupBy(function($appointment) {
                 return \Carbon\Carbon::parse($appointment->appointment_datetime)->format('H');
@@ -869,7 +902,7 @@ class ReportController extends Controller
             })
             ->sortBy('hour')
             ->values();
-        
+
         // Day of week analysis
         $dayOfWeekAnalysis = $appointments->groupBy(function($appointment) {
                 return \Carbon\Carbon::parse($appointment->appointment_datetime)->dayOfWeek;
@@ -883,7 +916,7 @@ class ReportController extends Controller
             })
             ->sortKeys()
             ->values();
-        
+
         // Cancellation reasons (if you have a reason field)
         $cancellationReasons = $appointments->where('status', 'cancelled')
             ->groupBy('cancellation_reason')
@@ -895,9 +928,9 @@ class ReportController extends Controller
             })
             ->sortByDesc('count')
             ->values();
-        
+
         $doctors = Doctor::orderBy('name')->get();
-        
+
         return view('admin.reports.appointment-statistics', compact(
             'appointments', 'stats', 'doctorAppointments', 'dailyTrend', 'timeSlotAnalysis',
             'dayOfWeekAnalysis', 'cancellationReasons', 'doctors', 'startDate', 'endDate', 'doctorId', 'status'
@@ -910,29 +943,29 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $wardId = $request->input('ward_id');
         $status = $request->input('status');
-        
+
         // Get admissions within date range
         $query = Admission::whereBetween('admission_date', [$startDate, $endDate])
             ->with(['patient', 'bed.ward', 'visit.doctor']);
-        
+
         if ($wardId) {
             $query->whereHas('bed', function($q) use ($wardId) {
                 $q->where('ward_id', $wardId);
             });
         }
-        
+
         if ($status === 'active') {
             $query->whereNull('discharge_date');
         } elseif ($status === 'discharged') {
             $query->whereNotNull('discharge_date');
         }
-        
+
         $admissions = $query->orderBy('admission_date', 'desc')->get();
-        
+
         // Calculate statistics
         $activeAdmissions = Admission::whereNull('discharge_date')->count();
         $dischargedInPeriod = $admissions->whereNotNull('discharge_date')->count();
-        
+
         $stats = [
             'total_admissions' => $admissions->count(),
             'active_admissions' => $activeAdmissions,
@@ -941,7 +974,7 @@ class ReportController extends Controller
             'total_bed_days' => 0,
             'bed_occupancy_rate' => 0,
         ];
-        
+
         // Calculate average length of stay
         $dischargedAdmissions = $admissions->whereNotNull('discharge_date');
         if ($dischargedAdmissions->count() > 0) {
@@ -951,19 +984,19 @@ class ReportController extends Controller
             });
             $stats['avg_length_of_stay'] = $totalDays / $dischargedAdmissions->count();
         }
-        
+
         // Calculate total bed days
         $stats['total_bed_days'] = $admissions->sum(function($admission) {
             $endDate = $admission->discharge_date ?? now();
             return \Carbon\Carbon::parse($admission->admission_date)->diffInDays($endDate);
         });
-        
+
         // Calculate bed occupancy rate
         $totalBeds = Bed::where('status', 'available')->orWhere('status', 'occupied')->count();
         if ($totalBeds > 0) {
             $stats['bed_occupancy_rate'] = ($activeAdmissions / $totalBeds) * 100;
         }
-        
+
         // Ward-wise statistics
         $wardStats = Ward::with(['beds'])->get()->map(function($ward) use ($startDate, $endDate) {
             $wardAdmissions = Admission::whereHas('bed', function($q) use ($ward) {
@@ -971,16 +1004,16 @@ class ReportController extends Controller
                 })
                 ->whereBetween('admission_date', [$startDate, $endDate])
                 ->get();
-            
+
             $activeInWard = Admission::whereHas('bed', function($q) use ($ward) {
                     $q->where('ward_id', $ward->id);
                 })
                 ->whereNull('discharge_date')
                 ->count();
-            
+
             $totalBeds = $ward->beds->count();
             $occupancyRate = $totalBeds > 0 ? ($activeInWard / $totalBeds * 100) : 0;
-            
+
             return [
                 'ward' => $ward,
                 'total_beds' => $totalBeds,
@@ -990,7 +1023,7 @@ class ReportController extends Controller
                 'occupancy_rate' => $occupancyRate,
             ];
         })->sortByDesc('admissions');
-        
+
         // Daily admission trend
         $dailyTrend = $admissions->groupBy(function($admission) {
                 return \Carbon\Carbon::parse($admission->admission_date)->format('Y-m-d');
@@ -1002,7 +1035,7 @@ class ReportController extends Controller
                 ];
             })
             ->sortKeys();
-        
+
         // Diagnosis-wise admissions (if you have diagnosis data)
         $diagnosisStats = $admissions->filter(function($admission) {
                 return $admission->visit && $admission->visit->consultation;
@@ -1019,7 +1052,7 @@ class ReportController extends Controller
             ->sortByDesc('count')
             ->take(10)
             ->values();
-        
+
         // Doctor-wise admissions
         $doctorStats = $admissions->filter(function($admission) {
                 return $admission->visit && $admission->visit->doctor;
@@ -1036,9 +1069,9 @@ class ReportController extends Controller
             })
             ->sortByDesc('admissions')
             ->values();
-        
+
         $wards = Ward::orderBy('name')->get();
-        
+
         return view('admin.reports.ipd-report', compact(
             'admissions', 'stats', 'wardStats', 'dailyTrend', 'diagnosisStats', 'doctorStats',
             'wards', 'startDate', 'endDate', 'wardId', 'status'
@@ -1050,54 +1083,54 @@ class ReportController extends Controller
         $startDate = $request->input('start_date', today()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $departmentId = $request->input('department_id');
-        
+
         // Get departments with their performance data
         $query = Department::with(['doctors']);
-        
+
         if ($departmentId) {
             $query->where('id', $departmentId);
         }
-        
+
         $departments = $query->get();
-        
+
         // Calculate performance metrics for each department
         $performance = $departments->map(function($department) use ($startDate, $endDate) {
             // Get doctors in this department
             $doctorIds = $department->doctors->pluck('id');
-            
+
             // Get visits
             $visits = Visit::whereIn('doctor_id', $doctorIds)
                 ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                 ->get();
-            
+
             // Get appointments
             $appointments = Appointment::whereIn('doctor_id', $doctorIds)
                 ->whereBetween('appointment_datetime', [$startDate, $endDate])
                 ->get();
-            
+
             // Get bills
             $bills = Bill::whereHas('visit', function($q) use ($doctorIds, $startDate, $endDate) {
                 $q->whereIn('doctor_id', $doctorIds)
                   ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             })->get();
-            
+
             // Get prescriptions
             $prescriptions = Prescription::whereHas('visit', function($q) use ($doctorIds, $startDate, $endDate) {
                 $q->whereIn('doctor_id', $doctorIds)
                   ->whereBetween('visit_datetime', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             })->get();
-            
+
             // Get investigation orders
             $investigationOrders = InvestigationOrder::whereIn('doctor_id', $doctorIds)
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
-            
+
             // Calculate metrics
             $totalRevenue = $bills->sum('total_amount');
             $totalCollected = $bills->sum('paid_amount');
             $totalVisits = $visits->count();
             $completedVisits = $visits->where('status', 'completed')->count();
-            
+
             return [
                 'department' => $department,
                 'doctors_count' => $department->doctors->count(),
@@ -1115,7 +1148,7 @@ class ReportController extends Controller
                 'avg_revenue_per_doctor' => $department->doctors->count() > 0 ? $totalRevenue / $department->doctors->count() : 0,
             ];
         })->sortByDesc('total_revenue');
-        
+
         // Overall statistics
         $stats = [
             'total_departments' => $departments->count(),
@@ -1125,7 +1158,7 @@ class ReportController extends Controller
             'total_prescriptions' => $performance->sum('total_prescriptions'),
             'total_investigations' => $performance->sum('total_investigations'),
         ];
-        
+
         // Revenue comparison
         $revenueComparison = $performance->map(function($perf) {
             return [
@@ -1134,7 +1167,7 @@ class ReportController extends Controller
                 'collected' => $perf['total_collected'],
             ];
         })->sortByDesc('revenue')->values();
-        
+
         // Visit comparison
         $visitComparison = $performance->sortByDesc('total_visits')->map(function($perf) {
             return [
@@ -1143,7 +1176,7 @@ class ReportController extends Controller
                 'completed' => $perf['completed_visits'],
             ];
         })->values();
-        
+
         // Efficiency metrics
         $efficiencyMetrics = $performance->map(function($perf) {
             return [
@@ -1153,9 +1186,9 @@ class ReportController extends Controller
                 'completion_rate' => $perf['completion_rate'],
             ];
         })->sortByDesc('avg_revenue_per_doctor')->values();
-        
+
         $allDepartments = Department::orderBy('name')->get();
-        
+
         return view('admin.reports.department-performance', compact(
             'performance', 'stats', 'revenueComparison', 'visitComparison', 'efficiencyMetrics',
             'allDepartments', 'startDate', 'endDate', 'departmentId'
@@ -1166,11 +1199,11 @@ class ReportController extends Controller
     {
         $startDate = $request->input('start_date', today()->startOfYear()->format('Y-m-d'));
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
-        
+
         // Get patients registered within date range
         $patients = Patient::whereBetween('created_at', [$startDate, $endDate])->get();
         $allPatients = Patient::all();
-        
+
         // Calculate statistics
         $stats = [
             'total_patients' => $allPatients->count(),
@@ -1179,7 +1212,7 @@ class ReportController extends Controller
             'female_patients' => $allPatients->where('gender', 'female')->count(),
             'other_gender' => $allPatients->whereNotIn('gender', ['male', 'female'])->count(),
         ];
-        
+
         // Age distribution
         $ageGroups = [
             '0-10' => ['min' => 0, 'max' => 10, 'count' => 0],
@@ -1191,7 +1224,7 @@ class ReportController extends Controller
             '61-70' => ['min' => 61, 'max' => 70, 'count' => 0],
             '71+' => ['min' => 71, 'max' => 999, 'count' => 0],
         ];
-        
+
         foreach ($allPatients as $patient) {
             if ($patient->date_of_birth) {
                 $age = \Carbon\Carbon::parse($patient->date_of_birth)->age;
@@ -1203,7 +1236,7 @@ class ReportController extends Controller
                 }
             }
         }
-        
+
         // Gender distribution by age group
         $genderAgeDistribution = [];
         foreach ($ageGroups as $group => $data) {
@@ -1213,7 +1246,7 @@ class ReportController extends Controller
                 'other' => 0,
             ];
         }
-        
+
         foreach ($allPatients as $patient) {
             if ($patient->date_of_birth) {
                 $age = \Carbon\Carbon::parse($patient->date_of_birth)->age;
@@ -1226,7 +1259,7 @@ class ReportController extends Controller
                 }
             }
         }
-        
+
         // Blood group distribution
         $bloodGroups = $allPatients->groupBy('blood_group')
             ->map(function($group, $bloodGroup) {
@@ -1237,7 +1270,7 @@ class ReportController extends Controller
             })
             ->sortByDesc('count')
             ->values();
-        
+
         // Monthly registration trend
         $monthlyTrend = $patients->groupBy(function($patient) {
                 return \Carbon\Carbon::parse($patient->created_at)->format('Y-m');
@@ -1250,7 +1283,7 @@ class ReportController extends Controller
                 ];
             })
             ->sortKeys();
-        
+
         // Top areas/cities (if you have address field)
         $topAreas = $allPatients->filter(function($patient) {
                 return !empty($patient->address);
@@ -1265,7 +1298,7 @@ class ReportController extends Controller
             ->sortByDesc('count')
             ->take(10)
             ->values();
-        
+
         // Patient visit frequency
         $visitFrequency = $allPatients->map(function($patient) {
             $visitCount = Visit::where('patient_id', $patient->id)->count();
@@ -1274,7 +1307,7 @@ class ReportController extends Controller
                 'visit_count' => $visitCount,
             ];
         })->sortByDesc('visit_count')->take(10)->values();
-        
+
         return view('admin.reports.patient-demographics', compact(
             'stats', 'ageGroups', 'genderAgeDistribution', 'bloodGroups', 'monthlyTrend',
             'topAreas', 'visitFrequency', 'startDate', 'endDate'

@@ -92,6 +92,18 @@
                         class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors">
                     <i class="fas fa-vial mr-1.5"></i>Collect Sample
                 </button>
+                <a href="{{ route('investigation-orders.edit', $order) }}"
+                   class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-edit mr-1.5"></i>Edit
+                </a>
+                <form action="{{ route('investigation-orders.destroy', $order) }}" method="POST" class="inline"
+                      onsubmit="return confirm('Delete this order and all its items? This cannot be undone.')">
+                    @csrf @method('DELETE')
+                    <button type="submit"
+                            class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
+                        <i class="fas fa-trash mr-1.5"></i>Delete
+                    </button>
+                </form>
             @endif
             <a href="{{ route('investigation-orders.show', $order) }}"
                class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-medical-blue bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">

@@ -300,7 +300,7 @@ Route::middleware('auth')->group(function () {
 
     // Tax Configuration
     Route::resource('taxes', \App\Http\Controllers\TaxController::class)->middleware('permission:view bills|create bills');
-    Route::post('taxes/calculate', [\App\Http\Controllers\TaxController::class, 'calculate'])->name('taxes.calculate');
+    Route::post('taxes/calculate', [\App\Http\Controllers\TaxController::class, 'calculate'])->name('taxes.calculate')->middleware('permission:view bills|create bills');
 
     // Accounting
     Route::prefix('accounting')->name('accounting.')->middleware('permission:view accounting')->group(function () {

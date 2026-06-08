@@ -20,6 +20,19 @@ class AccountingService
     public static function postBillEntry(Bill $bill): ?JournalEntry
     {
         try {
+            // Prevent duplicate journal entries for the same bill
+            $existing = JournalEntry::where('reference_type', 'Bill')
+                ->where('reference_id', $bill->id)
+                ->first();
+
+            if ($existing) {
+                Log::info('[Accounting] Journal entry already exists for bill — skipping', [
+                    'bill_id'  => $bill->id,
+                    'entry_id' => $existing->id,
+                ]);
+                return $existing;
+            }
+
             $receivable = Account::where('code', '1200')->first(); // Accounts Receivable
             $taxPayable = Account::where('code', '2100')->first(); // Tax Payable
             $revenueCode = self::getRevenueAccountCode($bill->bill_type);

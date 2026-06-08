@@ -66,6 +66,7 @@ class AccountingController extends Controller
             'parent_id' => 'nullable|exists:tenant.accounts,id',
             'description' => 'nullable|string|max:500',
             'is_active' => 'boolean',
+            'opening_balance' => 'nullable|numeric|min:0',
         ]);
 
         // Prevent setting parent to self or to a child account
@@ -81,6 +82,12 @@ class AccountingController extends Controller
             'description' => $request->description,
             'is_active'   => $request->boolean('is_active', true),
         ]);
+
+        // Record opening balance adjustment if provided
+        $openingBalance = (float) ($request->opening_balance ?? 0);
+        if ($openingBalance > 0) {
+            $this->recordOpeningBalance($account, $openingBalance);
+        }
 
         return redirect()->route('accounting.chart-of-accounts')->with('success', 'Account updated.');
     }
