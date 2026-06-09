@@ -39,12 +39,21 @@ class ReportController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        // ── Cash Outflows (Expenses — purchase orders received/paid in period) ─
-        $purchases = \App\Models\PurchaseOrder::whereBetween('order_date', [$startDate, $endDate])
-            ->where('status', 'received')
-            ->with('supplier')
-            ->orderBy('order_date')
+        // ── Cash Outflows (any journal entry that credits cash/bank accounts) ───
+        $cashAccountIds = Account::where('type', 'asset')
+            ->where(function ($q) {
+                $q->where('code', 'like', '11%')
+                  ->orWhere('code', '1100')
+                  ->orWhere('code', '1110');
+            })->active()->pluck('id');
+
+        $outflowLines = \App\Models\JournalEntryLine::whereIn('account_id', $cashAccountIds)
+            ->where('credit', '>', 0)
+            ->whereHas('journalEntry', fn($q) => $q->whereBetween('entry_date', [$startDate, $endDate]))
+            ->with(['journalEntry', 'account'])
             ->get();
+
+        $totalOutflows = (float) $outflowLines->sum('credit');
 
         // ── Bills created in the period (for reference) ──────────────────────
         $bills = Bill::whereBetween('bill_date', [$startDate, $endDate])
@@ -66,7 +75,6 @@ class ReportController extends Controller
 
         // ── Calculate summaries ───────────────────────────────────────────────
         $totalInflows  = $payments->sum('amount');
-        $totalOutflows = $purchases->sum('total_amount');
         $closingBalance = $openingBalance + $totalInflows - $totalOutflows;
 
         $summary = [
@@ -86,7 +94,7 @@ class ReportController extends Controller
         ];
 
         return view('admin.reports.daily-cash-register', compact(
-            'payments', 'purchases', 'bills', 'summary', 'startDate', 'endDate'
+            'payments', 'outflowLines', 'bills', 'summary', 'startDate', 'endDate'
         ));
     }
 

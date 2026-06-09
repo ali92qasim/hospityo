@@ -187,11 +187,11 @@
     </div>
 </div>
 
-<!-- Outflows — Purchases/Expenses -->
+<!-- Outflows — Expenses -->
 <div class="bg-white rounded-lg shadow mb-6">
     <div class="p-6 border-b border-gray-200">
         <h2 class="text-lg font-semibold text-gray-800">
-            <i class="fas fa-arrow-up text-red-500 mr-2"></i>Outflows — Purchases & Expenses
+            <i class="fas fa-arrow-up text-red-500 mr-2"></i>Outflows — Expenses & Payments Out
         </h2>
     </div>
     <div class="overflow-x-auto">
@@ -199,31 +199,33 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO #</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry #</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-                @forelse($purchases as $po)
+                @forelse($outflowLines as $line)
                 <tr>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ $po->order_date?->format('d M Y') ?? '—' }}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ $po->po_number ?? '—' }}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ $po->supplier?->name ?? '—' }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ $line->journalEntry?->entry_date?->format('d M Y') ?? '—' }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ $line->journalEntry?->entry_number ?? '—' }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-700">{{ $line->journalEntry?->description ?? $line->narration ?? '—' }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{{ $line->account?->code }} — {{ $line->account?->name }}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-red-700 text-right">
-                        - {{ format_currency($po->total_amount) }}
+                        - {{ format_currency($line->credit) }}
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">No outflows recorded in this period</td>
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">No outflows recorded in this period</td>
                 </tr>
                 @endforelse
             </tbody>
-            @if($purchases->count() > 0)
+            @if($outflowLines->count() > 0)
             <tfoot class="bg-red-50 font-semibold">
                 <tr>
-                    <td colspan="3" class="px-6 py-3 text-right text-sm text-gray-700">Total Outflows:</td>
+                    <td colspan="4" class="px-6 py-3 text-right text-sm text-gray-700">Total Outflows:</td>
                     <td class="px-6 py-3 text-right text-sm text-red-700">- {{ format_currency($summary['total_outflows']) }}</td>
                 </tr>
             </tfoot>
