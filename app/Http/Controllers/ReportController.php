@@ -39,21 +39,16 @@ class ReportController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        // ── Cash Outflows (any journal entry that credits cash/bank accounts) ───
-        $cashAccountIds = Account::where('type', 'asset')
-            ->where(function ($q) {
-                $q->where('code', 'like', '11%')
-                  ->orWhere('code', '1100')
-                  ->orWhere('code', '1110');
-            })->active()->pluck('id');
+        // ── Cash Outflows (journal entries where expense accounts are debited) ──
+        $expenseAccountIds = Account::where('type', 'expense')->pluck('id');
 
-        $outflowLines = \App\Models\JournalEntryLine::whereIn('account_id', $cashAccountIds)
-            ->where('credit', '>', 0)
+        $outflowLines = \App\Models\JournalEntryLine::whereIn('account_id', $expenseAccountIds)
+            ->where('debit', '>', 0)
             ->whereHas('journalEntry', fn($q) => $q->whereBetween('entry_date', [$startDate, $endDate]))
             ->with(['journalEntry', 'account'])
             ->get();
 
-        $totalOutflows = (float) $outflowLines->sum('credit');
+        $totalOutflows = (float) $outflowLines->sum('debit');
 
         // ── Bills created in the period (for reference) ──────────────────────
         $bills = Bill::whereBetween('bill_date', [$startDate, $endDate])
@@ -64,7 +59,7 @@ class ReportController extends Controller
         // ── Opening balance (cash accounts balance before start date) ─────────
         $cashAccounts = Account::where('type', 'asset')
             ->where(function ($q) {
-                $q->where('code', 'like', '11%') // Cash and Bank accounts
+                $q->where('code', 'like', '11%')
                   ->orWhere('code', '1100')
                   ->orWhere('code', '1110');
             })->active()->get();
