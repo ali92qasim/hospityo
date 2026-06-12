@@ -6,7 +6,7 @@ use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\SuperAdmin\ContactMessageController;
 use App\Http\Controllers\SuperAdmin\TenantController;
-use App\Http\Controllers\SuperAdmin\ProfileController;
+use App\Http\Controllers\SuperAdmin\ProfileController as SuperAdminProfileController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BillingController;
@@ -149,9 +149,9 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
         // Profile
-        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
-        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+        Route::get('/profile', [SuperAdminProfileController::class, 'edit'])->name('profile');
+        Route::patch('/profile', [SuperAdminProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [SuperAdminProfileController::class, 'updatePassword'])->name('profile.password');
 
         // Tenant management
         Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');

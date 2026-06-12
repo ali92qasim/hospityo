@@ -73,6 +73,23 @@ class LabTestParameter extends Model
             }
         }
 
+        $numValue = floatval($value);
+
+        // Handle single-bound ranges: "< 150", "<150", "<= 200", "≤200", "> 40", ">=5", "≥5"
+        if (preg_match('/^[<≤]\s*=?\s*(\d+\.?\d*)/', $range, $singleMatch)) {
+            // Upper bound only (e.g. "< 150" means normal is below 150)
+            $upperLimit = floatval($singleMatch[1]);
+            if ($numValue >= $upperLimit) return 'H';
+            return 'N';
+        }
+
+        if (preg_match('/^[>≥]\s*=?\s*(\d+\.?\d*)/', $range, $singleMatch)) {
+            // Lower bound only (e.g. "> 40" means normal is above 40)
+            $lowerLimit = floatval($singleMatch[1]);
+            if ($numValue <= $lowerLimit) return 'L';
+            return 'N';
+        }
+
         // Match the first "number - number" pair (spaces around dash are optional)
         if (!preg_match('/(\d+\.?\d*)\s*-\s*(\d+\.?\d*)/', $range, $matches)) {
             return 'N';
@@ -80,7 +97,6 @@ class LabTestParameter extends Model
 
         $low      = floatval($matches[1]);
         $high     = floatval($matches[2]);
-        $numValue = floatval($value);
 
         // Check critical values first
         if ($this->critical_values) {
