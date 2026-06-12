@@ -1,19 +1,39 @@
 <?php
 
 use App\Http\Controllers\InstallController;
+use App\Http\Controllers\SuperAdmin\AuthController;
+use App\Http\Controllers\AccountingController;
+use App\Http\Controllers\BackupController;
+use App\Http\Controllers\SuperAdmin\ContactMessageController;
+use App\Http\Controllers\SuperAdmin\TenantController;
+use App\Http\Controllers\SuperAdmin\ProfileController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\CentralLoginController;
+use App\Http\Controllers\SuperAdmin\DashboardController;
+use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\SuperAdmin\PageController;
+use App\Http\Controllers\SuperAdmin\PlanController;
+use App\Http\Controllers\SuperAdmin\PaymentGatewayController;
+use App\Http\Controllers\SuperAdmin\SiteSettingsController;
+use App\Http\Controllers\Admin\PrescriptionInstructionController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\VisitController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\TaxController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\WardController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\MedicineController;
@@ -28,14 +48,19 @@ use App\Http\Controllers\RadiologyResultController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DoctorShareController;
+use App\Http\Controllers\DepartmentStaffController;
+use App\Http\Controllers\DocumentManagementController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\LeaveController;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use App\Http\Controllers\TenantRegistrationController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 
 // Installation Routes
 Route::prefix('install')->name('install.')->group(function () {
@@ -92,21 +117,21 @@ Route::get('/documentation', function () {
 })->name('documentation');
 
 // Central Login (main domain — finds tenant by email)
-Route::get('/signin', [\App\Http\Controllers\CentralLoginController::class, 'showLogin'])->name('central.login');
-Route::post('/signin', [\App\Http\Controllers\CentralLoginController::class, 'login'])->name('central.login.submit');
+Route::get('/signin', [CentralLoginController::class, 'showLogin'])->name('central.login');
+Route::post('/signin', [CentralLoginController::class, 'login'])->name('central.login.submit');
 
 // Language Switcher Route
 Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
 // PayFast Webhook (server-to-server, no auth/tenant required)
-Route::post('/billing/payfast/webhook', [\App\Http\Controllers\BillingController::class, 'webhook'])
+Route::post('/billing/payfast/webhook', [BillingController::class, 'webhook'])
     ->name('billing.payfast.webhook')
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+    ->withoutMiddleware([VerifyCsrfToken::class]);
 
 // Paddle Webhook (server-to-server, no auth/tenant required)
-Route::post('/paddle/webhook', [\App\Http\Controllers\SubscriptionController::class, 'paddleWebhook'])
+Route::post('/paddle/webhook', [SubscriptionController::class, 'paddleWebhook'])
     ->name('paddle.webhook')
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+    ->withoutMiddleware([VerifyCsrfToken::class]);
 
 /*
 |--------------------------------------------------------------------------
@@ -115,56 +140,56 @@ Route::post('/paddle/webhook', [\App\Http\Controllers\SubscriptionController::cl
 */
 Route::prefix('super-admin')->name('super-admin.')->group(function () {
     // Auth
-    Route::get('/login', [\App\Http\Controllers\SuperAdmin\AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [\App\Http\Controllers\SuperAdmin\AuthController::class, 'login']);
-    Route::post('/logout', [\App\Http\Controllers\SuperAdmin\AuthController::class, 'logout'])->name('logout');
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Protected routes
     Route::middleware('super_admin')->group(function () {
-        Route::get('/', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
         // Profile
-        Route::get('/profile', [\App\Http\Controllers\SuperAdmin\ProfileController::class, 'edit'])->name('profile');
-        Route::patch('/profile', [\App\Http\Controllers\SuperAdmin\ProfileController::class, 'update'])->name('profile.update');
-        Route::put('/profile/password', [\App\Http\Controllers\SuperAdmin\ProfileController::class, 'updatePassword'])->name('profile.password');
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
         // Tenant management
-        Route::get('/tenants', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'index'])->name('tenants.index');
-        Route::get('/tenants/{tenant}', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'show'])->name('tenants.show');
-        Route::post('/tenants/{tenant}/suspend', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'suspend'])->name('tenants.suspend');
-        Route::post('/tenants/{tenant}/activate', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'activate'])->name('tenants.activate');
-        Route::post('/tenants/{tenant}/change-plan', [\App\Http\Controllers\SuperAdmin\TenantController::class, 'changePlan'])->name('tenants.change-plan');
+        Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
+        Route::get('/tenants/{tenant}', [TenantController::class, 'show'])->name('tenants.show');
+        Route::post('/tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
+        Route::post('/tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
+        Route::post('/tenants/{tenant}/change-plan', [TenantController::class, 'changePlan'])->name('tenants.change-plan');
 
         // Plan management
-        Route::get('/plans', [\App\Http\Controllers\SuperAdmin\PlanController::class, 'index'])->name('plans.index');
-        Route::get('/plans/create', [\App\Http\Controllers\SuperAdmin\PlanController::class, 'create'])->name('plans.create');
-        Route::post('/plans', [\App\Http\Controllers\SuperAdmin\PlanController::class, 'store'])->name('plans.store');
-        Route::get('/plans/{plan}/edit', [\App\Http\Controllers\SuperAdmin\PlanController::class, 'edit'])->name('plans.edit');
-        Route::put('/plans/{plan}', [\App\Http\Controllers\SuperAdmin\PlanController::class, 'update'])->name('plans.update');
-        Route::delete('/plans/{plan}', [\App\Http\Controllers\SuperAdmin\PlanController::class, 'destroy'])->name('plans.destroy');
+        Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+        Route::get('/plans/create', [PlanController::class, 'create'])->name('plans.create');
+        Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
+        Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
+        Route::put('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
 
         // Page management
-        Route::get('/pages', [\App\Http\Controllers\SuperAdmin\PageController::class, 'index'])->name('pages.index');
-        Route::get('/pages/create', [\App\Http\Controllers\SuperAdmin\PageController::class, 'create'])->name('pages.create');
-        Route::post('/pages', [\App\Http\Controllers\SuperAdmin\PageController::class, 'store'])->name('pages.store');
-        Route::get('/pages/{page}/edit', [\App\Http\Controllers\SuperAdmin\PageController::class, 'edit'])->name('pages.edit');
-        Route::put('/pages/{page}', [\App\Http\Controllers\SuperAdmin\PageController::class, 'update'])->name('pages.update');
-        Route::delete('/pages/{page}', [\App\Http\Controllers\SuperAdmin\PageController::class, 'destroy'])->name('pages.destroy');
+        Route::get('/pages', [PageController::class, 'index'])->name('pages.index');
+        Route::get('/pages/create', [PageController::class, 'create'])->name('pages.create');
+        Route::post('/pages', [PageController::class, 'store'])->name('pages.store');
+        Route::get('/pages/{page}/edit', [PageController::class, 'edit'])->name('pages.edit');
+        Route::put('/pages/{page}', [PageController::class, 'update'])->name('pages.update');
+        Route::delete('/pages/{page}', [PageController::class, 'destroy'])->name('pages.destroy');
 
         // Site settings
-        Route::get('/site-settings', [\App\Http\Controllers\SuperAdmin\SiteSettingsController::class, 'edit'])->name('site-settings.edit');
-        Route::put('/site-settings', [\App\Http\Controllers\SuperAdmin\SiteSettingsController::class, 'update'])->name('site-settings.update');
+        Route::get('/site-settings', [SiteSettingsController::class, 'edit'])->name('site-settings.edit');
+        Route::put('/site-settings', [SiteSettingsController::class, 'update'])->name('site-settings.update');
 
         // Contact messages
-        Route::get('/contact-messages', [\App\Http\Controllers\SuperAdmin\ContactMessageController::class, 'index'])->name('contact-messages.index');
-        Route::get('/contact-messages/{contactMessage}', [\App\Http\Controllers\SuperAdmin\ContactMessageController::class, 'show'])->name('contact-messages.show');
-        Route::delete('/contact-messages/{contactMessage}', [\App\Http\Controllers\SuperAdmin\ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+        Route::get('/contact-messages', [ContactMessageController::class, 'index'])->name('contact-messages.index');
+        Route::get('/contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])->name('contact-messages.show');
+        Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
 
         // Payment gateways
-        Route::get('/payment-gateways', [\App\Http\Controllers\SuperAdmin\PaymentGatewayController::class, 'index'])->name('payment-gateways.index');
-        Route::get('/payment-gateways/{paymentGateway}/edit', [\App\Http\Controllers\SuperAdmin\PaymentGatewayController::class, 'edit'])->name('payment-gateways.edit');
-        Route::put('/payment-gateways/{paymentGateway}', [\App\Http\Controllers\SuperAdmin\PaymentGatewayController::class, 'update'])->name('payment-gateways.update');
-        Route::patch('/payment-gateways/{paymentGateway}/toggle', [\App\Http\Controllers\SuperAdmin\PaymentGatewayController::class, 'toggle'])->name('payment-gateways.toggle');
+        Route::get('/payment-gateways', [PaymentGatewayController::class, 'index'])->name('payment-gateways.index');
+        Route::get('/payment-gateways/{paymentGateway}/edit', [PaymentGatewayController::class, 'edit'])->name('payment-gateways.edit');
+        Route::put('/payment-gateways/{paymentGateway}', [PaymentGatewayController::class, 'update'])->name('payment-gateways.update');
+        Route::patch('/payment-gateways/{paymentGateway}/toggle', [PaymentGatewayController::class, 'toggle'])->name('payment-gateways.toggle');
     });
 });
 
@@ -259,15 +284,15 @@ Route::middleware('auth')->group(function () {
 
     // Billing & Subscription Routes
     Route::prefix('billing')->name('billing.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\BillingController::class, 'index'])->name('index');
-        Route::post('/subscribe', [\App\Http\Controllers\BillingController::class, 'subscribe'])->name('subscribe');
-        Route::get('/payfast/success', [\App\Http\Controllers\BillingController::class, 'success'])->name('payfast.success');
-        Route::get('/payfast/cancel', [\App\Http\Controllers\BillingController::class, 'cancel'])->name('payfast.cancel');
+        Route::get('/', [BillingController::class, 'index'])->name('index');
+        Route::post('/subscribe', [BillingController::class, 'subscribe'])->name('subscribe');
+        Route::get('/payfast/success', [BillingController::class, 'success'])->name('payfast.success');
+        Route::get('/payfast/cancel', [BillingController::class, 'cancel'])->name('payfast.cancel');
     });
 
     // Subscription management (Paddle)
-    Route::get('/subscription', [\App\Http\Controllers\SubscriptionController::class, 'index'])->name('subscription.index');
-    Route::post('/subscription/activate', [\App\Http\Controllers\SubscriptionController::class, 'activate'])->name('subscription.activate');
+    Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('/subscription/activate', [SubscriptionController::class, 'activate'])->name('subscription.activate');
 });
 
 Route::middleware('auth')->group(function () {
@@ -299,119 +324,119 @@ Route::middleware('auth')->group(function () {
     Route::get('bills/{bill}/print', [BillController::class, 'print'])->name('bills.print')->middleware('permission:view bills');
 
     // Tax Configuration
-    Route::resource('taxes', \App\Http\Controllers\TaxController::class)->middleware('permission:view bills|create bills');
-    Route::post('taxes/calculate', [\App\Http\Controllers\TaxController::class, 'calculate'])->name('taxes.calculate')->middleware('permission:view bills|create bills');
+    Route::resource('taxes', TaxController::class)->middleware('permission:view bills|create bills');
+    Route::post('taxes/calculate', [TaxController::class, 'calculate'])->name('taxes.calculate')->middleware('permission:view bills|create bills');
 
     // Accounting
     Route::prefix('accounting')->name('accounting.')->middleware('permission:view accounting')->group(function () {
-        Route::get('chart-of-accounts', [\App\Http\Controllers\AccountingController::class, 'chartOfAccounts'])->name('chart-of-accounts');
-        Route::get('chart-of-accounts/create', [\App\Http\Controllers\AccountingController::class, 'createAccount'])->name('create-account');
-        Route::post('chart-of-accounts', [\App\Http\Controllers\AccountingController::class, 'storeAccount'])->name('store-account');
-        Route::get('chart-of-accounts/{account}/edit', [\App\Http\Controllers\AccountingController::class, 'editAccount'])->name('edit-account');
-        Route::put('chart-of-accounts/{account}', [\App\Http\Controllers\AccountingController::class, 'updateAccount'])->name('update-account');
-        Route::get('deposit', [\App\Http\Controllers\AccountingController::class, 'deposit'])->name('deposit');
-        Route::post('deposit', [\App\Http\Controllers\AccountingController::class, 'processDeposit'])->name('process-deposit');
-        Route::get('transfer', [\App\Http\Controllers\AccountingController::class, 'transfer'])->name('transfer');
-        Route::post('transfer', [\App\Http\Controllers\AccountingController::class, 'processTransfer'])->name('process-transfer');
-        Route::get('general-ledger', [\App\Http\Controllers\AccountingController::class, 'generalLedger'])->name('general-ledger');
-        Route::get('journal-entries', [\App\Http\Controllers\AccountingController::class, 'journalEntries'])->name('journal-entries');
-        Route::get('journal-entries/create', [\App\Http\Controllers\AccountingController::class, 'createJournalEntry'])->name('create-journal-entry');
-        Route::post('journal-entries', [\App\Http\Controllers\AccountingController::class, 'storeJournalEntry'])->name('store-journal-entry');
-        Route::get('journal-entries/{journalEntry}/edit', [\App\Http\Controllers\AccountingController::class, 'editJournalEntry'])->name('edit-journal-entry');
-        Route::put('journal-entries/{journalEntry}', [\App\Http\Controllers\AccountingController::class, 'updateJournalEntry'])->name('update-journal-entry');
-        Route::get('patient-ledger', [\App\Http\Controllers\AccountingController::class, 'patientLedger'])->name('patient-ledger');
-        Route::get('vendor-ledger', [\App\Http\Controllers\AccountingController::class, 'vendorLedger'])->name('vendor-ledger');
-        Route::get('profit-loss', [\App\Http\Controllers\AccountingController::class, 'profitAndLoss'])->name('profit-loss');
-        Route::get('balance-sheet', [\App\Http\Controllers\AccountingController::class, 'balanceSheet'])->name('balance-sheet');
+        Route::get('chart-of-accounts', [AccountingController::class, 'chartOfAccounts'])->name('chart-of-accounts');
+        Route::get('chart-of-accounts/create', [AccountingController::class, 'createAccount'])->name('create-account');
+        Route::post('chart-of-accounts', [AccountingController::class, 'storeAccount'])->name('store-account');
+        Route::get('chart-of-accounts/{account}/edit', [AccountingController::class, 'editAccount'])->name('edit-account');
+        Route::put('chart-of-accounts/{account}', [AccountingController::class, 'updateAccount'])->name('update-account');
+        Route::get('deposit', [AccountingController::class, 'deposit'])->name('deposit');
+        Route::post('deposit', [AccountingController::class, 'processDeposit'])->name('process-deposit');
+        Route::get('transfer', [AccountingController::class, 'transfer'])->name('transfer');
+        Route::post('transfer', [AccountingController::class, 'processTransfer'])->name('process-transfer');
+        Route::get('general-ledger', [AccountingController::class, 'generalLedger'])->name('general-ledger');
+        Route::get('journal-entries', [AccountingController::class, 'journalEntries'])->name('journal-entries');
+        Route::get('journal-entries/create', [AccountingController::class, 'createJournalEntry'])->name('create-journal-entry');
+        Route::post('journal-entries', [AccountingController::class, 'storeJournalEntry'])->name('store-journal-entry');
+        Route::get('journal-entries/{journalEntry}/edit', [AccountingController::class, 'editJournalEntry'])->name('edit-journal-entry');
+        Route::put('journal-entries/{journalEntry}', [AccountingController::class, 'updateJournalEntry'])->name('update-journal-entry');
+        Route::get('patient-ledger', [AccountingController::class, 'patientLedger'])->name('patient-ledger');
+        Route::get('vendor-ledger', [AccountingController::class, 'vendorLedger'])->name('vendor-ledger');
+        Route::get('profit-loss', [AccountingController::class, 'profitAndLoss'])->name('profit-loss');
+        Route::get('balance-sheet', [AccountingController::class, 'balanceSheet'])->name('balance-sheet');
     });
 
     // HR Module
     Route::prefix('hr')->name('hr.')->middleware('permission:view hr')->group(function () {
-        Route::resource('employees', \App\Http\Controllers\EmployeeController::class);
-        Route::post('employees/{employee}/documents', [\App\Http\Controllers\EmployeeController::class, 'uploadDocument'])->name('employees.upload-document');
-        Route::delete('employees/documents/{document}', [\App\Http\Controllers\EmployeeController::class, 'deleteDocument'])->name('employees.delete-document');
-        Route::resource('designations', \App\Http\Controllers\DesignationController::class);
+        Route::resource('employees', EmployeeController::class);
+        Route::post('employees/{employee}/documents', [EmployeeController::class, 'uploadDocument'])->name('employees.upload-document');
+        Route::delete('employees/documents/{document}', [EmployeeController::class, 'deleteDocument'])->name('employees.delete-document');
+        Route::resource('designations', DesignationController::class);
 
         // Attendance
-        Route::get('attendance', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('attendance.index');
-        Route::get('attendance/mark', [\App\Http\Controllers\AttendanceController::class, 'markDaily'])->name('attendance.mark');
-        Route::post('attendance/mark', [\App\Http\Controllers\AttendanceController::class, 'storeDaily'])->name('attendance.store-daily');
-        Route::get('attendance/monthly', [\App\Http\Controllers\AttendanceController::class, 'monthly'])->name('attendance.monthly');
+        Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+        Route::get('attendance/mark', [AttendanceController::class, 'markDaily'])->name('attendance.mark');
+        Route::post('attendance/mark', [AttendanceController::class, 'storeDaily'])->name('attendance.store-daily');
+        Route::get('attendance/monthly', [AttendanceController::class, 'monthly'])->name('attendance.monthly');
 
         // Leave Requests
-        Route::get('leave', [\App\Http\Controllers\LeaveController::class, 'index'])->name('leave.index');
-        Route::get('leave/create', [\App\Http\Controllers\LeaveController::class, 'create'])->name('leave.create');
-        Route::post('leave', [\App\Http\Controllers\LeaveController::class, 'store'])->name('leave.store');
-        Route::post('leave/{leaveRequest}/approve', [\App\Http\Controllers\LeaveController::class, 'approve'])->name('leave.approve');
-        Route::post('leave/{leaveRequest}/reject', [\App\Http\Controllers\LeaveController::class, 'reject'])->name('leave.reject');
-        Route::post('leave/{leaveRequest}/cancel', [\App\Http\Controllers\LeaveController::class, 'cancel'])->name('leave.cancel');
-        Route::get('leave/balances', [\App\Http\Controllers\LeaveController::class, 'balances'])->name('leave.balances');
+        Route::get('leave', [LeaveController::class, 'index'])->name('leave.index');
+        Route::get('leave/create', [LeaveController::class, 'create'])->name('leave.create');
+        Route::post('leave', [LeaveController::class, 'store'])->name('leave.store');
+        Route::post('leave/{leaveRequest}/approve', [LeaveController::class, 'approve'])->name('leave.approve');
+        Route::post('leave/{leaveRequest}/reject', [LeaveController::class, 'reject'])->name('leave.reject');
+        Route::post('leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->name('leave.cancel');
+        Route::get('leave/balances', [LeaveController::class, 'balances'])->name('leave.balances');
 
         // Leave Types
-        Route::get('leave-types', [\App\Http\Controllers\LeaveController::class, 'types'])->name('leave-types.index');
-        Route::get('leave-types/create', [\App\Http\Controllers\LeaveController::class, 'createType'])->name('leave-types.create');
-        Route::post('leave-types', [\App\Http\Controllers\LeaveController::class, 'storeType'])->name('leave-types.store');
-        Route::get('leave-types/{leaveType}/edit', [\App\Http\Controllers\LeaveController::class, 'editType'])->name('leave-types.edit');
-        Route::put('leave-types/{leaveType}', [\App\Http\Controllers\LeaveController::class, 'updateType'])->name('leave-types.update');
-        Route::delete('leave-types/{leaveType}', [\App\Http\Controllers\LeaveController::class, 'destroyType'])->name('leave-types.destroy');
+        Route::get('leave-types', [LeaveController::class, 'types'])->name('leave-types.index');
+        Route::get('leave-types/create', [LeaveController::class, 'createType'])->name('leave-types.create');
+        Route::post('leave-types', [LeaveController::class, 'storeType'])->name('leave-types.store');
+        Route::get('leave-types/{leaveType}/edit', [LeaveController::class, 'editType'])->name('leave-types.edit');
+        Route::put('leave-types/{leaveType}', [LeaveController::class, 'updateType'])->name('leave-types.update');
+        Route::delete('leave-types/{leaveType}', [LeaveController::class, 'destroyType'])->name('leave-types.destroy');
 
         // Payroll
-        Route::get('payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
-        Route::post('payroll/generate', [\App\Http\Controllers\PayrollController::class, 'generate'])->name('payroll.generate');
-        Route::get('payroll/{payrollRun}', [\App\Http\Controllers\PayrollController::class, 'show'])->name('payroll.show');
-        Route::post('payroll/{payrollRun}/approve', [\App\Http\Controllers\PayrollController::class, 'approve'])->name('payroll.approve');
-        Route::post('payroll/{payrollRun}/cancel', [\App\Http\Controllers\PayrollController::class, 'cancel'])->name('payroll.cancel');
+        Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
+        Route::post('payroll/generate', [PayrollController::class, 'generate'])->name('payroll.generate');
+        Route::get('payroll/{payrollRun}', [PayrollController::class, 'show'])->name('payroll.show');
+        Route::post('payroll/{payrollRun}/approve', [PayrollController::class, 'approve'])->name('payroll.approve');
+        Route::post('payroll/{payrollRun}/cancel', [PayrollController::class, 'cancel'])->name('payroll.cancel');
 
         // Payslips
-        Route::get('payslip/{payslip}', [\App\Http\Controllers\PayrollController::class, 'payslip'])->name('payroll.payslip');
-        Route::get('payslip/{payslip}/print', [\App\Http\Controllers\PayrollController::class, 'printPayslip'])->name('payroll.print-payslip');
-        Route::post('payslip/{payslip}/mark-paid', [\App\Http\Controllers\PayrollController::class, 'markPaid'])->name('payroll.mark-paid');
+        Route::get('payslip/{payslip}', [PayrollController::class, 'payslip'])->name('payroll.payslip');
+        Route::get('payslip/{payslip}/print', [PayrollController::class, 'printPayslip'])->name('payroll.print-payslip');
+        Route::post('payslip/{payslip}/mark-paid', [PayrollController::class, 'markPaid'])->name('payroll.mark-paid');
 
         // Salary Components
-        Route::get('payroll-components', [\App\Http\Controllers\PayrollController::class, 'components'])->name('payroll.components');
-        Route::get('payroll-components/create', [\App\Http\Controllers\PayrollController::class, 'createComponent'])->name('payroll.create-component');
-        Route::post('payroll-components', [\App\Http\Controllers\PayrollController::class, 'storeComponent'])->name('payroll.store-component');
-        Route::get('payroll-components/{salaryComponent}/edit', [\App\Http\Controllers\PayrollController::class, 'editComponent'])->name('payroll.edit-component');
-        Route::put('payroll-components/{salaryComponent}', [\App\Http\Controllers\PayrollController::class, 'updateComponent'])->name('payroll.update-component');
-        Route::delete('payroll-components/{salaryComponent}', [\App\Http\Controllers\PayrollController::class, 'destroyComponent'])->name('payroll.destroy-component');
+        Route::get('payroll-components', [PayrollController::class, 'components'])->name('payroll.components');
+        Route::get('payroll-components/create', [PayrollController::class, 'createComponent'])->name('payroll.create-component');
+        Route::post('payroll-components', [PayrollController::class, 'storeComponent'])->name('payroll.store-component');
+        Route::get('payroll-components/{salaryComponent}/edit', [PayrollController::class, 'editComponent'])->name('payroll.edit-component');
+        Route::put('payroll-components/{salaryComponent}', [PayrollController::class, 'updateComponent'])->name('payroll.update-component');
+        Route::delete('payroll-components/{salaryComponent}', [PayrollController::class, 'destroyComponent'])->name('payroll.destroy-component');
 
         // Employee Salary Structure
-        Route::get('employees/{employee}/salary', [\App\Http\Controllers\PayrollController::class, 'employeeSalary'])->name('payroll.employee-salary');
-        Route::post('employees/{employee}/salary', [\App\Http\Controllers\PayrollController::class, 'updateEmployeeSalary'])->name('payroll.update-employee-salary');
+        Route::get('employees/{employee}/salary', [PayrollController::class, 'employeeSalary'])->name('payroll.employee-salary');
+        Route::post('employees/{employee}/salary', [PayrollController::class, 'updateEmployeeSalary'])->name('payroll.update-employee-salary');
 
         // Shifts
-        Route::get('shifts', [\App\Http\Controllers\ShiftController::class, 'shifts'])->name('shifts.index');
-        Route::get('shifts/create', [\App\Http\Controllers\ShiftController::class, 'createShift'])->name('shifts.create');
-        Route::post('shifts', [\App\Http\Controllers\ShiftController::class, 'storeShift'])->name('shifts.store');
-        Route::get('shifts/{shift}/edit', [\App\Http\Controllers\ShiftController::class, 'editShift'])->name('shifts.edit');
-        Route::put('shifts/{shift}', [\App\Http\Controllers\ShiftController::class, 'updateShift'])->name('shifts.update');
-        Route::delete('shifts/{shift}', [\App\Http\Controllers\ShiftController::class, 'destroyShift'])->name('shifts.destroy');
+        Route::get('shifts', [ShiftController::class, 'shifts'])->name('shifts.index');
+        Route::get('shifts/create', [ShiftController::class, 'createShift'])->name('shifts.create');
+        Route::post('shifts', [ShiftController::class, 'storeShift'])->name('shifts.store');
+        Route::get('shifts/{shift}/edit', [ShiftController::class, 'editShift'])->name('shifts.edit');
+        Route::put('shifts/{shift}', [ShiftController::class, 'updateShift'])->name('shifts.update');
+        Route::delete('shifts/{shift}', [ShiftController::class, 'destroyShift'])->name('shifts.destroy');
 
         // Duty Roster
-        Route::get('duty-roster', [\App\Http\Controllers\ShiftController::class, 'roster'])->name('shifts.roster');
-        Route::post('duty-roster', [\App\Http\Controllers\ShiftController::class, 'storeRoster'])->name('shifts.store-roster');
-        Route::post('duty-roster/auto-generate', [\App\Http\Controllers\ShiftController::class, 'autoGenerate'])->name('shifts.auto-generate');
+        Route::get('duty-roster', [ShiftController::class, 'roster'])->name('shifts.roster');
+        Route::post('duty-roster', [ShiftController::class, 'storeRoster'])->name('shifts.store-roster');
+        Route::post('duty-roster/auto-generate', [ShiftController::class, 'autoGenerate'])->name('shifts.auto-generate');
 
         // Shift Swap Requests
-        Route::get('shift-swaps', [\App\Http\Controllers\ShiftController::class, 'swapRequests'])->name('shifts.swap-requests');
-        Route::post('shift-swaps/{shiftSwapRequest}/approve', [\App\Http\Controllers\ShiftController::class, 'approveSwap'])->name('shifts.approve-swap');
-        Route::post('shift-swaps/{shiftSwapRequest}/reject', [\App\Http\Controllers\ShiftController::class, 'rejectSwap'])->name('shifts.reject-swap');
+        Route::get('shift-swaps', [ShiftController::class, 'swapRequests'])->name('shifts.swap-requests');
+        Route::post('shift-swaps/{shiftSwapRequest}/approve', [ShiftController::class, 'approveSwap'])->name('shifts.approve-swap');
+        Route::post('shift-swaps/{shiftSwapRequest}/reject', [ShiftController::class, 'rejectSwap'])->name('shifts.reject-swap');
 
         // Department Staff Management
-        Route::get('department-staff', [\App\Http\Controllers\DepartmentStaffController::class, 'index'])->name('department-staff.index');
-        Route::get('department-staff/{department}', [\App\Http\Controllers\DepartmentStaffController::class, 'show'])->name('department-staff.show');
-        Route::put('department-staff/{department}/head', [\App\Http\Controllers\DepartmentStaffController::class, 'updateHead'])->name('department-staff.update-head');
-        Route::post('department-staff/transfer', [\App\Http\Controllers\DepartmentStaffController::class, 'transferEmployee'])->name('department-staff.transfer');
+        Route::get('department-staff', [DepartmentStaffController::class, 'index'])->name('department-staff.index');
+        Route::get('department-staff/{department}', [DepartmentStaffController::class, 'show'])->name('department-staff.show');
+        Route::put('department-staff/{department}/head', [DepartmentStaffController::class, 'updateHead'])->name('department-staff.update-head');
+        Route::post('department-staff/transfer', [DepartmentStaffController::class, 'transferEmployee'])->name('department-staff.transfer');
 
         // Document Management
-        Route::get('documents', [\App\Http\Controllers\DocumentManagementController::class, 'index'])->name('documents.index');
-        Route::get('documents/compliance', [\App\Http\Controllers\DocumentManagementController::class, 'compliance'])->name('documents.compliance');
-        Route::post('documents/{document}/verify', [\App\Http\Controllers\DocumentManagementController::class, 'verify'])->name('documents.verify');
-        Route::post('documents/{document}/unverify', [\App\Http\Controllers\DocumentManagementController::class, 'unverify'])->name('documents.unverify');
-        Route::get('documents/requirements', [\App\Http\Controllers\DocumentManagementController::class, 'requirements'])->name('documents.requirements');
-        Route::get('documents/requirements/create', [\App\Http\Controllers\DocumentManagementController::class, 'createRequirement'])->name('documents.create-requirement');
-        Route::post('documents/requirements', [\App\Http\Controllers\DocumentManagementController::class, 'storeRequirement'])->name('documents.store-requirement');
-        Route::delete('documents/requirements/{documentRequirement}', [\App\Http\Controllers\DocumentManagementController::class, 'destroyRequirement'])->name('documents.destroy-requirement');
+        Route::get('documents', [DocumentManagementController::class, 'index'])->name('documents.index');
+        Route::get('documents/compliance', [DocumentManagementController::class, 'compliance'])->name('documents.compliance');
+        Route::post('documents/{document}/verify', [DocumentManagementController::class, 'verify'])->name('documents.verify');
+        Route::post('documents/{document}/unverify', [DocumentManagementController::class, 'unverify'])->name('documents.unverify');
+        Route::get('documents/requirements', [DocumentManagementController::class, 'requirements'])->name('documents.requirements');
+        Route::get('documents/requirements/create', [DocumentManagementController::class, 'createRequirement'])->name('documents.create-requirement');
+        Route::post('documents/requirements', [DocumentManagementController::class, 'storeRequirement'])->name('documents.store-requirement');
+        Route::delete('documents/requirements/{documentRequirement}', [DocumentManagementController::class, 'destroyRequirement'])->name('documents.destroy-requirement');
     });
     // Service import routes — must be BEFORE the resource route to avoid
     // the resource route capturing 'import' as a {service} parameter
@@ -433,7 +458,7 @@ Route::middleware('auth')->group(function () {
     Route::post('prescriptions/{prescription}/dispense', [PrescriptionController::class, 'dispense'])->name('prescriptions.dispense')->middleware('permission:edit visits');
 
     // Prescription Instructions Routes
-    Route::resource('prescription-instructions', \App\Http\Controllers\Admin\PrescriptionInstructionController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
+    Route::resource('prescription-instructions', PrescriptionInstructionController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
 
     // Unit Routes
     Route::resource('units', UnitController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
@@ -544,11 +569,11 @@ Route::middleware('auth')->group(function () {
 
     // Backup & Restore Routes
     Route::prefix('backup')->name('backup.')->middleware('role:Super Admin|Hospital Administrator')->group(function () {
-        Route::get('/', [\App\Http\Controllers\BackupController::class, 'index'])->name('index');
-        Route::post('/create', [\App\Http\Controllers\BackupController::class, 'create'])->name('create');
-        Route::get('/download/{filename}', [\App\Http\Controllers\BackupController::class, 'download'])->name('download');
-        Route::delete('/delete/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('destroy');
-        Route::post('/restore/{filename}', [\App\Http\Controllers\BackupController::class, 'restore'])->name('restore');
+        Route::get('/', [BackupController::class, 'index'])->name('index');
+        Route::post('/create', [BackupController::class, 'create'])->name('create');
+        Route::get('/download/{filename}', [BackupController::class, 'download'])->name('download');
+        Route::delete('/delete/{filename}', [BackupController::class, 'destroy'])->name('destroy');
+        Route::post('/restore/{filename}', [BackupController::class, 'restore'])->name('restore');
     });
 
     // Patient Search API
@@ -580,7 +605,7 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 
 // Public signed URL route for sharing lab reports via WhatsApp (no auth required)
-Route::get('lab-report/{labResult}', [\App\Http\Controllers\LabResultController::class, 'publicReport'])
+Route::get('lab-report/{labResult}', [LabResultController::class, 'publicReport'])
     ->name('lab-results.public-report')
     ->middleware('signed');
 
