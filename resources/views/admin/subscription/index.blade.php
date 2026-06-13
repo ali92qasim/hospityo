@@ -244,4 +244,54 @@
     });
 </script>
 @endif
+
+{{-- Payment History --}}
+@if(isset($paymentHistory) && $paymentHistory->count() > 0)
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 mt-8">
+    <div class="p-6 border-b border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800">Payment History</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction ID</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                @foreach($paymentHistory as $payment)
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ $payment->paid_at?->format('d M Y, h:i A') ?? '—' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ $payment->currency ?? 'PKR' }} {{ number_format($payment->amount, 2) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700">
+                            {{ ucfirst($payment->payment_method ?? 'unknown') }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <span class="px-2 py-0.5 text-xs rounded-full
+                            {{ $payment->status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
+                            {{ ucfirst($payment->status ?? 'pending') }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">
+                        {{ $payment->gateway_transaction_id ?? $payment->payfast_transaction_id ?? '—' }}
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
+</div> {{-- end max-w-5xl --}}
 @endsection

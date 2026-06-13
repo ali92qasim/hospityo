@@ -14,6 +14,7 @@ class SubscriptionPayment extends Model
         'subscription_id',
         'tenant_id',
         'payfast_transaction_id',
+        'gateway_transaction_id',
         'status',
         'amount',
         'currency',

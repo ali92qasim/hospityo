@@ -19,7 +19,13 @@ class SubscriptionController extends Controller
         $currentSubscription = $tenant->activeSubscription;
         $gateway = PaymentGateway::enabled()->orderBy('sort_order')->first();
 
-        return view('admin.subscription.index', compact('tenant', 'plans', 'currentSubscription', 'gateway'));
+        // Payment history for the tenant
+        $paymentHistory = \App\Models\SubscriptionPayment::where('tenant_id', $tenant->id)
+            ->orderBy('paid_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        return view('admin.subscription.index', compact('tenant', 'plans', 'currentSubscription', 'gateway', 'paymentHistory'));
     }
 
     /**
@@ -96,6 +102,17 @@ class SubscriptionController extends Controller
             $tenant->update([
                 'plan_id' => $plan?->id,
                 'trial_ends_at' => null,
+            ]);
+
+            // Record subscription payment for history
+            $subscription->payments()->create([
+                'tenant_id'              => $tenant->id,
+                'amount'                 => $plan?->price ?? 0,
+                'currency'               => $transactionData['currency_code'] ?? 'USD',
+                'payment_method'         => 'paddle',
+                'status'                 => 'completed',
+                'paid_at'                => now(),
+                'gateway_transaction_id' => $transactionId,
             ]);
 
             Log::info('[Subscription] Activated via checkout callback', [

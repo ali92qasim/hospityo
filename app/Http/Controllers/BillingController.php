@@ -47,7 +47,7 @@ class BillingController extends Controller
             try {
                 $tenant->update(['plan_id' => $plan->id]);
 
-                Subscription::create([
+                $subscription = Subscription::create([
                     'tenant_id' => $tenant->id,
                     'plan_id'   => $plan->id,
                     'status'    => 'active',
@@ -55,6 +55,16 @@ class BillingController extends Controller
                     'currency'  => 'PKR',
                     'starts_at' => now(),
                     'ends_at'   => null,
+                ]);
+
+                // Record payment event for history (even for free plan)
+                $subscription->payments()->create([
+                    'tenant_id'      => $tenant->id,
+                    'amount'         => 0,
+                    'currency'       => 'PKR',
+                    'payment_method' => 'free',
+                    'status'         => 'completed',
+                    'paid_at'        => now(),
                 ]);
 
                 return redirect()->route('billing.index')
