@@ -113,6 +113,24 @@ class RolePermissionSeeder extends Seeder
         // ── Doctor Share ──────────────────────────────────────────────────────
         'manage doctor shares',
 
+        // ── Operation Theatre ─────────────────────────────────────────────────
+        'view surgeries',
+        'create surgeries',
+        'edit surgeries',
+        'delete surgeries',
+
+        // ── Settings ──────────────────────────────────────────────────────────
+        'manage settings',
+
+        // ── Surgical Checklists ───────────────────────────────────────────────
+        'manage surgical checklists',
+
+        // ── OT Consumables ────────────────────────────────────────────────────
+        'manage ot consumables',
+
+        // ── Sterilization ─────────────────────────────────────────────────────
+        'manage sterilization',
+
         // ── RBAC ──────────────────────────────────────────────────────────────
         'view roles',
         'create roles',
@@ -150,8 +168,13 @@ class RolePermissionSeeder extends Seeder
             'view accounting',
             'view reports',
             'view hr',
+            'view surgeries', 'create surgeries', 'edit surgeries', 'delete surgeries',
             'manage doctor shares',
             'manage user roles',
+            'manage settings',
+            'manage surgical checklists',
+            'manage ot consumables',
+            'manage sterilization',
         ],
         'Doctor' => [
             'view patients', 'edit patients',
@@ -171,12 +194,16 @@ class RolePermissionSeeder extends Seeder
             'view investigation orders',
             'view lab results',
             'view wards', 'view beds',
+            'manage surgical checklists',
+            'manage ot consumables',
+            'manage sterilization',
         ],
         'Receptionist' => [
             'view patients', 'create patients', 'edit patients',
             'view appointments', 'create appointments', 'edit appointments',
             'view visits', 'create visits',
             'view bills', 'create bills', 'create payments',
+            'manage settings',
         ],
         'Lab Technician' => [
             'view patients',

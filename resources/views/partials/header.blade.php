@@ -58,9 +58,11 @@
                             <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                 <i class="fas fa-user-circle mr-2"></i>{{ __('messages.profile') }}
                             </a>
+                            @can('manage settings')
                             <a href="{{ route('settings.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                 <i class="fas fa-cog mr-2"></i>{{ __('messages.settings') }}
                             </a>
+                            @endcan
                             <hr class="my-2">
                             <form method="POST" action="{{ route('logout') }}" class="block">
                                 @csrf

@@ -28,7 +28,11 @@ class SyncTenantPermissions extends Command
 
             $tenant->makeCurrent();
 
-            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+            // Set the tenant-specific cache key BEFORE clearing — this matches
+            // EnsureTenantActive middleware so we actually clear the right cache.
+            $registrar = app()[\Spatie\Permission\PermissionRegistrar::class];
+            $registrar->cacheKey = 'spatie.permission.cache.tenant.' . $tenant->id;
+            $registrar->forgetCachedPermissions();
 
             // Fix any permissions/roles created via the UI with the wrong guard_name
             \Illuminate\Support\Facades\DB::connection('tenant')
@@ -46,6 +50,9 @@ class SyncTenantPermissions extends Command
                 '--database' => 'tenant',
                 '--force'    => true,
             ]);
+
+            // Clear again after seeder so next web request rebuilds with new permissions
+            $registrar->forgetCachedPermissions();
 
             $this->info("  ✓ Done — {$tenant->slug}");
 

@@ -20,7 +20,8 @@ class EmployeeController extends Controller
 
         if ($request->search) {
             $s = '%' . $request->search . '%';
-            $query->where(fn($q) => $q->where('first_name', 'like', $s)
+            $query->where(fn($q) => $q->where('name', 'like', $s)
+                ->orWhere('first_name', 'like', $s)
                 ->orWhere('last_name', 'like', $s)
                 ->orWhere('employee_no', 'like', $s)
                 ->orWhere('phone', 'like', $s)
@@ -56,8 +57,9 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'first_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'cnic' => 'nullable|string|max:15',
@@ -73,11 +75,11 @@ class EmployeeController extends Controller
             'designation_id' => 'nullable|exists:tenant.designations,id',
             'user_id' => 'nullable|exists:tenant.users,id',
             'doctor_id' => 'nullable|exists:tenant.doctors,id',
-            'employment_type' => 'required|in:full_time,part_time,contract,intern',
+            'employment_type' => 'nullable|in:full_time,part_time,contract,intern',
             'joining_date' => 'required|date',
             'probation_end_date' => 'nullable|date|after_or_equal:joining_date',
             'contract_end_date' => 'nullable|date|after_or_equal:joining_date',
-            'status' => 'required|in:active,on_leave,suspended,terminated,resigned',
+            'status' => 'nullable|in:active,on_leave,suspended,terminated,resigned',
             'basic_salary' => 'nullable|numeric|min:0',
             'bank_name' => 'nullable|string|max:255',
             'bank_account_no' => 'nullable|string|max:50',
@@ -88,6 +90,10 @@ class EmployeeController extends Controller
             'photo' => 'nullable|image|max:2048',
             'notes' => 'nullable|string|max:1000',
         ]);
+
+        // Set defaults
+        $validated['employment_type'] = $validated['employment_type'] ?? 'full_time';
+        $validated['status'] = $validated['status'] ?? 'active';
 
         try {
             if ($request->hasFile('photo')) {

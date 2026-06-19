@@ -1,13 +1,13 @@
 @extends('admin.layout')
 
-@section('title', 'Lab Test Report')
+@section('title', 'Investigation Report')
 
 @section('content')
 <div class="mb-6">
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Lab Test Report</h1>
-            <p class="text-gray-600 mt-1">Laboratory and radiology test statistics</p>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Investigation Report</h1>
+            <p class="text-gray-600 mt-1">Laboratory and radiology investigation statistics</p>
         </div>
         <button onclick="window.print()" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 no-print">
             <i class="fas fa-print mr-2"></i>Print Report
@@ -185,11 +185,15 @@
                 @forelse($testBreakdown as $test)
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ $test['investigation']?->name }}
+                        {{ $test['investigation']?->name ?? 'Unknown' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 text-xs rounded-full {{ $test['investigation']?->type === 'lab' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800' }}">
-                            {{ ucfirst($test['investigation']?->type) }}
+                        @php
+                            $cat = $test['investigation']?->category;
+                            $isLab = in_array($cat, ['hematology', 'biochemistry', 'microbiology', 'immunology', 'histopathology', 'molecular']);
+                        @endphp
+                        <span class="px-2 py-1 text-xs rounded-full {{ $isLab ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800' }}">
+                            {{ $isLab ? 'Lab' : 'Radiology' }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

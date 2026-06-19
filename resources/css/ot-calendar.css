@@ -1,0 +1,76 @@
+/* OT Calendar — Custom styles on top of FullCalendar CDN CSS */
+
+/* Toolbar buttons — match medical-blue */
+.fc .fc-button-primary {
+    background-color: #0066CC !important;
+    border-color: #0066CC !important;
+    font-size: 0.8rem !important;
+}
+.fc .fc-button-primary:hover {
+    background-color: #0052a3 !important;
+    border-color: #0052a3 !important;
+}
+.fc .fc-button-primary:disabled {
+    background-color: #9ca3af !important;
+    border-color: #9ca3af !important;
+}
+.fc .fc-button-active {
+    background-color: #004080 !important;
+    border-color: #004080 !important;
+}
+
+/* Title */
+.fc .fc-toolbar-title {
+    font-size: 1.1rem !important;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Events — Google Calendar style pills */
+.fc-event {
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    padding: 2px 6px !important;
+    font-size: 0.72rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 2px !important;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+.fc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 10 !important;
+}
+
+/* Day cell — pointer cursor */
+.fc-daygrid-day {
+    cursor: pointer;
+}
+.fc-daygrid-day:hover {
+    background-color: #f0f7ff !important;
+}
+
+/* Today */
+.fc-day-today {
+    background-color: #eff6ff !important;
+}
+
+/* Remove default dot and time (we render custom content) */
+.fc-daygrid-event-dot {
+    display: none !important;
+}
+.fc-event-time {
+    display: none !important;
+}
+
+/* Custom event pill content */
+.fc-event-pill {
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 2px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}

@@ -340,86 +340,89 @@ class ReportController extends Controller
     public function labTests(Request $request)
     {
         $startDate = $request->input('start_date', today()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->input('end_date', today()->format('Y-m-d'));
-        $testType = $request->input('test_type'); // lab or radiology
+        $endDate   = $request->input('end_date', today()->format('Y-m-d'));
+        $testType  = $request->input('test_type');
 
-        // Get investigation orders within date range
-        $query = InvestigationOrder::whereBetween('created_at', [$startDate, $endDate])
-            ->with(['investigation', 'patient', 'doctor']);
-
-        if ($testType) {
-            $query->whereHas('investigation', function($q) use ($testType) {
-                $q->where('type', $testType);
-            });
-        }
+        // Get investigation orders within date range with items
+        $query = InvestigationOrder::whereBetween('ordered_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->with(['items.investigation', 'patient', 'doctor']);
 
         $orders = $query->get();
 
-        // Calculate statistics
+        // Filter by test type if specified
+        if ($testType) {
+            $orders = $orders->filter(function ($order) use ($testType) {
+                return $order->items->contains(function ($item) use ($testType) {
+                    $cat = $item->investigation?->category;
+                    if ($testType === 'lab') {
+                        return in_array($cat, ['hematology', 'biochemistry', 'microbiology', 'immunology', 'histopathology', 'molecular']);
+                    }
+                    return in_array($cat, ['x-ray', 'ultrasound', 'ct-scan', 'mri', 'cardiac-diagnostics']);
+                });
+            });
+        }
+
+        // Status mapping — use order-level status
         $stats = [
-            'total_orders' => $orders->count(),
-            'completed' => $orders->where('status', 'completed')->count(),
-            'pending' => $orders->where('status', 'pending')->count(),
-            'sample_collected' => $orders->where('status', 'sample_collected')->count(),
-            'in_progress' => $orders->where('status', 'in_progress')->count(),
-            'lab_tests' => $orders->filter(function($order) {
-                return $order->investigation && $order->isPathology();
-            })->count(),
-            'radiology_tests' => $orders->filter(function($order) {
-                return $order->investigation && $order->isRadiology();
-            })->count(),
+            'total_orders'     => $orders->count(),
+            'completed'        => $orders->whereIn('status', ['reported', 'verified'])->count(),
+            'pending'          => $orders->where('status', 'ordered')->count(),
+            'sample_collected' => $orders->where('status', 'collected')->count(),
+            'in_progress'      => $orders->where('status', 'testing')->count(),
+            'lab_tests'        => $orders->filter(fn($o) => $o->items->contains(fn($i) =>
+                in_array($i->investigation?->category, ['hematology', 'biochemistry', 'microbiology', 'immunology', 'histopathology', 'molecular'])
+            ))->count(),
+            'radiology_tests'  => $orders->filter(fn($o) => $o->items->contains(fn($i) =>
+                in_array($i->investigation?->category, ['x-ray', 'ultrasound', 'ct-scan', 'mri', 'cardiac-diagnostics'])
+            ))->count(),
         ];
 
-        // Test-wise breakdown
-        $testBreakdown = $orders->groupBy('investigation_id')
-            ->map(function($testOrders) {
-                $investigation = $testOrders->first()->investigation;
+        // Investigation-wise breakdown (from items, not order-level investigation_id)
+        $allItems = $orders->flatMap->items;
+
+        $testBreakdown = $allItems->groupBy('investigation_id')
+            ->map(function ($items) {
+                $investigation = $items->first()?->investigation;
                 return [
                     'investigation' => $investigation,
-                    'count' => $testOrders->count(),
-                    'completed' => $testOrders->where('status', 'completed')->count(),
-                    'pending' => $testOrders->where('status', 'pending')->count(),
+                    'count'         => $items->count(),
+                    'completed'     => $items->whereIn('status', ['verified', 'reported'])->count(),
+                    'pending'       => $items->whereIn('status', ['ordered', 'collected', 'testing'])->count(),
                 ];
             })
+            ->filter(fn($r) => $r['investigation'] !== null)
             ->sortByDesc('count')
             ->values();
 
         // Doctor-wise orders
-        $doctorOrders = $orders->filter(function($order) {
-                return $order->doctor;
-            })
+        $doctorOrders = $orders->filter(fn($o) => $o->doctor)
             ->groupBy('doctor_id')
-            ->map(function($doctorOrders) {
+            ->map(function ($doctorOrders) {
                 return [
-                    'doctor' => $doctorOrders->first()->doctor,
-                    'orders' => $doctorOrders->count(),
-                    'completed' => $doctorOrders->where('status', 'completed')->count(),
+                    'doctor'    => $doctorOrders->first()->doctor,
+                    'orders'    => $doctorOrders->count(),
+                    'completed' => $doctorOrders->whereIn('status', ['reported', 'verified'])->count(),
                 ];
             })
             ->sortByDesc('orders')
             ->values();
 
         // Daily trend
-        $dailyTrend = $orders->groupBy(function($order) {
-                return $order->created_at->format('Y-m-d');
-            })
-            ->map(function($dayOrders) {
+        $dailyTrend = $orders->groupBy(fn($o) => $o->ordered_at?->format('Y-m-d') ?? $o->created_at->format('Y-m-d'))
+            ->map(function ($dayOrders) {
                 return [
-                    'total' => $dayOrders->count(),
-                    'completed' => $dayOrders->where('status', 'completed')->count(),
+                    'total'     => $dayOrders->count(),
+                    'completed' => $dayOrders->whereIn('status', ['reported', 'verified'])->count(),
                 ];
             })
             ->sortKeys();
 
-        // Turnaround time analysis (for completed tests)
-        $completedOrders = $orders->where('status', 'completed')->filter(function($order) {
-            return $order->result_date;
-        });
+        // Average turnaround time (ordered_at → result reported_at)
+        $completedOrders = $orders->whereIn('status', ['reported', 'verified'])
+            ->filter(fn($o) => $o->ordered_at && $o->result?->reported_at);
 
         $avgTurnaroundTime = $completedOrders->count() > 0
-            ? $completedOrders->avg(function($order) {
-                return $order->created_at->diffInHours($order->result_date);
-            })
+            ? $completedOrders->avg(fn($o) => $o->ordered_at->diffInHours($o->result->reported_at))
             : 0;
 
         return view('admin.reports.lab-tests', compact(

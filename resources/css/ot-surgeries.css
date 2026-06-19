@@ -1,0 +1,108 @@
+/* Import Select2 and Flatpickr styles */
+@import 'select2/dist/css/select2.min.css';
+@import 'flatpickr/dist/flatpickr.min.css';
+
+/* FullCalendar Custom Theme */
+.fc .fc-button-primary {
+    background-color: #0066CC !important;
+    border-color: #0066CC !important;
+}
+.fc .fc-button-primary:hover {
+    background-color: #0052a3 !important;
+    border-color: #0052a3 !important;
+}
+.fc .fc-button-primary:disabled {
+    background-color: #9ca3af !important;
+    border-color: #9ca3af !important;
+}
+
+/* Event styling */
+.fc-event {
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    font-size: 0.75rem !important;
+    transition: opacity 0.15s;
+}
+.fc-event:hover {
+    opacity: 0.85;
+}
+.fc-event-pill {
+    color: #fff;
+    font-weight: 500;
+    padding: 2px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fc-daygrid-event-dot {
+    display: none !important;
+}
+.fc-event-time {
+    display: none !important;
+}
+.fc-daygrid-day {
+    cursor: pointer;
+}
+.fc-daygrid-day:hover {
+    background-color: #f0f7ff !important;
+}
+
+/* Select2 custom styling to match forms */
+.select2-container .select2-selection--single {
+    height: 42px !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.5rem !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 40px !important;
+    padding-left: 12px !important;
+    color: #374151 !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px !important;
+    right: 8px !important;
+}
+.select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #0066CC !important;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #9ca3af !important;
+}
+.select2-dropdown {
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #0066CC !important;
+}
+
+/* Flatpickr styling */
+.flatpickr-calendar {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 0.5rem !important;
+}
+.flatpickr-day.selected {
+    background: #0066CC !important;
+    border-color: #0066CC !important;
+}
+.flatpickr-months .flatpickr-month {
+    background: #0066CC !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: #0066CC !important;
+}
+.flatpickr-current-month input.cur-year {
+    color: white !important;
+}
+
+/* Modal overflow fix */
+#surgeryModal {
+    overflow-y: auto;
+}
+#surgeryModal .bg-white {
+    max-height: 90vh;
+    overflow-y: auto;
+}

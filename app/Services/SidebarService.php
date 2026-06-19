@@ -71,6 +71,18 @@ class SidebarService
             }
         }
 
+        // ── Operation Theatre ─────────────────────────────────────────────────
+        if ($user->can('view surgeries')) {
+            $items = [
+                $this->item('Theatres', 'fa-door-open', 'ot.theatres', ['ot.theatres*']),
+                $this->item('Surgeries', 'fa-procedures', 'ot.surgeries.index', ['ot.surgeries.*', 'ot.calendar*']),
+                $this->item('PAC Requests', 'fa-clipboard-check', 'ot.pac.index', ['ot.pac.*']),
+                $this->item('OT Inventory', 'fa-boxes', 'ot.consumables.index', ['ot.consumables.*']),
+                $this->item('Sterilization', 'fa-shield-virus', 'ot.sterilization.index', ['ot.sterilization.*']),
+            ];
+            $menu[] = $this->group('ot', 'Operation Theatre', $items, ['ot.*']);
+        }
+
         // ── Pharmacy ──────────────────────────────────────────────────────────
         if ($this->hasModule($tenant, 'pharmacy') && ($user->can('view services') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {
             $items = [
@@ -159,7 +171,7 @@ class SidebarService
                 $this->item('Patient Visits', 'fa-user-clock', 'reports.patient-visits', ['reports.patient-visits']),
                 $this->item('Revenue Report', 'fa-chart-line', 'reports.revenue', ['reports.revenue']),
                 $this->item('Outstanding Bills', 'fa-file-invoice-dollar', 'reports.outstanding-bills', ['reports.outstanding-bills']),
-                $this->item('Lab Test Report', 'fa-flask', 'reports.lab-tests', ['reports.lab-tests']),
+                $this->item('Investigation Report', 'fa-flask', 'reports.investigations', ['reports.investigations', 'reports.lab-tests']),
                 $this->item('Medicine Sales', 'fa-pills', 'reports.medicine-sales', ['reports.medicine-sales']),
                 $this->item('Inventory Status', 'fa-boxes', 'reports.inventory-status', ['reports.inventory-status']),
                 $this->item('Expiry Report', 'fa-calendar-times', 'reports.expiry-report', ['reports.expiry-report']),

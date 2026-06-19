@@ -14,7 +14,7 @@ class Employee extends Model
     use Auditable, UsesTenantConnection;
 
     protected $fillable = [
-        'employee_no', 'user_id', 'doctor_id', 'department_id', 'designation_id',
+        'employee_no', 'name', 'user_id', 'doctor_id', 'department_id', 'designation_id',
         'first_name', 'last_name', 'email', 'phone', 'cnic', 'gender',
         'date_of_birth', 'blood_group', 'address', 'city',
         'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
@@ -50,7 +50,7 @@ class Employee extends Model
     // ── Accessors ──
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . $this->last_name);
+        return $this->name ?? trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
     }
 
     // ── Relationships ──
