@@ -80,8 +80,9 @@ class ReportController extends Controller
             'total_bills'        => $bills->count(),
             'total_billed'       => $bills->sum('total_amount'),
             'total_collected'    => $totalInflows,
-            'total_outstanding'  => $bills->sum('due_amount'),
+            'total_outstanding'  => $bills->sum(fn($b) => max(0, $b->total_amount - $b->paid_amount)),
             'total_discount'     => $bills->sum('discount_amount'),
+            'patient_credits'    => $bills->sum(fn($b) => max(0, $b->paid_amount - $b->total_amount)),
             'cash_payments'      => $payments->where('payment_method', 'cash')->sum('amount'),
             'card_payments'      => $payments->where('payment_method', 'card')->sum('amount'),
             'insurance_payments' => $payments->where('payment_method', 'insurance')->sum('amount'),
@@ -160,22 +161,22 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $groupBy = $request->input('group_by', 'service');
 
-        // Get bills within date range
-        $bills = Bill::whereBetween('created_at', [$startDate, $endDate])
+        // Get bills within date range (using bill_date — the business date)
+        $bills = Bill::whereBetween('bill_date', [$startDate, $endDate])
             ->with(['billItems.service', 'patient', 'visit.doctor'])
             ->get();
 
-        // Calculate totals
+        // Calculate totals — outstanding capped at 0 per bill to avoid negatives from overpayments
         $totals = [
             'total_revenue' => $bills->sum('total_amount'),
             'total_collected' => $bills->sum('paid_amount'),
-            'total_outstanding' => $bills->sum('total_amount') - $bills->sum('paid_amount'),
+            'total_outstanding' => $bills->sum(fn($b) => max(0, $b->total_amount - $b->paid_amount)),
             'total_bills' => $bills->count(),
         ];
 
         // Revenue by service type
         $serviceRevenue = BillItem::whereHas('bill', function($query) use ($startDate, $endDate) {
-                $query->whereBetween('created_at', [$startDate, $endDate]);
+                $query->whereBetween('bill_date', [$startDate, $endDate]);
             })
             ->with('service')
             ->get()
@@ -209,7 +210,7 @@ class ReportController extends Controller
 
         // Daily revenue trend
         $dailyRevenue = $bills->groupBy(function($bill) {
-                return $bill->created_at->format('Y-m-d');
+                return $bill->bill_date->format('Y-m-d');
             })
             ->map(function($dayBills) {
                 return [
@@ -222,7 +223,7 @@ class ReportController extends Controller
 
         // Monthly comparison (if date range spans multiple months)
         $monthlyRevenue = $bills->groupBy(function($bill) {
-                return $bill->created_at->format('Y-m');
+                return $bill->bill_date->format('Y-m');
             })
             ->map(function($monthBills) {
                 return [

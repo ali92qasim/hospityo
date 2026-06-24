@@ -136,7 +136,7 @@ class BillController extends Controller
             return redirect()->back()->withErrors(['error' => $e->getMessage()]);
         }
 
-        // All bill writes in a single transaction — no partial update state
+        // All bill writes + accounting reconciliation in a single transaction
         DB::connection('tenant')->transaction(function () use ($request, $bill) {
             $discountType       = $request->discount_type ?? 'fixed';
             $discountPercentage = $request->discount_percentage ?? 0;
@@ -175,6 +175,29 @@ class BillController extends Controller
             }
 
             $bill->calculateTotals();
+
+            // --- Accounting Reconciliation: Reverse & Repost ---
+            // Reverse old bill journal entry and post a fresh one with updated amounts.
+            // This keeps full audit trail — old entries are never modified/deleted.
+            \App\Services\AccountingService::reverseAndRepostBillEntry($bill, 'bill_updated');
+
+            // --- Overpayment Detection & Handling ---
+            // If paid > new total after discount, post an adjustment entry to move
+            // the excess to "Advance from Patients" (liability account 2300).
+            $overpayment = round((float) $bill->paid_amount - (float) $bill->total_amount, 2);
+
+            if ($overpayment > 0) {
+                // Cap due_amount at 0 (no negative due)
+                $bill->due_amount = 0;
+                $bill->status = 'paid';
+                $bill->save();
+
+                \App\Services\AccountingService::postOverpaymentAdjustment($bill, $overpayment);
+            } else {
+                // Re-evaluate bill status after total change
+                $bill->status = $this->evaluateBillStatus($bill);
+                $bill->save();
+            }
         });
 
         // Share recalculation runs after the transaction commits — same reasoning
@@ -194,6 +217,29 @@ class BillController extends Controller
             return redirect()->back()->withErrors([
                 'error' => $e->getMessage(),
             ]);
+        }
+
+        // Reverse all journal entries for this bill before deletion.
+        // This ensures the ledger stays accurate and no orphaned entries remain.
+        $billEntries = \App\Models\JournalEntry::where('reference_type', 'Bill')
+            ->where('reference_id', $bill->id)
+            ->where('description', 'not like', 'REVERSAL%')
+            ->get();
+
+        foreach ($billEntries as $entry) {
+            \App\Services\AccountingService::reverseEntry($entry, 'bill_deleted');
+        }
+
+        // Also reverse any payment journal entries linked to this bill's payments
+        foreach ($bill->payments as $payment) {
+            $paymentEntries = \App\Models\JournalEntry::where('reference_type', 'Payment')
+                ->where('reference_id', $payment->id)
+                ->where('description', 'not like', 'REVERSAL%')
+                ->get();
+
+            foreach ($paymentEntries as $entry) {
+                \App\Services\AccountingService::reverseEntry($entry, 'bill_deleted');
+            }
         }
 
         $bill->delete();
@@ -236,6 +282,19 @@ class BillController extends Controller
             'hospital_logo'    => setting('hospital_logo', ''),
         ];
         return view('admin.bills.print', compact('bill', 'settings'));
+    }
+
+    /**
+     * Evaluate the correct bill status based on paid vs total amounts.
+     */
+    private function evaluateBillStatus(Bill $bill): string
+    {
+        $paid  = (float) $bill->paid_amount;
+        $total = (float) $bill->total_amount;
+
+        if ($paid >= $total) return 'paid';
+        if ($paid > 0) return 'partial';
+        return 'pending';
     }
 
     /**

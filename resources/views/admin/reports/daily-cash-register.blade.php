@@ -201,11 +201,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry #</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-<<<<<<< HEAD
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account</th>
-=======
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Debited To</th>
->>>>>>> 99bc01c (Fix: daily cash register now showing the account that was debited and readme file updated adding project information)
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                 </tr>
             </thead>
@@ -215,15 +211,9 @@
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ $line->journalEntry?->entry_date?->format('d M Y') ?? '—' }}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ $line->journalEntry?->entry_number ?? '—' }}</td>
                     <td class="px-6 py-3 text-sm text-gray-700">{{ $line->journalEntry?->description ?? $line->narration ?? '—' }}</td>
-<<<<<<< HEAD
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{{ $line->account?->code }} — {{ $line->account?->name }}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-red-700 text-right">
-                        - {{ format_currency($line->credit) }}
-=======
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{{ $line->account?->name ?? '—' }}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-red-700 text-right">
                         - {{ format_currency($line->debit) }}
->>>>>>> 99bc01c (Fix: daily cash register now showing the account that was debited and readme file updated adding project information)
                     </td>
                 </tr>
                 @empty

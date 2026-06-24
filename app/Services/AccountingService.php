@@ -12,6 +12,255 @@ use Illuminate\Support\Facades\Log;
 class AccountingService
 {
     /**
+     * Reverse an existing journal entry by posting a mirror entry (swap debits/credits).
+     * This preserves the full audit trail — original entries are never modified or deleted.
+     *
+     * @param  JournalEntry  $originalEntry  The entry to reverse
+     * @param  string        $reason         Narration suffix explaining the reversal
+     * @return JournalEntry|null
+     */
+    public static function reverseEntry(JournalEntry $originalEntry, string $reason = 'Bill updated'): ?JournalEntry
+    {
+        try {
+            // Use the same entry_date as the original so both entries fall within
+            // the same reporting period and cancel each other out correctly.
+            $reversal = JournalEntry::create([
+                'entry_date'     => $originalEntry->entry_date,
+                'reference_type' => $originalEntry->reference_type,
+                'reference_id'   => $originalEntry->reference_id,
+                'description'    => "REVERSAL — {$originalEntry->description} ({$reason})",
+                'created_by'     => auth()->id() ?? $originalEntry->created_by ?? 1,
+                'is_auto'        => true,
+            ]);
+
+            // Mirror all lines — swap debit ↔ credit
+            foreach ($originalEntry->lines as $line) {
+                $reversal->lines()->create([
+                    'account_id' => $line->account_id,
+                    'debit'      => $line->credit,
+                    'credit'     => $line->debit,
+                    'narration'  => "Reversal: {$line->narration}",
+                ]);
+            }
+
+            // Mirror sub-ledger entries
+            foreach ($originalEntry->subLedgerEntries as $sub) {
+                $reversal->subLedgerEntries()->create([
+                    'ledger_type' => $sub->ledger_type,
+                    'ledger_id'   => $sub->ledger_id,
+                    'debit'       => $sub->credit,
+                    'credit'      => $sub->debit,
+                    'narration'   => "Reversal: {$sub->narration}",
+                ]);
+            }
+
+            Log::info('[Accounting] Journal entry reversed', [
+                'original_entry_id' => $originalEntry->id,
+                'reversal_entry_id' => $reversal->id,
+                'reason'            => $reason,
+            ]);
+
+            return $reversal;
+        } catch (\Throwable $e) {
+            Log::error('[Accounting] Failed to reverse journal entry', [
+                'entry_id' => $originalEntry->id,
+                'error'    => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Reverse the existing bill journal entry and post a fresh one with current amounts.
+     * Used when a bill is edited after creation (e.g., discount added post-payment).
+     *
+     * @param  Bill    $bill    The updated bill (with new totals already calculated)
+     * @param  string  $reason  Narration for the reversal
+     * @return JournalEntry|null  The new corrected entry, or null on failure
+     */
+    public static function reverseAndRepostBillEntry(Bill $bill, string $reason = 'Bill updated'): ?JournalEntry
+    {
+        try {
+            // Find the original (non-reversal) bill journal entry
+            $originalEntry = JournalEntry::where('reference_type', 'Bill')
+                ->where('reference_id', $bill->id)
+                ->where('description', 'not like', 'REVERSAL%')
+                ->latest('id')
+                ->first();
+
+            if ($originalEntry) {
+                self::reverseEntry($originalEntry, $reason);
+            }
+
+            // Post fresh entry with current bill amounts
+            // We need to temporarily remove the existing entry check by using a dedicated method
+            return self::postBillEntryFresh($bill);
+        } catch (\Throwable $e) {
+            Log::error('[Accounting] Failed to reverse and repost bill entry', [
+                'bill_id' => $bill->id,
+                'error'   => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Post a fresh bill journal entry without the duplicate check.
+     * Used internally by reverseAndRepostBillEntry after reversal.
+     */
+    private static function postBillEntryFresh(Bill $bill): ?JournalEntry
+    {
+        try {
+            $receivable  = Account::where('code', '1200')->first();
+            $taxPayable  = Account::where('code', '2100')->first();
+            $revenueCode = self::getRevenueAccountCode($bill->bill_type);
+            $revenue     = Account::where('code', $revenueCode)->first();
+
+            if (!$receivable || !$revenue) return null;
+
+            $entry = JournalEntry::create([
+                'entry_date'     => now()->toDateString(),
+                'reference_type' => 'Bill',
+                'reference_id'   => $bill->id,
+                'description'    => "Invoice {$bill->bill_number} — {$bill->patient?->name} (revised)",
+                'created_by'     => auth()->id() ?? $bill->created_by ?? 1,
+                'is_auto'        => true,
+            ]);
+
+            // DR: Receivable for total amount
+            $entry->lines()->create([
+                'account_id' => $receivable->id,
+                'debit'      => $bill->total_amount,
+                'credit'     => 0,
+                'narration'  => "Patient receivable for {$bill->bill_number} (revised)",
+            ]);
+
+            // CR: Revenue for subtotal
+            $entry->lines()->create([
+                'account_id' => $revenue->id,
+                'debit'      => 0,
+                'credit'     => $bill->subtotal,
+                'narration'  => ucfirst($bill->bill_type) . " revenue (revised)",
+            ]);
+
+            // CR: Tax Payable (if tax > 0)
+            if ($bill->tax_amount > 0 && $taxPayable) {
+                $entry->lines()->create([
+                    'account_id' => $taxPayable->id,
+                    'debit'      => 0,
+                    'credit'     => $bill->tax_amount,
+                    'narration'  => "Tax on {$bill->bill_number} (revised)",
+                ]);
+            }
+
+            // DR: Discount (if discount > 0)
+            if ($bill->discount_amount > 0) {
+                $discountAccount = Account::where('code', '5200')->first();
+                if ($discountAccount) {
+                    $entry->lines()->create([
+                        'account_id' => $discountAccount->id,
+                        'debit'      => $bill->discount_amount,
+                        'credit'     => 0,
+                        'narration'  => "Discount on {$bill->bill_number} (revised)",
+                    ]);
+                }
+            }
+
+            // Sub-ledger: Patient
+            $entry->subLedgerEntries()->create([
+                'ledger_type' => 'patient',
+                'ledger_id'   => $bill->patient_id,
+                'debit'       => $bill->total_amount,
+                'credit'      => 0,
+                'narration'   => "Invoice {$bill->bill_number} (revised)",
+            ]);
+
+            return $entry;
+        } catch (\Throwable $e) {
+            Log::error('[Accounting] Failed to post fresh bill entry', [
+                'bill_id' => $bill->id,
+                'error'   => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Post an overpayment adjustment entry when paid_amount exceeds total_amount.
+     * Moves the excess from Accounts Receivable to Patient Advance (liability).
+     *
+     * DR: Accounts Receivable (reduce the over-credited amount)
+     * CR: Advance from Patients (patient has credit balance)
+     *
+     * @param  Bill   $bill
+     * @param  float  $overpaymentAmount  The excess amount (paid - total)
+     * @return JournalEntry|null
+     */
+    public static function postOverpaymentAdjustment(Bill $bill, float $overpaymentAmount): ?JournalEntry
+    {
+        try {
+            if ($overpaymentAmount <= 0) return null;
+
+            $receivable     = Account::where('code', '1200')->first();
+            $patientAdvance = Account::where('code', '2300')->first();
+
+            if (!$receivable || !$patientAdvance) {
+                Log::warning('[Accounting] Cannot post overpayment — missing accounts (1200 or 2300)', [
+                    'bill_id' => $bill->id,
+                ]);
+                return null;
+            }
+
+            $entry = JournalEntry::create([
+                'entry_date'     => now()->toDateString(),
+                'reference_type' => 'Bill',
+                'reference_id'   => $bill->id,
+                'description'    => "Overpayment adjustment — {$bill->bill_number} (patient credit)",
+                'created_by'     => auth()->id() ?? 1,
+                'is_auto'        => true,
+            ]);
+
+            // DR: Accounts Receivable (netting out the excess credit from payment entries)
+            $entry->lines()->create([
+                'account_id' => $receivable->id,
+                'debit'      => $overpaymentAmount,
+                'credit'     => 0,
+                'narration'  => "Overpayment adjustment for {$bill->bill_number}",
+            ]);
+
+            // CR: Advance from Patients (patient now has credit balance)
+            $entry->lines()->create([
+                'account_id' => $patientAdvance->id,
+                'debit'      => 0,
+                'credit'     => $overpaymentAmount,
+                'narration'  => "Patient credit from {$bill->bill_number}",
+            ]);
+
+            // Sub-ledger: Patient credit
+            $entry->subLedgerEntries()->create([
+                'ledger_type' => 'patient',
+                'ledger_id'   => $bill->patient_id,
+                'debit'       => 0,
+                'credit'      => $overpaymentAmount,
+                'narration'   => "Credit balance from {$bill->bill_number}",
+            ]);
+
+            Log::info('[Accounting] Overpayment adjustment posted', [
+                'bill_id' => $bill->id,
+                'amount'  => $overpaymentAmount,
+            ]);
+
+            return $entry;
+        } catch (\Throwable $e) {
+            Log::error('[Accounting] Failed to post overpayment adjustment', [
+                'bill_id' => $bill->id,
+                'error'   => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
      * Post a journal entry for a new bill (invoice created).
      * DR: Accounts Receivable (patient owes money)
      * CR: Revenue account (based on bill type)

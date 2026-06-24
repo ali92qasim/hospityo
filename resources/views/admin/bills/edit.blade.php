@@ -7,6 +7,20 @@
     <h1 class="text-2xl font-bold text-gray-800">Edit Bill #{{ $bill->bill_number }}</h1>
 </div>
 
+@if($bill->paid_amount > 0)
+<div class="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3" id="payment-warning-banner">
+    <i class="fas fa-exclamation-triangle text-amber-500 mt-0.5"></i>
+    <div>
+        <p class="text-sm font-medium text-amber-800">This bill has existing payments</p>
+        <p class="text-sm text-amber-700">
+            <strong>{{ format_currency($bill->paid_amount) }}</strong> has already been paid.
+            If you reduce the total below the paid amount (e.g., by adding a discount), the excess will be
+            recorded as a patient credit balance. Accounting entries will be automatically reconciled.
+        </p>
+    </div>
+</div>
+@endif
+
 <div class="bg-white rounded-lg shadow p-6">
     <form method="POST" action="{{ route('bills.update', $bill) }}" id="billForm">
         @csrf @method('PUT')
@@ -142,136 +156,13 @@
 </div>
 
 <script>
-let itemIndex = {{ $bill->billItems->count() }};
-
-document.getElementById('addItem').addEventListener('click', function() {
-    const billItems = document.getElementById('billItems');
-    const newItem = document.querySelector('.bill-item').cloneNode(true);
-
-    newItem.querySelectorAll('input, select').forEach(input => {
-        const oldName = input.name;
-        if (oldName) {
-            input.name = oldName.replace(/\[\d+\]/, `[${itemIndex}]`);
-        }
-        if (input.type !== 'button') {
-            input.value = input.type === 'number' && input.classList.contains('quantity') ? '1' : '';
-        }
-        if (input.tagName === 'SELECT') {
-            input.selectedIndex = 0;
-        }
-    });
-
-    billItems.appendChild(newItem);
-    itemIndex++;
-    updateTotal();
-});
-
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('remove-item')) {
-        if (document.querySelectorAll('.bill-item').length > 1) {
-            e.target.closest('.bill-item').remove();
-            updateTotal();
-        }
-    }
-});
-
-document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('service-select')) {
-        const option = e.target.selectedOptions[0];
-        const priceInput = e.target.closest('.bill-item').querySelector('.unit-price');
-        const descInput = e.target.closest('.bill-item').querySelector('input[name*="[description]"]');
-
-        if (option.dataset.price) {
-            priceInput.value = option.dataset.price;
-            descInput.value = option.text.split(' - ')[0];
-        }
-        updateTotal();
-    }
-
-    if (e.target.classList.contains('quantity') || e.target.classList.contains('unit-price') ||
-        e.target.id === 'tax_amount') {
-        updateTotal();
-    }
-});
-
-// Discount type select → update hint, sync hidden radios, recompute
-document.getElementById('discount_type_select').addEventListener('change', function () {
-    const isPercentage = this.value === 'percentage';
-
-    document.getElementById('discount_type_fixed').checked = !isPercentage;
-    document.getElementById('discount_type_percentage').checked = isPercentage;
-
-    document.getElementById('discount_input_hint').textContent =
-        isPercentage ? 'Enter percentage (0–100)' : 'Enter fixed amount';
-
-    const computedWrap = document.getElementById('discount_computed_wrap');
-    computedWrap.classList.toggle('hidden', !isPercentage);
-
-    const inputVal = document.getElementById('discount_input_value');
-    inputVal.value = '0';
-    inputVal.max = isPercentage ? '100' : '';
-
-    if (isPercentage) {
-        document.getElementById('discount_percentage').value = '0';
-        computeDiscountFromPercentage();
-    } else {
-        document.getElementById('discount_amount').value = '0';
-        document.getElementById('discount_percentage').value = '0';
-    }
-    updateTotal();
-});
-
-// Visible discount input changed
-document.getElementById('discount_input_value').addEventListener('input', function () {
-    const isPercentage = document.getElementById('discount_type_select').value === 'percentage';
-    if (isPercentage) {
-        document.getElementById('discount_percentage').value = this.value;
-        computeDiscountFromPercentage();
-    } else {
-        document.getElementById('discount_amount').value = this.value;
-    }
-    updateTotal();
-});
-
-function computeDiscountFromPercentage() {
-    const percentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
-    const subtotal = getSubtotal();
-    const discountAmount = (percentage / 100) * subtotal;
-    document.getElementById('discount_amount').value = discountAmount.toFixed(2);
-
-    const computedEl = document.getElementById('discount_computed_amount');
-    if (computedEl) {
-        computedEl.textContent = document.getElementById('totalAmount').textContent.charAt(0) + discountAmount.toFixed(2);
-    }
-}
-
-function getSubtotal() {
-    let subtotal = 0;
-    document.querySelectorAll('.bill-item').forEach(item => {
-        const qty = parseFloat(item.querySelector('.quantity').value) || 0;
-        const price = parseFloat(item.querySelector('.unit-price').value) || 0;
-        subtotal += qty * price;
-    });
-    return subtotal;
-}
-
-function updateTotal() {
-    const subtotal = getSubtotal();
-
-    // If percentage mode, recompute discount_amount from current subtotal
-    const discountTypeEl = document.getElementById('discount_type_select');
-    if (discountTypeEl && discountTypeEl.value === 'percentage') {
-        computeDiscountFromPercentage();
-    }
-
-    const tax = parseFloat(document.getElementById('tax_amount').value) || 0;
-    const discount = parseFloat(document.getElementById('discount_amount').value) || 0;
-    const total = subtotal + tax - discount;
-
-    document.getElementById('totalAmount').textContent = `{{ currency_symbol() }}${total.toFixed(2)}`;
-}
-
-// Initialize total calculation
-updateTotal();
+    // Pass server-side values to the external JS module
+    window._billItemCount = {{ $bill->billItems->count() }};
+    window._currencySymbol = '{{ currency_symbol() }}';
+    window._billPaidAmount = {{ $bill->paid_amount }};
 </script>
+
+@push('scripts')
+    @vite('resources/js/bills-edit.js')
+@endpush
 @endsection

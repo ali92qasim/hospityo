@@ -23,6 +23,7 @@ export default defineConfig({
                 'resources/js/purchases-form.js',
                 'resources/js/investigations-form.js',
                 'resources/js/bills-form.js',
+                'resources/js/bills-edit.js',
                 'resources/js/date-picker.js',
                 'resources/js/datatable.js',
                 'resources/js/pagination.js',

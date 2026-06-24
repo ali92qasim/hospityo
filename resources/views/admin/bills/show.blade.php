@@ -7,6 +7,20 @@
     <h1 class="text-2xl font-bold text-gray-800">Bill #{{ $bill->bill_number }}</h1>
 </div>
 
+@if($bill->paid_amount > $bill->total_amount)
+<div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3" id="overpayment-banner">
+    <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+    <div>
+        <p class="text-sm font-medium text-blue-800">Patient Credit Balance</p>
+        <p class="text-sm text-blue-700">
+            This bill was modified after payment. The patient has a credit balance of
+            <strong>{{ format_currency($bill->paid_amount - $bill->total_amount) }}</strong>
+            which can be applied to future bills or refunded.
+        </p>
+    </div>
+</div>
+@endif
+
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2">
         <div class="bg-white rounded-lg shadow p-6 mb-6">
@@ -95,6 +109,12 @@
                             <div class="flex justify-between py-2 text-red-600 font-semibold">
                                 <span>Due:</span>
                                 <span>{{ format_currency($bill->due_amount) }}</span>
+                            </div>
+                            @endif
+                            @if($bill->paid_amount > $bill->total_amount)
+                            <div class="flex justify-between py-2 text-blue-600 font-semibold">
+                                <span>Patient Credit:</span>
+                                <span>{{ format_currency($bill->paid_amount - $bill->total_amount) }}</span>
                             </div>
                             @endif
                         </div>

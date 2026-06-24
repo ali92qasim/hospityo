@@ -72,6 +72,7 @@ Hospityo enables healthcare facilities to manage their entire operation from a s
 | **Tax Configuration** | Configurable tax rules per bill type |
 | **Chart of Accounts** | Full double-entry chart with parent/child hierarchy |
 | **Journal Entries** | Manual and auto-generated (bills, payments, purchases) |
+| **Accounting Reconciliation** | Reverse-and-repost on bill edits; overpayment auto-adjustment |
 | **Deposit & Transfer** | Quick forms for cash movements between accounts |
 | **General Ledger** | Per-account transaction view with date range |
 | **Profit & Loss** | Revenue vs expenses by period |
@@ -316,6 +317,7 @@ Default roles: Super Admin, Hospital Administrator, Doctor, Nurse, Receptionist,
 - **Bill number** uses `MAX(sequence)` not `COUNT()` — prevents duplicates on deletion
 - **Signed URLs** for public lab report sharing via WhatsApp (72-hour expiry)
 - **Duplicate journal entry prevention** — checks `reference_type + reference_id` before creating
+- **Bill edit accounting reconciliation** — reverse-and-repost pattern maintains full audit trail when bills are modified post-payment; overpayments auto-posted to "Advance from Patients" (2300)
 - **Service import** accepts both CSV and Excel (PhpSpreadsheet) — handles user accidentally saving as .xlsx
 - **Tenant-scoped Spatie cache** — `SyncTenantPermissions` clears `spatie.permission.cache.tenant.{id}` (not default key)
 - **OT conflict detection** — time-overlap query: `existing_start < new_end AND existing_end > new_start`; emergency surgeries bypass the hard block
@@ -413,6 +415,9 @@ php artisan cache:clear
 | Command | Purpose |
 |---------|---------|
 | `php artisan tenants:sync-permissions` | Re-seed permissions on all tenants (clears tenant-scoped cache) |
+| `php artisan accounting:reconcile-bills` | Retroactively fix stale journal entries on all tenants |
+| `php artisan accounting:reconcile-bills --dry-run` | Preview mismatches without making changes |
+| `php artisan accounting:reconcile-bills --tenant=5` | Reconcile bills for a specific tenant |
 | `php artisan pharmacy:alert-near-expiry` | Send near-expiry medicine alerts |
 | `php artisan cache:clear` | Clear all cached data |
 | `php artisan config:clear` | Clear config cache |
