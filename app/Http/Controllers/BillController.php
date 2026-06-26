@@ -100,6 +100,10 @@ class BillController extends Controller
             // manually if needed. The bill and accounting entry are already committed.
             \App\Services\DoctorShareService::calculate($bill);
 
+            if ($request->has('save_and_add_another')) {
+                return redirect()->route('bills.create')->with('success', 'Bill created successfully.');
+            }
+
             return redirect()->route('bills.show', $bill)->with('success', 'Bill created successfully');
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('[BillController] store() failed', [

@@ -21,9 +21,9 @@ class StorePatientRequest extends FormRequest
             'marital_status' => 'nullable|in:single,married,divorced,widowed',
             'present_address' => 'nullable|string',
             'permanent_address' => 'nullable|string',
-            'emergency_name' => 'required|string|max:255',
-            'emergency_phone' => 'required|string|max:20',
-            'emergency_relation' => 'required|string|max:100',
+            'emergency_name' => 'nullable|string|max:255',
+            'emergency_phone' => 'nullable|string|max:20',
+            'emergency_relation' => 'nullable|string|max:100',
         ];
     }
 }

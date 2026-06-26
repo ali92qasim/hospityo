@@ -70,6 +70,7 @@
                 </div>
 
                 <!-- Emergency Contact -->
+                @if($patient->emergency_name || $patient->emergency_phone || $patient->emergency_relation)
                 <div>
                     <h4 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-phone mr-2 text-red-500"></i>
@@ -78,18 +79,19 @@
                     <div class="space-y-4">
                         <div class="flex justify-between py-2 border-b border-gray-100">
                             <span class="text-gray-600">Name:</span>
-                            <span class="font-medium">{{ $patient->emergency_name }}</span>
+                            <span class="font-medium">{{ $patient->emergency_name ?? '—' }}</span>
                         </div>
                         <div class="flex justify-between py-2 border-b border-gray-100">
                             <span class="text-gray-600">Phone:</span>
-                            <span class="font-medium">{{ $patient->emergency_phone }}</span>
+                            <span class="font-medium">{{ $patient->emergency_phone ?? '—' }}</span>
                         </div>
                         <div class="flex justify-between py-2 border-b border-gray-100">
                             <span class="text-gray-600">Relationship:</span>
-                            <span class="font-medium">{{ $patient->emergency_relation }}</span>
+                            <span class="font-medium">{{ $patient->emergency_relation ?? '—' }}</span>
                         </div>
                     </div>
                 </div>
+                @endif
 
                 <!-- Address Information -->
                 @if($patient->present_address || $patient->permanent_address)

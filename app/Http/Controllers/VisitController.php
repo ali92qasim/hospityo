@@ -117,13 +117,18 @@ class VisitController extends Controller
 
     public function create()
     {
-        $patients = Patient::all();
+        $patients = Patient::latest()->get();
         return view('admin.visits.create', compact('patients'));
     }
 
     public function store(StoreVisitRequest $request)
     {
         $visit = Visit::create($request->validated());
+
+        if ($request->has('save_and_add_another')) {
+            return redirect()->route('visits.create')
+                ->with('success', 'Visit registered successfully.');
+        }
 
         return redirect()->route('visits.workflow', $visit)
             ->with('success', 'Visit registered successfully. Please record vital signs.');

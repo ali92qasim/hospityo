@@ -26,11 +26,11 @@
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Patient *</label>
-                    <select name="patient_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                    <select id="patient_id" name="patient_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                         <option value="">Select Patient</option>
                         @foreach($patients as $patient)
                         <option value="{{ $patient->id }}" {{ (old('patient_id') == $patient->id || request('patient_id') == $patient->id) ? 'selected' : '' }}>
-                            {{ $patient->name }} ({{ $patient->patient_no }})
+                            {{ $patient->name }} ({{ $patient->patient_no }}) — {{ $patient->phone }}
                         </option>
                         @endforeach
                     </select>
@@ -59,6 +59,10 @@
                 <a href="{{ route('visits.index') }}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Cancel
                 </a>
+                <button type="submit" name="save_and_add_another" value="1" class="px-6 py-2 border border-medical-blue text-medical-blue rounded-lg hover:bg-blue-50 flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Save & Add Another
+                </button>
                 <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 flex items-center">
                     <i class="fas fa-save mr-2"></i>
                     Register Visit

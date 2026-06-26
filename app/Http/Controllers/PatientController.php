@@ -63,11 +63,13 @@ class PatientController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            return $this->successResponse(
-                "Patient {$patient->name} created successfully with Patient No: {$patient->patient_no}",
-                $patient,
-                'patients.index'
-            );
+            $message = "Patient {$patient->name} created successfully with Patient No: {$patient->patient_no}";
+
+            if ($request->has('save_and_add_another')) {
+                return redirect()->route('patients.create')->with('success', $message);
+            }
+
+            return $this->successResponse($message, $patient, 'patients.index');
         } catch (\Throwable $e) {
             DB::rollBack();
             return $this->handleException($e, 'Patient creation');

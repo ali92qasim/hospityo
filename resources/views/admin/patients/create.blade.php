@@ -91,25 +91,22 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Contact Name *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Contact Name</label>
                     <input type="text" name="emergency_name" value="{{ old('emergency_name') }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
-                           required>
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Phone *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Phone</label>
                     <input type="tel" name="emergency_phone" value="{{ old('emergency_phone') }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
-                           required>
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Relationship *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
                     <input type="text" name="emergency_relation" value="{{ old('emergency_relation') }}" 
                            placeholder="e.g., Father, Mother, Spouse, Sibling"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
-                           required>
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 </div>
             </div>
 
@@ -117,6 +114,10 @@
                 <a href="{{ route('patients.index') }}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Cancel
                 </a>
+                <button type="submit" name="save_and_add_another" value="1" class="px-6 py-2 border border-medical-blue text-medical-blue rounded-lg hover:bg-blue-50 flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Save & Add Another
+                </button>
                 <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 flex items-center">
                     <i class="fas fa-save mr-2"></i>
                     Save Patient

@@ -162,6 +162,9 @@
 
         <div class="flex justify-end space-x-3">
             <a href="{{ route('bills.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancel</a>
+            <button type="submit" name="save_and_add_another" value="1" class="border border-medical-blue text-medical-blue px-4 py-2 rounded-lg hover:bg-blue-50 flex items-center">
+                <i class="fas fa-plus mr-2"></i>Save & Add Another
+            </button>
             <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">Create Bill</button>
         </div>
     </form>

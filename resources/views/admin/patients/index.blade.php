@@ -52,8 +52,10 @@
                         @endif
                     </td>
                     <td class="px-4 lg:px-6 py-4">
-                        <div class="text-sm text-gray-900">{{ $patient->emergency_name }}</div>
-                        <div class="text-xs text-gray-500">{{ $patient->emergency_phone }} ({{ $patient->emergency_relation }})</div>
+                        <div class="text-sm text-gray-900">{{ $patient->emergency_name ?? '—' }}</div>
+                        @if($patient->emergency_phone)
+                        <div class="text-xs text-gray-500">{{ $patient->emergency_phone }}{{ $patient->emergency_relation ? ' (' . $patient->emergency_relation . ')' : '' }}</div>
+                        @endif
                     </td>
                     <td class="px-4 lg:px-6 py-4 text-sm font-medium">
                         <div class="flex gap-3">
@@ -107,14 +109,18 @@
                     <span class="text-gray-900">{{ ucfirst($patient->marital_status) }}</span>
                 </div>
                 @endif
+                @if($patient->emergency_name)
                 <div class="flex justify-between gap-2">
                     <span class="text-gray-500">Emergency:</span>
                     <span class="text-gray-900 text-right">{{ $patient->emergency_name }}</span>
                 </div>
+                @endif
+                @if($patient->emergency_phone)
                 <div class="flex justify-between gap-2">
                     <span class="text-gray-500">Emergency Phone:</span>
                     <span class="text-gray-900">{{ $patient->emergency_phone }}</span>
                 </div>
+                @endif
             </div>
             
             <div class="grid grid-cols-3 gap-2">

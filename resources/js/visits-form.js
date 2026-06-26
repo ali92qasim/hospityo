@@ -6,6 +6,19 @@ import flatpickr from 'flatpickr';
 select2(window, $);
 
 $(function() {
+    // Initialize Select2 for patient dropdown on visit create page
+    if ($('#patient_id').length && typeof $.fn.select2 !== 'undefined') {
+        try {
+            $('#patient_id').select2({
+                placeholder: 'Search patient by name, number or phone...',
+                allowClear: true,
+                width: '100%',
+            });
+        } catch (error) {
+            console.error('Error initializing patient Select2:', error);
+        }
+    }
+
     // Initialize Select2 for allergies dropdown
     if ($('#allergies-select').length && typeof $.fn.select2 !== 'undefined') {
         try {

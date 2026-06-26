@@ -516,8 +516,9 @@ class DoctorShareController extends Controller
             });
         }
 
-        // Summary: group by doctor_id
+        // Summary: group by doctor_id (remove inherited ordering — not valid with GROUP BY)
         $summaryRows = (clone $baseQuery)
+            ->reorder()
             ->select('doctor_id')
             ->selectRaw('SUM(share_amount) as total_earned')
             ->selectRaw('SUM(CASE WHEN status = "pending" THEN share_amount ELSE 0 END) as total_pending')
