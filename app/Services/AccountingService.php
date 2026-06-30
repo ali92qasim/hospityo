@@ -30,13 +30,14 @@ class AccountingService
                 // Use the same entry_date as the original so both entries fall within
                 // the same reporting period and cancel each other out correctly.
                 $reversal = JournalEntry::create([
-                    'entry_date'     => $originalEntry->entry_date,
-                    'reference_type' => $originalEntry->reference_type,
-                    'reference_id'   => $originalEntry->reference_id,
-                    'description'    => "REVERSAL — {$originalEntry->description} ({$reason})",
-                    'created_by'     => auth()->id() ?? $originalEntry->created_by ?? 1,
-                    'is_auto'        => true,
-                    'entry_type'     => 'reversal',
+                    'entry_date'        => $originalEntry->entry_date,
+                    'reference_type'    => $originalEntry->reference_type,
+                    'reference_id'      => $originalEntry->reference_id,
+                    'description'       => "REVERSAL — {$originalEntry->description} ({$reason})",
+                    'created_by'        => auth()->id() ?? $originalEntry->created_by ?? 1,
+                    'is_auto'           => true,
+                    'entry_type'        => 'reversal',
+                    'reversed_entry_id' => $originalEntry->id,
                 ]);
 
                 // Mirror all lines — swap debit ↔ credit

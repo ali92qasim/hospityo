@@ -105,7 +105,7 @@ it('allows system reversal in a closed period when matching entry exists', funct
         'closed_by' => $this->user->id,
     ]);
 
-    // Reversal should be allowed (mirrors existing entry in same period)
+    // Reversal should be allowed (links to specific original via reversed_entry_id, same date)
     $reversal = JournalEntry::create([
         'entry_date' => '2026-03-15',
         'reference_type' => 'Bill',
@@ -114,14 +114,16 @@ it('allows system reversal in a closed period when matching entry exists', funct
         'created_by' => $this->user->id,
         'is_auto' => true,
         'entry_type' => 'reversal',
+        'reversed_entry_id' => $original->id,
     ]);
 
     expect($reversal)->not->toBeNull()
-        ->and($reversal->entry_type)->toBe('reversal');
+        ->and($reversal->entry_type)->toBe('reversal')
+        ->and($reversal->reversed_entry_id)->toBe($original->id);
 });
 
 it('blocks manual reversal in a closed period (not auto-generated)', function () {
-    JournalEntry::create([
+    $original = JournalEntry::create([
         'entry_date' => '2026-03-15',
         'reference_type' => 'Bill',
         'reference_id' => 99,
@@ -141,7 +143,7 @@ it('blocks manual reversal in a closed period (not auto-generated)', function ()
         'closed_by' => $this->user->id,
     ]);
 
-    // Manual (is_auto=false) reversal should be blocked
+    // Reversal without reversed_entry_id should be blocked (no link to verify)
     expect(fn() => JournalEntry::create([
         'entry_date' => '2026-03-15',
         'reference_type' => 'Bill',
@@ -154,7 +156,7 @@ it('blocks manual reversal in a closed period (not auto-generated)', function ()
 });
 
 it('blocks reversal with non-matching date in closed period', function () {
-    JournalEntry::create([
+    $original = JournalEntry::create([
         'entry_date' => '2026-03-15',
         'reference_type' => 'Bill',
         'reference_id' => 99,
@@ -174,7 +176,7 @@ it('blocks reversal with non-matching date in closed period', function () {
         'closed_by' => $this->user->id,
     ]);
 
-    // Auto reversal but with DIFFERENT date than original — should be blocked
+    // Reversal with reversed_entry_id but DIFFERENT date than original — should be blocked
     expect(fn() => JournalEntry::create([
         'entry_date' => '2026-04-01', // different from original's 2026-03-15
         'reference_type' => 'Bill',
@@ -183,6 +185,7 @@ it('blocks reversal with non-matching date in closed period', function () {
         'created_by' => $this->user->id,
         'is_auto' => true,
         'entry_type' => 'reversal',
+        'reversed_entry_id' => $original->id,
     ]))->toThrow(ClosedPeriodException::class);
 });
 

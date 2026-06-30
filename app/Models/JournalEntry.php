@@ -14,7 +14,7 @@ class JournalEntry extends Model
 
     protected $fillable = [
         'entry_number', 'entry_date', 'reference_type', 'reference_id',
-        'description', 'department_id', 'created_by', 'is_auto', 'entry_type',
+        'description', 'department_id', 'created_by', 'is_auto', 'entry_type', 'reversed_entry_id',
     ];
 
     protected $casts = ['entry_date' => 'date', 'is_auto' => 'boolean'];
@@ -84,16 +84,19 @@ class JournalEntry extends Model
             return; // Date is not in any closed period
         }
 
-        // Allow system-generated reversals that mirror an existing entry in the same period
-        if ($entry->entry_type === 'reversal' && (bool) $entry->is_auto) {
-            $hasMatchingOriginal = static::where('reference_type', $entry->reference_type)
-                ->where('reference_id', $entry->reference_id)
-                ->whereDate('entry_date', $entryDate)
-                ->where('entry_type', '!=', 'reversal')
-                ->exists();
+        // Allow system-generated reversals that link to a specific original entry in this period
+        if ($entry->entry_type === 'reversal' && $entry->reversed_entry_id) {
+            $reversedEntry = static::find($entry->reversed_entry_id);
 
-            if ($hasMatchingOriginal) {
-                return; // Reversal mirrors an existing entry in the same closed period — allowed
+            if ($reversedEntry) {
+                $reversedDate = $reversedEntry->entry_date instanceof \Carbon\Carbon
+                    ? $reversedEntry->entry_date->format('Y-m-d')
+                    : (string) $reversedEntry->entry_date;
+
+                // Only bypass if the reversal date matches the original entry's date exactly
+                if ($reversedDate === $entryDate) {
+                    return; // Reversal mirrors its linked original in the same closed period — allowed
+                }
             }
         }
 

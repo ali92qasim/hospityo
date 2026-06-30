@@ -109,10 +109,9 @@ class ReconcileBillEntries extends Command
                         $entry = JournalEntry::find($orphan->id);
                         if (!$entry) continue;
 
-                        // Check if already reversed
-                        $alreadyReversed = JournalEntry::where('description', 'like', "REVERSAL — " . substr($entry->description, 0, 50) . "%")
-                            ->where('reference_type', $entry->reference_type)
-                            ->where('reference_id', $entry->reference_id)
+                        // Check if already reversed (has a reversal pointing to it)
+                        $alreadyReversed = JournalEntry::where('reversed_entry_id', $entry->id)
+                            ->where('entry_type', 'reversal')
                             ->exists();
 
                         if ($alreadyReversed) {
@@ -216,8 +215,7 @@ class ReconcileBillEntries extends Command
             ->join('journal_entries as je', function ($join) {
                 $join->on('je.reference_id', '=', 'b.id')
                     ->where('je.reference_type', '=', 'Bill')
-                    ->where('je.description', 'not like', 'REVERSAL%')
-                    ->where('je.description', 'not like', 'Overpayment%');
+                    ->where('je.entry_type', '=', 'original');
             })
             ->join('journal_entry_lines as jel', function ($join) use ($receivableAccountId) {
                 $join->on('jel.journal_entry_id', '=', 'je.id')
@@ -245,8 +243,7 @@ class ReconcileBillEntries extends Command
                 $join->on('b.id', '=', 'je.reference_id');
             })
             ->where('je.reference_type', 'Bill')
-            ->where('je.description', 'not like', 'REVERSAL%')
-            ->where('je.description', 'not like', 'Overpayment%')
+            ->where('je.entry_type', 'original')
             ->whereNull('b.id')
             ->select('je.id', 'je.reference_id', 'je.description', 'je.entry_date')
             ->orderBy('je.id')

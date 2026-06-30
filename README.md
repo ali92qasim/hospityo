@@ -68,11 +68,12 @@ Hospityo enables healthcare facilities to manage their entire operation from a s
 | Module | Description |
 |--------|-------------|
 | **Bills** | OPD/IPD/Investigation/Pharmacy billing with line items |
-| **Payments** | Cash, card, insurance, bank transfer tracking |
+| **Payments** | Cash, card, insurance, bank transfer tracking; edit & delete with full journal reversal |
 | **Tax Configuration** | Configurable tax rules per bill type |
 | **Chart of Accounts** | Full double-entry chart with parent/child hierarchy |
-| **Journal Entries** | Manual and auto-generated (bills, payments, purchases) |
-| **Accounting Reconciliation** | Reverse-and-repost on bill edits; overpayment auto-adjustment |
+| **Journal Entries** | Manual and auto-generated (bills, payments, purchases); `entry_type` column tracks original/reversal/adjustment/superseded |
+| **Accounting Reconciliation** | Reverse-and-repost on bill edits; overpayment auto-adjustment; orphan cleanup for deleted bills |
+| **Fiscal Year Management** | Period close with pre-close summary, anomaly detection, and irreversible lock enforcement |
 | **Deposit & Transfer** | Quick forms for cash movements between accounts |
 | **General Ledger** | Per-account transaction view with date range |
 | **Profit & Loss** | Revenue vs expenses by period |
@@ -121,7 +122,7 @@ Hospityo enables healthcare facilities to manage their entire operation from a s
 | Feature | Description |
 |---------|-------------|
 | **Super Admin** | Tenant management, plan management, site settings |
-| **Plans** | Custom pricing flag, module-based feature gating |
+| **Plans** | Custom pricing flag, module-based feature gating (15 modules) |
 | **Tenant Registration** | 3-step wizard, auto-provisioning with queue |
 | **Landing Page** | DB-driven pricing cards, "Most Popular" badge |
 | **Subscriptions** | Paddle/PayFast integration, payment history tracking |
@@ -300,12 +301,17 @@ Uses Spatie Permission with per-tenant isolation:
 - Permissions assigned to Roles (not directly to users)
 - Roles assigned to Users
 - Route middleware: `->middleware('permission:view patients|create patients')`
-- Sidebar driven by `SidebarService` — checks user permissions via `$user->can()`
+- Sidebar driven by `SidebarService` — checks user permissions + module access via `$tenant->hasModule()`
 - Seeded via `RolePermissionSeeder` — single source of truth
 - System Settings restricted via `manage settings` permission
 - Tenant-scoped permission cache (fixes stale cache after sync)
 
 Default roles: Super Admin, Hospital Administrator, Doctor, Nurse, Receptionist, Lab Technician, Pharmacist
+
+Notable permissions:
+- `edit payments` — edit payment amount/method (Hospital Administrator, Receptionist)
+- `delete payments` — remove a payment entirely (Hospital Administrator only)
+- `view accounting` — access all accounting features (Hospital Administrator)
 
 ---
 
@@ -316,13 +322,21 @@ Default roles: Super Admin, Hospital Administrator, Doctor, Nurse, Receptionist,
 - **Doctor Share** uses bcmath (scale 6) — no float arithmetic in financial calculations
 - **Bill number** uses `MAX(sequence)` not `COUNT()` — prevents duplicates on deletion
 - **Signed URLs** for public lab report sharing via WhatsApp (72-hour expiry)
-- **Duplicate journal entry prevention** — checks `reference_type + reference_id` before creating
+- **Journal entry `entry_type` column** — explicit `original`, `reversal`, `adjustment`, `superseded` states replace fragile description-matching; indexed for query performance
+- **`reversed_entry_id` FK with unique index** — each reversal links directly to the specific entry it reverses; prevents double-reversals and enables precise fiscal year bypass logic
+- **Fiscal year period lock** — enforced at `JournalEntry::creating` model event (single enforcement point); reversals bypass only when `reversed_entry_id` points to an entry with matching date in the same period
 - **Bill edit accounting reconciliation** — reverse-and-repost pattern maintains full audit trail when bills are modified post-payment; overpayments auto-posted to "Advance from Patients" (2300)
+- **Payment edit/delete** — reverse-old + post-new pattern; overpayment adjustments are bill-scoped (all reversed and recomputed fresh on any payment change)
+- **Bill deletion reverses all journal entries** — prevents orphaned ledger entries; aborts deletion if reversal fails
+- **Daily Cash Register excludes discount debits (5200) from outflows** — discounts are non-cash accounting entries, not actual cash leaving the business
+- **Revenue Report uses `bill_date`** (not `created_at`) — consistent with Cash Register; outstanding calculated per-bill with `max(0, total - paid)` to avoid negatives
+- **`Account::getBalance()` single-query** — `SUM(debit)` and `SUM(credit)` in one `selectRaw` call; eliminates race condition from two separate queries
 - **Service import** accepts both CSV and Excel (PhpSpreadsheet) — handles user accidentally saving as .xlsx
 - **Tenant-scoped Spatie cache** — `SyncTenantPermissions` clears `spatie.permission.cache.tenant.{id}` (not default key)
 - **OT conflict detection** — time-overlap query: `existing_start < new_end AND existing_end > new_start`; emergency surgeries bypass the hard block
 - **Doctor profile self-service** — Doctors can update professional fields (specialization, qualification, schedule) from their profile page
 - **Permission-gated Settings** — System settings accessible only to users with `manage settings` permission (default: Hospital Administrator, Receptionist)
+- **Module gating** — 15 modules in `ModuleRegistry` (patients, doctors, appointments, visits, billing, pharmacy, laboratory, ipd, ot, doctor-share, hr, reports, rbac, audit, backup); `CheckModule` middleware auto-detects module from route name
 
 ---
 
@@ -415,7 +429,8 @@ php artisan cache:clear
 | Command | Purpose |
 |---------|---------|
 | `php artisan tenants:sync-permissions` | Re-seed permissions on all tenants (clears tenant-scoped cache) |
-| `php artisan accounting:reconcile-bills` | Retroactively fix stale journal entries on all tenants |
+| `php artisan accounting:reconcile-bills` | Fix stale journal entries (receivable + discount mismatches) |
+| `php artisan accounting:reconcile-bills --include-orphans` | Also reverse entries for deleted bills |
 | `php artisan accounting:reconcile-bills --dry-run` | Preview mismatches without making changes |
 | `php artisan accounting:reconcile-bills --tenant=5` | Reconcile bills for a specific tenant |
 | `php artisan pharmacy:alert-near-expiry` | Send near-expiry medicine alerts |
@@ -456,6 +471,24 @@ resources/views/
 
 docs/                     # Feature documentation and bug reports
 ```
+
+---
+
+## Testing
+
+```bash
+php artisan test                    # Run all tests
+php artisan test --filter=Accounting  # Accounting module tests only
+```
+
+Test coverage includes:
+- Journal entry creation, balance validation, sub-ledger entries
+- `entry_type` lifecycle (original → superseded → reversal)
+- `reversed_entry_id` linking and duplicate-check behavior
+- Payment edit with overpayment adjustment reversal/recomputation
+- Fiscal year period lock enforcement and reversal bypass logic
+- Account balance calculation
+- Payroll accounting integration
 
 ---
 
