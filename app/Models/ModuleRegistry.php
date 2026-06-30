@@ -57,6 +57,18 @@ class ModuleRegistry
             'name'   => 'IPD Management',
             'routes' => ['wards.', 'beds.'],
         ],
+        'ot' => [
+            'name'   => 'Operation Theatre',
+            'routes' => ['ot.'],
+        ],
+        'doctor-share' => [
+            'name'   => 'Doctor Share',
+            'routes' => ['doctor-share.'],
+        ],
+        'hr' => [
+            'name'   => 'HR & Payroll',
+            'routes' => ['hr.'],
+        ],
         'reports' => [
             'name'   => 'Reports & Analytics',
             'routes' => ['reports.'],

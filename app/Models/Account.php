@@ -52,8 +52,10 @@ class Account extends Model
         if ($from) $query->whereHas('journalEntry', fn($q) => $q->where('entry_date', '>=', $from));
         if ($to) $query->whereHas('journalEntry', fn($q) => $q->where('entry_date', '<=', $to));
 
-        $debits = (float) $query->sum('debit');
-        $credits = (float) (clone $query)->sum('credit');
+        $totals = (clone $query)->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')->first();
+
+        $debits = (float) $totals->total_debit;
+        $credits = (float) $totals->total_credit;
 
         return in_array($this->type, ['asset', 'expense'])
             ? $debits - $credits

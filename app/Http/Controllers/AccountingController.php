@@ -174,6 +174,7 @@ class AccountingController extends Controller
                     'description' => $request->description,
                     'created_by'  => auth()->id(),
                     'is_auto'     => false,
+                    'entry_type'  => 'original',
                 ]);
 
                 foreach ($request->lines as $line) {
@@ -311,6 +312,7 @@ class AccountingController extends Controller
                     'description' => $request->description,
                     'created_by'  => auth()->id(),
                     'is_auto'     => false,
+                    'entry_type'  => 'original',
                 ]);
 
                 $entry->lines()->create([
@@ -358,6 +360,7 @@ class AccountingController extends Controller
                     'description' => $request->description,
                     'created_by'  => auth()->id(),
                     'is_auto'     => false,
+                    'entry_type'  => 'original',
                 ]);
 
                 $entry->lines()->create([
@@ -500,6 +503,7 @@ class AccountingController extends Controller
             'description' => "Opening balance for {$account->code} — {$account->name}",
             'created_by'  => auth()->id(),
             'is_auto'     => true,
+            'entry_type'  => 'original',
         ]);
 
         if ($isDebitNature) {

@@ -173,6 +173,7 @@ class PayrollService
                 'description' => "Salary expense — {$run->title}",
                 'created_by' => $run->created_by,
                 'is_auto' => true,
+                'entry_type' => 'original',
             ]);
 
             // DR: Salary Expense (gross)

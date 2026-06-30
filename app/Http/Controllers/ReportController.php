@@ -40,7 +40,11 @@ class ReportController extends Controller
             ->get();
 
         // ── Cash Outflows (journal entries where expense accounts are debited) ──
-        $expenseAccountIds = Account::where('type', 'expense')->pluck('id');
+        // Exclude "Discounts Given" (5200) — discounts are accounting contra-entries,
+        // not actual cash leaving the business. They should not affect the cash register.
+        $expenseAccountIds = Account::where('type', 'expense')
+            ->where('code', '!=', '5200')
+            ->pluck('id');
 
         $outflowLines = \App\Models\JournalEntryLine::whereIn('account_id', $expenseAccountIds)
             ->where('debit', '>', 0)

@@ -224,25 +224,37 @@ class BillController extends Controller
         }
 
         // Reverse all journal entries for this bill before deletion.
-        // This ensures the ledger stays accurate and no orphaned entries remain.
+        // If any reversal fails, abort the deletion to prevent orphaned entries.
         $billEntries = \App\Models\JournalEntry::where('reference_type', 'Bill')
             ->where('reference_id', $bill->id)
-            ->where('description', 'not like', 'REVERSAL%')
+            ->where('entry_type', 'original')
+            ->with(['lines', 'subLedgerEntries'])
             ->get();
 
         foreach ($billEntries as $entry) {
-            \App\Services\AccountingService::reverseEntry($entry, 'bill_deleted');
+            $reversal = \App\Services\AccountingService::reverseEntry($entry, 'bill_deleted');
+            if (!$reversal) {
+                return redirect()->back()->withErrors([
+                    'error' => "Failed to reverse journal entry #{$entry->entry_number}. Bill was not deleted to protect financial integrity.",
+                ]);
+            }
         }
 
-        // Also reverse any payment journal entries linked to this bill's payments
+        // Reverse payment journal entries linked to this bill's payments
         foreach ($bill->payments as $payment) {
             $paymentEntries = \App\Models\JournalEntry::where('reference_type', 'Payment')
                 ->where('reference_id', $payment->id)
-                ->where('description', 'not like', 'REVERSAL%')
+                ->where('entry_type', 'original')
+                ->with(['lines', 'subLedgerEntries'])
                 ->get();
 
             foreach ($paymentEntries as $entry) {
-                \App\Services\AccountingService::reverseEntry($entry, 'bill_deleted');
+                $reversal = \App\Services\AccountingService::reverseEntry($entry, 'bill_deleted');
+                if (!$reversal) {
+                    return redirect()->back()->withErrors([
+                        'error' => "Failed to reverse payment journal entry #{$entry->entry_number}. Bill was not deleted to protect financial integrity.",
+                    ]);
+                }
             }
         }
 
@@ -262,12 +274,18 @@ class BillController extends Controller
         ]);
 
         $bill->paid_amount += $request->amount;
-        $bill->due_amount = $bill->total_amount - $bill->paid_amount;
-        $bill->status = $bill->due_amount <= 0 ? 'paid' : 'partial';
+        $bill->due_amount = max(0, $bill->total_amount - $bill->paid_amount);
+        $bill->status = $bill->paid_amount >= $bill->total_amount ? 'paid' : 'partial';
         $bill->save();
 
         // Auto-post accounting journal entry
         \App\Services\AccountingService::postPaymentEntry($payment);
+
+        // Handle overpayment — if paid exceeds total, post adjustment to Patient Advance (2300)
+        $overpayment = round((float) $bill->paid_amount - (float) $bill->total_amount, 2);
+        if ($overpayment > 0) {
+            \App\Services\AccountingService::postOverpaymentAdjustment($bill, $overpayment);
+        }
 
         // Append immutable allocation events to the share ledger
         \App\Services\DoctorShareService::recordPaymentAllocations($payment);

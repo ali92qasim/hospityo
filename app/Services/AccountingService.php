@@ -22,45 +22,52 @@ class AccountingService
     public static function reverseEntry(JournalEntry $originalEntry, string $reason = 'Bill updated'): ?JournalEntry
     {
         try {
-            // Use the same entry_date as the original so both entries fall within
-            // the same reporting period and cancel each other out correctly.
-            $reversal = JournalEntry::create([
-                'entry_date'     => $originalEntry->entry_date,
-                'reference_type' => $originalEntry->reference_type,
-                'reference_id'   => $originalEntry->reference_id,
-                'description'    => "REVERSAL — {$originalEntry->description} ({$reason})",
-                'created_by'     => auth()->id() ?? $originalEntry->created_by ?? 1,
-                'is_auto'        => true,
-            ]);
+            return \Illuminate\Support\Facades\DB::connection('tenant')->transaction(function () use ($originalEntry, $reason) {
+                // Mark the original entry as superseded so it's no longer treated as
+                // the active "original" by duplicate checks or queries.
+                $originalEntry->update(['entry_type' => 'superseded']);
 
-            // Mirror all lines — swap debit ↔ credit
-            foreach ($originalEntry->lines as $line) {
-                $reversal->lines()->create([
-                    'account_id' => $line->account_id,
-                    'debit'      => $line->credit,
-                    'credit'     => $line->debit,
-                    'narration'  => "Reversal: {$line->narration}",
+                // Use the same entry_date as the original so both entries fall within
+                // the same reporting period and cancel each other out correctly.
+                $reversal = JournalEntry::create([
+                    'entry_date'     => $originalEntry->entry_date,
+                    'reference_type' => $originalEntry->reference_type,
+                    'reference_id'   => $originalEntry->reference_id,
+                    'description'    => "REVERSAL — {$originalEntry->description} ({$reason})",
+                    'created_by'     => auth()->id() ?? $originalEntry->created_by ?? 1,
+                    'is_auto'        => true,
+                    'entry_type'     => 'reversal',
                 ]);
-            }
 
-            // Mirror sub-ledger entries
-            foreach ($originalEntry->subLedgerEntries as $sub) {
-                $reversal->subLedgerEntries()->create([
-                    'ledger_type' => $sub->ledger_type,
-                    'ledger_id'   => $sub->ledger_id,
-                    'debit'       => $sub->credit,
-                    'credit'      => $sub->debit,
-                    'narration'   => "Reversal: {$sub->narration}",
+                // Mirror all lines — swap debit ↔ credit
+                foreach ($originalEntry->lines as $line) {
+                    $reversal->lines()->create([
+                        'account_id' => $line->account_id,
+                        'debit'      => $line->credit,
+                        'credit'     => $line->debit,
+                        'narration'  => "Reversal: {$line->narration}",
+                    ]);
+                }
+
+                // Mirror sub-ledger entries
+                foreach ($originalEntry->subLedgerEntries as $sub) {
+                    $reversal->subLedgerEntries()->create([
+                        'ledger_type' => $sub->ledger_type,
+                        'ledger_id'   => $sub->ledger_id,
+                        'debit'       => $sub->credit,
+                        'credit'      => $sub->debit,
+                        'narration'   => "Reversal: {$sub->narration}",
+                    ]);
+                }
+
+                Log::info('[Accounting] Journal entry reversed', [
+                    'original_entry_id' => $originalEntry->id,
+                    'reversal_entry_id' => $reversal->id,
+                    'reason'            => $reason,
                 ]);
-            }
 
-            Log::info('[Accounting] Journal entry reversed', [
-                'original_entry_id' => $originalEntry->id,
-                'reversal_entry_id' => $reversal->id,
-                'reason'            => $reason,
-            ]);
-
-            return $reversal;
+                return $reversal;
+            });
         } catch (\Throwable $e) {
             Log::error('[Accounting] Failed to reverse journal entry', [
                 'entry_id' => $originalEntry->id,
@@ -84,7 +91,7 @@ class AccountingService
             // Find the original (non-reversal) bill journal entry
             $originalEntry = JournalEntry::where('reference_type', 'Bill')
                 ->where('reference_id', $bill->id)
-                ->where('description', 'not like', 'REVERSAL%')
+                ->where('entry_type', 'original')
                 ->latest('id')
                 ->first();
 
@@ -125,6 +132,7 @@ class AccountingService
                 'description'    => "Invoice {$bill->bill_number} — {$bill->patient?->name} (revised)",
                 'created_by'     => auth()->id() ?? $bill->created_by ?? 1,
                 'is_auto'        => true,
+                'entry_type'     => 'original',
             ]);
 
             // DR: Receivable for total amount
@@ -218,6 +226,7 @@ class AccountingService
                 'description'    => "Overpayment adjustment — {$bill->bill_number} (patient credit)",
                 'created_by'     => auth()->id() ?? 1,
                 'is_auto'        => true,
+                'entry_type'     => 'adjustment',
             ]);
 
             // DR: Accounts Receivable (netting out the excess credit from payment entries)
@@ -270,8 +279,10 @@ class AccountingService
     {
         try {
             // Prevent duplicate journal entries for the same bill
+            // Only check for 'original' type entries — reversals and adjustments share the same reference
             $existing = JournalEntry::where('reference_type', 'Bill')
                 ->where('reference_id', $bill->id)
+                ->where('entry_type', 'original')
                 ->first();
 
             if ($existing) {
@@ -296,6 +307,7 @@ class AccountingService
                 'description' => "Invoice {$bill->bill_number} — {$bill->patient?->name}",
                 'created_by' => $bill->created_by ?? auth()->id() ?? 1,
                 'is_auto' => true,
+                'entry_type' => 'original',
             ]);
 
             // DR: Receivable for total amount
@@ -376,6 +388,7 @@ class AccountingService
                 'description' => "Payment received for {$bill->bill_number} — {$payment->payment_method}",
                 'created_by' => $payment->received_by ?? auth()->id() ?? 1,
                 'is_auto' => true,
+                'entry_type' => 'original',
             ]);
 
             // DR: Cash/Bank
@@ -431,6 +444,7 @@ class AccountingService
                 'description' => "Purchase {$po->po_number} — {$po->supplier?->name}",
                 'created_by' => $po->created_by ?? auth()->id() ?? 1,
                 'is_auto' => true,
+                'entry_type' => 'original',
             ]);
 
             // DR: Inventory for subtotal

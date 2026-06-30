@@ -72,7 +72,7 @@ class SidebarService
         }
 
         // ── Operation Theatre ─────────────────────────────────────────────────
-        if ($user->can('view surgeries')) {
+        if ($this->hasModule($tenant, 'ot') && $user->can('view surgeries')) {
             $items = [
                 $this->item('Theatres', 'fa-door-open', 'ot.theatres', ['ot.theatres*']),
                 $this->item('Surgeries', 'fa-procedures', 'ot.surgeries.index', ['ot.surgeries.*', 'ot.calendar*']),
@@ -140,7 +140,7 @@ class SidebarService
         }
 
         // ── Doctor Share ──────────────────────────────────────────────────────
-        if ($user->can('manage doctor shares')) {
+        if ($this->hasModule($tenant, 'doctor-share') && $user->can('manage doctor shares')) {
             $items = [
                 $this->item('Share Rules', 'fa-list-alt', 'doctor-share.rules.index', ['doctor-share.rules.*']),
                 $this->item('Share Items', 'fa-hand-holding-usd', 'doctor-share.items.index', ['doctor-share.items.*']),
@@ -185,7 +185,7 @@ class SidebarService
         }
 
         // ── HR ────────────────────────────────────────────────────────────────
-        if ($user->can('view hr')) {
+        if ($this->hasModule($tenant, 'hr') && $user->can('view hr')) {
             $items = [
                 $this->item('Employees', 'fa-users', 'hr.employees.index', ['hr.employees.*']),
                 $this->item('Designations', 'fa-id-badge', 'hr.designations.index', ['hr.designations.*']),
