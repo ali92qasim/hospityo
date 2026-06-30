@@ -56,6 +56,47 @@ class JournalEntry extends Model
                     (static::whereYear('created_at', date('Y'))->count() + 1), 5, '0', STR_PAD_LEFT
                 );
             }
+
+            // Enforce fiscal year period lock
+            static::enforceOpenPeriod($entry);
         });
+    }
+
+    /**
+     * Block journal entry creation if the entry_date falls within a closed fiscal year.
+     * Reversals are allowed if they match an existing entry's date in the same period
+     * (they net to zero and don't change the closed period's balances).
+     *
+     * @throws \App\Exceptions\ClosedPeriodException
+     */
+    protected static function enforceOpenPeriod(self $entry): void
+    {
+        $entryDate = $entry->entry_date instanceof \Carbon\Carbon
+            ? $entry->entry_date->format('Y-m-d')
+            : (string) $entry->entry_date;
+
+        $closedPeriod = \App\Models\FiscalYear::where('is_closed', true)
+            ->where('start_date', '<=', $entryDate)
+            ->where('end_date', '>=', $entryDate)
+            ->first();
+
+        if (!$closedPeriod) {
+            return; // Date is not in any closed period
+        }
+
+        // Allow system-generated reversals that mirror an existing entry in the same period
+        if ($entry->entry_type === 'reversal' && (bool) $entry->is_auto) {
+            $hasMatchingOriginal = static::where('reference_type', $entry->reference_type)
+                ->where('reference_id', $entry->reference_id)
+                ->whereDate('entry_date', $entryDate)
+                ->where('entry_type', '!=', 'reversal')
+                ->exists();
+
+            if ($hasMatchingOriginal) {
+                return; // Reversal mirrors an existing entry in the same closed period — allowed
+            }
+        }
+
+        throw new \App\Exceptions\ClosedPeriodException($closedPeriod, $entryDate);
     }
 }

@@ -350,6 +350,9 @@ Route::middleware('auth')->group(function () {
         Route::get('vendor-ledger', [AccountingController::class, 'vendorLedger'])->name('vendor-ledger');
         Route::get('profit-loss', [AccountingController::class, 'profitAndLoss'])->name('profit-loss');
         Route::get('balance-sheet', [AccountingController::class, 'balanceSheet'])->name('balance-sheet');
+        Route::get('fiscal-years', [AccountingController::class, 'fiscalYears'])->name('fiscal-years');
+        Route::get('fiscal-years/{fiscalYear}/pre-close', [AccountingController::class, 'preCloseSummary'])->name('fiscal-years.pre-close');
+        Route::post('fiscal-years/{fiscalYear}/close', [AccountingController::class, 'closeFiscalYear'])->name('fiscal-years.close');
     });
 
     // HR Module

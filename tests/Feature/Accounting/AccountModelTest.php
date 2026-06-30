@@ -115,6 +115,9 @@ it('filters accounts by type scope', function () {
 });
 
 it('filters active accounts', function () {
+    // Clear any existing accounts to isolate the test
+    Account::query()->delete();
+
     Account::create(['code' => '1100', 'name' => 'Active', 'type' => 'asset', 'is_active' => true]);
     Account::create(['code' => '1200', 'name' => 'Inactive', 'type' => 'asset', 'is_active' => false]);
 

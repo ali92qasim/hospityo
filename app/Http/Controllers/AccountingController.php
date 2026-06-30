@@ -516,4 +516,85 @@ class AccountingController extends Controller
             $entry->lines()->create(['account_id' => $account->id, 'debit' => 0, 'credit' => $amount, 'narration' => 'Opening balance']);
         }
     }
+
+    // ── Fiscal Year Close ──────────────────────────
+
+    public function fiscalYears()
+    {
+        $fiscalYears = FiscalYear::orderBy('start_date', 'desc')->get();
+        return view('admin.accounting.fiscal-years', compact('fiscalYears'));
+    }
+
+    public function preCloseSummary(FiscalYear $fiscalYear)
+    {
+        if ($fiscalYear->is_closed) {
+            return back()->with('error', "Fiscal year \"{$fiscalYear->name}\" is already closed.");
+        }
+
+        $from = $fiscalYear->start_date->format('Y-m-d');
+        $to = $fiscalYear->end_date->format('Y-m-d');
+
+        // Entry count
+        $entryCount = JournalEntry::whereBetween('entry_date', [$from, $to])->count();
+
+        // Total debits/credits
+        $totals = \App\Models\JournalEntryLine::whereHas('journalEntry', fn($q) => $q->whereBetween('entry_date', [$from, $to]))
+            ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
+            ->first();
+
+        // Net P&L for the period
+        $revenue = Account::ofType('revenue')->active()->get()->sum(fn($a) => $a->getBalance($from, $to));
+        $expenses = Account::ofType('expense')->active()->get()->sum(fn($a) => $a->getBalance($from, $to));
+        $netIncome = $revenue - $expenses;
+
+        // Unbalanced entries (anomalies)
+        $allEntries = JournalEntry::whereBetween('entry_date', [$from, $to])
+            ->with('lines')
+            ->get();
+
+        $unbalancedEntries = $allEntries->filter(function ($entry) {
+            $debit = round($entry->lines->sum('debit'), 2);
+            $credit = round($entry->lines->sum('credit'), 2);
+            return $debit !== $credit;
+        });
+
+        // Entries with zero lines (empty/broken entries)
+        $emptyEntries = $allEntries->filter(fn($e) => $e->lines->isEmpty());
+
+        return view('admin.accounting.pre-close-summary', compact(
+            'fiscalYear', 'entryCount', 'totals', 'revenue', 'expenses', 'netIncome',
+            'unbalancedEntries', 'emptyEntries'
+        ));
+    }
+
+    public function closeFiscalYear(Request $request, FiscalYear $fiscalYear)
+    {
+        if ($fiscalYear->is_closed) {
+            return back()->with('error', "Fiscal year \"{$fiscalYear->name}\" is already closed.");
+        }
+
+        // Require explicit confirmation token to prevent accidental close
+        $request->validate([
+            'confirmation' => ['required', 'string', function ($attribute, $value, $fail) use ($fiscalYear) {
+                if ($value !== 'CLOSE ' . $fiscalYear->name) {
+                    $fail("Please type exactly: CLOSE {$fiscalYear->name}");
+                }
+            }],
+        ]);
+
+        $fiscalYear->update([
+            'is_closed' => true,
+            'closed_at' => now(),
+            'closed_by' => auth()->id(),
+        ]);
+
+        \Illuminate\Support\Facades\Log::info('[Accounting] Fiscal year closed', [
+            'fiscal_year_id' => $fiscalYear->id,
+            'name' => $fiscalYear->name,
+            'closed_by' => auth()->id(),
+        ]);
+
+        return redirect()->route('accounting.fiscal-years')
+            ->with('success', "Fiscal year \"{$fiscalYear->name}\" has been closed. No further entries can be posted to this period.");
+    }
 }
