@@ -293,6 +293,114 @@ class BillController extends Controller
         return redirect()->route('bills.show', $bill)->with('success', 'Payment added successfully');
     }
 
+    public function removePayment(Bill $bill, \App\Models\Payment $payment)
+    {
+        // Ensure the payment belongs to this bill
+        if ($payment->bill_id !== $bill->id) {
+            return redirect()->back()->withErrors(['error' => 'Payment does not belong to this bill.']);
+        }
+
+        // Reverse the payment's journal entry
+        $paymentEntries = \App\Models\JournalEntry::where('reference_type', 'Payment')
+            ->where('reference_id', $payment->id)
+            ->where('entry_type', 'original')
+            ->with(['lines', 'subLedgerEntries'])
+            ->get();
+
+        foreach ($paymentEntries as $entry) {
+            $reversal = \App\Services\AccountingService::reverseEntry($entry, 'payment_deleted');
+            if (!$reversal) {
+                return redirect()->back()->withErrors([
+                    'error' => 'Failed to reverse payment journal entry. Payment was not deleted.',
+                ]);
+            }
+        }
+
+        // Update bill amounts
+        $bill->paid_amount -= $payment->amount;
+        $bill->due_amount = max(0, $bill->total_amount - $bill->paid_amount);
+        $bill->status = $this->evaluateBillStatus($bill);
+        $bill->save();
+
+        // Delete the payment record
+        $payment->delete();
+
+        return redirect()->route('bills.show', $bill)->with('success', 'Payment removed and journal entry reversed.');
+    }
+
+    public function updatePayment(\Illuminate\Http\Request $request, Bill $bill, \App\Models\Payment $payment)
+    {
+        // Ensure the payment belongs to this bill
+        if ($payment->bill_id !== $bill->id) {
+            return redirect()->back()->withErrors(['error' => 'Payment does not belong to this bill.']);
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|in:cash,card,upi,bank_transfer,cheque,insurance',
+            'payment_date' => 'required|date',
+            'reference_number' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $oldAmount = (float) $payment->amount;
+        $newAmount = (float) $request->amount;
+
+        DB::connection('tenant')->transaction(function () use ($request, $bill, $payment, $oldAmount, $newAmount) {
+            // 1. Reverse the old payment journal entry
+            $paymentEntries = \App\Models\JournalEntry::where('reference_type', 'Payment')
+                ->where('reference_id', $payment->id)
+                ->where('entry_type', 'original')
+                ->with(['lines', 'subLedgerEntries'])
+                ->get();
+
+            foreach ($paymentEntries as $entry) {
+                $reversal = \App\Services\AccountingService::reverseEntry($entry, 'payment_edited');
+                if (!$reversal) {
+                    throw new \RuntimeException('Failed to reverse payment journal entry.');
+                }
+            }
+
+            // 2. Reverse ALL existing overpayment adjustments for this bill
+            $overpaymentEntries = \App\Models\JournalEntry::where('reference_type', 'Bill')
+                ->where('reference_id', $bill->id)
+                ->where('entry_type', 'adjustment')
+                ->where('description', 'like', 'Overpayment%')
+                ->with(['lines', 'subLedgerEntries'])
+                ->get();
+
+            foreach ($overpaymentEntries as $entry) {
+                \App\Services\AccountingService::reverseEntry($entry, 'payment_edited_recalc');
+            }
+
+            // 3. Update the payment record
+            $payment->update([
+                'amount' => $newAmount,
+                'payment_method' => $request->payment_method,
+                'payment_date' => $request->payment_date,
+                'reference_number' => $request->reference_number,
+                'notes' => $request->notes,
+            ]);
+
+            // 4. Recalculate bill amounts
+            $bill->paid_amount = $bill->paid_amount - $oldAmount + $newAmount;
+            $bill->due_amount = max(0, $bill->total_amount - $bill->paid_amount);
+            $bill->status = $this->evaluateBillStatus($bill);
+            $bill->save();
+
+            // 5. Post new payment journal entry
+            \App\Services\AccountingService::postPaymentEntry($payment);
+
+            // 6. Recompute overpayment — if paid still exceeds total, post fresh adjustment
+            $overpayment = round((float) $bill->paid_amount - (float) $bill->total_amount, 2);
+            if ($overpayment > 0) {
+                \App\Services\AccountingService::postOverpaymentAdjustment($bill, $overpayment);
+            }
+        });
+
+        return redirect()->route('bills.show', $bill)->with('success', 'Payment updated successfully.');
+    }
+
     public function print(Bill $bill)
     {
         $bill->load(['patient', 'visit', 'billItems.service', 'payments.receivedBy', 'createdBy']);

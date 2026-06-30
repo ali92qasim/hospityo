@@ -177,7 +177,27 @@
                             - {{ $payment->reference_number }}
                         @endif
                     </div>
-                    <div class="text-xs text-gray-500">By: {{ $payment->receivedBy->name }}</div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-xs text-gray-500">By: {{ $payment->receivedBy->name }}</span>
+                        <div class="flex gap-2">
+                            @can('edit payments')
+                            <button type="button" class="text-xs text-medical-blue hover:text-blue-700"
+                                    onclick="editPayment({{ $payment->id }}, {{ $payment->amount }}, '{{ $payment->payment_method }}', '{{ $payment->payment_date->format('Y-m-d') }}', '{{ $payment->reference_number }}', '{{ addslashes($payment->notes) }}')"
+                                    title="Edit payment">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            @endcan
+                            @can('delete payments')
+                            <form method="POST" action="{{ route('bills.remove-payment', [$bill, $payment]) }}" class="inline"
+                                  onsubmit="return confirm('Are you sure you want to remove this payment? This will reverse the accounting entry.')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="text-xs text-red-500 hover:text-red-700" title="Remove payment">
+                                    <i class="fas fa-times"></i> Remove
+                                </button>
+                            </form>
+                            @endcan
+                        </div>
+                    </div>
                 </div>
                 @endforeach
             </div>
@@ -193,4 +213,77 @@
     </a>
     <a href="{{ route('bills.edit', $bill) }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">Edit Bill</a>
 </div>
+
+{{-- Edit Payment Modal --}}
+@can('edit payments')
+<div id="editPaymentModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50" onclick="closeEditPaymentModal()"></div>
+        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Edit Payment</h3>
+                <button onclick="closeEditPaymentModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <form id="editPaymentForm" method="POST">
+                @csrf @method('PUT')
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                        <input type="number" name="amount" id="editPaymentAmount" step="0.01" min="0.01"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                        <select name="payment_method" id="editPaymentMethod"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="upi">UPI</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="insurance">Insurance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Date</label>
+                        <input type="date" name="payment_date" id="editPaymentDate"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
+                        <input type="text" name="reference_number" id="editPaymentRef"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" id="editPaymentNotes" rows="2"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeEditPaymentModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700">Update Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
+
+<script>
+function editPayment(paymentId, amount, method, date, ref, notes) {
+    var form = document.getElementById('editPaymentForm');
+    form.action = '{{ url("bills/{$bill->id}/payment") }}/' + paymentId;
+    document.getElementById('editPaymentAmount').value = amount;
+    document.getElementById('editPaymentMethod').value = method;
+    document.getElementById('editPaymentDate').value = date;
+    document.getElementById('editPaymentRef').value = ref || '';
+    document.getElementById('editPaymentNotes').value = notes || '';
+    document.getElementById('editPaymentModal').classList.remove('hidden');
+}
+
+function closeEditPaymentModal() {
+    document.getElementById('editPaymentModal').classList.add('hidden');
+}
+</script>
 @endsection

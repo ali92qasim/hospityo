@@ -376,6 +376,20 @@ class AccountingService
             $bill = $payment->bill;
             if (!$bill) return null;
 
+            // Prevent duplicate journal entries for the same payment
+            $existing = JournalEntry::where('reference_type', 'Payment')
+                ->where('reference_id', $payment->id)
+                ->where('entry_type', 'original')
+                ->first();
+
+            if ($existing) {
+                Log::info('[Accounting] Payment journal entry already exists — skipping', [
+                    'payment_id' => $payment->id,
+                    'entry_id'   => $existing->id,
+                ]);
+                return $existing;
+            }
+
             $cashAccount = self::getPaymentAccount($payment->payment_method);
             $receivable = Account::where('code', '1200')->first();
 

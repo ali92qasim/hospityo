@@ -321,6 +321,8 @@ Route::middleware('auth')->group(function () {
     // Billing Routes
     Route::resource('bills', BillController::class)->middleware('permission:view bills|create bills|edit bills|delete bills');
     Route::post('bills/{bill}/payment', [BillController::class, 'addPayment'])->name('bills.add-payment')->middleware('permission:create payments');
+    Route::put('bills/{bill}/payment/{payment}', [BillController::class, 'updatePayment'])->name('bills.update-payment')->middleware('permission:edit payments');
+    Route::delete('bills/{bill}/payment/{payment}', [BillController::class, 'removePayment'])->name('bills.remove-payment')->middleware('permission:delete payments');
     Route::get('bills/{bill}/print', [BillController::class, 'print'])->name('bills.print')->middleware('permission:view bills');
 
     // Tax Configuration
