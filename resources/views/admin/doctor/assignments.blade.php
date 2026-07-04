@@ -1,6 +1,6 @@
 @extends('admin.layout')
 
-@section('title', 'My Assignments - Hospityo')
+@section('title', 'My Assignments - UseClinicSync')
 @section('page-title', 'My Assignments')
 @section('page-description', 'All assigned patients')
 

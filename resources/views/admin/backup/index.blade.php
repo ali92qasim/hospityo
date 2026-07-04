@@ -1,6 +1,6 @@
 @extends('admin.layout')
 
-@section('title', 'Backup & Restore - Hospityo')
+@section('title', 'Backup & Restore - UseClinicSync')
 @section('page-title', __('messages.backup_restore'))
 @section('page-description', __('messages.backup_restore_description'))
 

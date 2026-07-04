@@ -3,21 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setting Up Your Hospital — Hospityo</title>
+    <title>Setting Up Your Hospital — UseClinicSync</title>
     @vite(['resources/css/app.css'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen flex items-center justify-center">
 
 <div class="max-w-md w-full mx-4">
-    <div class="text-center mb-6">
-        <a href="{{ url('/') }}" class="inline-flex items-center space-x-2">
-            <div class="h-9 w-9 bg-medical-blue rounded-lg flex items-center justify-center">
-                <i class="fas fa-hospital text-white text-sm"></i>
-            </div>
-            <span class="text-xl font-bold text-gray-900">Hospityo</span>
+        <a href="{{ url('/') }}" class="inline-flex items-center mb-6">
+            @include('partials.logo')
         </a>
-    </div>
 
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
         {{-- Spinner State --}}

@@ -50,7 +50,7 @@ class BillingService
 
             // Build PayFast hosted checkout payload
             $merchantId   = config('payfast.merchant_id');
-            $merchantName = config('app.name', 'Hospityo');
+            $merchantName = config('app.name', 'UseClinicSync');
             $orderId      = 'SUB-' . $subscription->id . '-' . time();
             $amount       = (int) ($plan->price * 100); // PayFast expects paisa
             $signature    = md5($merchantId . ':' . $merchantName . ':' . $amount . ':' . $orderId);
@@ -68,7 +68,7 @@ class BillingService
                 'CUSTOMER_MOBILE_NO'     => $tenant->phone ?? '',
                 'CUSTOMER_EMAIL_ADDRESS' => $tenant->email ?? '',
                 'SIGNATURE'              => $signature,
-                'VERSION'                => 'HOSPITYO-SAAS-1.0',
+                'VERSION'                => 'USECLINICSYNC-SAAS-1.0',
                 'TXNDESC'                => "Subscription: {$plan->name} plan for {$tenant->name}",
                 'SUCCESS_URL'            => urlencode($successUrl),
                 'FAILURE_URL'            => urlencode($failUrl),

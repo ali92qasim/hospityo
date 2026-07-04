@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Install Hospityo</title>
+    <title>Install UseClinicSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -12,7 +12,7 @@
         <div class="max-w-2xl w-full bg-white rounded-lg shadow-lg p-8">
             <div class="text-center mb-8">
                 <i class="fas fa-hospital text-6xl text-blue-600 mb-4"></i>
-                <h1 class="text-3xl font-bold text-gray-900">Welcome to Hospityo</h1>
+                <h1 class="text-3xl font-bold text-gray-900">Welcome to UseClinicSync</h1>
                 <p class="text-gray-600 mt-2">Hospital Management System Installation Wizard</p>
             </div>
             

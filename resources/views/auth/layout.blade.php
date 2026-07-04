@@ -15,10 +15,9 @@
     <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8">
             <div class="text-center">
-                <div class="mx-auto h-16 w-16 bg-medical-blue rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-hospital text-white text-2xl"></i>
+                <div class="flex justify-center mb-3">
+                    @include('partials.logo', ['size' => 'lg'])
                 </div>
-                <h1 class="text-3xl font-bold text-gray-900">Hospityo</h1>
                 <p class="mt-2 text-sm text-gray-600">@yield('subtitle')</p>
             </div>
             

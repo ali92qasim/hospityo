@@ -1,14 +1,7 @@
 <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-gray-900 shadow-lg overflow-y-auto z-40 -translate-x-full lg:translate-x-0 transition-transform duration-300">
-    <div class="p-4 border-b border-gray-800">
-        <div class="flex items-center px-4 py-3">
-            <div class="bg-medical-blue rounded-lg p-2 flex items-center justify-center mr-3">
-                <i class="fas fa-shield-alt text-white text-lg"></i>
-            </div>
-            <div>
-                <h1 class="text-lg font-bold text-white">Hospityo</h1>
-                <p class="text-xs text-gray-400">Super Admin</p>
-            </div>
-        </div>
+    <div class="px-6 py-4 border-b border-gray-800">
+        @include('partials.logo', ['dark' => true])
+        <p class="text-xs text-gray-500 mt-1">Super Admin</p>
     </div>
 
     <nav class="mt-6 pb-6">

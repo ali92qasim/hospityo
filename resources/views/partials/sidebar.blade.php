@@ -4,13 +4,8 @@
 @endphp
 
 <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-white shadow-lg border-r border-gray-200 overflow-y-auto z-40 -translate-x-full lg:translate-x-0 transition-transform duration-300">
-    <div class="p-4 border-b border-gray-200">
-        <div class="flex items-center px-4 py-3">
-            <div class="bg-medical-blue rounded-lg p-2 flex items-center justify-center mr-3">
-                <i class="fas fa-hospital text-white text-lg"></i>
-            </div>
-            <h1 class="text-xl font-bold text-medical-blue">Hospityo</h1>
-        </div>
+    <div class="px-6 py-4 border-b border-gray-200">
+        @include('partials.logo')
     </div>
 
     <nav class="mt-6 pb-6">

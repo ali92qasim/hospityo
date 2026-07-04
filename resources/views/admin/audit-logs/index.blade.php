@@ -1,6 +1,6 @@
 @extends('admin.layout')
 
-@section('title', 'Audit Logs - Hospityo')
+@section('title', 'Audit Logs - UseClinicSync')
 @section('page-title', 'Audit Logs')
 @section('page-description', 'System activity and change tracking')
 

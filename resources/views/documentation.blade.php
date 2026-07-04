@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentation — Hospityo</title>
+    <title>Documentation — UseClinicSync</title>
     @vite(['resources/css/app.css'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -13,10 +13,7 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
             <a href="{{ url('/') }}" class="flex items-center space-x-2">
-                <div class="h-9 w-9 bg-medical-blue rounded-lg flex items-center justify-center">
-                    <i class="fas fa-hospital text-white text-sm"></i>
-                </div>
-                <span class="text-xl font-bold text-gray-900">Hospityo</span>
+                @include('partials.logo', ['size' => 'sm'])
                 <span class="text-xs bg-blue-100 text-medical-blue px-2 py-0.5 rounded-full font-medium">Docs</span>
             </a>
             <a href="{{ url('/') }}" class="text-sm text-gray-600 hover:text-medical-blue"><i class="fas fa-arrow-left mr-1"></i>Back to Home</a>
@@ -27,7 +24,7 @@
 <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="text-center mb-12">
         <h1 class="text-3xl font-bold text-gray-900">Documentation</h1>
-        <p class="mt-2 text-gray-600 max-w-xl mx-auto">Everything you need to get started and make the most of Hospityo.</p>
+        <p class="mt-2 text-gray-600 max-w-xl mx-auto">Everything you need to get started and make the most of UseClinicSync.</p>
     </div>
 
     {{-- Quick Start --}}
@@ -143,7 +140,7 @@
         @php
             $faqs = [
                 ['q' => 'How do I add a new doctor?', 'a' => 'Go to Doctors → Add Doctor. Fill in the name, specialization, qualification, and contact details. A user account is automatically created for the doctor with the "Doctor" role.'],
-                ['q' => 'Can multiple users work at the same time?', 'a' => 'Yes. Hospityo is a multi-user system. Receptionists, doctors, lab technicians, and pharmacists can all work simultaneously on different modules.'],
+                ['q' => 'Can multiple users work at the same time?', 'a' => 'Yes. UseClinicSync is a multi-user system. Receptionists, doctors, lab technicians, and pharmacists can all work simultaneously on different modules.'],
                 ['q' => 'How do I print a prescription?', 'a' => 'Open the visit workflow, go to the Prescription tab, and click "Print Report" in the top right. The prescription opens in a print-optimized A4 layout.'],
                 ['q' => 'Is my data safe?', 'a' => 'Each hospital gets a completely isolated database. Data is encrypted in transit with 256-bit SSL. Passwords are hashed and never stored in plain text. Daily automated backups are performed.'],
                 ['q' => 'Can I use this on my phone?', 'a' => 'Yes. The interface is fully responsive and works on tablets and smartphones. All features are accessible from any modern browser.'],
@@ -178,7 +175,7 @@
 </main>
 
 <footer class="py-8 text-center text-sm text-gray-500">
-    &copy; {{ date('Y') }} Hospityo. All rights reserved.
+    &copy; {{ date('Y') }} UseClinicSync. All rights reserved.
 </footer>
 
 </body>

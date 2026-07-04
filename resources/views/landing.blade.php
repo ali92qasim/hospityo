@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Hospityo — Cloud-based hospital management system. Manage patients, billing, pharmacy, labs, and more from any device.">
-    <title>Hospityo — Hospital Management Made Simple</title>
+    <meta name="description" content="UseClinicSync — Cloud-based hospital management system. Manage patients, billing, pharmacy, labs, and more from any device.">
+    <title>UseClinicSync — Hospital Management Made Simple</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -14,11 +14,8 @@
 <nav class="fixed top-0 w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-            <div class="flex items-center space-x-2">
-                <div class="h-9 w-9 bg-medical-blue rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-hospital text-white text-sm"></i>
-                </div>
-                <span class="text-xl font-bold text-gray-900">Hospityo</span>
+            <div class="flex items-center">
+                @include('partials.logo', ['size' => 'sm'])
             </div>
             <div class="hidden md:flex items-center space-x-8">
                 <a href="#features" class="text-sm text-gray-600 hover:text-medical-blue transition-colors">Features</a>
@@ -309,7 +306,7 @@
 <section class="py-20 bg-gradient-to-r from-medical-blue to-indigo-600">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl sm:text-4xl font-bold text-white">Ready to modernize your hospital?</h2>
-        <p class="mt-4 text-lg text-blue-100 max-w-2xl mx-auto">Join healthcare providers who trust Hospityo to manage their daily operations. Set up takes less than a minute.</p>
+        <p class="mt-4 text-lg text-blue-100 max-w-2xl mx-auto">Join healthcare providers who trust UseClinicSync to manage their daily operations. Set up takes less than a minute.</p>
         <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href="{{ route('tenant.register') }}"
                class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 text-base font-medium text-medical-blue bg-white rounded-xl hover:bg-gray-50 transition-colors">
@@ -328,11 +325,8 @@
         @endphp
         <div class="grid grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8">
             <div class="col-span-2 md:col-span-1">
-                <div class="flex items-center space-x-2 mb-4">
-                    <div class="h-8 w-8 bg-medical-blue rounded-lg flex items-center justify-center">
-                        <i class="fas fa-hospital text-white text-xs"></i>
-                    </div>
-                    <span class="text-lg font-bold text-white">Hospityo</span>
+                <div class="mb-4">
+                    @include('partials.logo', ['size' => 'sm', 'dark' => true])
                 </div>
                 <p class="text-sm text-gray-400 leading-relaxed">Cloud-based hospital management for modern healthcare providers.</p>
                 @if(!empty($site['facebook_url']) || !empty($site['twitter_url']) || !empty($site['linkedin_url']) || !empty($site['whatsapp_number']))
@@ -399,7 +393,7 @@
             </div>
         </div>
         <div class="mt-10 pt-8 border-t border-gray-800 text-center">
-            <p class="text-sm text-gray-500">&copy; {{ date('Y') }} Hospityo. All rights reserved.</p>
+            <p class="text-sm text-gray-500">&copy; {{ date('Y') }} UseClinicSync. All rights reserved.</p>
         </div>
     </div>
 </footer>

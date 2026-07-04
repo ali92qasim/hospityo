@@ -1,6 +1,6 @@
 @extends('auth.layout')
 
-@section('title', 'Login - Hospityo')
+@section('title', 'Login - UseClinicSync')
 @section('subtitle', 'Sign in to your account')
 
 @section('content')

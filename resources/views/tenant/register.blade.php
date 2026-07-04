@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Get Started — Hospityo</title>
+    <title>Get Started — UseClinicSync</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -13,11 +13,8 @@
 <nav class="bg-white/80 backdrop-blur-sm border-b border-gray-100">
     <div class="max-w-xl mx-auto px-4 sm:px-6">
         <div class="flex items-center justify-between h-14">
-            <a href="{{ url('/') }}" class="flex items-center space-x-2">
-                <div class="h-8 w-8 bg-medical-blue rounded-lg flex items-center justify-center">
-                    <i class="fas fa-hospital text-white text-xs"></i>
-                </div>
-                <span class="text-lg font-bold text-gray-900">Hospityo</span>
+            <a href="{{ url('/') }}" class="flex items-center">
+                @include('partials.logo', ['size' => 'sm'])
             </a>
             <span class="text-sm text-gray-400">
                 Already have an account?
@@ -251,7 +248,7 @@
 </main>
 
 <footer class="py-6 text-center text-xs text-gray-400">
-    &copy; {{ date('Y') }} Hospityo. All rights reserved.
+    &copy; {{ date('Y') }} UseClinicSync. All rights reserved.
 </footer>
 
 <script>

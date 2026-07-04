@@ -227,7 +227,7 @@
     function cancelSubscription() {
         if (!confirm('Are you sure you want to cancel your subscription? You will retain access until the end of the current billing period.')) return;
         // For now, redirect to contact — full cancellation via API can be added later
-        alert('Please contact support to cancel your subscription. Email: billing@hospityo.com');
+        alert('Please contact support to cancel your subscription. Email: billing@UseClinicSync.com');
     }
 </script>
 @endif

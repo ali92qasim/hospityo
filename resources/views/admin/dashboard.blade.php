@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Dashboard - Hospityo')
+@section('title', 'Dashboard - UseClinicSync')
 @section('page-title', 'Dashboard')
-@section('page-description', 'Hospityo Overview')
+@section('page-description', 'UseClinicSync Overview')
 
 @section('content')
 
@@ -415,9 +415,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 @endif
 
-@section('title', 'Dashboard - Hospityo')
+@section('title', 'Dashboard - UseClinicSync')
 @section('page-title', 'Dashboard')
-@section('page-description', 'Hospityo Overview')
+@section('page-description', 'UseClinicSync Overview')
 
 @section('content')
 @if(auth()->user()->hasRole('Doctor') && isset($assignedPatients))
