@@ -6,7 +6,9 @@ use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
 use App\Traits\HandlesErrors;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -143,5 +145,30 @@ class PatientController extends Controller
             ->first();
         
         return view('admin.patients.history', compact('patient', 'visits', 'prescriptions', 'labOrders', 'admissions', 'latestVisit'));
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $phone = $request->query('phone');
+
+        if (!$phone || strlen($phone) < 3) {
+            return response()->json(['found' => false]);
+        }
+
+        $patient = Patient::where('phone', 'like', "%{$phone}%")->first();
+
+        if ($patient) {
+            return response()->json([
+                'found' => true,
+                'patient' => [
+                    'id' => $patient->id,
+                    'name' => $patient->name,
+                    'patient_no' => $patient->patient_no,
+                    'phone' => $patient->phone,
+                ],
+            ]);
+        }
+
+        return response()->json(['found' => false]);
     }
 }

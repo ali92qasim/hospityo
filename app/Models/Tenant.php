@@ -4,10 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Multitenancy\Models\Tenant as BaseTenant;
 
 class Tenant extends BaseTenant
 {
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        $flush = fn (self $tenant) => Cache::forget('tenant_domain:' . $tenant->domain);
+
+        static::saved($flush);
+        static::deleted($flush);
+    }
+
     protected $fillable = [
         'name',
         'slug',

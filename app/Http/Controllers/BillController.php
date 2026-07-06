@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateBillRequest;
 use App\Http\Requests\AddBillPaymentRequest;
 use App\Models\Bill;
 use App\Models\Patient;
+use App\Models\Payment;
 use App\Models\Service;
 use App\Models\Visit;
 use Illuminate\Support\Facades\DB;
@@ -293,11 +294,10 @@ class BillController extends Controller
         return redirect()->route('bills.show', $bill)->with('success', 'Payment added successfully');
     }
 
-    public function removePayment(Bill $bill, \App\Models\Payment $payment)
+    public function removePayment(Bill $bill, Payment $payment)
     {
-        // Ensure the payment belongs to this bill
-        if ($payment->bill_id !== $bill->id) {
-            return redirect()->back()->withErrors(['error' => 'Payment does not belong to this bill.']);
+        if ($response = $this->ensurePaymentBelongsToBill($bill, $payment)) {
+            return $response;
         }
 
         // Reverse the payment's journal entry
@@ -328,11 +328,10 @@ class BillController extends Controller
         return redirect()->route('bills.show', $bill)->with('success', 'Payment removed and journal entry reversed.');
     }
 
-    public function updatePayment(\Illuminate\Http\Request $request, Bill $bill, \App\Models\Payment $payment)
+    public function updatePayment(\Illuminate\Http\Request $request, Bill $bill, Payment $payment)
     {
-        // Ensure the payment belongs to this bill
-        if ($payment->bill_id !== $bill->id) {
-            return redirect()->back()->withErrors(['error' => 'Payment does not belong to this bill.']);
+        if ($response = $this->ensurePaymentBelongsToBill($bill, $payment)) {
+            return $response;
         }
 
         $request->validate([
@@ -412,6 +411,19 @@ class BillController extends Controller
             'hospital_logo'    => setting('hospital_logo', ''),
         ];
         return view('admin.bills.print', compact('bill', 'settings'));
+    }
+
+    /**
+     * Verify the payment is linked to the bill via the relationship query so
+     * MySQL string/int ID mismatches from strict comparison cannot false-fail.
+     */
+    private function ensurePaymentBelongsToBill(Bill $bill, Payment $payment): ?\Illuminate\Http\RedirectResponse
+    {
+        if (!$bill->payments()->whereKey($payment->getKey())->exists()) {
+            return redirect()->back()->withErrors(['error' => 'Payment does not belong to this bill.']);
+        }
+
+        return null;
     }
 
     /**

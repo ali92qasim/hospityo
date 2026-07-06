@@ -26,22 +26,25 @@ return [
         */
         'landlord' => match ($landlordDriver) {
             'mysql', 'mariadb' => [
-                'driver'    => $landlordDriver,
-                'host'      => env('DB_HOST', '127.0.0.1'),
-                'port'      => env('DB_PORT', '3306'),
-                'database'  => env('DB_DATABASE', 'landlord'),
-                'username'  => env('DB_USERNAME', 'root'),
-                'password'  => env('DB_PASSWORD', ''),
+                'driver'      => $landlordDriver,
+                'host'        => env('DB_HOST', '127.0.0.1'),
+                'port'        => env('DB_PORT', '3306'),
+                'database'    => env('DB_DATABASE', 'landlord'),
+                'username'    => env('DB_USERNAME', 'root'),
+                'password'    => env('DB_PASSWORD', ''),
                 'unix_socket' => env('DB_SOCKET', ''),
-                'charset'   => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'prefix'    => '',
+                'charset'     => 'utf8mb4',
+                'collation'   => 'utf8mb4_unicode_ci',
+                'prefix'      => '',
                 'prefix_indexes' => true,
-                'strict'    => true,
-                'engine'    => null,
-                'options'   => extension_loaded('pdo_mysql') ? array_filter([
-                    (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
-                ]) : [],
+                'strict'      => true,
+                'engine'      => null,
+                'options'     => extension_loaded('pdo_mysql') ? array_filter([
+                    PDO::ATTR_PERSISTENT                                                              => env('DB_PERSISTENT', true),
+                    (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA)   => env('MYSQL_ATTR_SSL_CA'),
+                ]) : [
+                    PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
+                ],
             ],
             'pgsql' => [
                 'driver'   => 'pgsql',
@@ -81,22 +84,25 @@ return [
         */
         'tenant' => match ($tenantDriver) {
             'mysql', 'mariadb' => [
-                'driver'    => $tenantDriver,
-                'host'      => env('DB_HOST', '127.0.0.1'),
-                'port'      => env('DB_PORT', '3306'),
-                'database'  => null, // Spatie sets this per-tenant
-                'username'  => env('DB_USERNAME', 'root'),
-                'password'  => env('DB_PASSWORD', ''),
+                'driver'      => $tenantDriver,
+                'host'        => env('DB_HOST', '127.0.0.1'),
+                'port'        => env('DB_PORT', '3306'),
+                'database'    => null,
+                'username'    => env('DB_USERNAME', 'root'),
+                'password'    => env('DB_PASSWORD', ''),
                 'unix_socket' => env('DB_SOCKET', ''),
-                'charset'   => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'prefix'    => '',
+                'charset'     => 'utf8mb4',
+                'collation'   => 'utf8mb4_unicode_ci',
+                'prefix'      => '',
                 'prefix_indexes' => true,
-                'strict'    => true,
-                'engine'    => null,
-                'options'   => extension_loaded('pdo_mysql') ? array_filter([
-                    (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
-                ]) : [],
+                'strict'      => true,
+                'engine'      => null,
+                'options'     => extension_loaded('pdo_mysql') ? array_filter([
+                    PDO::ATTR_PERSISTENT                                                              => env('DB_PERSISTENT', true),
+                    (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA)   => env('MYSQL_ATTR_SSL_CA'),
+                ]) : [
+                    PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
+                ],
             ],
             'pgsql' => [
                 'driver'   => 'pgsql',

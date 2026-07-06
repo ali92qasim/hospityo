@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +23,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Disconnect DB connections after each queue job so persistent
+        // connections are released back to the pool and don't accumulate.
+        Queue::after(function (JobProcessed $event) {
+            DB::disconnect('landlord');
+            DB::disconnect('tenant');
+        });
+
+        Queue::failing(function (JobFailed $event) {
+            DB::disconnect('landlord');
+            DB::disconnect('tenant');
+        });
+
         // Route model binding for backward compatibility
         \Route::bind('labOrder', function ($value) {
             return \App\Models\LabOrder::findOrFail($value);

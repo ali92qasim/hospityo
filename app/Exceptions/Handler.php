@@ -9,6 +9,7 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Database\QueryException;
+use PDOException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -72,6 +73,17 @@ class Handler extends ExceptionHandler
             return $this->handleQueryException($request, $e);
         }
 
+        // PDOException wrapping "Too many connections" before QueryException is thrown
+        if ($e instanceof PDOException && $e->getCode() == 1040) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error'   => 'Service Temporarily Unavailable',
+                    'message' => 'The server is busy. Please retry in a moment.',
+                ], 503)->header('Retry-After', '5');
+            }
+            return response()->view('errors.503', [], 503)->header('Retry-After', '5');
+        }
+
         // Handle HTTP Exceptions (403, 500, etc.)
         if ($e instanceof HttpException) {
             return $this->handleHttpException($request, $e);
@@ -123,18 +135,29 @@ class Handler extends ExceptionHandler
      */
     protected function handleQueryException($request, QueryException $e)
     {
-        // Log the full error for debugging
         \Log::error('Database Query Exception', [
-            'message' => $e->getMessage(),
-            'sql' => $e->getSql() ?? 'N/A',
+            'message'  => $e->getMessage(),
+            'sql'      => $e->getSql() ?? 'N/A',
             'bindings' => $e->getBindings() ?? [],
         ]);
 
+        // Too many connections — tell the client to retry
+        if ($e->getCode() == 1040 || str_contains($e->getMessage(), 'Too many connections')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error'   => 'Service Temporarily Unavailable',
+                    'message' => 'The server is busy. Please retry in a moment.',
+                ], 503)->header('Retry-After', '5');
+            }
+
+            return response()->view('errors.503', [
+                'message' => 'The server is temporarily busy. Please wait a moment and refresh the page.',
+            ], 503)->header('Retry-After', '5');
+        }
+
         $message = 'A database error occurred. Please try again.';
 
-        // Check for specific database errors
         if ($e->getCode() == 23000) {
-            // Integrity constraint violation
             if (str_contains($e->getMessage(), 'Duplicate entry')) {
                 $message = 'This record already exists in the system.';
             } elseif (str_contains($e->getMessage(), 'foreign key constraint')) {
@@ -144,14 +167,12 @@ class Handler extends ExceptionHandler
 
         if ($request->expectsJson()) {
             return response()->json([
-                'error' => 'Database Error',
-                'message' => $message
+                'error'   => 'Database Error',
+                'message' => $message,
             ], 500);
         }
 
-        return redirect()->back()
-            ->with('error', $message)
-            ->withInput();
+        return redirect()->back()->with('error', $message)->withInput();
     }
 
     /**

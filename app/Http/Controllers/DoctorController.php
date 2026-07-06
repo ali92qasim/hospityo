@@ -103,4 +103,22 @@ class DoctorController extends Controller
         return redirect()->route('doctors.index')
             ->with('success', 'Doctor deleted successfully.');
     }
+
+    public function assignments(): View
+    {
+        $user = auth()->user();
+
+        if (!$user->hasRole('Doctor')) {
+            abort(403);
+        }
+
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) {
+            abort(404);
+        }
+
+        $assignedPatients = $doctor->assignedPatients()->paginate(8);
+
+        return view('admin.doctor.assignments', compact('assignedPatients'));
+    }
 }

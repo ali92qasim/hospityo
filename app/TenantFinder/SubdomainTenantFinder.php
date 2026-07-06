@@ -3,6 +3,7 @@
 namespace App\TenantFinder;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Multitenancy\Contracts\IsTenant;
 use Spatie\Multitenancy\TenantFinder\TenantFinder;
 
@@ -29,7 +30,11 @@ class SubdomainTenantFinder extends TenantFinder
             return null;
         }
 
-        return app(IsTenant::class)::whereDomain($host)->first();
+        return Cache::remember(
+            'tenant_domain:' . $host,
+            now()->addHour(),
+            fn () => app(IsTenant::class)::whereDomain($host)->first()
+        );
     }
 
     protected function getBaseDomain(): string

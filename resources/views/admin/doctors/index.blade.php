@@ -23,58 +23,58 @@
         <table class="w-full">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor Info</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor Info</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($doctors as $doctor)
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4">
+                    <td class="px-4 py-4">
                         <div class="flex items-center">
-                            <div class="w-10 h-10 bg-medical-green rounded-full flex items-center justify-center mr-3">
-                                <i class="fas fa-user-md text-white"></i>
+                            <div class="w-9 h-9 bg-medical-green rounded-full flex items-center justify-center mr-3 shrink-0">
+                                <i class="fas fa-user-md text-white text-sm"></i>
                             </div>
-                            <div>
-                                <div class="text-sm font-medium text-gray-900">{{ $doctor->name }}</div>
+                            <div class="min-w-0">
+                                <div class="text-sm font-medium text-gray-900 truncate max-w-[160px]" title="{{ $doctor->name }}">{{ $doctor->name }}</div>
                                 <div class="text-sm text-gray-500">{{ $doctor->doctor_no }}</div>
-                                <div class="text-xs text-gray-400">{{ $doctor->experience_years }} years exp.</div>
+                                <div class="text-xs text-gray-400">{{ $doctor->experience_years }} yrs exp.</div>
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm text-gray-900">{{ $doctor->specialization }}</div>
-                        <div class="text-xs text-gray-500">{{ $doctor->qualification }}</div>
+                    <td class="px-4 py-4">
+                        <div class="text-sm text-gray-900 truncate max-w-[130px]" title="{{ $doctor->specialization }}">{{ $doctor->specialization }}</div>
+                        <div class="text-xs text-gray-500 truncate max-w-[130px]">{{ $doctor->qualification }}</div>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-4 py-4">
                         <div class="text-sm text-gray-900">{{ $doctor->phone }}</div>
-                        <div class="text-xs text-gray-500">{{ $doctor->email }}</div>
+                        <div class="text-xs text-gray-500 truncate max-w-[140px]" title="{{ $doctor->email }}">{{ $doctor->email }}</div>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-4 py-4 whitespace-nowrap">
                         <div class="text-sm text-gray-900">{{ $doctor->shift_start }} - {{ $doctor->shift_end }}</div>
                         <div class="text-xs text-gray-500">{{ format_currency($doctor->consultation_fee) }}</div>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-4 py-4">
                         <span class="px-2 py-1 text-xs rounded-full {{ $doctor->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                             {{ ucfirst($doctor->status) }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-sm font-medium space-x-2">
-                        <a href="{{ route('doctors.show', $doctor) }}" class="text-medical-blue hover:text-blue-700">
-                            <i class="fas fa-eye"></i>
+                    <td class="px-4 py-4 text-sm font-medium whitespace-nowrap">
+                        <a href="{{ route('doctors.show', $doctor) }}" class="inline-flex items-center justify-center w-7 h-7 rounded text-medical-blue hover:bg-blue-50">
+                            <i class="fas fa-eye text-xs"></i>
                         </a>
-                        <a href="{{ route('doctors.edit', $doctor) }}" class="text-medical-green hover:text-green-700">
-                            <i class="fas fa-edit"></i>
+                        <a href="{{ route('doctors.edit', $doctor) }}" class="inline-flex items-center justify-center w-7 h-7 rounded text-medical-green hover:bg-green-50">
+                            <i class="fas fa-edit text-xs"></i>
                         </a>
                         <form action="{{ route('doctors.destroy', $doctor) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-800">
-                                <i class="fas fa-trash"></i>
+                            <button type="submit" class="inline-flex items-center justify-center w-7 h-7 rounded text-red-600 hover:bg-red-50">
+                                <i class="fas fa-trash text-xs"></i>
                             </button>
                         </form>
                     </td>

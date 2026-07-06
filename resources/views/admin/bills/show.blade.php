@@ -182,7 +182,13 @@
                         <div class="flex gap-2">
                             @can('edit payments')
                             <button type="button" class="text-xs text-medical-blue hover:text-blue-700"
-                                    onclick="editPayment({{ $payment->id }}, {{ $payment->amount }}, '{{ $payment->payment_method }}', '{{ $payment->payment_date->format('Y-m-d') }}', '{{ $payment->reference_number }}', '{{ addslashes($payment->notes) }}')"
+                                    onclick="editPayment(this)"
+                                    data-update-url="{{ route('bills.update-payment', [$bill, $payment]) }}"
+                                    data-amount="{{ $payment->amount }}"
+                                    data-method="{{ $payment->payment_method }}"
+                                    data-date="{{ $payment->payment_date->format('Y-m-d') }}"
+                                    data-reference="{{ $payment->reference_number }}"
+                                    data-notes="{{ $payment->notes }}"
                                     title="Edit payment">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
@@ -271,14 +277,14 @@
 @endcan
 
 <script>
-function editPayment(paymentId, amount, method, date, ref, notes) {
+function editPayment(button) {
     var form = document.getElementById('editPaymentForm');
-    form.action = '{{ url("bills/{$bill->id}/payment") }}/' + paymentId;
-    document.getElementById('editPaymentAmount').value = amount;
-    document.getElementById('editPaymentMethod').value = method;
-    document.getElementById('editPaymentDate').value = date;
-    document.getElementById('editPaymentRef').value = ref || '';
-    document.getElementById('editPaymentNotes').value = notes || '';
+    form.action = button.dataset.updateUrl;
+    document.getElementById('editPaymentAmount').value = button.dataset.amount;
+    document.getElementById('editPaymentMethod').value = button.dataset.method;
+    document.getElementById('editPaymentDate').value = button.dataset.date;
+    document.getElementById('editPaymentRef').value = button.dataset.reference || '';
+    document.getElementById('editPaymentNotes').value = button.dataset.notes || '';
     document.getElementById('editPaymentModal').classList.remove('hidden');
 }
 

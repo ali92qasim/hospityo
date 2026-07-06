@@ -22,8 +22,9 @@ class Payment extends Model
     ];
 
     protected $casts = [
+        'bill_id' => 'integer',
         'payment_date' => 'date',
-        'amount' => 'decimal:2'
+        'amount' => 'decimal:2',
     ];
 
     public function bill(): BelongsTo
