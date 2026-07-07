@@ -10,6 +10,7 @@ use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\Visit;
+use App\Services\BillItemCategoryResolver;
 use Illuminate\Support\Facades\DB;
 
 class BillController extends Controller
@@ -77,13 +78,9 @@ class BillController extends Controller
                 ]);
 
                 foreach ($request->items as $item) {
-                    $bill->billItems()->create([
-                        'service_id'       => $item['service_id'] ?? null,
-                        'investigation_id' => $item['investigation_id'] ?? null,
-                        'description'      => $item['description'],
-                        'quantity'         => $item['quantity'],
-                        'unit_price'       => $item['unit_price'],
-                    ]);
+                    $bill->billItems()->create(
+                        $this->buildBillItemAttributes($item, $request->bill_type)
+                    );
                 }
 
                 $bill->calculateTotals();
@@ -170,13 +167,9 @@ class BillController extends Controller
             $bill->billItems()->delete();
 
             foreach ($request->items as $item) {
-                $bill->billItems()->create([
-                    'service_id'       => $item['service_id'] ?? null,
-                    'investigation_id' => $item['investigation_id'] ?? null,
-                    'description'      => $item['description'],
-                    'quantity'         => $item['quantity'],
-                    'unit_price'       => $item['unit_price'],
-                ]);
+                $bill->billItems()->create(
+                    $this->buildBillItemAttributes($item, $request->bill_type)
+                );
             }
 
             $bill->calculateTotals();
@@ -456,5 +449,17 @@ class BillController extends Controller
         $nextNumber = ($lastNumber ?? 0) + 1;
 
         return $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+    }
+
+    private function buildBillItemAttributes(array $item, string $billType): array
+    {
+        return [
+            'service_id'       => $item['service_id'] ?? null,
+            'investigation_id' => $item['investigation_id'] ?? null,
+            'item_category'    => BillItemCategoryResolver::resolve($item, $billType),
+            'description'      => $item['description'],
+            'quantity'         => $item['quantity'],
+            'unit_price'       => $item['unit_price'],
+        ];
     }
 }

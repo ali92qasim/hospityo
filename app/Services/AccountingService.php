@@ -118,80 +118,12 @@ class AccountingService
      */
     private static function postBillEntryFresh(Bill $bill): ?JournalEntry
     {
-        try {
-            $receivable  = Account::where('code', '1200')->first();
-            $taxPayable  = Account::where('code', '2100')->first();
-            $revenueCode = self::getRevenueAccountCode($bill->bill_type);
-            $revenue     = Account::where('code', $revenueCode)->first();
-
-            if (!$receivable || !$revenue) return null;
-
-            $entry = JournalEntry::create([
-                'entry_date'     => now()->toDateString(),
-                'reference_type' => 'Bill',
-                'reference_id'   => $bill->id,
-                'description'    => "Invoice {$bill->bill_number} — {$bill->patient?->name} (revised)",
-                'created_by'     => auth()->id() ?? $bill->created_by ?? 1,
-                'is_auto'        => true,
-                'entry_type'     => 'original',
-            ]);
-
-            // DR: Receivable for total amount
-            $entry->lines()->create([
-                'account_id' => $receivable->id,
-                'debit'      => $bill->total_amount,
-                'credit'     => 0,
-                'narration'  => "Patient receivable for {$bill->bill_number} (revised)",
-            ]);
-
-            // CR: Revenue for subtotal
-            $entry->lines()->create([
-                'account_id' => $revenue->id,
-                'debit'      => 0,
-                'credit'     => $bill->subtotal,
-                'narration'  => ucfirst($bill->bill_type) . " revenue (revised)",
-            ]);
-
-            // CR: Tax Payable (if tax > 0)
-            if ($bill->tax_amount > 0 && $taxPayable) {
-                $entry->lines()->create([
-                    'account_id' => $taxPayable->id,
-                    'debit'      => 0,
-                    'credit'     => $bill->tax_amount,
-                    'narration'  => "Tax on {$bill->bill_number} (revised)",
-                ]);
-            }
-
-            // DR: Discount (if discount > 0)
-            if ($bill->discount_amount > 0) {
-                $discountAccount = Account::where('code', '5200')->first();
-                if ($discountAccount) {
-                    $entry->lines()->create([
-                        'account_id' => $discountAccount->id,
-                        'debit'      => $bill->discount_amount,
-                        'credit'     => 0,
-                        'narration'  => "Discount on {$bill->bill_number} (revised)",
-                    ]);
-                }
-            }
-
-            // Sub-ledger: Patient
-            $entry->subLedgerEntries()->create([
-                'ledger_type' => 'patient',
-                'ledger_id'   => $bill->patient_id,
-                'debit'       => $bill->total_amount,
-                'credit'      => 0,
-                'narration'   => "Invoice {$bill->bill_number} (revised)",
-            ]);
-
-            return $entry;
-        } catch (\Throwable $e) {
-            Log::error('[Accounting] Failed to post fresh bill entry', [
-                'bill_id' => $bill->id,
-                'error'   => $e->getMessage(),
-            ]);
-            return null;
-        }
+        return self::createBillJournalEntry(
+            $bill,
+            "Invoice {$bill->bill_number} — {$bill->patient?->name} (revised)",
+            now()->toDateString(),
+            ' (revised)'
+        );
     }
 
     /**
@@ -273,7 +205,7 @@ class AccountingService
     /**
      * Post a journal entry for a new bill (invoice created).
      * DR: Accounts Receivable (patient owes money)
-     * CR: Revenue account (based on bill type)
+     * CR: Revenue account(s) (based on bill item categories)
      * CR: Tax Payable (if tax applied)
      */
     public static function postBillEntry(Bill $bill): ?JournalEntry
@@ -294,72 +226,11 @@ class AccountingService
                 return $existing;
             }
 
-            $receivable = Account::where('code', '1200')->first(); // Accounts Receivable
-            $taxPayable = Account::where('code', '2100')->first(); // Tax Payable
-            $revenueCode = self::getRevenueAccountCode($bill->bill_type);
-            $revenue = Account::where('code', $revenueCode)->first();
-
-            if (!$receivable || !$revenue) return null;
-
-            $entry = JournalEntry::create([
-                'entry_date' => $bill->bill_date,
-                'reference_type' => 'Bill',
-                'reference_id' => $bill->id,
-                'description' => "Invoice {$bill->bill_number} — {$bill->patient?->name}",
-                'created_by' => $bill->created_by ?? auth()->id() ?? 1,
-                'is_auto' => true,
-                'entry_type' => 'original',
-            ]);
-
-            // DR: Receivable for total amount
-            $entry->lines()->create([
-                'account_id' => $receivable->id,
-                'debit' => $bill->total_amount,
-                'credit' => 0,
-                'narration' => "Patient receivable for {$bill->bill_number}",
-            ]);
-
-            // CR: Revenue for subtotal
-            $entry->lines()->create([
-                'account_id' => $revenue->id,
-                'debit' => 0,
-                'credit' => $bill->subtotal,
-                'narration' => ucfirst($bill->bill_type) . " revenue",
-            ]);
-
-            // CR: Tax Payable (if tax > 0)
-            if ($bill->tax_amount > 0 && $taxPayable) {
-                $entry->lines()->create([
-                    'account_id' => $taxPayable->id,
-                    'debit' => 0,
-                    'credit' => $bill->tax_amount,
-                    'narration' => "Tax on {$bill->bill_number}",
-                ]);
-            }
-
-            // CR: Discount (if discount > 0, reduce receivable)
-            if ($bill->discount_amount > 0) {
-                $discountAccount = Account::where('code', '5200')->first();
-                if ($discountAccount) {
-                    $entry->lines()->create([
-                        'account_id' => $discountAccount->id,
-                        'debit' => $bill->discount_amount,
-                        'credit' => 0,
-                        'narration' => "Discount on {$bill->bill_number}",
-                    ]);
-                }
-            }
-
-            // Sub-ledger: Patient
-            $entry->subLedgerEntries()->create([
-                'ledger_type' => 'patient',
-                'ledger_id' => $bill->patient_id,
-                'debit' => $bill->total_amount,
-                'credit' => 0,
-                'narration' => "Invoice {$bill->bill_number}",
-            ]);
-
-            return $entry;
+            return self::createBillJournalEntry(
+                $bill,
+                "Invoice {$bill->bill_number} — {$bill->patient?->name}",
+                $bill->bill_date?->toDateString() ?? now()->toDateString()
+            );
         } catch (\Throwable $e) {
             Log::error('[Accounting] Failed to post bill entry', ['bill' => $bill->id, 'error' => $e->getMessage()]);
             return null;
@@ -506,9 +377,9 @@ class AccountingService
         }
     }
 
-    private static function getRevenueAccountCode(string $billType): string
+    private static function getRevenueAccountCode(string $category): string
     {
-        return match ($billType) {
+        return match ($category) {
             'opd' => '4100',
             'ipd' => '4200',
             'investigation' => '4300',
@@ -516,6 +387,130 @@ class AccountingService
             'emergency' => '4500',
             default => '4100',
         };
+    }
+
+    /**
+     * @return array<string, float>
+     */
+    private static function groupRevenueByCategory(Bill $bill): array
+    {
+        $bill->loadMissing('billItems');
+        $groups = [];
+
+        foreach ($bill->billItems as $item) {
+            $category = $item->item_category ?: $bill->bill_type;
+            $amount = (float) $item->total_price;
+            $groups[$category] = ($groups[$category] ?? 0) + $amount;
+        }
+
+        if ($groups === [] && (float) $bill->subtotal > 0) {
+            $groups[$bill->bill_type] = (float) $bill->subtotal;
+        }
+
+        return $groups;
+    }
+
+    private static function createBillJournalEntry(
+        Bill $bill,
+        string $description,
+        string $entryDate,
+        string $narrationSuffix = ''
+    ): ?JournalEntry {
+        try {
+            $receivable = Account::where('code', '1200')->first();
+            $taxPayable = Account::where('code', '2100')->first();
+            $revenueByCategory = self::groupRevenueByCategory($bill);
+
+            if (! $receivable || $revenueByCategory === []) {
+                return null;
+            }
+
+            $revenueAccounts = [];
+            foreach ($revenueByCategory as $category => $amount) {
+                if ($amount <= 0) {
+                    continue;
+                }
+
+                $account = Account::where('code', self::getRevenueAccountCode($category))->first();
+                if (! $account) {
+                    return null;
+                }
+
+                $revenueAccounts[] = [
+                    'account'  => $account,
+                    'category' => $category,
+                    'amount'   => $amount,
+                ];
+            }
+
+            if ($revenueAccounts === []) {
+                return null;
+            }
+
+            $entry = JournalEntry::create([
+                'entry_date'     => $entryDate,
+                'reference_type' => 'Bill',
+                'reference_id'   => $bill->id,
+                'description'    => $description,
+                'created_by'     => $bill->created_by ?? auth()->id() ?? 1,
+                'is_auto'        => true,
+                'entry_type'     => 'original',
+            ]);
+
+            $entry->lines()->create([
+                'account_id' => $receivable->id,
+                'debit'      => $bill->total_amount,
+                'credit'     => 0,
+                'narration'  => "Patient receivable for {$bill->bill_number}{$narrationSuffix}",
+            ]);
+
+            foreach ($revenueAccounts as $revenueLine) {
+                $entry->lines()->create([
+                    'account_id' => $revenueLine['account']->id,
+                    'debit'      => 0,
+                    'credit'     => $revenueLine['amount'],
+                    'narration'  => ucfirst($revenueLine['category']) . " revenue{$narrationSuffix}",
+                ]);
+            }
+
+            if ($bill->tax_amount > 0 && $taxPayable) {
+                $entry->lines()->create([
+                    'account_id' => $taxPayable->id,
+                    'debit'      => 0,
+                    'credit'     => $bill->tax_amount,
+                    'narration'  => "Tax on {$bill->bill_number}{$narrationSuffix}",
+                ]);
+            }
+
+            if ($bill->discount_amount > 0) {
+                $discountAccount = Account::where('code', '5200')->first();
+                if ($discountAccount) {
+                    $entry->lines()->create([
+                        'account_id' => $discountAccount->id,
+                        'debit'      => $bill->discount_amount,
+                        'credit'     => 0,
+                        'narration'  => "Discount on {$bill->bill_number}{$narrationSuffix}",
+                    ]);
+                }
+            }
+
+            $entry->subLedgerEntries()->create([
+                'ledger_type' => 'patient',
+                'ledger_id'   => $bill->patient_id,
+                'debit'       => $bill->total_amount,
+                'credit'      => 0,
+                'narration'   => "Invoice {$bill->bill_number}{$narrationSuffix}",
+            ]);
+
+            return $entry;
+        } catch (\Throwable $e) {
+            Log::error('[Accounting] Failed to create bill journal entry', [
+                'bill_id' => $bill->id,
+                'error'   => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private static function getPaymentAccount(string $method): ?Account

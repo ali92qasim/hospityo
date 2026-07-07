@@ -15,6 +15,7 @@ class BillItem extends Model
         'bill_id',
         'service_id',
         'investigation_id',
+        'item_category',
         'description',
         'quantity',
         'unit_price',

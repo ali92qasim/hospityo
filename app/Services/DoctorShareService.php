@@ -86,14 +86,6 @@ class DoctorShareService
     public static function calculate(Bill $bill): void
     {
         try {
-            if (self::isExcluded($bill->bill_type)) {
-                Log::info('[DoctorShare] Skipped — excluded bill type', [
-                    'bill_id'   => $bill->id,
-                    'bill_type' => $bill->bill_type,
-                ]);
-                return;
-            }
-
             $doctorId = self::resolveDoctorId($bill);
 
             if ($doctorId === null) {
@@ -328,11 +320,21 @@ class DoctorShareService
         BillItem $item,
         int $doctorId
     ): void {
+        $itemCategory = $item->item_category ?: $bill->bill_type;
+
+        if (self::isExcluded($itemCategory)) {
+            Log::debug('[DoctorShare] Skipped — excluded item category', [
+                'bill_item_id'  => $item->id,
+                'item_category' => $itemCategory,
+            ]);
+            return;
+        }
+
         $rule = self::resolveRule(
             $doctorId,
             $item->service_id,
             $item->investigation_id,
-            $bill->bill_type
+            $itemCategory
         );
 
         if ($rule === null) {
@@ -499,10 +501,10 @@ class DoctorShareService
     }
 
     /**
-     * Whether a bill type is excluded from share calculation.
+     * Whether a revenue/share category is excluded from share calculation.
      */
-    private static function isExcluded(string $billType): bool
+    private static function isExcluded(string $category): bool
     {
-        return in_array($billType, self::EXCLUDED_BILL_TYPES, true);
+        return in_array($category, self::EXCLUDED_BILL_TYPES, true);
     }
 }
