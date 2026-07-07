@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
+use App\Models\Employee;
 use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
 use App\Models\FiscalYear;
 use App\Models\SubLedgerEntry;
 use Illuminate\Http\Request;
@@ -419,6 +421,30 @@ class AccountingController extends Controller
         }
 
         return view('admin.accounting.vendor-ledger', compact('suppliers', 'entries', 'supplierId'));
+    }
+
+    public function employeeLedger(Request $request)
+    {
+        $employeeId = $request->input('employee_id');
+        $employees = Employee::orderBy('name')->orderBy('first_name')->get();
+        $lines = collect();
+        $employee = null;
+        $balance = 0;
+
+        if ($employeeId) {
+            $employee = Employee::with('expenseAccount')->find($employeeId);
+
+            if ($employee?->expense_account_id) {
+                $lines = JournalEntryLine::where('account_id', $employee->expense_account_id)
+                    ->with('journalEntry')
+                    ->orderBy('created_at')
+                    ->get();
+
+                $balance = $employee->expenseAccount->getBalance();
+            }
+        }
+
+        return view('admin.accounting.employee-ledger', compact('employees', 'lines', 'employeeId', 'employee', 'balance'));
     }
 
     // ── Financial Reports ──────────────────────────

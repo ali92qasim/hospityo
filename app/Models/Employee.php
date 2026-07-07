@@ -20,7 +20,7 @@ class Employee extends Model
         'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
         'employment_type', 'joining_date', 'probation_end_date', 'contract_end_date',
         'termination_date', 'status',
-        'basic_salary', 'bank_name', 'bank_account_no', 'bank_branch',
+        'basic_salary', 'expense_account_id', 'bank_name', 'bank_account_no', 'bank_branch',
         'default_shift', 'shift_start', 'shift_end',
         'photo', 'notes',
     ];
@@ -43,6 +43,23 @@ class Employee extends Model
         static::creating(function ($emp) {
             if (empty($emp->employee_no)) {
                 $emp->employee_no = 'EMP' . str_pad((static::max('id') ?? 0) + 1, 5, '0', STR_PAD_LEFT);
+            }
+        });
+
+        static::created(function (Employee $employee) {
+            \App\Services\EmployeeAccountService::ensureExpenseAccount($employee);
+        });
+
+        static::updated(function (Employee $employee) {
+            if ($employee->wasChanged(['name', 'first_name', 'last_name', 'employee_no', 'status'])) {
+                \App\Services\EmployeeAccountService::ensureExpenseAccount($employee);
+                \App\Services\EmployeeAccountService::syncAccountStatus($employee);
+            }
+        });
+
+        static::deleting(function (Employee $employee) {
+            if ($employee->expenseAccount) {
+                $employee->expenseAccount->update(['is_active' => false]);
             }
         });
     }
@@ -72,6 +89,11 @@ class Employee extends Model
     public function designation(): BelongsTo
     {
         return $this->belongsTo(Designation::class);
+    }
+
+    public function expenseAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'expense_account_id');
     }
 
     public function documents(): HasMany

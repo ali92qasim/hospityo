@@ -1,9 +1,11 @@
 <?php
 
+use App\Models\Account;
 use App\Models\Employee;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\User;
+use App\Services\EmployeeAccountService;
 beforeEach(function () {
     $this->user = User::create([
         'name' => 'Test User',
@@ -131,4 +133,24 @@ it('belongs to department and designation', function () {
 
     expect($employee->department->name)->toBe('Emergency')
         ->and($employee->designation->name)->toBe('Consultant');
+});
+
+it('creates a linked salary expense account on creation', function () {
+    Account::create(['code' => '5300', 'name' => 'Salaries & Wages', 'type' => 'expense', 'is_system' => false]);
+
+    $employee = Employee::create([
+        'first_name' => 'Sara',
+        'last_name' => 'Ali',
+        'department_id' => $this->department->id,
+        'joining_date' => '2026-01-01',
+        'basic_salary' => 70000,
+    ]);
+
+    $employee->refresh();
+
+    expect($employee->expense_account_id)->not->toBeNull()
+        ->and($employee->expenseAccount)->not->toBeNull()
+        ->and($employee->expenseAccount->code)->toBe(EmployeeAccountService::expenseAccountCode($employee->id))
+        ->and($employee->expenseAccount->type)->toBe('expense')
+        ->and($employee->expenseAccount->parent_id)->toBe(Account::where('code', '5300')->value('id'));
 });

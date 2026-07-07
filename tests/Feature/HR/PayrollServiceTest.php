@@ -22,6 +22,10 @@ beforeEach(function () {
         'status' => 'active',
     ]);
 
+    Account::create(['code' => '5300', 'name' => 'Salaries & Wages', 'type' => 'expense', 'is_system' => false]);
+    Account::create(['code' => '1100', 'name' => 'Cash in Hand', 'type' => 'asset', 'is_system' => true]);
+    Account::create(['code' => '2200', 'name' => 'Accounts Payable', 'type' => 'liability', 'is_system' => true]);
+
     $this->employee = Employee::create([
         'first_name' => 'Ahmed',
         'last_name' => 'Khan',
@@ -161,12 +165,7 @@ it('calculates overtime at 1.5x rate', function () {
         ->and((float) $payslip->overtime_amount)->toBeGreaterThan(0);
 });
 
-it('posts payroll to accounting', function () {
-    // Seed accounting accounts
-    Account::create(['code' => '5300', 'name' => 'Salaries & Wages', 'type' => 'expense', 'is_system' => true]);
-    Account::create(['code' => '1100', 'name' => 'Cash in Hand', 'type' => 'asset', 'is_system' => true]);
-    Account::create(['code' => '2200', 'name' => 'Accounts Payable', 'type' => 'liability', 'is_system' => true]);
-
+it('posts payroll to accounting using employee expense accounts', function () {
     $run = PayrollService::generate(2026, 4, $this->user->id);
     $run->update(['status' => 'completed']);
 
@@ -179,6 +178,16 @@ it('posts payroll to accounting', function () {
     expect($entry)->not->toBeNull()
         ->and($entry->is_auto)->toBeTrue()
         ->and($entry->lines->sum('debit'))->toEqual($entry->lines->sum('credit'));
+
+    $this->employee->refresh();
+
+    $expenseLine = $entry->lines()
+        ->where('account_id', $this->employee->expense_account_id)
+        ->where('debit', '>', 0)
+        ->first();
+
+    expect($expenseLine)->not->toBeNull()
+        ->and((float) $expenseLine->debit)->toBe(92000.0);
 });
 
 it('recalculates payroll run totals', function () {

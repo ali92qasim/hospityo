@@ -158,13 +158,28 @@ class PayrollService
     public static function postToAccounting(PayrollRun $run): void
     {
         try {
-            $salaryExpense = Account::where('code', '5300')->first(); // Salaries & Wages
-            $cashAccount = Account::where('code', '1100')->first();   // Cash in Hand
+            $existing = JournalEntry::where('reference_type', 'PayrollRun')
+                ->where('reference_id', $run->id)
+                ->where('entry_type', 'original')
+                ->first();
 
-            if (!$salaryExpense || !$cashAccount) {
-                Log::warning('[Payroll] Accounting accounts not found, skipping journal entry');
+            if ($existing) {
+                Log::info('[Payroll] Journal entry already exists — skipping', [
+                    'payroll_run_id' => $run->id,
+                    'entry_id' => $existing->id,
+                ]);
                 return;
             }
+
+            $cashAccount = Account::where('code', '1100')->first();
+            $payable = Account::where('code', '2200')->first();
+
+            if (! $cashAccount) {
+                Log::warning('[Payroll] Cash account not found, skipping journal entry');
+                return;
+            }
+
+            $run->load('payslips.employee.expenseAccount');
 
             $entry = JournalEntry::create([
                 'entry_date' => Carbon::create($run->year, $run->month)->endOfMonth(),
@@ -176,13 +191,39 @@ class PayrollService
                 'entry_type' => 'original',
             ]);
 
-            // DR: Salary Expense (gross)
-            $entry->lines()->create([
-                'account_id' => $salaryExpense->id,
-                'debit' => $run->total_gross,
-                'credit' => 0,
-                'narration' => "Gross salary for {$run->title}",
-            ]);
+            foreach ($run->payslips as $payslip) {
+                $gross = (float) $payslip->gross_salary;
+                if ($gross <= 0) {
+                    continue;
+                }
+
+                $employee = $payslip->employee;
+                if (! $employee) {
+                    continue;
+                }
+
+                $expenseAccount = EmployeeAccountService::resolveExpenseAccount($employee);
+                if (! $expenseAccount) {
+                    Log::warning('[Payroll] Missing expense account for employee', [
+                        'employee_id' => $employee->id,
+                        'payroll_run_id' => $run->id,
+                    ]);
+                    continue;
+                }
+
+                $entry->lines()->create([
+                    'account_id' => $expenseAccount->id,
+                    'debit' => $gross,
+                    'credit' => 0,
+                    'narration' => "Gross salary — {$employee->full_name} ({$run->title})",
+                ]);
+            }
+
+            if ($entry->lines()->where('debit', '>', 0)->doesntExist()) {
+                $entry->delete();
+                Log::warning('[Payroll] No salary expense lines posted', ['payroll_run_id' => $run->id]);
+                return;
+            }
 
             // CR: Cash/Bank (net paid)
             $entry->lines()->create([
@@ -194,16 +235,13 @@ class PayrollService
 
             // CR: Deductions payable (if any difference)
             $deductionsDiff = $run->total_gross - $run->total_net;
-            if ($deductionsDiff > 0) {
-                $payable = Account::where('code', '2200')->first(); // Accounts Payable
-                if ($payable) {
-                    $entry->lines()->create([
-                        'account_id' => $payable->id,
-                        'debit' => 0,
-                        'credit' => $deductionsDiff,
-                        'narration' => "Statutory deductions for {$run->title}",
-                    ]);
-                }
+            if ($deductionsDiff > 0 && $payable) {
+                $entry->lines()->create([
+                    'account_id' => $payable->id,
+                    'debit' => 0,
+                    'credit' => $deductionsDiff,
+                    'narration' => "Statutory deductions for {$run->title}",
+                ]);
             }
 
             Log::info('[Payroll] Journal entry posted', ['entry' => $entry->entry_number]);

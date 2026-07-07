@@ -188,6 +188,19 @@
                     <span class="text-gray-600">Branch</span>
                     <span class="font-medium">{{ $employee->bank_branch ?? '—' }}</span>
                 </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 md:col-span-2">
+                    <span class="text-gray-600">Expense Account</span>
+                    @if($employee->expenseAccount)
+                        <span class="font-medium text-right">
+                            {{ $employee->expenseAccount->code }} — {{ $employee->expenseAccount->name }}
+                            <a href="{{ route('accounting.employee-ledger', ['employee_id' => $employee->id]) }}" class="block text-xs text-medical-blue hover:underline mt-1">
+                                View salary ledger
+                            </a>
+                        </span>
+                    @else
+                        <span class="font-medium text-gray-400">Not provisioned</span>
+                    @endif
+                </div>
             </div>
         </div>
     </div>

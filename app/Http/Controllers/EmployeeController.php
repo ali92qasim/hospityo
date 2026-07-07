@@ -111,7 +111,7 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        $employee->load(['department', 'designation', 'user', 'doctor', 'documents']);
+        $employee->load(['department', 'designation', 'user', 'doctor', 'documents', 'expenseAccount']);
         return view('admin.hr.employees.show', compact('employee'));
     }
 

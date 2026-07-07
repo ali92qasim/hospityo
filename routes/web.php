@@ -278,6 +278,7 @@ Route::middleware('auth')->group(function () {
         Route::put('journal-entries/{journalEntry}', [AccountingController::class, 'updateJournalEntry'])->name('update-journal-entry');
         Route::get('patient-ledger', [AccountingController::class, 'patientLedger'])->name('patient-ledger');
         Route::get('vendor-ledger', [AccountingController::class, 'vendorLedger'])->name('vendor-ledger');
+        Route::get('employee-ledger', [AccountingController::class, 'employeeLedger'])->name('employee-ledger');
         Route::get('profit-loss', [AccountingController::class, 'profitAndLoss'])->name('profit-loss');
         Route::get('balance-sheet', [AccountingController::class, 'balanceSheet'])->name('balance-sheet');
         Route::get('fiscal-years', [AccountingController::class, 'fiscalYears'])->name('fiscal-years');
