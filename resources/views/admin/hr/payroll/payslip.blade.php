@@ -22,7 +22,7 @@
                         <h2 class="text-xl font-semibold text-gray-800">{{ $payslip->employee->full_name }}</h2>
                         <p class="text-sm text-gray-600">{{ $payslip->employee->employee_no }} &bull; {{ $payslip->employee->department->name ?? '—' }} &bull; {{ $payslip->employee->designation->name ?? '—' }}</p>
                         <p class="text-sm text-gray-500 mt-1">
-                            Payslip for <span class="font-medium">{{ \Carbon\Carbon::create()->month($payslip->payrollRun->month)->format('F') }} {{ $payslip->payrollRun->year }}</span>
+                            Payslip for <span class="font-medium">{{ $payslip->payrollRun->period_label }}</span>
                         </p>
                     </div>
                 </div>

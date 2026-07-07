@@ -19,7 +19,7 @@
                 <select name="month" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                     @foreach(range(1, 12) as $m)
                         <option value="{{ $m }}" {{ ($month ?? now()->month) == $m ? 'selected' : '' }}>
-                            {{ \Carbon\Carbon::create()->month($m)->format('F') }}
+                            {{ \Carbon\Carbon::createFromDate(2000, $m, 1)->format('F') }}
                         </option>
                     @endforeach
                 </select>

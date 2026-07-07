@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payslip - {{ $payslip->employee->full_name }} - {{ \Carbon\Carbon::create()->month($payslip->payrollRun->month)->format('F') }} {{ $payslip->payrollRun->year }}</title>
+    <title>Payslip - {{ $payslip->employee->full_name }} - {{ $payslip->payrollRun->period_label }}</title>
     <style>
         * {
             margin: 0;
@@ -279,7 +279,7 @@
                     @if(setting('hospital_email'))Email: {{ setting('hospital_email') }}@endif
                 </p>
             @endif
-            <div class="payslip-title">Payslip for {{ \Carbon\Carbon::create()->month($payslip->payrollRun->month)->format('F') }} {{ $payslip->payrollRun->year }}</div>
+            <div class="payslip-title">Payslip for {{ $payslip->payrollRun->period_label }}</div>
         </div>
 
         <!-- Employee Details -->
@@ -293,7 +293,7 @@
             </div>
             <div class="employee-info-section">
                 <h3>Pay Details</h3>
-                <p><strong>Pay Period:</strong> {{ \Carbon\Carbon::create()->month($payslip->payrollRun->month)->format('F') }} {{ $payslip->payrollRun->year }}</p>
+                <p><strong>Pay Period:</strong> {{ $payslip->payrollRun->period_label }}</p>
                 <p><strong>Working Days:</strong> {{ $payslip->working_days ?? 0 }}</p>
                 <p><strong>Present Days:</strong> {{ $payslip->present_days ?? 0 }}</p>
                 <p><strong>Payment Method:</strong> {{ ucwords(str_replace('_', ' ', $payslip->payment_method ?? 'N/A')) }}</p>

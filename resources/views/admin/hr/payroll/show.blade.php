@@ -13,7 +13,7 @@
                 <div>
                     <h2 class="text-xl font-semibold text-gray-800">{{ $payrollRun->title }}</h2>
                     <p class="text-sm text-gray-600 mt-1">
-                        {{ \Carbon\Carbon::create()->month($payrollRun->month)->format('F') }} {{ $payrollRun->year }}
+                        {{ $payrollRun->period_label }}
                     </p>
                     <div class="mt-2">
                         @php

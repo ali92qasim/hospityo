@@ -19,11 +19,21 @@ class PayrollRun extends Model
     ];
 
     protected $casts = [
+        'year' => 'integer',
+        'month' => 'integer',
         'total_gross' => 'decimal:2',
         'total_deductions' => 'decimal:2',
         'total_net' => 'decimal:2',
         'approved_at' => 'datetime',
     ];
+
+    /**
+     * Human-readable pay period, e.g. "April 2026".
+     */
+    public function getPeriodLabelAttribute(): string
+    {
+        return \Carbon\Carbon::create($this->year, $this->month, 1)->format('F Y');
+    }
 
     public function payslips(): HasMany
     {
