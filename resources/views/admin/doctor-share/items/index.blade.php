@@ -67,23 +67,44 @@
 
 {{-- Summary stats --}}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="bg-white rounded-lg shadow-sm p-4">
-        <p class="text-sm font-medium text-gray-500">Total Share Amount</p>
-        <p class="text-2xl font-bold text-gray-800 mt-1">
-            {{ currency_symbol() }}{{ number_format($totalShare, 2) }}
-        </p>
+    <div class="bg-white rounded-lg shadow-sm p-5">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Total Revenue Generated</p>
+                <p class="text-2xl font-bold text-gray-800 mt-1">
+                    {{ format_currency($totalRevenue) }}
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-chart-line text-medical-blue text-xl"></i>
+            </div>
+        </div>
     </div>
-    <div class="bg-white rounded-lg shadow-sm p-4">
-        <p class="text-sm font-medium text-gray-500">Total Collected</p>
-        <p class="text-2xl font-bold text-green-600 mt-1">
-            {{ currency_symbol() }}{{ number_format($totalCollected, 2) }}
-        </p>
+    <div class="bg-white rounded-lg shadow-sm p-5">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Hospital Share</p>
+                <p class="text-2xl font-bold text-indigo-600 mt-1">
+                    {{ format_currency($totalHospitalShare) }}
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-hospital text-indigo-600 text-xl"></i>
+            </div>
+        </div>
     </div>
-    <div class="bg-white rounded-lg shadow-sm p-4">
-        <p class="text-sm font-medium text-gray-500">Total Pending</p>
-        <p class="text-2xl font-bold text-yellow-600 mt-1">
-            {{ currency_symbol() }}{{ number_format($totalPending, 2) }}
-        </p>
+    <div class="bg-white rounded-lg shadow-sm p-5">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Doctor Share</p>
+                <p class="text-2xl font-bold text-green-600 mt-1">
+                    {{ format_currency($totalDoctorShare) }}
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-user-md text-green-600 text-xl"></i>
+            </div>
+        </div>
     </div>
 </div>
 

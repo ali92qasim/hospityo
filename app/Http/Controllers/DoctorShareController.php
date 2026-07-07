@@ -260,28 +260,18 @@ class DoctorShareController extends Controller
             $summaryQuery->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $totalShare = (clone $summaryQuery)->sum('share_amount');
-
-        $totalCollected = DB::connection('tenant')
-            ->table('doctor_share_allocations')
-            ->whereIn(
-                'doctor_share_item_id',
-                (clone $summaryQuery)->select('id')
-            )
-            ->sum('amount');
-
-        $totalPending = (clone $summaryQuery)
-            ->where('status', 'pending')
-            ->sum('share_amount');
+        $totalRevenue = (float) (clone $summaryQuery)->sum('base_amount');
+        $totalDoctorShare = (float) (clone $summaryQuery)->sum('share_amount');
+        $totalHospitalShare = max(0, $totalRevenue - $totalDoctorShare);
 
         $doctors = Doctor::orderBy('name')->get();
 
         return view('admin.doctor-share.items.index', compact(
             'items',
             'doctors',
-            'totalShare',
-            'totalCollected',
-            'totalPending'
+            'totalRevenue',
+            'totalHospitalShare',
+            'totalDoctorShare'
         ));
     }
 
