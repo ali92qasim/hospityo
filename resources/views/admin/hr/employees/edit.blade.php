@@ -20,23 +20,19 @@
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
-                        <input type="text" name="first_name" value="{{ old('first_name', $employee->first_name) }}"
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                        <input type="text" name="name" value="{{ old('name', $employee->name ?? $employee->full_name) }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
-                        @error('first_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
-                        <input type="text" name="last_name" value="{{ old('last_name', $employee->last_name) }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
-                        @error('last_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                         <input type="email" name="email" value="{{ old('email', $employee->email) }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                         @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
+                    <input type="hidden" name="first_name" value="{{ old('first_name', $employee->first_name) }}">
+                    <input type="hidden" name="last_name" value="{{ old('last_name', $employee->last_name) }}">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
                         <input type="tel" name="phone" value="{{ old('phone', $employee->phone) }}"
@@ -239,14 +235,18 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Shift Start</label>
-                        <input type="time" name="shift_start" value="{{ old('shift_start', $employee->shift_start) }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <input type="text" name="shift_start" value="{{ old('shift_start', $employee->shift_start) }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent js-time-picker"
+                               data-default-hour="9" data-default-minute="0"
+                               placeholder="HH:MM">
                         @error('shift_start') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Shift End</label>
-                        <input type="time" name="shift_end" value="{{ old('shift_end', $employee->shift_end) }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <input type="text" name="shift_end" value="{{ old('shift_end', $employee->shift_end) }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent js-time-picker"
+                               data-default-hour="17" data-default-minute="0"
+                               placeholder="HH:MM">
                         @error('shift_end') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>

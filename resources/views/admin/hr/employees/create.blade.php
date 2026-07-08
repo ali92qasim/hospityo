@@ -103,6 +103,32 @@
                         @error('designation_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Default Shift</label>
+                        <select name="default_shift" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <option value="">Select Shift</option>
+                            <option value="morning" {{ old('default_shift') == 'morning' ? 'selected' : '' }}>Morning</option>
+                            <option value="evening" {{ old('default_shift') == 'evening' ? 'selected' : '' }}>Evening</option>
+                            <option value="night" {{ old('default_shift') == 'night' ? 'selected' : '' }}>Night</option>
+                        </select>
+                        @error('default_shift') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Shift Start</label>
+                        <input type="text" name="shift_start" value="{{ old('shift_start') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent js-time-picker"
+                               data-default-hour="9" data-default-minute="0"
+                               placeholder="HH:MM">
+                        @error('shift_start') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Shift End</label>
+                        <input type="text" name="shift_end" value="{{ old('shift_end') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent js-time-picker"
+                               data-default-hour="17" data-default-minute="0"
+                               placeholder="HH:MM">
+                        @error('shift_end') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Joining Date *</label>
                         <input type="date" name="joining_date" value="{{ old('joining_date', date('Y-m-d')) }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>

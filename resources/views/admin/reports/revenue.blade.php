@@ -53,7 +53,12 @@
             <i class="fas fa-money-bill-wave text-2xl opacity-75"></i>
         </div>
         <p class="text-3xl font-bold">{{ format_currency($totals['total_collected']) }}</p>
-        <p class="text-xs opacity-75 mt-2">{{ $totals['total_revenue'] > 0 ? number_format($totals['total_collected'] / $totals['total_revenue'] * 100, 1) : 0 }}% collection rate</p>
+        <p class="text-xs opacity-75 mt-2">
+            {{ $totals['total_revenue'] > 0 ? number_format($totals['total_collected'] / $totals['total_revenue'] * 100, 1) : 0 }}% of revenue
+            @if(($totals['total_overpaid'] ?? 0) > 0)
+                · Cash received {{ format_currency($totals['total_collected_cash']) }} (incl. {{ format_currency($totals['total_overpaid']) }} overpay)
+            @endif
+        </p>
     </div>
 
     <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
@@ -62,7 +67,10 @@
             <i class="fas fa-exclamation-triangle text-2xl opacity-75"></i>
         </div>
         <p class="text-3xl font-bold">{{ format_currency($totals['total_outstanding']) }}</p>
-        <p class="text-xs opacity-75 mt-2">{{ $totals['total_revenue'] > 0 ? number_format($totals['total_outstanding'] / $totals['total_revenue'] * 100, 1) : 0 }}% pending</p>
+        <p class="text-xs opacity-75 mt-2">
+            {{ $totals['total_revenue'] > 0 ? number_format($totals['total_outstanding'] / $totals['total_revenue'] * 100, 1) : 0 }}% pending
+            · Revenue − Collected
+        </p>
     </div>
 
     <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">

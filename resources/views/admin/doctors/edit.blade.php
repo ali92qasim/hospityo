@@ -143,7 +143,8 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Shift Start *</label>
                     <input type="text" name="shift_start" value="{{ old('shift_start', $doctor->shift_start) }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent js-time-picker"
+                           data-default-hour="9" data-default-minute="0"
                            placeholder="HH:MM"
                            required>
                 </div>
@@ -151,7 +152,8 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Shift End *</label>
                     <input type="text" name="shift_end" value="{{ old('shift_end', $doctor->shift_end) }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent js-time-picker"
+                           data-default-hour="17" data-default-minute="0"
                            placeholder="HH:MM"
                            required>
                 </div>

@@ -170,11 +170,21 @@ class ReportController extends Controller
             ->with(['billItems.service', 'patient', 'visit.doctor'])
             ->get();
 
-        // Calculate totals — outstanding capped at 0 per bill to avoid negatives from overpayments
+        // Totals must reconcile: revenue = collected_applied + outstanding
+        // Collected (cash) can exceed bill totals due to overpayments/advances.
+        // "Collected applied" is capped at each bill total so the cards stay consistent.
+        $totalRevenue = (float) $bills->sum('total_amount');
+        $totalPaid = (float) $bills->sum('paid_amount');
+        $totalOutstanding = (float) $bills->sum(fn($b) => max(0, (float) $b->total_amount - (float) $b->paid_amount));
+        $totalOverpaid = (float) $bills->sum(fn($b) => max(0, (float) $b->paid_amount - (float) $b->total_amount));
+        $collectedApplied = $totalRevenue - $totalOutstanding; // equals sum(min(paid, total))
+
         $totals = [
-            'total_revenue' => $bills->sum('total_amount'),
-            'total_collected' => $bills->sum('paid_amount'),
-            'total_outstanding' => $bills->sum(fn($b) => max(0, $b->total_amount - $b->paid_amount)),
+            'total_revenue' => $totalRevenue,
+            'total_collected' => $collectedApplied,
+            'total_collected_cash' => $totalPaid,
+            'total_outstanding' => $totalOutstanding,
+            'total_overpaid' => $totalOverpaid,
             'total_bills' => $bills->count(),
         ];
 

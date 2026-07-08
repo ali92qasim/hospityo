@@ -69,6 +69,7 @@ $(function () {
 
     if (shiftStartInput) {
         try {
+            if (shiftStartInput._flatpickr) return;
             flatpickr(shiftStartInput, {
                 ...flatpickrConfig,
                 defaultHour: 9,
@@ -81,6 +82,7 @@ $(function () {
 
     if (shiftEndInput) {
         try {
+            if (shiftEndInput._flatpickr) return;
             flatpickr(shiftEndInput, {
                 ...flatpickrConfig,
                 defaultHour: 17,

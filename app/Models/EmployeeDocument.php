@@ -75,6 +75,6 @@ class EmployeeDocument extends Model
     public function getDaysUntilExpiryAttribute(): ?int
     {
         if (!$this->expiry_date) return null;
-        return (int) now()->diffInDays($this->expiry_date, false);
+        return (int) now()->startOfDay()->diffInDays($this->expiry_date->copy()->startOfDay(), false);
     }
 }
