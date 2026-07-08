@@ -16,6 +16,10 @@ class DutyRoster extends Model
         'employee_id', 'shift_id', 'date', 'is_off_day', 'notes', 'assigned_by',
     ];
 
+    protected $attributes = [
+        'is_off_day' => false,
+    ];
+
     protected $casts = ['date' => 'date', 'is_off_day' => 'boolean'];
 
     public function employee(): BelongsTo
@@ -35,7 +39,7 @@ class DutyRoster extends Model
 
     public function scopeForDate(Builder $q, string $date): Builder
     {
-        return $q->where('date', $date);
+        return $q->whereDate('date', $date);
     }
 
     public function scopeForWeek(Builder $q, string $startDate, string $endDate): Builder

@@ -5,42 +5,93 @@
 
 @section('content')
 @php
-    $weekStartDate = \Carbon\Carbon::parse($weekStart);
-    $weekEndDate = $weekStartDate->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
-    $prevWeek = $weekStartDate->copy()->subWeek()->format('Y-m-d');
-    $nextWeek = $weekStartDate->copy()->addWeek()->format('Y-m-d');
+    $period = $period ?? request('period', 'weekly'); // weekly | monthly | custom
+
+    $startDate = \Carbon\Carbon::parse($weekStart);
+    $endDate = \Carbon\Carbon::parse($weekEnd);
+
+    if ($period === 'monthly') {
+        $label = $startDate->format('F Y');
+        $prev = $startDate->copy()->subMonth()->startOfMonth();
+        $next = $startDate->copy()->addMonth()->startOfMonth();
+    } elseif ($period === 'custom') {
+        $label = $startDate->format('M d, Y') . ' - ' . $endDate->format('M d, Y');
+        $spanDays = max(0, $startDate->diffInDays($endDate));
+        $prev = $startDate->copy()->subDays($spanDays + 1);
+        $next = $startDate->copy()->addDays($spanDays + 1);
+    } else {
+        $label = $startDate->format('M d') . ' - ' . $endDate->format('M d, Y');
+        $prev = $startDate->copy()->subWeek();
+        $next = $startDate->copy()->addWeek();
+    }
 
     $days = [];
-    for ($i = 0; $i < 7; $i++) {
-        $days[] = $weekStartDate->copy()->addDays($i);
+    for ($d = $startDate->copy(); $d->lte($endDate); $d->addDay()) {
+        $days[] = $d->copy();
     }
 @endphp
 
-<!-- Week Navigation & Filters -->
+<!-- Period Navigation & Filters -->
 <div class="bg-white rounded-lg shadow-sm mb-6">
     <div class="p-4">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <!-- Week Navigation -->
+            <!-- Navigation -->
             <div class="flex items-center gap-3">
-                <a href="{{ route('hr.shifts.roster', ['week_start' => $prevWeek]) }}"
+                <a href="{{ route('hr.shifts.roster', array_filter([
+                    'period' => $period,
+                    'week_start' => $prev->format('Y-m-d'),
+                    'month' => $period === 'monthly' ? $prev->format('Y-m-01') : null,
+                    'start_date' => $period === 'custom' ? $prev->format('Y-m-d') : null,
+                    'end_date' => $period === 'custom' ? $prev->copy()->addDays(max(0, $startDate->diffInDays($endDate)))->format('Y-m-d') : null,
+                    'department_id' => request('department_id'),
+                ])) }}"
                    class="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-chevron-left mr-1"></i>Previous Week
+                    <i class="fas fa-chevron-left mr-1"></i>Previous
                 </a>
                 <div class="text-center">
                     <h3 class="text-lg font-semibold text-gray-800">
-                        {{ $weekStartDate->format('M d') }} - {{ $weekEndDate->format('M d, Y') }}
+                        {{ $label }}
                     </h3>
                 </div>
-                <a href="{{ route('hr.shifts.roster', ['week_start' => $nextWeek]) }}"
+                <a href="{{ route('hr.shifts.roster', array_filter([
+                    'period' => $period,
+                    'week_start' => $next->format('Y-m-d'),
+                    'month' => $period === 'monthly' ? $next->format('Y-m-01') : null,
+                    'start_date' => $period === 'custom' ? $next->format('Y-m-d') : null,
+                    'end_date' => $period === 'custom' ? $next->copy()->addDays(max(0, $startDate->diffInDays($endDate)))->format('Y-m-d') : null,
+                    'department_id' => request('department_id'),
+                ])) }}"
                    class="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    Next Week<i class="fas fa-chevron-right ml-1"></i>
+                    Next<i class="fas fa-chevron-right ml-1"></i>
                 </a>
             </div>
 
-            <!-- Department Filter & Actions -->
+            <!-- Filters & Actions -->
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <form action="{{ route('hr.shifts.roster') }}" method="GET" class="flex items-center gap-2">
-                    <input type="hidden" name="week_start" value="{{ $weekStartDate->format('Y-m-d') }}">
+                <form action="{{ route('hr.shifts.roster') }}" method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 print:hidden">
+                    <input type="hidden" name="period" value="{{ $period }}">
+                    <input type="hidden" name="week_start" value="{{ $startDate->format('Y-m-d') }}">
+                    @if($period === 'monthly')
+                        <input type="month" name="month" value="{{ $startDate->format('Y-m') }}"
+                               onchange="this.form.submit()"
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                    @elseif($period === 'custom')
+                        <input type="date" name="start_date" value="{{ $startDate->format('Y-m-d') }}"
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <input type="date" name="end_date" value="{{ $endDate->format('Y-m-d') }}"
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <button type="submit" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                            Apply
+                        </button>
+                    @endif
+
+                    <select name="period" onchange="this.form.submit()"
+                            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <option value="weekly" {{ $period === 'weekly' ? 'selected' : '' }}>Weekly</option>
+                        <option value="monthly" {{ $period === 'monthly' ? 'selected' : '' }}>Monthly</option>
+                        <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>Custom dates</option>
+                    </select>
+
                     <select name="department_id" onchange="this.form.submit()"
                             class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                         <option value="">All Departments</option>
@@ -52,12 +103,24 @@
                     </select>
                 </form>
 
-                <form action="{{ route('hr.shifts.auto-generate') }}" method="POST" class="inline">
+                <div class="flex items-center gap-2 print:hidden">
+                    <button type="button"
+                            onclick="window.print()"
+                            class="w-full sm:w-auto px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors">
+                        <i class="fas fa-print mr-2"></i>Print
+                    </button>
+                </div>
+
+                <form action="{{ route('hr.shifts.auto-generate') }}" method="POST" class="inline print:hidden">
                     @csrf
-                    <input type="hidden" name="week_start" value="{{ $weekStartDate->format('Y-m-d') }}">
+                    <input type="hidden" name="period" value="{{ $period }}">
+                    <input type="hidden" name="week_start" value="{{ $startDate->format('Y-m-d') }}">
+                    <input type="hidden" name="start_date" value="{{ $startDate->format('Y-m-d') }}">
+                    <input type="hidden" name="end_date" value="{{ $endDate->format('Y-m-d') }}">
+                    <input type="hidden" name="month" value="{{ $startDate->format('Y-m-01') }}">
                     <input type="hidden" name="department_id" value="{{ request('department_id') }}">
                     <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                            onclick="return confirm('This will auto-generate the roster for this week. Existing assignments may be overwritten. Continue?')">
+                            onclick="return confirm('This will auto-generate the roster for this period. Existing assignments may be overwritten. Continue?')">
                         <i class="fas fa-magic mr-2"></i>Auto Generate
                     </button>
                 </form>
@@ -89,15 +152,21 @@
     <div class="p-6 border-b border-gray-200">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div>
-                <h3 class="text-lg font-semibold text-gray-800">Weekly Duty Roster</h3>
-                <p class="text-sm text-gray-600">Assign shifts to employees for the week</p>
+                <h3 class="text-lg font-semibold text-gray-800">Duty Roster</h3>
+                <p class="text-sm text-gray-600">
+                    {{ $period === 'monthly' ? 'Assign shifts for the month' : ($period === 'custom' ? 'Assign shifts for selected dates' : 'Assign shifts to employees for the week') }}
+                </p>
             </div>
         </div>
     </div>
 
     <form action="{{ route('hr.shifts.store-roster') }}" method="POST">
         @csrf
-        <input type="hidden" name="week_start" value="{{ $weekStartDate->format('Y-m-d') }}">
+        <input type="hidden" name="period" value="{{ $period }}">
+        <input type="hidden" name="week_start" value="{{ $startDate->format('Y-m-d') }}">
+        <input type="hidden" name="start_date" value="{{ $startDate->format('Y-m-d') }}">
+        <input type="hidden" name="end_date" value="{{ $endDate->format('Y-m-d') }}">
+        <input type="hidden" name="month" value="{{ $startDate->format('Y-m-01') }}">
         <input type="hidden" name="department_id" value="{{ request('department_id') }}">
 
         <div class="overflow-x-auto">
@@ -220,5 +289,21 @@
         });
     });
 </script>
+@endpush
+
+@push('styles')
+<style>
+    @media print {
+        .print\:hidden { display: none !important; }
+        body { background: #fff !important; }
+        .shadow-sm { box-shadow: none !important; }
+        .rounded-lg { border-radius: 0 !important; }
+        .overflow-x-auto { overflow: visible !important; }
+        table { page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        thead { display: table-header-group; }
+        .sticky { position: static !important; }
+    }
+    </style>
 @endpush
 @endsection

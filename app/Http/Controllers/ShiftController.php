@@ -88,8 +88,33 @@ class ShiftController extends Controller
 
     public function roster(Request $request)
     {
+        $period = $request->input('period', 'weekly'); // weekly | monthly | custom
+
+        // Backward compatible: keep `week_start` working for weekly view.
         $weekStart = $request->input('week_start', now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d'));
-        $weekEnd = Carbon::parse($weekStart)->addDays(6)->format('Y-m-d');
+
+        if ($period === 'monthly') {
+            $anchor = Carbon::parse($request->input('month', now()->format('Y-m-01')));
+            $startDate = $anchor->copy()->startOfMonth();
+            $endDate = $anchor->copy()->endOfMonth();
+        } elseif ($period === 'custom') {
+            $startDate = Carbon::parse($request->input('start_date', now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d')));
+            $endDate = Carbon::parse($request->input('end_date', $startDate->copy()->addDays(6)->format('Y-m-d')));
+        } else {
+            $startDate = Carbon::parse($weekStart);
+            $endDate = $startDate->copy()->addDays(6);
+        }
+
+        // Guardrails: ensure sane order and avoid huge tables by accident.
+        if ($endDate->lt($startDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+        if ($startDate->diffInDays($endDate) > 62) {
+            $endDate = $startDate->copy()->addDays(62);
+        }
+
+        $weekStart = $startDate->format('Y-m-d');
+        $weekEnd = $endDate->format('Y-m-d');
         $departmentId = $request->input('department_id');
 
         $query = Employee::active()->with(['department', 'designation']);
@@ -112,7 +137,7 @@ class ShiftController extends Controller
         }
 
         return view('admin.hr.shifts.roster', compact(
-            'employees', 'shifts', 'departments', 'rosters', 'dates', 'weekStart', 'weekEnd'
+            'employees', 'shifts', 'departments', 'rosters', 'dates', 'weekStart', 'weekEnd', 'period'
         ));
     }
 
@@ -160,8 +185,30 @@ class ShiftController extends Controller
      */
     public function autoGenerate(Request $request)
     {
+        $period = $request->input('period', 'weekly');
         $weekStart = $request->input('week_start', now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d'));
-        $weekEnd = Carbon::parse($weekStart)->addDays(6)->format('Y-m-d');
+
+        if ($period === 'monthly') {
+            $anchor = Carbon::parse($request->input('month', now()->format('Y-m-01')));
+            $startDate = $anchor->copy()->startOfMonth();
+            $endDate = $anchor->copy()->endOfMonth();
+        } elseif ($period === 'custom') {
+            $startDate = Carbon::parse($request->input('start_date', now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d')));
+            $endDate = Carbon::parse($request->input('end_date', $startDate->copy()->addDays(6)->format('Y-m-d')));
+        } else {
+            $startDate = Carbon::parse($weekStart);
+            $endDate = $startDate->copy()->addDays(6);
+        }
+
+        if ($endDate->lt($startDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+        if ($startDate->diffInDays($endDate) > 62) {
+            $endDate = $startDate->copy()->addDays(62);
+        }
+
+        $weekStart = $startDate->format('Y-m-d');
+        $weekEnd = $endDate->format('Y-m-d');
         $departmentId = $request->input('department_id');
 
         $query = Employee::active();
@@ -173,6 +220,9 @@ class ShiftController extends Controller
             'morning' => $shifts->get('MOR')?->id ?? $shifts->first()?->id,
             'evening' => $shifts->get('EVE')?->id ?? $shifts->first()?->id,
             'night' => $shifts->get('NGT')?->id ?? $shifts->first()?->id,
+            'morning_evening' => $shifts->get('MOR_EVE')?->id ?? $shifts->get('MOR')?->id ?? $shifts->first()?->id,
+            'evening_night' => $shifts->get('EVE_NGT')?->id ?? $shifts->get('NGT')?->id ?? $shifts->first()?->id,
+            '24_hours' => $shifts->get('H24')?->id ?? $shifts->first()?->id,
         ];
 
         $count = 0;
