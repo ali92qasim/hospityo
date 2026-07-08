@@ -117,7 +117,7 @@ class ShiftController extends Controller
         $weekEnd = $endDate->format('Y-m-d');
         $departmentId = $request->input('department_id');
 
-        $query = Employee::active()->with(['department', 'designation']);
+        $query = Employee::active()->with(['department', 'designation', 'doctor']);
         if ($departmentId) $query->where('department_id', $departmentId);
         $employees = $query->orderBy('first_name')->get();
 

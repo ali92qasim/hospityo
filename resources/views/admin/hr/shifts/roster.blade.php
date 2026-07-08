@@ -31,8 +31,20 @@
     }
 @endphp
 
+<!-- Print header (visible only when printing) -->
+<div class="hidden print:block mb-4">
+    <h1 class="text-xl font-bold text-center">Duty Roster</h1>
+    <p class="text-center text-sm text-gray-700">{{ $label }}</p>
+    @if(request('department_id'))
+        @php $deptName = optional(($departments ?? collect())->firstWhere('id', (int) request('department_id')))->name; @endphp
+        @if($deptName)
+            <p class="text-center text-xs text-gray-600">Department: {{ $deptName }}</p>
+        @endif
+    @endif
+</div>
+
 <!-- Period Navigation & Filters -->
-<div class="bg-white rounded-lg shadow-sm mb-6">
+<div class="bg-white rounded-lg shadow-sm mb-6 print:hidden">
     <div class="p-4">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <!-- Navigation -->
@@ -130,13 +142,13 @@
 </div>
 
 <!-- Shift Legend -->
-<div class="bg-white rounded-lg shadow-sm mb-6">
+<div class="bg-white rounded-lg shadow-sm mb-6 print:hidden">
     <div class="p-4">
         <div class="flex flex-wrap gap-4 text-sm">
             @foreach($shifts as $shift)
                 <div class="flex items-center gap-1.5">
                     <span class="inline-block w-3 h-3 rounded-full border border-gray-200" style="background-color: {{ $shift->color }};"></span>
-                    <span class="text-gray-600">{{ $shift->name }}</span>
+                    <span class="text-gray-600">{{ $shift->name }} ({{ $shift->time_range }})</span>
                 </div>
             @endforeach
             <div class="flex items-center gap-1.5">
@@ -147,9 +159,17 @@
     </div>
 </div>
 
+<!-- Print shift timing legend -->
+<div class="hidden print:block mb-3 text-xs">
+    <strong>Shift timings:</strong>
+    @foreach($shifts as $shift)
+        <span class="mr-3">{{ $shift->name }}: {{ $shift->time_range }}</span>
+    @endforeach
+</div>
+
 <!-- Roster Grid -->
 <div class="bg-white rounded-lg shadow-sm">
-    <div class="p-6 border-b border-gray-200">
+    <div class="p-6 border-b border-gray-200 print:hidden">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div>
                 <h3 class="text-lg font-semibold text-gray-800">Duty Roster</h3>
@@ -170,11 +190,11 @@
         <input type="hidden" name="department_id" value="{{ request('department_id') }}">
 
         <div class="overflow-x-auto">
-            <table class="w-full">
+            <table class="w-full roster-table">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 min-w-[200px]">
-                            Employee
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 min-w-[220px]">
+                            Doctor / Employee
                         </th>
                         @foreach($days as $day)
                             <th class="px-2 py-3 text-center text-xs font-medium {{ $day->isSunday() ? 'text-red-500' : 'text-gray-500' }} uppercase tracking-wider min-w-[160px]">
@@ -186,17 +206,44 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($employees ?? [] as $employee)
+                    @php
+                        $doctor = $employee->doctor;
+                        $displayName = $doctor?->name ?: $employee->full_name;
+                        $pmdc = $doctor?->pmdc_number;
+                        $registration = $pmdc ?: ($doctor?->doctor_no);
+                        $doctorTimings = null;
+                        if ($doctor?->shift_start && $doctor?->shift_end) {
+                            $doctorTimings = \Carbon\Carbon::parse($doctor->shift_start)->format('h:i A')
+                                . ' — '
+                                . \Carbon\Carbon::parse($doctor->shift_end)->format('h:i A');
+                        }
+                    @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
-                            <div class="flex items-center">
+                            <div class="flex items-start">
                                 @if($employee->photo)
-                                    <img src="{{ asset('storage/' . $employee->photo) }}" alt="{{ $employee->full_name }}" class="w-7 h-7 rounded-full object-cover mr-2">
+                                    <img src="{{ asset('storage/' . $employee->photo) }}" alt="{{ $displayName }}" class="w-7 h-7 rounded-full object-cover mr-2 print:hidden">
                                 @else
-                                    <div class="w-7 h-7 bg-medical-blue rounded-full flex items-center justify-center text-white text-xs font-medium mr-2">
-                                        {{ strtoupper(substr($employee->first_name, 0, 1) . substr($employee->last_name, 0, 1)) }}
+                                    <div class="w-7 h-7 bg-medical-blue rounded-full flex items-center justify-center text-white text-xs font-medium mr-2 print:hidden">
+                                        {{ strtoupper(substr($employee->first_name ?? $displayName, 0, 1) . substr($employee->last_name ?? '', 0, 1)) }}
                                     </div>
                                 @endif
-                                <span class="truncate">{{ $employee->full_name }}</span>
+                                <div class="min-w-0">
+                                    <div class="font-semibold truncate">{{ $displayName }}</div>
+                                    @if($pmdc)
+                                        <div class="text-xs text-gray-600">PMDC: {{ $pmdc }}</div>
+                                    @elseif($registration)
+                                        <div class="text-xs text-gray-600">Reg No: {{ $registration }}</div>
+                                    @elseif($doctor)
+                                        <div class="text-xs text-gray-500">PMDC: —</div>
+                                    @endif
+                                    @if($doctorTimings)
+                                        <div class="text-xs text-gray-600">Timings: {{ $doctorTimings }}</div>
+                                    @endif
+                                    @if($employee->department)
+                                        <div class="text-xs text-gray-400 print:hidden">{{ $employee->department->name }}</div>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                         @foreach($days as $day)
@@ -204,10 +251,11 @@
                                 $dateKey = $day->format('Y-m-d');
                                 $rosterEntry = $rosters[$employee->id][$dateKey] ?? null;
                                 $currentShiftId = $rosterEntry->shift_id ?? null;
-                                $isOff = $rosterEntry->is_off ?? false;
+                                $assignedShift = $rosterEntry->shift ?? null;
+                                $isOff = (bool) ($rosterEntry->is_off_day ?? false);
                             @endphp
                             <td class="px-2 py-3 text-center {{ $isOff ? 'bg-gray-100' : '' }}">
-                                <div class="space-y-1">
+                                <div class="space-y-1 print:hidden">
                                     <select name="roster[{{ $employee->id }}][{{ $dateKey }}][shift_id]"
                                             class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-medical-blue focus:border-transparent roster-shift-select"
                                             data-employee="{{ $employee->id }}" data-date="{{ $dateKey }}"
@@ -228,6 +276,18 @@
                                         <span class="text-xs text-gray-500">Off</span>
                                     </label>
                                 </div>
+
+                                {{-- Print-only cell content --}}
+                                <div class="hidden print:block text-xs leading-tight">
+                                    @if($isOff)
+                                        <strong>Off</strong>
+                                    @elseif($assignedShift)
+                                        <div class="font-semibold">{{ $assignedShift->name }}</div>
+                                        <div>{{ $assignedShift->time_range }}</div>
+                                    @else
+                                        <span class="text-gray-400">—</span>
+                                    @endif
+                                </div>
                             </td>
                         @endforeach
                     </tr>
@@ -247,7 +307,7 @@
         </div>
 
         @if(($employees ?? collect())->count() > 0)
-        <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end print:hidden">
             <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 flex items-center">
                 <i class="fas fa-save mr-2"></i>
                 Save Roster
@@ -294,16 +354,58 @@
 @push('styles')
 <style>
     @media print {
-        .print\:hidden { display: none !important; }
-        body { background: #fff !important; }
+        /* Hide app chrome */
+        #sidebar,
+        #mobile-overlay,
+        header,
+        .print\:hidden,
+        nav,
+        aside {
+            display: none !important;
+        }
+
+        .hidden.print\:block,
+        .print\:block {
+            display: block !important;
+        }
+
+        body {
+            background: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Expand main content full width when sidebar is hidden */
+        .lg\:ml-64 {
+            margin-left: 0 !important;
+        }
+
+        main {
+            padding: 0 !important;
+        }
+
         .shadow-sm { box-shadow: none !important; }
         .rounded-lg { border-radius: 0 !important; }
         .overflow-x-auto { overflow: visible !important; }
+
+        .roster-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .roster-table th,
+        .roster-table td {
+            border: 1px solid #d1d5db;
+            padding: 6px 4px;
+            vertical-align: top;
+        }
+
         table { page-break-inside: auto; }
         tr { page-break-inside: avoid; page-break-after: auto; }
         thead { display: table-header-group; }
         .sticky { position: static !important; }
     }
-    </style>
+</style>
 @endpush
 @endsection
