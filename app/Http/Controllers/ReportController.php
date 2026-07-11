@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\BillItemRevenueGrouper;
 use App\Models\Bill;
 use App\Models\Payment;
 use App\Models\Visit;
@@ -22,6 +23,8 @@ use App\Models\Ward;
 use App\Models\Bed;
 use App\Models\Department;
 use App\Models\Patient;
+use App\Models\DoctorShareItem;
+use App\Models\DoctorShareAllocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -188,39 +191,73 @@ class ReportController extends Controller
             'total_bills' => $bills->count(),
         ];
 
-        // Revenue by service type
-        $serviceRevenue = BillItem::whereHas('bill', function($query) use ($startDate, $endDate) {
+        // Revenue by service / investigation (group linked services and lab lines correctly)
+        $investigationsByName = BillItemRevenueGrouper::investigationsByName();
+
+        $billItems = BillItem::whereHas('bill', function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('bill_date', [$startDate, $endDate]);
             })
-            ->with('service')
-            ->get()
-            ->groupBy('service.name')
-            ->map(function($items, $serviceName) {
+            ->with(['service', 'investigation'])
+            ->get();
+
+        $serviceRevenue = $billItems
+            ->groupBy(fn (BillItem $item) => BillItemRevenueGrouper::groupKey($item, $investigationsByName))
+            ->map(function ($items) use ($investigationsByName) {
+                $sample = $items->first();
+
                 return [
-                    'service' => $serviceName ?: 'Unknown',
+                    'service' => BillItemRevenueGrouper::groupLabel($sample, $investigationsByName),
+                    'is_investigation' => BillItemRevenueGrouper::isInvestigation($sample, $investigationsByName),
                     'quantity' => $items->sum('quantity'),
-                    'revenue' => $items->sum('total_amount'),
+                    'revenue' => $items->sum('total_price'),
                 ];
             })
             ->sortByDesc('revenue')
             ->values();
 
-        // Revenue by doctor
-        $doctorRevenue = $bills->filter(function($bill) {
+        // Revenue by doctor — full bill totals attributed to the visit doctor
+        $doctorRevenue = $bills->filter(function ($bill) {
                 return $bill->visit && $bill->visit->doctor;
             })
             ->groupBy('visit.doctor_id')
-            ->map(function($doctorBills) {
+            ->map(function ($doctorBills) {
                 $doctor = $doctorBills->first()->visit->doctor;
+
                 return [
                     'doctor' => $doctor,
                     'bills' => $doctorBills->count(),
-                    'revenue' => $doctorBills->sum('total_amount'),
-                    'collected' => $doctorBills->sum('paid_amount'),
+                    'revenue' => (float) $doctorBills->sum('total_amount'),
+                    'collected' => (float) $doctorBills->sum('paid_amount'),
                 ];
             })
             ->sortByDesc('revenue')
             ->values();
+
+        // Doctor share comparison:
+        // - share_earned: share_amount on bills whose bill_date is inside the range
+        // - share_collected: allocation ledger entries created inside the range (payment events)
+        $billIdsInRange = $bills->pluck('id');
+
+        $shareEarnedByDoctor = DoctorShareItem::query()
+            ->active()
+            ->whereIn('bill_id', $billIdsInRange)
+            ->selectRaw('doctor_id, SUM(share_amount) as share_earned')
+            ->groupBy('doctor_id')
+            ->pluck('share_earned', 'doctor_id');
+
+        $shareCollectedByDoctor = DoctorShareAllocation::query()
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->selectRaw('doctor_id, SUM(amount) as share_collected')
+            ->groupBy('doctor_id')
+            ->pluck('share_collected', 'doctor_id');
+
+        // Attach share figures to each doctor row for side-by-side comparison
+        $doctorRevenue = $doctorRevenue->map(function ($row) use ($shareEarnedByDoctor, $shareCollectedByDoctor) {
+            $doctorId = $row['doctor']->id;
+            $row['share_earned'] = (float) ($shareEarnedByDoctor[$doctorId] ?? 0);
+            $row['share_collected'] = (float) ($shareCollectedByDoctor[$doctorId] ?? 0);
+            return $row;
+        });
 
         // Daily revenue trend
         $dailyRevenue = $bills->groupBy(function($bill) {

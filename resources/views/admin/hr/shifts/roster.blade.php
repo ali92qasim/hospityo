@@ -31,112 +31,181 @@
     }
 @endphp
 
-<!-- Print header (visible only when printing) -->
-<div class="hidden print:block mb-4">
-    <h1 class="text-xl font-bold text-center">Duty Roster</h1>
-    <p class="text-center text-sm text-gray-700">{{ $label }}</p>
-    @if(request('department_id'))
-        @php $deptName = optional(($departments ?? collect())->firstWhere('id', (int) request('department_id')))->name; @endphp
-        @if($deptName)
-            <p class="text-center text-xs text-gray-600">Department: {{ $deptName }}</p>
+@php
+    $hospitalName = setting('hospital_name', config('app.name', 'Hospital Management System'));
+    $hospitalLogo = setting('hospital_logo', '');
+    $hospitalAddress = setting('hospital_address', '');
+    $hospitalPhone = setting('hospital_phone', '');
+    $hospitalEmail = setting('hospital_email', '');
+    $printDeptName = request('department_id')
+        ? optional(($departments ?? collect())->firstWhere('id', (int) request('department_id')))->name
+        : null;
+@endphp
+
+<!-- Print letterhead (visible only when printing) -->
+<div class="hidden print:block roster-print-header">
+    <div class="roster-print-brand">
+        @if($hospitalLogo)
+            <img src="{{ asset('storage/' . $hospitalLogo) }}" alt="{{ $hospitalName }}" class="roster-print-logo">
         @endif
-    @endif
+        <div class="roster-print-brand-text">
+            <h1 class="roster-print-hospital">{{ $hospitalName }}</h1>
+            @if($hospitalAddress)
+                <p class="roster-print-meta">{{ $hospitalAddress }}</p>
+            @endif
+            @if($hospitalPhone || $hospitalEmail)
+                <p class="roster-print-meta">
+                    @if($hospitalPhone)<span>Tel: {{ $hospitalPhone }}</span>@endif
+                    @if($hospitalPhone && $hospitalEmail)<span class="roster-print-sep">·</span>@endif
+                    @if($hospitalEmail)<span>{{ $hospitalEmail }}</span>@endif
+                </p>
+            @endif
+        </div>
+    </div>
+
+    <div class="roster-print-doc">
+        <h2 class="roster-print-title">Duty Roster</h2>
+        <div class="roster-print-details">
+            <span><strong>Period:</strong> {{ $label }}</span>
+            @if($printDeptName)
+                <span><strong>Department:</strong> {{ $printDeptName }}</span>
+            @else
+                <span><strong>Department:</strong> All</span>
+            @endif
+            <span><strong>Printed:</strong> {{ now()->format('d M Y, h:i A') }}</span>
+        </div>
+    </div>
 </div>
 
+@php
+    $navQuery = fn ($anchor) => array_filter([
+        'period' => $period,
+        'week_start' => $anchor->format('Y-m-d'),
+        'month' => $period === 'monthly' ? $anchor->format('Y-m-01') : null,
+        'start_date' => $period === 'custom' ? $anchor->format('Y-m-d') : null,
+        'end_date' => $period === 'custom'
+            ? $anchor->copy()->addDays(max(0, $startDate->diffInDays($endDate)))->format('Y-m-d')
+            : null,
+        'department_id' => request('department_id'),
+    ]);
+
+    if ($period === 'custom') {
+        $rangeLabel = $startDate->format('d M Y') . ' – ' . $endDate->format('d M Y');
+        $rangeSub = ($startDate->diffInDays($endDate) + 1) . ' days';
+    } elseif ($period === 'monthly') {
+        $rangeLabel = $startDate->format('F Y');
+        $rangeSub = 'Monthly';
+    } else {
+        $rangeLabel = $startDate->format('d M') . ' – ' . $endDate->format('d M Y');
+        $rangeSub = 'Weekly';
+    }
+@endphp
+
 <!-- Period Navigation & Filters -->
-<div class="bg-white rounded-lg shadow-sm mb-6 print:hidden">
-    <div class="p-4">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <!-- Navigation -->
-            <div class="flex items-center gap-3">
-                <a href="{{ route('hr.shifts.roster', array_filter([
-                    'period' => $period,
-                    'week_start' => $prev->format('Y-m-d'),
-                    'month' => $period === 'monthly' ? $prev->format('Y-m-01') : null,
-                    'start_date' => $period === 'custom' ? $prev->format('Y-m-d') : null,
-                    'end_date' => $period === 'custom' ? $prev->copy()->addDays(max(0, $startDate->diffInDays($endDate)))->format('Y-m-d') : null,
-                    'department_id' => request('department_id'),
-                ])) }}"
-                   class="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-chevron-left mr-1"></i>Previous
-                </a>
-                <div class="text-center">
-                    <h3 class="text-lg font-semibold text-gray-800">
-                        {{ $label }}
-                    </h3>
+<div class="bg-white rounded-lg shadow-sm mb-6 print:hidden overflow-hidden">
+    <div class="p-4 space-y-4">
+        {{-- Row 1: Period navigation --}}
+        <div class="flex items-center gap-2 sm:gap-3">
+            <a href="{{ route('hr.shifts.roster', $navQuery($prev)) }}"
+               class="inline-flex items-center justify-center shrink-0 h-10 w-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+               title="Previous period" aria-label="Previous period">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+
+            <div class="flex-1 min-w-0 flex justify-center">
+                <div class="inline-flex max-w-full items-center gap-2 rounded-xl bg-gray-50 border border-gray-200 px-3 sm:px-4 py-2">
+                    <i class="fas fa-calendar-alt text-medical-blue shrink-0"></i>
+                    <div class="min-w-0 text-center">
+                        <p class="text-sm sm:text-base font-semibold text-gray-800 leading-snug break-words">
+                            {{ $rangeLabel }}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ $rangeSub }}</p>
+                    </div>
                 </div>
-                <a href="{{ route('hr.shifts.roster', array_filter([
-                    'period' => $period,
-                    'week_start' => $next->format('Y-m-d'),
-                    'month' => $period === 'monthly' ? $next->format('Y-m-01') : null,
-                    'start_date' => $period === 'custom' ? $next->format('Y-m-d') : null,
-                    'end_date' => $period === 'custom' ? $next->copy()->addDays(max(0, $startDate->diffInDays($endDate)))->format('Y-m-d') : null,
-                    'department_id' => request('department_id'),
-                ])) }}"
-                   class="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    Next<i class="fas fa-chevron-right ml-1"></i>
-                </a>
             </div>
 
-            <!-- Filters & Actions -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <form action="{{ route('hr.shifts.roster') }}" method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 print:hidden">
-                    <input type="hidden" name="period" value="{{ $period }}">
-                    <input type="hidden" name="week_start" value="{{ $startDate->format('Y-m-d') }}">
-                    @if($period === 'monthly')
-                        <input type="month" name="month" value="{{ $startDate->format('Y-m') }}"
-                               onchange="this.form.submit()"
-                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                    @elseif($period === 'custom')
+            <a href="{{ route('hr.shifts.roster', $navQuery($next)) }}"
+               class="inline-flex items-center justify-center shrink-0 h-10 w-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+               title="Next period" aria-label="Next period">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+
+        {{-- Row 2: Filters --}}
+        <form action="{{ route('hr.shifts.roster') }}" method="GET"
+              class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-3 items-end">
+            <input type="hidden" name="week_start" value="{{ $startDate->format('Y-m-d') }}">
+
+            <div class="xl:col-span-2">
+                <label class="block text-xs font-medium text-gray-500 mb-1">View</label>
+                <select name="period" onchange="this.form.submit()"
+                        class="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                    <option value="weekly" {{ $period === 'weekly' ? 'selected' : '' }}>Weekly</option>
+                    <option value="monthly" {{ $period === 'monthly' ? 'selected' : '' }}>Monthly</option>
+                    <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>Custom dates</option>
+                </select>
+            </div>
+
+            <div class="xl:col-span-3">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Department</label>
+                <select name="department_id" onchange="this.form.submit()"
+                        class="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                    <option value="">All Departments</option>
+                    @foreach($departments ?? [] as $department)
+                        <option value="{{ $department->id }}" {{ request('department_id') == $department->id ? 'selected' : '' }}>
+                            {{ $department->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            @if($period === 'monthly')
+                <div class="xl:col-span-3">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Month</label>
+                    <input type="month" name="month" value="{{ $startDate->format('Y-m') }}"
+                           onchange="this.form.submit()"
+                           class="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                </div>
+            @elseif($period === 'custom')
+                <div class="sm:col-span-2 xl:col-span-5">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Date range</label>
+                    <div class="flex flex-col sm:flex-row items-stretch gap-2">
                         <input type="date" name="start_date" value="{{ $startDate->format('Y-m-d') }}"
-                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                               class="w-full min-w-0 h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <span class="hidden sm:inline-flex items-center justify-center text-xs text-gray-400 shrink-0 px-1">to</span>
                         <input type="date" name="end_date" value="{{ $endDate->format('Y-m-d') }}"
-                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                        <button type="submit" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                               class="w-full min-w-0 h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <button type="submit"
+                                class="h-10 px-4 shrink-0 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-colors">
                             Apply
                         </button>
-                    @endif
-
-                    <select name="period" onchange="this.form.submit()"
-                            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                        <option value="weekly" {{ $period === 'weekly' ? 'selected' : '' }}>Weekly</option>
-                        <option value="monthly" {{ $period === 'monthly' ? 'selected' : '' }}>Monthly</option>
-                        <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>Custom dates</option>
-                    </select>
-
-                    <select name="department_id" onchange="this.form.submit()"
-                            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                        <option value="">All Departments</option>
-                        @foreach($departments ?? [] as $department)
-                            <option value="{{ $department->id }}" {{ request('department_id') == $department->id ? 'selected' : '' }}>
-                                {{ $department->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
-
-                <div class="flex items-center gap-2 print:hidden">
-                    <button type="button"
-                            onclick="window.print()"
-                            class="w-full sm:w-auto px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors">
-                        <i class="fas fa-print mr-2"></i>Print
-                    </button>
+                    </div>
                 </div>
+            @endif
+        </form>
 
-                <form action="{{ route('hr.shifts.auto-generate') }}" method="POST" class="inline print:hidden">
-                    @csrf
-                    <input type="hidden" name="period" value="{{ $period }}">
-                    <input type="hidden" name="week_start" value="{{ $startDate->format('Y-m-d') }}">
-                    <input type="hidden" name="start_date" value="{{ $startDate->format('Y-m-d') }}">
-                    <input type="hidden" name="end_date" value="{{ $endDate->format('Y-m-d') }}">
-                    <input type="hidden" name="month" value="{{ $startDate->format('Y-m-01') }}">
-                    <input type="hidden" name="department_id" value="{{ request('department_id') }}">
-                    <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                            onclick="return confirm('This will auto-generate the roster for this period. Existing assignments may be overwritten. Continue?')">
-                        <i class="fas fa-magic mr-2"></i>Auto Generate
-                    </button>
-                </form>
-            </div>
+        {{-- Row 3: Actions --}}
+        <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100">
+            <button type="button"
+                    onclick="window.print()"
+                    class="inline-flex items-center justify-center h-10 px-4 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-print mr-2 text-gray-500"></i>Print
+            </button>
+
+            <form action="{{ route('hr.shifts.auto-generate') }}" method="POST" class="inline-flex">
+                @csrf
+                <input type="hidden" name="period" value="{{ $period }}">
+                <input type="hidden" name="week_start" value="{{ $startDate->format('Y-m-d') }}">
+                <input type="hidden" name="start_date" value="{{ $startDate->format('Y-m-d') }}">
+                <input type="hidden" name="end_date" value="{{ $endDate->format('Y-m-d') }}">
+                <input type="hidden" name="month" value="{{ $startDate->format('Y-m-01') }}">
+                <input type="hidden" name="department_id" value="{{ request('department_id') }}">
+                <button type="submit"
+                        class="inline-flex items-center justify-center h-10 px-4 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                        onclick="return confirm('This will auto-generate the roster for this period. Existing assignments may be overwritten. Continue?')">
+                    <i class="fas fa-magic mr-2"></i>Auto Generate
+                </button>
+            </form>
         </div>
     </div>
 </div>
@@ -160,10 +229,10 @@
 </div>
 
 <!-- Print shift timing legend -->
-<div class="hidden print:block mb-3 text-xs">
+<div class="hidden print:block roster-print-legend">
     <strong>Shift timings:</strong>
     @foreach($shifts as $shift)
-        <span class="mr-3">{{ $shift->name }}: {{ $shift->time_range }}</span>
+        <span>{{ $shift->name }}: {{ $shift->time_range }}</span>@if(!$loop->last)<span class="roster-print-sep">·</span>@endif
     @endforeach
 </div>
 
@@ -317,6 +386,24 @@
     </form>
 </div>
 
+<!-- Print footer -->
+<div class="hidden print:block roster-print-footer">
+    <div class="roster-print-sign">
+        <div class="roster-print-sign-line"></div>
+        Prepared by
+    </div>
+    <div class="roster-print-sign">
+        <div class="roster-print-sign-line"></div>
+        Approved by
+    </div>
+    <div>
+        {{ $hospitalName }}
+        @if($hospitalPhone)
+            · {{ $hospitalPhone }}
+        @endif
+    </div>
+</div>
+
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -353,6 +440,8 @@
 
 @push('styles')
 <style>
+    /* Screen: keep print-only blocks hidden (Tailwind handles this) */
+
     @media print {
         /* Hide app chrome */
         #sidebar,
@@ -373,9 +462,11 @@
             background: #fff !important;
             margin: 0 !important;
             padding: 0 !important;
+            color: #111827 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
-        /* Expand main content full width when sidebar is hidden */
         .lg\:ml-64 {
             margin-left: 0 !important;
         }
@@ -388,16 +479,129 @@
         .rounded-lg { border-radius: 0 !important; }
         .overflow-x-auto { overflow: visible !important; }
 
+        @page {
+            size: A4 landscape;
+            margin: 10mm 8mm 12mm;
+        }
+
+        /* ── Letterhead ── */
+        .roster-print-header {
+            display: block !important;
+            margin-bottom: 10px;
+            page-break-inside: avoid;
+        }
+
+        .roster-print-brand {
+            display: flex !important;
+            align-items: center;
+            gap: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #111827;
+        }
+
+        .roster-print-logo {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .roster-print-brand-text {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .roster-print-hospital {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #111827;
+        }
+
+        .roster-print-meta {
+            margin: 2px 0 0;
+            font-size: 10px;
+            line-height: 1.35;
+            color: #4b5563;
+        }
+
+        .roster-print-sep {
+            margin: 0 4px;
+            color: #9ca3af;
+        }
+
+        .roster-print-doc {
+            margin-top: 8px;
+            display: flex !important;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .roster-print-title {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: #111827;
+        }
+
+        .roster-print-details {
+            display: flex !important;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+            font-size: 10px;
+            color: #374151;
+        }
+
+        .roster-print-legend {
+            display: block !important;
+            margin: 0 0 8px;
+            padding: 5px 8px;
+            font-size: 9px;
+            line-height: 1.4;
+            color: #374151;
+            background: #f9fafb !important;
+            border: 1px solid #e5e7eb;
+        }
+
+        .roster-print-footer {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 24px;
+            margin-top: 18px;
+            padding-top: 10px;
+            border-top: 1px solid #d1d5db;
+            font-size: 10px;
+            color: #4b5563;
+            page-break-inside: avoid;
+        }
+
+        .roster-print-sign {
+            min-width: 160px;
+            text-align: center;
+        }
+
+        .roster-print-sign-line {
+            border-top: 1px solid #6b7280;
+            margin-bottom: 4px;
+            height: 28px;
+        }
+
         .roster-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
+            font-size: 10px;
         }
 
         .roster-table th,
         .roster-table td {
             border: 1px solid #d1d5db;
-            padding: 6px 4px;
+            padding: 5px 4px;
             vertical-align: top;
         }
 

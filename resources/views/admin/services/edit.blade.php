@@ -62,7 +62,7 @@
                 <select id="department_id" name="department_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                     <option value="">Select Department</option>
                     @foreach($departments as $department)
-                        <option value="{{ $department->id }}" {{ old('department_id', $service->department_id) == $department->id ? 'selected' : '' }}>
+                        <option value="{{ $department->id }}" {{ old('department_id', $service->department_id ?? '') == $department->id ? 'selected' : '' }}>
                             {{ $department->name }}
                         </option>
                     @endforeach

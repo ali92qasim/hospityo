@@ -16,8 +16,8 @@ class StoreServiceRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'code' => 'required|string|unique:tenant.services,code',
-            'category' => 'required|in:consultation,procedure,lab_test,imaging,medication,other',
-            'price' => 'required|numeric|min:0'
+            'category' => 'required|in:consultation,procedure,investigation,lab_test,imaging,medication,other',
+            'price' => 'required|numeric|min:0',
         ];
     }
 }

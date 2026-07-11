@@ -86,13 +86,14 @@
 <!-- Revenue by Service -->
 <div class="bg-white rounded-lg shadow mb-6">
     <div class="p-6 border-b border-gray-200">
-        <h2 class="text-lg font-semibold text-gray-800">Revenue by Service</h2>
+        <h2 class="text-lg font-semibold text-gray-800">Revenue by Service & Investigation</h2>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Revenue</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">% of Total</th>
@@ -103,6 +104,9 @@
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {{ $service['service'] }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {{ ($service['is_investigation'] ?? false) ? 'Investigation' : 'Service' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ $service['quantity'] }}
@@ -121,7 +125,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
                         No service revenue data available
                     </td>
                 </tr>
@@ -131,6 +135,7 @@
             <tfoot class="bg-gray-50 font-semibold">
                 <tr>
                     <td class="px-6 py-4 text-sm text-gray-900">Total</td>
+                    <td class="px-6 py-4 text-sm text-gray-900"></td>
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $serviceRevenue->sum('quantity') }}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($serviceRevenue->sum('revenue')) }}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">100%</td>
@@ -146,6 +151,7 @@
 <div class="bg-white rounded-lg shadow mb-6">
     <div class="p-6 border-b border-gray-200">
         <h2 class="text-lg font-semibold text-gray-800">Revenue by Doctor</h2>
+        <p class="text-sm text-gray-500 mt-1">Based on bill totals for visits assigned to each doctor.</p>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full">
@@ -155,6 +161,8 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bills</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Revenue</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Collected</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Share Earned</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Share Collected</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Collection %</th>
                 </tr>
             </thead>
@@ -175,6 +183,12 @@
                         {{ format_currency($doctor['collected']) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ format_currency($doctor['share_earned'] ?? 0) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ format_currency($doctor['share_collected'] ?? 0) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ $doctor['revenue'] > 0 ? number_format($doctor['collected'] / $doctor['revenue'] * 100, 1) : 0 }}%
                     </td>
                 </tr>
@@ -186,6 +200,8 @@
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $doctorRevenue->sum('bills') }}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($doctorRevenue->sum('revenue')) }}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($doctorRevenue->sum('collected')) }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($doctorRevenue->sum('share_earned')) }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ format_currency($doctorRevenue->sum('share_collected')) }}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">
                         {{ $doctorRevenue->sum('revenue') > 0 ? number_format($doctorRevenue->sum('collected') / $doctorRevenue->sum('revenue') * 100, 1) : 0 }}%
                     </td>
