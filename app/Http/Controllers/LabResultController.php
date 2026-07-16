@@ -353,30 +353,35 @@ class LabResultController extends Controller
 
     /**
      * Build WhatsApp share payload with the public verify-gate link.
+     * Pass ?redirect=1 to open WhatsApp directly (avoids popup blockers).
      */
-    public function shareWhatsApp(LabResult $labResult)
+    public function shareWhatsApp(Request $request, LabResult $labResult)
     {
         $labResult->load('investigationOrder.patient');
 
         $order = $labResult->investigationOrder;
         if (! $order) {
+            if ($request->boolean('redirect')) {
+                return redirect()->back()->with('error', 'Investigation order not found for this result.');
+            }
+
             return response()->json(['message' => 'Investigation order not found for this result.'], 404);
         }
 
-        return $this->whatsAppShareResponse($order);
+        return $this->whatsAppShareResponse($request, $order);
     }
 
     /**
      * Build WhatsApp share payload for an investigation order.
      */
-    public function shareOrderWhatsApp(InvestigationOrder $investigationOrder)
+    public function shareOrderWhatsApp(Request $request, InvestigationOrder $investigationOrder)
     {
         $investigationOrder->load('patient');
 
-        return $this->whatsAppShareResponse($investigationOrder);
+        return $this->whatsAppShareResponse($request, $investigationOrder);
     }
 
-    private function whatsAppShareResponse(InvestigationOrder $order)
+    private function whatsAppShareResponse(Request $request, InvestigationOrder $order)
     {
         $patient = $order->patient;
         $phone = $patient?->phone;
@@ -405,6 +410,14 @@ class LabResultController extends Controller
         $whatsappUrl = $whatsappPhone !== ''
             ? 'https://wa.me/' . $whatsappPhone . '?text=' . urlencode($message)
             : null;
+
+        if ($request->boolean('redirect')) {
+            if (! $whatsappUrl) {
+                return redirect()->back()->with('error', 'Patient mobile number is missing. Use Copy Link instead.');
+            }
+
+            return redirect()->away($whatsappUrl);
+        }
 
         return response()->json([
             'whatsapp_url' => $whatsappUrl,

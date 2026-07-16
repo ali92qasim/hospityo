@@ -1,8 +1,9 @@
 /**
- * Lab result / order WhatsApp share — opens wa.me with verify-link message.
- * Expects a button with:
- *   data-share-url  → JSON endpoint that returns { whatsapp_url, share_url, phone }
- * Optional sibling #copy-report-link for copy-to-clipboard fallback.
+ * Lab result share helpers:
+ * - Copy report verify-link
+ * - Confirm finalize on verify form
+ *
+ * WhatsApp opens via a normal <a href="...?redirect=1"> so browsers do not block it.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -17,51 +18,28 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const shareBtn = document.getElementById('share-whatsapp-btn');
-    if (!shareBtn) {
+    const copyBtn = document.getElementById('copy-report-link');
+    if (!copyBtn) {
         return;
     }
 
-    const copyBtn = document.getElementById('copy-report-link');
-    let lastShareUrl = shareBtn.dataset.shareLink || '';
+    let lastShareUrl = '';
 
-    if (copyBtn) {
-        copyBtn.addEventListener('click', async function () {
-            if (!lastShareUrl) {
-                const loaded = await loadSharePayload(shareBtn.dataset.shareUrl);
-                if (!loaded?.share_url) {
-                    notify('Report link is not available yet.', 'error');
-                    return;
-                }
-                lastShareUrl = loaded.share_url;
+    copyBtn.addEventListener('click', async function () {
+        if (!lastShareUrl) {
+            const loaded = await loadSharePayload(copyBtn.dataset.shareUrl);
+            if (!loaded?.share_url) {
+                notify('Report link is not available yet.', 'error');
+                return;
             }
-
-            try {
-                await navigator.clipboard.writeText(lastShareUrl);
-                notify('Report link copied.', 'success');
-            } catch (e) {
-                notify('Could not copy link. Please copy it manually.', 'error');
-            }
-        });
-    }
-
-    shareBtn.addEventListener('click', async function () {
-        const data = await loadSharePayload(shareBtn.dataset.shareUrl);
-        if (!data) {
-            return;
+            lastShareUrl = loaded.share_url;
         }
 
-        if (data.share_url) {
-            lastShareUrl = data.share_url;
-        }
-
-        if (!data.phone) {
-            notify(data.message || 'Patient mobile number is missing. Use Copy Link instead.', 'warning');
-            return;
-        }
-
-        if (data.whatsapp_url) {
-            window.open(data.whatsapp_url, '_blank');
+        try {
+            await navigator.clipboard.writeText(lastShareUrl);
+            notify('Report link copied.', 'success');
+        } catch (e) {
+            notify('Could not copy link. Please copy it manually.', 'error');
         }
     });
 
@@ -71,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return null;
         }
 
-        shareBtn.disabled = true;
+        copyBtn.disabled = true;
 
         try {
             const response = await fetch(endpoint, {
@@ -85,16 +63,16 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
 
             if (!response.ok) {
-                notify(data.message || 'Unable to share report.', 'error');
+                notify(data.message || 'Unable to prepare report link.', 'error');
                 return null;
             }
 
             return data;
         } catch (e) {
-            notify('Unable to prepare share link.', 'error');
+            notify('Unable to prepare report link.', 'error');
             return null;
         } finally {
-            shareBtn.disabled = false;
+            copyBtn.disabled = false;
         }
     }
 

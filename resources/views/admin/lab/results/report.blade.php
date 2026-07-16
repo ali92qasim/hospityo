@@ -41,10 +41,13 @@
             font-size: 12pt;
             cursor: pointer;
             color: #fff;
+            border-radius: 8px;
         }
 
-        .print-btn { background: #111; margin-right: 10px; }
-        .close-btn { background: #666; }
+        .print-btn { background: #2563eb; margin-right: 10px; }
+        .print-btn:hover { background: #1d4ed8; }
+        .close-btn { background: #6b7280; }
+        .close-btn:hover { background: #4b5563; }
 
         .report-page {
             width: 210mm;
@@ -60,43 +63,48 @@
             break-after: auto;
         }
 
-        .letterhead {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #111;
-            margin-bottom: 12px;
+        /* Old-style header: logo left, hospital title/details centered */
+        .header {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 20px;
+            align-items: start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
         }
 
-        .letterhead-logo {
-            width: 64px;
-            height: 64px;
+        .logo {
+            width: 100px;
+            height: 100px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
             object-fit: contain;
-            flex-shrink: 0;
         }
 
-        .letterhead-text { flex: 1; min-width: 0; }
+        .hospital-header {
+            text-align: center;
+        }
 
         .hospital-name {
-            font-size: 17pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
+            font-size: 18pt;
+            font-weight: bold;
+            margin-bottom: 5px;
         }
 
-        .hospital-meta {
+        .hospital-address {
             font-size: 9pt;
-            color: #444;
-            margin-top: 2px;
+            margin-bottom: 3px;
         }
 
         .report-title {
-            margin-top: 8px;
-            font-size: 12pt;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
+            font-size: 16pt;
+            font-weight: bold;
+            margin-top: 10px;
+            text-decoration: underline;
         }
 
         .patient-box {
@@ -212,25 +220,26 @@
     @forelse($pages as $pageIndex => $page)
         <section class="report-page">
             @if($pageIndex === 0)
-                <header class="letterhead">
-                    @if($settings['hospital_logo'])
-                        <img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="{{ $settings['hospital_name'] }}" class="letterhead-logo">
-                    @endif
-                    <div class="letterhead-text">
+                <div class="header">
+                    <div class="logo">
+                        @if($settings['hospital_logo'])
+                            <img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Hospital Logo">
+                        @endif
+                    </div>
+                    <div class="hospital-header">
                         <div class="hospital-name">{{ $settings['hospital_name'] }}</div>
                         @if($settings['hospital_address'])
-                            <div class="hospital-meta">{{ $settings['hospital_address'] }}</div>
+                            <div class="hospital-address">{{ $settings['hospital_address'] }}</div>
                         @endif
-                        @if($settings['hospital_phone'] || $settings['hospital_email'])
-                            <div class="hospital-meta">
-                                @if($settings['hospital_phone'])Tel: {{ $settings['hospital_phone'] }}@endif
-                                @if($settings['hospital_phone'] && $settings['hospital_email']) · @endif
-                                @if($settings['hospital_email']){{ $settings['hospital_email'] }}@endif
-                            </div>
+                        @if($settings['hospital_phone'])
+                            <div class="hospital-address">Phone: {{ $settings['hospital_phone'] }}</div>
                         @endif
-                        <div class="report-title">Laboratory Report</div>
+                        @if($settings['hospital_email'])
+                            <div class="hospital-address">Email: {{ $settings['hospital_email'] }}</div>
+                        @endif
+                        <div class="report-title">LAB REPORT</div>
                     </div>
-                </header>
+                </div>
 
                 <div class="patient-box">
                     <div class="patient-grid">

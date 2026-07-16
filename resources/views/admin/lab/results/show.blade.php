@@ -29,24 +29,25 @@
             @if($labResult->status === 'preliminary')
                 <form action="{{ route('lab-results.verify', $labResult) }}" method="POST" class="inline" id="verify-result-form">
                     @csrf
-                    <button type="submit" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md" data-confirm="Verify and finalize this result? This action cannot be undone.">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-confirm="Verify and finalize this result? This action cannot be undone.">
                         <i class="fas fa-check-circle mr-2"></i>Verify & Finalize
                     </button>
                 </form>
             @endif
-            <a href="{{ route('lab-results.report', $labResult) }}" target="_blank" 
-               class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-md">
+            <a href="{{ route('lab-results.report', $labResult) }}" target="_blank"
+               class="inline-flex items-center px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
                 <i class="fas fa-print mr-2"></i>Print Report
             </a>
-            <button type="button"
-                    id="share-whatsapp-btn"
-                    data-share-url="{{ route('lab-results.share-whatsapp', $labResult) }}"
-                    class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md">
+            <a href="{{ route('lab-results.share-whatsapp', ['labResult' => $labResult, 'redirect' => 1]) }}"
+               target="_blank"
+               rel="noopener"
+               class="inline-flex items-center px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
                 <i class="fab fa-whatsapp mr-2"></i>Share on WhatsApp
-            </button>
+            </a>
             <button type="button"
                     id="copy-report-link"
-                    class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md">
+                    data-share-url="{{ route('lab-results.share-whatsapp', $labResult) }}"
+                    class="inline-flex items-center px-4 py-2 border border-medical-blue text-medical-blue bg-white rounded-lg hover:bg-blue-50 transition-colors">
                 <i class="fas fa-link mr-2"></i>Copy Link
             </button>
         </div>

@@ -37,18 +37,19 @@
                     </a>
                 @endif
                 @if($investigationOrder->items->contains(fn ($item) => $item->status === 'reported'))
-                    <a href="{{ route('investigation-orders.report', $investigationOrder) }}" target="_blank" class="inline-flex items-center px-3 py-1.5 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-900">
+                    <a href="{{ route('investigation-orders.report', $investigationOrder) }}" target="_blank" class="inline-flex items-center px-3 py-1.5 text-sm bg-medical-blue text-white rounded-lg hover:bg-blue-700">
                         <i class="fas fa-print mr-1"></i>Print Report
                     </a>
-                    <button type="button"
-                            id="share-whatsapp-btn"
-                            data-share-url="{{ route('investigation-orders.share-whatsapp', $investigationOrder) }}"
-                            class="inline-flex items-center px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <a href="{{ route('investigation-orders.share-whatsapp', ['investigationOrder' => $investigationOrder, 'redirect' => 1]) }}"
+                       target="_blank"
+                       rel="noopener"
+                       class="inline-flex items-center px-3 py-1.5 text-sm bg-medical-blue text-white rounded-lg hover:bg-blue-700">
                         <i class="fab fa-whatsapp mr-1"></i>WhatsApp
-                    </button>
+                    </a>
                     <button type="button"
                             id="copy-report-link"
-                            class="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            data-share-url="{{ route('investigation-orders.share-whatsapp', $investigationOrder) }}"
+                            class="inline-flex items-center px-3 py-1.5 text-sm border border-medical-blue text-medical-blue bg-white rounded-lg hover:bg-blue-50">
                         <i class="fas fa-link mr-1"></i>Copy Link
                     </button>
                 @endif
