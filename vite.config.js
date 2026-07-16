@@ -36,6 +36,8 @@ export default defineConfig({
                 'resources/js/ot-consumable-usage.js',
                 'resources/js/sterilization-form.js',
                 'resources/js/operative-vitals.js',
+                'resources/js/lab-result-share.js',
+                'resources/js/lab-report-print.js',
             ],
             refresh: true,
         }),

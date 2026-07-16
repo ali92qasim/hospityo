@@ -8,6 +8,7 @@ use App\Models\InvestigationOrder;
 use App\Models\InvestigationOrderItem;
 use App\Services\LabReportBuilder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 class LabResultController extends Controller
 {
@@ -336,63 +337,80 @@ class LabResultController extends Controller
     }
 
     /**
-     * Public report view accessible via signed URL (no authentication required).
-     * Used for WhatsApp sharing — patient opens the link and sees the report.
-     * The signed URL expires after the configured time (default 72 hours).
+     * Public report view — kept for backward-compatible signed links.
+     * Prefer the verify-gate flow via PublicLabReportController.
      */
     public function publicReport(LabResult $labResult)
     {
         $labResult->load('investigationOrder');
 
-        $report = LabReportBuilder::build($labResult->investigationOrder);
+        if ($labResult->investigationOrder) {
+            return redirect()->route('lab-report.show', $labResult->investigationOrder->ensureShareToken());
+        }
 
-        return view('admin.lab.results.report', compact('report'));
+        abort(404);
     }
 
     /**
-     * Generate a signed URL for sharing the lab report via WhatsApp.
-     * Returns the WhatsApp wa.me URL with the signed link as the message body.
+     * Build WhatsApp share payload with the public verify-gate link.
      */
     public function shareWhatsApp(LabResult $labResult)
     {
         $labResult->load('investigationOrder.patient');
 
-        $patient = $labResult->investigationOrder?->patient;
-        $phone   = $patient?->phone;
+        $order = $labResult->investigationOrder;
+        if (! $order) {
+            return response()->json(['message' => 'Investigation order not found for this result.'], 404);
+        }
 
-        // Generate a signed URL valid for 72 hours
-        $signedUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
-            'lab-results.public-report',
-            now()->addHours(72),
-            ['labResult' => $labResult->id]
-        );
+        return $this->whatsAppShareResponse($order);
+    }
 
-        // Build the WhatsApp message
+    /**
+     * Build WhatsApp share payload for an investigation order.
+     */
+    public function shareOrderWhatsApp(InvestigationOrder $investigationOrder)
+    {
+        $investigationOrder->load('patient');
+
+        return $this->whatsAppShareResponse($investigationOrder);
+    }
+
+    private function whatsAppShareResponse(InvestigationOrder $order)
+    {
+        $patient = $order->patient;
+        $phone = $patient?->phone;
+
+        URL::forceRootUrl(request()->getSchemeAndHttpHost());
+
+        $shareUrl = $order->publicReportUrl();
         $patientName = $patient?->name ?? 'Patient';
-        $message = "Dear {$patientName},\n\n"
-                 . "Your laboratory report is ready. You can view it using the link below:\n\n"
-                 . $signedUrl . "\n\n"
-                 . "This link is valid for 72 hours.\n\n"
-                 . "— " . setting('hospital_name', 'Hospital');
+        $hospitalName = setting('hospital_name', 'Hospital');
 
-        // Format phone for WhatsApp (remove spaces, dashes, leading 0, add country code)
+        $message = "Dear {$patientName},\n\n"
+            . "Your laboratory report from {$hospitalName} is ready.\n"
+            . "Open this link, then enter your Patient Number and Mobile Number to view or download it:\n\n"
+            . "{$shareUrl}\n\n"
+            . "— {$hospitalName}";
+
         $whatsappPhone = '';
         if ($phone) {
-            $cleaned = preg_replace('/[^0-9+]/', '', $phone);
-            // If starts with 0, replace with 92 (Pakistan)
+            $cleaned = preg_replace('/[^0-9+]/', '', $phone) ?? '';
             if (str_starts_with($cleaned, '0')) {
                 $cleaned = '92' . substr($cleaned, 1);
             }
-            // If doesn't start with +, don't add one (wa.me handles both)
             $whatsappPhone = ltrim($cleaned, '+');
         }
 
-        $whatsappUrl = 'https://wa.me/' . $whatsappPhone . '?text=' . urlencode($message);
+        $whatsappUrl = $whatsappPhone !== ''
+            ? 'https://wa.me/' . $whatsappPhone . '?text=' . urlencode($message)
+            : null;
 
         return response()->json([
             'whatsapp_url' => $whatsappUrl,
-            'signed_url'   => $signedUrl,
-            'phone'        => $whatsappPhone,
+            'share_url' => $shareUrl,
+            'phone' => $whatsappPhone,
+            'message' => $whatsappPhone === '' ? 'Patient mobile number is missing.' : null,
         ]);
     }
 }

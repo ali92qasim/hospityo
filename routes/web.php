@@ -49,6 +49,7 @@ use App\Http\Controllers\InvestigationController;
 use App\Http\Controllers\LabOrderController;
 use App\Http\Controllers\InvestigationOrderController;
 use App\Http\Controllers\LabResultController;
+use App\Http\Controllers\PublicLabReportController;
 use App\Http\Controllers\RadiologyResultController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\SupplierController;
@@ -444,6 +445,7 @@ Route::middleware('auth')->group(function () {
     Route::post('lab-results/{labResult}/verify', [LabResultController::class, 'verify'])->name('lab-results.verify')->middleware('permission:edit lab results');
     Route::get('lab-results/{labResult}/report', [LabResultController::class, 'report'])->name('lab-results.report')->middleware('permission:view lab results');
     Route::get('lab-results/{labResult}/share-whatsapp', [LabResultController::class, 'shareWhatsApp'])->name('lab-results.share-whatsapp')->middleware('permission:view lab results');
+    Route::get('investigation-orders/{investigationOrder}/share-whatsapp', [LabResultController::class, 'shareOrderWhatsApp'])->name('investigation-orders.share-whatsapp')->middleware('permission:view lab results');
 
     Route::resource('lab-results', LabResultController::class)->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
 
@@ -594,9 +596,22 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// Public signed URL route for sharing lab reports via WhatsApp (no auth required)
+// Legacy signed URL — redirects into the verify-gate flow (numeric id only)
 Route::get('lab-report/{labResult}', [LabResultController::class, 'publicReport'])
     ->name('lab-results.public-report')
-    ->middleware('signed');
+    ->middleware('signed')
+    ->whereNumber('labResult');
+
+// Public lab report access — verify with patient number + mobile (no auth)
+Route::get('lab-report/{shareToken}', [PublicLabReportController::class, 'show'])
+    ->name('lab-report.show')
+    ->where('shareToken', '[A-Za-z0-9]{20,64}');
+Route::post('lab-report/{shareToken}/verify', [PublicLabReportController::class, 'verify'])
+    ->name('lab-report.verify')
+    ->middleware('throttle:10,1')
+    ->where('shareToken', '[A-Za-z0-9]{20,64}');
+Route::get('lab-report/{shareToken}/view', [PublicLabReportController::class, 'view'])
+    ->name('lab-report.view')
+    ->where('shareToken', '[A-Za-z0-9]{20,64}');
 
 }); // end tenant middleware group

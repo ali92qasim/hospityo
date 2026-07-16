@@ -203,8 +203,10 @@
 </head>
 <body>
     <div class="no-print">
-        <button onclick="window.print()" class="print-btn">Print Report</button>
-        <button onclick="window.close()" class="close-btn">Close</button>
+        <button type="button" id="lab-report-print-btn" class="print-btn">Print / Save as PDF</button>
+        @unless($isPublic ?? false)
+            <button type="button" id="lab-report-close-btn" class="close-btn">Close</button>
+        @endunless
     </div>
 
     @forelse($pages as $pageIndex => $page)
@@ -337,12 +339,6 @@
         </section>
     @endforelse
 
-    <script>
-        if (window.location.search.includes('print=1')) {
-            window.onload = function () {
-                window.print();
-            };
-        }
-    </script>
+    @vite(['resources/js/lab-report-print.js'])
 </body>
 </html>

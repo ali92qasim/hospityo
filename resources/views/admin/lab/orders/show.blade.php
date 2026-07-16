@@ -40,6 +40,17 @@
                     <a href="{{ route('investigation-orders.report', $investigationOrder) }}" target="_blank" class="inline-flex items-center px-3 py-1.5 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-900">
                         <i class="fas fa-print mr-1"></i>Print Report
                     </a>
+                    <button type="button"
+                            id="share-whatsapp-btn"
+                            data-share-url="{{ route('investigation-orders.share-whatsapp', $investigationOrder) }}"
+                            class="inline-flex items-center px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <i class="fab fa-whatsapp mr-1"></i>WhatsApp
+                    </button>
+                    <button type="button"
+                            id="copy-report-link"
+                            class="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-link mr-1"></i>Copy Link
+                    </button>
                 @endif
                 <a href="{{ route('investigation-orders.index') }}" class="text-gray-500 hover:text-gray-700 text-sm">
                     <i class="fas fa-arrow-left mr-1"></i>Back
@@ -204,4 +215,6 @@
         </div>
     </div>
 </div>
+
+@vite(['resources/js/lab-result-share.js'])
 @endsection

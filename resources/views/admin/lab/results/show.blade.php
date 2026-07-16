@@ -27,10 +27,9 @@
         </div>
         <div class="flex flex-wrap gap-3">
             @if($labResult->status === 'preliminary')
-                <form action="{{ route('lab-results.verify', $labResult) }}" method="POST" class="inline">
+                <form action="{{ route('lab-results.verify', $labResult) }}" method="POST" class="inline" id="verify-result-form">
                     @csrf
-                    <button type="submit" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md" 
-                            onclick="return confirm('Verify and finalize this result? This action cannot be undone.')">
+                    <button type="submit" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md" data-confirm="Verify and finalize this result? This action cannot be undone.">
                         <i class="fas fa-check-circle mr-2"></i>Verify & Finalize
                     </button>
                 </form>
@@ -39,8 +38,16 @@
                class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-md">
                 <i class="fas fa-print mr-2"></i>Print Report
             </a>
-            <button onclick="shareResult()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md">
-                <i class="fas fa-share mr-2"></i>Share
+            <button type="button"
+                    id="share-whatsapp-btn"
+                    data-share-url="{{ route('lab-results.share-whatsapp', $labResult) }}"
+                    class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md">
+                <i class="fab fa-whatsapp mr-2"></i>Share on WhatsApp
+            </button>
+            <button type="button"
+                    id="copy-report-link"
+                    class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md">
+                <i class="fas fa-link mr-2"></i>Copy Link
             </button>
         </div>
     </div>
@@ -576,47 +583,5 @@
     </div>
 </div>
 
-<script>
-function shareResult() {
-    @php
-        $signedUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
-            'lab-results.public-report',
-            now()->addHours(72),
-            ['labResult' => $labResult->id]
-        );
-        $patientName = $labResult->investigationOrder?->patient?->name ?? 'Patient';
-        $patientPhone = $labResult->investigationOrder?->patient?->phone ?? '';
-        $hospitalName = setting('hospital_name', 'Hospital');
-    @endphp
-
-    var shareUrl = @json($signedUrl);
-    var patientName = @json($patientName);
-    var hospitalName = @json($hospitalName);
-    var patientPhone = @json($patientPhone);
-
-    var message = 'Dear ' + patientName + ',\n\n'
-                + 'Your laboratory report is ready. You can view it using the link below:\n\n'
-                + shareUrl + '\n\n'
-                + 'This link is valid for 72 hours.\n\n'
-                + '— ' + hospitalName;
-
-    // Check if mobile (where native share shows WhatsApp)
-    var isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-
-    if (isMobile && navigator.share) {
-        navigator.share({
-            title: 'Lab Report - ' + patientName,
-            text: message
-        });
-    } else {
-        // Desktop: open WhatsApp Web directly
-        var phone = patientPhone.replace(/[^0-9]/g, '');
-        if (phone.startsWith('0')) {
-            phone = '92' + phone.substring(1);
-        }
-        var waUrl = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(message);
-        window.open(waUrl, '_blank');
-    }
-}
-</script>
+@vite(['resources/js/lab-result-share.js'])
 @endsection

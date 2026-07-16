@@ -15,7 +15,7 @@ class InvestigationOrder extends Model
     use Auditable, UsesTenantConnection;
 
     protected $fillable = [
-        'order_number', 'patient_id', 'visit_id', 'doctor_id',
+        'order_number', 'share_token', 'patient_id', 'visit_id', 'doctor_id',
         'priority', 'status', 'ordered_at', 'sample_collected_at', 'completed_at',
         'clinical_notes', 'special_instructions'
     ];
@@ -43,7 +43,34 @@ class InvestigationOrder extends Model
                 \Log::error('Failed to generate investigation order number: ' . $e->getMessage());
                 throw $e;
             }
+
+            if (empty($order->share_token)) {
+                $order->share_token = static::generateShareToken();
+            }
         });
+    }
+
+    public static function generateShareToken(): string
+    {
+        do {
+            $token = \Illuminate\Support\Str::random(40);
+        } while (static::query()->where('share_token', $token)->exists());
+
+        return $token;
+    }
+
+    public function ensureShareToken(): string
+    {
+        if (! $this->share_token) {
+            $this->forceFill(['share_token' => static::generateShareToken()])->save();
+        }
+
+        return $this->share_token;
+    }
+
+    public function publicReportUrl(): string
+    {
+        return route('lab-report.show', $this->ensureShareToken());
     }
 
     public function patient(): BelongsTo
