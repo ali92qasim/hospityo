@@ -58,7 +58,8 @@
             break-after: page;
         }
 
-        .report-page:last-child {
+        /* Use :last-of-type — Vite script tags make :last-child fail and force a blank page */
+        .report-page:last-of-type {
             page-break-after: auto;
             break-after: auto;
         }
@@ -136,6 +137,7 @@
             font-size: 10.5pt;
             font-weight: 700;
             text-transform: uppercase;
+            text-align: center;
         }
 
         .results-table {
@@ -199,8 +201,16 @@
             .no-print { display: none !important; }
             .report-page {
                 width: auto;
+                min-height: 0;
+                height: auto;
                 margin: 0;
                 padding: 0;
+                page-break-after: always;
+                break-after: page;
+            }
+            .report-page:last-of-type {
+                page-break-after: avoid;
+                break-after: avoid;
             }
             @page {
                 size: A4 portrait;
@@ -208,6 +218,7 @@
             }
         }
     </style>
+    @vite(['resources/js/lab-report-print.js'])
 </head>
 <body>
     <div class="no-print">
@@ -347,7 +358,5 @@
             <div class="empty-state">No laboratory results are available for this order.</div>
         </section>
     @endforelse
-
-    @vite(['resources/js/lab-report-print.js'])
 </body>
 </html>
