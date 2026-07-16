@@ -6,8 +6,8 @@ use App\Http\Requests\UpdateLabResultRequest;
 use App\Models\LabResult;
 use App\Models\InvestigationOrder;
 use App\Models\InvestigationOrderItem;
+use App\Services\LabReportBuilder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class LabResultController extends Controller
 {
@@ -321,18 +321,18 @@ class LabResultController extends Controller
 
     public function report(LabResult $labResult)
     {
-        $labResult->load([
-            'investigationOrder.patient',
-            'investigationOrder.doctor',
-            'investigationOrder.investigation',
-            'investigationOrder.items.investigation',
-            'investigationOrder.visit',
-            'technician',
-            'pathologist',
-            'resultItems.parameter',
-        ]);
+        $labResult->load('investigationOrder');
 
-        return view('admin.lab.results.report', compact('labResult'));
+        $report = LabReportBuilder::build($labResult->investigationOrder);
+
+        return view('admin.lab.results.report', compact('report'));
+    }
+
+    public function orderReport(InvestigationOrder $investigationOrder)
+    {
+        $report = LabReportBuilder::build($investigationOrder);
+
+        return view('admin.lab.results.report', compact('report'));
     }
 
     /**
@@ -342,18 +342,11 @@ class LabResultController extends Controller
      */
     public function publicReport(LabResult $labResult)
     {
-        $labResult->load([
-            'investigationOrder.patient',
-            'investigationOrder.doctor',
-            'investigationOrder.investigation',
-            'investigationOrder.items.investigation',
-            'investigationOrder.visit',
-            'technician',
-            'pathologist',
-            'resultItems.parameter',
-        ]);
+        $labResult->load('investigationOrder');
 
-        return view('admin.lab.results.report', compact('labResult'));
+        $report = LabReportBuilder::build($labResult->investigationOrder);
+
+        return view('admin.lab.results.report', compact('report'));
     }
 
     /**

@@ -3,153 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab Report - {{ $labResult->labOrder->order_number }}</title>
+    @php
+        $order = $report['order'];
+        $pages = $report['pages'];
+        $primaryResult = $report['primaryResult'];
+        $comments = $report['comments'] ?? [];
+        $settings = [
+            'hospital_name' => setting('hospital_name', config('app.name', 'Hospital Management System')),
+            'hospital_address' => setting('hospital_address', ''),
+            'hospital_phone' => setting('hospital_phone', ''),
+            'hospital_email' => setting('hospital_email', ''),
+            'hospital_logo' => setting('hospital_logo', null),
+        ];
+        $visitType = $order->visit->visit_type ?? null;
+        $visitLabel = $visitType === 'ipd' ? 'IPD' : ($visitType === 'opd' ? 'OPD' : 'Lab');
+    @endphp
+    <title>Lab Report - {{ $order->order_number }}</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Arial', sans-serif;
-            font-size: 11pt;
-            line-height: 1.4;
-            color: #000;
-            background: white;
-        }
-
-        .container {
-            max-width: 210mm;
-            margin: 0 auto;
-            padding: 15mm;
-        }
-
-        /* Header Section */
-        .header {
-            text-align: center;
-            border-bottom: 3px solid #000;
-            padding-bottom: 20px;
-            margin-bottom: 25px;
-        }
-
-        .logo {
-            margin: 0 auto 15px;
-            width: 120px;
-            height: 120px;
-        }
-
-        .logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .hospital-header {
-            text-align: center;
-        }
-
-        .hospital-name {
-            font-size: 22pt;
-            font-weight: bold;
-            color: #000;
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .hospital-address {
-            font-size: 10pt;
-            color: #333;
-            margin-bottom: 4px;
-            line-height: 1.6;
-        }
-
-        .hospital-contact {
-            font-size: 9pt;
-            color: #555;
-            margin-bottom: 3px;
-        }
-
-        .report-title {
-            font-size: 16pt;
-            font-weight: bold;
-            margin-top: 15px;
-            padding: 8px 0;
-            border-top: 2px solid #ddd;
-            border-bottom: 2px solid #ddd;
-            letter-spacing: 2px;
-            color: #000;
-        }
-
-        /* Patient Details */
-        .patient-details {
-            margin-bottom: 20px;
-            border: 1px solid #000;
-            padding: 10px;
-        }
-
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-
-        .detail-item {
-            font-size: 10pt;
-        }
-
-        .detail-label {
-            font-weight: bold;
-            display: inline-block;
-            min-width: 140px;
-        }
-
-        /* Results Table */
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        .results-table th {
-            background: #f0f0f0;
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: left;
-            font-weight: bold;
-            font-size: 10pt;
-        }
-
-        .results-table td {
-            border: 1px solid #000;
-            padding: 8px;
-            font-size: 10pt;
-        }
-
-        .result-abnormal {
-            font-weight: bold;
-        }
-
-        /* Print Styles */
-        @media print {
-            body {
-                margin: 0;
-                padding: 0;
-            }
-
-            .container {
-                max-width: 100%;
-                padding: 10mm;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-
-            @page {
-                margin: 10mm;
-            }
+            font-family: Arial, sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.35;
+            color: #111;
+            background: #fff;
         }
 
         .no-print {
@@ -157,202 +35,311 @@
             margin: 15px 0;
         }
 
-        .print-btn {
-            background: #000;
-            color: white;
+        .print-btn, .close-btn {
             border: none;
             padding: 10px 25px;
             font-size: 12pt;
             cursor: pointer;
-            margin-right: 10px;
+            color: #fff;
         }
 
-        .print-btn:hover {
-            background: #333;
+        .print-btn { background: #111; margin-right: 10px; }
+        .close-btn { background: #666; }
+
+        .report-page {
+            width: 210mm;
+            min-height: 277mm;
+            margin: 0 auto;
+            padding: 10mm 12mm 12mm;
+            page-break-after: always;
+            break-after: page;
         }
 
-        .close-btn {
-            background: #666;
-            color: white;
-            border: none;
-            padding: 10px 25px;
+        .report-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+
+        .letterhead {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #111;
+            margin-bottom: 12px;
+        }
+
+        .letterhead-logo {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .letterhead-text { flex: 1; min-width: 0; }
+
+        .hospital-name {
+            font-size: 17pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .hospital-meta {
+            font-size: 9pt;
+            color: #444;
+            margin-top: 2px;
+        }
+
+        .report-title {
+            margin-top: 8px;
             font-size: 12pt;
-            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
         }
 
-        .close-btn:hover {
-            background: #888;
+        .patient-box {
+            border: 1px solid #111;
+            padding: 8px 10px;
+            margin-bottom: 12px;
+        }
+
+        .patient-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px 16px;
+        }
+
+        .patient-item { font-size: 9.5pt; }
+        .patient-label { font-weight: 700; display: inline-block; min-width: 128px; }
+
+        .test-panel {
+            border: 1px solid #111;
+            margin-bottom: 10px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .test-panel-header {
+            background: #f3f4f6;
+            border-bottom: 1px solid #111;
+            padding: 6px 8px;
+            font-size: 10.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th,
+        .results-table td {
+            border-top: 1px solid #d1d5db;
+            padding: 5px 8px;
+            font-size: 9.5pt;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .results-table th {
+            background: #fafafa;
+            font-weight: 700;
+        }
+
+        .result-abnormal { font-weight: 700; }
+
+        .comments-box,
+        .signatures {
+            margin-top: 14px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .comments-box {
+            border: 1px solid #111;
+            padding: 8px 10px;
+            font-size: 9.5pt;
+        }
+
+        .signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 28px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #111;
+            padding-top: 4px;
+            margin-top: 42px;
+            text-align: center;
+            font-size: 9.5pt;
+        }
+
+        .empty-state {
+            border: 1px solid #111;
+            padding: 24px;
+            text-align: center;
+            color: #555;
+        }
+
+        @media print {
+            body { margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .report-page {
+                width: auto;
+                margin: 0;
+                padding: 0;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Print Buttons -->
-        <div class="no-print">
-            <button onclick="window.print()" class="print-btn">Print Report</button>
-            <button onclick="window.close()" class="close-btn">Close</button>
-        </div>
+    <div class="no-print">
+        <button onclick="window.print()" class="print-btn">Print Report</button>
+        <button onclick="window.close()" class="close-btn">Close</button>
+    </div>
 
-        <!-- Header -->
-        <div class="header">
-            @php
-                $settings = [
-                    'hospital_name' => cache('settings.hospital_name', config('app.name', 'Hospital Management System')),
-                    'hospital_address' => cache('settings.hospital_address', ''),
-                    'hospital_phone' => cache('settings.hospital_phone', ''),
-                    'hospital_email' => cache('settings.hospital_email', ''),
-                    'hospital_logo' => cache('settings.hospital_logo', null)
-                ];
-            @endphp
-            
-            <!-- Logo (Centered) -->
-            @if($settings['hospital_logo'])
-                <div class="logo">
-                    <img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Hospital Logo">
+    @forelse($pages as $pageIndex => $page)
+        <section class="report-page">
+            @if($pageIndex === 0)
+                <header class="letterhead">
+                    @if($settings['hospital_logo'])
+                        <img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="{{ $settings['hospital_name'] }}" class="letterhead-logo">
+                    @endif
+                    <div class="letterhead-text">
+                        <div class="hospital-name">{{ $settings['hospital_name'] }}</div>
+                        @if($settings['hospital_address'])
+                            <div class="hospital-meta">{{ $settings['hospital_address'] }}</div>
+                        @endif
+                        @if($settings['hospital_phone'] || $settings['hospital_email'])
+                            <div class="hospital-meta">
+                                @if($settings['hospital_phone'])Tel: {{ $settings['hospital_phone'] }}@endif
+                                @if($settings['hospital_phone'] && $settings['hospital_email']) · @endif
+                                @if($settings['hospital_email']){{ $settings['hospital_email'] }}@endif
+                            </div>
+                        @endif
+                        <div class="report-title">Laboratory Report</div>
+                    </div>
+                </header>
+
+                <div class="patient-box">
+                    <div class="patient-grid">
+                        <div class="patient-item">
+                            <span class="patient-label">Patient Name:</span>
+                            <span>{{ $order->patient->name }}</span>
+                        </div>
+                        <div class="patient-item">
+                            <span class="patient-label">Age / Sex:</span>
+                            <span>{{ $order->patient->age }} Years / {{ ucfirst($order->patient->gender) }}</span>
+                        </div>
+                        <div class="patient-item">
+                            <span class="patient-label">Referred By:</span>
+                            <span>Dr. {{ $order->doctor->name ?? 'N/A' }}</span>
+                        </div>
+                        <div class="patient-item">
+                            <span class="patient-label">{{ $visitLabel }} #:</span>
+                            <span>{{ $order->patient->patient_no }}</span>
+                        </div>
+                        <div class="patient-item">
+                            <span class="patient-label">Order #:</span>
+                            <span>{{ $order->order_number }}</span>
+                        </div>
+                        <div class="patient-item">
+                            <span class="patient-label">Collection:</span>
+                            <span>{{ $order->sample_collected_at ? $order->sample_collected_at->format('d M Y, h:i A') : 'Not recorded' }}</span>
+                        </div>
+                        <div class="patient-item">
+                            <span class="patient-label">Reporting:</span>
+                            <span>{{ $primaryResult?->reported_at?->format('d M Y, h:i A') ?? now()->format('d M Y, h:i A') }}</span>
+                        </div>
+                        <div class="patient-item">
+                            <span class="patient-label">Consultant:</span>
+                            <span>{{ $primaryResult?->pathologist?->name ?? 'Pending' }}</span>
+                        </div>
+                    </div>
                 </div>
             @endif
 
-            <!-- Hospital Info (Centered) -->
-            <div class="hospital-header">
-                <div class="hospital-name">{{ $settings['hospital_name'] }}</div>
-                
-                @if($settings['hospital_address'])
-                    <div class="hospital-address">{{ $settings['hospital_address'] }}</div>
+            @foreach($page['sections'] as $section)
+                <article class="test-panel">
+                    <div class="test-panel-header">{{ $section['investigation']->name }}</div>
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 36%;">Parameter</th>
+                                <th style="width: 18%;">Result</th>
+                                <th style="width: 14%;">Unit</th>
+                                <th style="width: 32%;">Reference Range</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($section['items'] as $item)
+                                @php
+                                    $parameter = $item->parameter;
+                                    $referenceRange = $parameter
+                                        ? $parameter->getReferenceRange($order->patient->age, $order->patient->gender)
+                                        : '-';
+                                    $isAbnormal = $item->flag && $item->flag !== 'N';
+                                @endphp
+                                <tr>
+                                    <td>{{ $parameter?->parameter_name ?? 'N/A' }}</td>
+                                    <td class="{{ $isAbnormal ? 'result-abnormal' : '' }}">{{ $item->value }}</td>
+                                    <td>{{ $item->unit ?? ($parameter?->unit ?? '-') }}</td>
+                                    <td>{{ $referenceRange }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </article>
+            @endforeach
+
+            @if($loop->last)
+                @if(!empty($comments))
+                    <div class="comments-box">
+                        <strong>Comments</strong>
+                        @foreach($comments as $comment)
+                            <p style="margin-top: 4px;">{{ $comment }}</p>
+                        @endforeach
+                    </div>
                 @endif
-                
-                <div class="hospital-contact">
-                    @if($settings['hospital_phone'])
-                        <span>Tel: {{ $settings['hospital_phone'] }}</span>
-                    @endif
-                    @if($settings['hospital_phone'] && $settings['hospital_email'])
-                        <span> | </span>
-                    @endif
-                    @if($settings['hospital_email'])
-                        <span>Email: {{ $settings['hospital_email'] }}</span>
-                    @endif
-                </div>
-                
-                <div class="report-title">LABORATORY REPORT</div>
-            </div>
-        </div>
 
-        <!-- Patient Details -->
-        <div class="patient-details">
-            <div class="details-grid">
-                <div class="detail-item">
-                    <span class="detail-label">Patient Name:</span>
-                    <span>{{ $labResult->labOrder->patient->name }}</span>
+                <div class="signatures">
+                    <div>
+                        <div class="signature-line">
+                            <strong>Lab Technician</strong>
+                            @if($primaryResult?->technician)
+                                <div>{{ $primaryResult->technician->name }}</div>
+                            @endif
+                        </div>
+                    </div>
+                    <div>
+                        <div class="signature-line">
+                            <strong>Pathologist / Consultant</strong>
+                            @if($primaryResult?->pathologist)
+                                <div>{{ $primaryResult->pathologist->name }}</div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Age:</span>
-                    <span>{{ $labResult->labOrder->patient->age }} Years</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Sex:</span>
-                    <span>{{ ucfirst($labResult->labOrder->patient->gender) }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Referred By:</span>
-                    <span>Dr. {{ $labResult->labOrder->doctor->name ?? 'N/A' }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">{{ ($labResult->labOrder->visit->visit_type ?? null) === 'ipd' ? 'IPD' : (($labResult->labOrder->visit->visit_type ?? null) === 'opd' ? 'OPD' : 'Lab') }} #:</span>
-                    <span>{{ $labResult->labOrder->patient->patient_no }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Collection Date & Time:</span>
-                    <span>{{ $labResult->labOrder->sample_collected_at ? $labResult->labOrder->sample_collected_at->format('d M Y, h:i A') : 'Not recorded' }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Reporting Date & Time:</span>
-                    <span>{{ $labResult->reported_at ? $labResult->reported_at->format('d M Y, h:i A') : now()->format('d M Y, h:i A') }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Consultant Name:</span>
-                    <span>{{ $labResult->pathologist ? $labResult->pathologist->name : 'Pending' }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Results Table -->
-        @if($labResult->resultItems && $labResult->resultItems->count() > 0)
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th style="width: 35%;">Test Name</th>
-                        <th style="width: 20%;">Result</th>
-                        <th style="width: 15%;">Unit</th>
-                        <th style="width: 30%;">Reference Range</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($labResult->resultItems as $item)
-                        @php
-                            $parameter = $item->parameter;
-                            $isAbnormal = false;
-                            
-                            // Get reference range
-                            $referenceRange = '-';
-                            if ($parameter) {
-                                $referenceRange = $parameter->getReferenceRange(
-                                    $labResult->labOrder->patient->age,
-                                    $labResult->labOrder->patient->gender
-                                );
-                            }
-                            
-                            // Check if result is abnormal based on flag
-                            if ($item->flag && $item->flag !== 'N') {
-                                $isAbnormal = true;
-                            }
-                        @endphp
-                        <tr>
-                            <td>{{ $parameter ? $parameter->parameter_name : 'N/A' }}</td>
-                            <td class="{{ $isAbnormal ? 'result-abnormal' : '' }}">{{ $item->value }}</td>
-                            <td>{{ $item->unit ?? ($parameter ? $parameter->unit : '-') }}</td>
-                            <td>{{ $referenceRange }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <div style="padding: 20px; border: 1px solid #000; text-align: center;">
-                <p>No detailed results available</p>
-            </div>
-        @endif
-
-        <!-- Comments -->
-        @if($labResult->comments)
-            <div style="margin-top: 20px; padding: 10px; border: 1px solid #000;">
-                <strong>Comments:</strong>
-                <p style="margin-top: 5px;">{{ $labResult->comments }}</p>
-            </div>
-        @endif
-
-        <!-- Signatures -->
-        <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-            <div style="text-align: center;">
-                <div style="border-top: 1px solid #000; padding-top: 5px; margin-top: 50px;">
-                    <strong>Lab Technician</strong>
-                    @if($labResult->technician)
-                        <div>{{ $labResult->technician->name }}</div>
-                    @endif
-                </div>
-            </div>
-            <div style="text-align: center;">
-                <div style="border-top: 1px solid #000; padding-top: 5px; margin-top: 50px;">
-                    <strong>Pathologist/Consultant</strong>
-                    @if($labResult->pathologist)
-                        <div>{{ $labResult->pathologist->name }}</div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
+            @endif
+        </section>
+    @empty
+        <section class="report-page">
+            <div class="empty-state">No laboratory results are available for this order.</div>
+        </section>
+    @endforelse
 
     <script>
-        // Auto-print when opened with print parameter
         if (window.location.search.includes('print=1')) {
-            window.onload = function() {
+            window.onload = function () {
                 window.print();
             };
         }

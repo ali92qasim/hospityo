@@ -36,6 +36,11 @@
                         <i class="fas fa-edit mr-1"></i>Edit
                     </a>
                 @endif
+                @if($investigationOrder->items->contains(fn ($item) => $item->status === 'reported'))
+                    <a href="{{ route('investigation-orders.report', $investigationOrder) }}" target="_blank" class="inline-flex items-center px-3 py-1.5 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-900">
+                        <i class="fas fa-print mr-1"></i>Print Report
+                    </a>
+                @endif
                 <a href="{{ route('investigation-orders.index') }}" class="text-gray-500 hover:text-gray-700 text-sm">
                     <i class="fas fa-arrow-left mr-1"></i>Back
                 </a>
@@ -163,7 +168,7 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 @if($item->hasResult())
-                                    <a href="{{ route('lab-results.report', $investigationOrder->result) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700" target="_blank">
+                                    <a href="{{ route('investigation-orders.report', $investigationOrder) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700" target="_blank">
                                         <i class="fas fa-print mr-1"></i>View Report
                                     </a>
                                 @else

@@ -81,6 +81,11 @@ class InvestigationOrder extends Model
         return $this->hasOne(LabResult::class, 'investigation_order_id');
     }
 
+    public function results(): HasMany
+    {
+        return $this->hasMany(LabResult::class, 'investigation_order_id');
+    }
+
     public function radiologyResult(): HasOne
     {
         return $this->hasOne(RadiologyResult::class);
