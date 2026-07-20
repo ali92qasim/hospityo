@@ -21,7 +21,8 @@ class DoctorController extends Controller
 
     public function data()
     {
-        $query = Doctor::query();
+        $query = Doctor::query()
+            ->orderByDesc('id'); // Latest first (newest doctors)
 
         return DataTables::eloquent($query)
             ->toJson();

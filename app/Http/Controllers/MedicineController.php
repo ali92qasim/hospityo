@@ -60,7 +60,7 @@ class MedicineController extends Controller
             $query->where('manage_stock', true);
         }
 
-        return $query;
+        return $query->orderByDesc('id'); // Latest first (newest medicines)
     }
 
     public function create()

@@ -23,7 +23,9 @@ class BillController extends Controller
 
     public function data()
     {
-        $query = Bill::query()->with('patient');
+        $query = Bill::query()
+            ->with('patient')
+            ->orderByDesc('id'); // Latest first (newest bills)
 
         return DataTables::eloquent($query)
             ->filterColumn('patient', function ($query, $keyword) {

@@ -123,7 +123,7 @@ class VisitController extends Controller
             $query->where('status', $request->status);
         }
 
-        return $query;
+        return $query->orderByDesc('id'); // Latest first (newest visits)
     }
 
     public function create()

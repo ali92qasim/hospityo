@@ -19,7 +19,8 @@ class InvestigationController extends Controller
     }
     public function data()
     {
-        $query = Investigation::query();
+        $query = Investigation::query()
+            ->orderByDesc('id'); // Latest first (newest investigations)
 
         return DataTables::eloquent($query)
             ->toJson();
