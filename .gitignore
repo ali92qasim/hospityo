@@ -66,7 +66,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
-
+*.md
 # Tinker/PsySH session artifacts (files created by accidental shell redirection)
 *())
 *.psysh

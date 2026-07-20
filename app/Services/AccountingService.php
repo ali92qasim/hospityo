@@ -89,6 +89,10 @@ class AccountingService
     public static function reverseAndRepostBillEntry(Bill $bill, string $reason = 'Bill updated'): ?JournalEntry
     {
         try {
+            if ($bill->isDraft()) {
+                return null;
+            }
+
             // Find the original (non-reversal) bill journal entry
             $originalEntry = JournalEntry::where('reference_type', 'Bill')
                 ->where('reference_id', $bill->id)
@@ -211,6 +215,14 @@ class AccountingService
     public static function postBillEntry(Bill $bill): ?JournalEntry
     {
         try {
+            if ($bill->isDraft()) {
+                Log::info('[Accounting] Skipping journal entry for draft bill', [
+                    'bill_id' => $bill->id,
+                ]);
+
+                return null;
+            }
+
             // Prevent duplicate journal entries for the same bill
             // Only check for 'original' type entries — reversals and adjustments share the same reference
             $existing = JournalEntry::where('reference_type', 'Bill')

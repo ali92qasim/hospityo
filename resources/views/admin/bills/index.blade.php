@@ -10,69 +10,18 @@
     </a>
 </div>
 
-<div class="bg-white rounded-lg shadow">
-    <div class="overflow-x-auto">
-        <table class="w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bill #</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                @foreach($bills as $bill)
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="font-medium text-gray-900">{{ $bill->bill_number }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">{{ $bill->patient->name }}</div>
-                        <div class="text-sm text-gray-500">{{ $bill->patient->phone }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded uppercase">{{ $bill->bill_type }}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">{{ format_currency($bill->total_amount) }}</div>
-                        @if($bill->due_amount > 0)
-                            <div class="text-sm text-red-500">Due: {{ format_currency($bill->due_amount) }}</div>
-                        @endif
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="bg-{{ $bill->status_color }}-100 text-{{ $bill->status_color }}-800 text-xs px-2 py-1 rounded capitalize">{{ $bill->status }}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ $bill->bill_date->format('M d, Y') }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="{{ route('bills.show', $bill) }}" class="text-medical-blue hover:text-blue-700 mr-3" title="View">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="{{ route('bills.print', $bill) }}" target="_blank" class="text-green-600 hover:text-green-700 mr-3" title="Print">
-                            <i class="fas fa-print"></i>
-                        </a>
-                        <a href="{{ route('bills.edit', $bill) }}" class="text-medical-blue hover:text-blue-700 mr-3" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form method="POST" action="{{ route('bills.destroy', $bill) }}" class="inline">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Are you sure?')" title="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-    <div class="px-6 py-4">
-        {{ $bills->links() }}
-    </div>
-</div>
+<table class="bills-table w-full invisible">
+    <thead>
+        <tr>
+            <th>Bill #</th>
+            <th>Patient</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+</table>
+@vite(['resources/js/bills-index.js'])
 @endsection

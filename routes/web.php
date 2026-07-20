@@ -227,10 +227,19 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/patients/data', [PatientController::class, 'data'])
+        ->name('patients.data')
+        ->middleware('permission:view patients|create patients|edit patients|delete patients');
     Route::resource('patients', PatientController::class)->middleware('permission:view patients|create patients|edit patients|delete patients');
     Route::get('patients/{patient}/history', [PatientController::class, 'history'])->name('patients.history')->middleware('permission:view patients');
+    Route::get('/doctors/data', [DoctorController::class, 'data'])
+        ->name('doctors.data')
+        ->middleware('permission:view doctors|create doctors|edit doctors|delete doctors');
     Route::resource('doctors', DoctorController::class)->middleware('permission:view doctors|create doctors|edit doctors|delete doctors');
     Route::resource('departments', DepartmentController::class)->middleware('permission:view departments|create departments|edit departments|delete departments');
+    Route::get('/visits/data', [VisitController::class, 'data'])
+        ->name('visits.data')
+        ->middleware('permission:view visits|create visits|edit visits|delete visits');
     Route::resource('visits', VisitController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
     Route::get('visits/{visit}/workflow', [VisitController::class, 'workflow'])->name('visits.workflow')->middleware('permission:view visits');
     Route::get('visits/{visit}/print', [VisitController::class, 'print'])->name('visits.print')->middleware('permission:view visits');
@@ -250,6 +259,9 @@ Route::middleware('auth')->group(function () {
     Route::get('calendar/events', [AppointmentController::class, 'getCalendarEvents'])->name('calendar.events')->middleware('permission:view appointments');
 
     // Billing Routes
+    Route::get('/bills/data', [BillController::class, 'data'])
+        ->name('bills.data')
+        ->middleware('permission:view bills|create bills|edit bills|delete bills');
     Route::resource('bills', BillController::class)->middleware('permission:view bills|create bills|edit bills|delete bills');
     Route::post('bills/{bill}/payment', [BillController::class, 'addPayment'])->name('bills.add-payment')->middleware('permission:create payments');
     Route::put('bills/{bill}/payment/{payment}', [BillController::class, 'updatePayment'])->name('bills.update-payment')->middleware('permission:edit payments')->scopeBindings();
@@ -387,6 +399,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('beds', BedController::class)->middleware('permission:view beds|create beds|edit beds|delete beds');
 
     // Pharmacy Routes
+    Route::get('/medicines/data', [MedicineController::class, 'data'])
+        ->name('medicines.data')
+        ->middleware('permission:view services|view pharmacy|manage pharmacy');
     Route::resource('medicine-categories', MedicineCategoryController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
     Route::resource('medicine-brands', MedicineBrandController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
     Route::resource('medicines', MedicineController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');

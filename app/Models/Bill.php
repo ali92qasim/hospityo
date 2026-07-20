@@ -106,11 +106,18 @@ class Bill extends Model
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'paid' => 'green',
             'partial' => 'yellow',
             'pending' => 'red',
-            default => 'gray'
+            'draft' => 'blue',
+            'cancelled' => 'gray',
+            default => 'gray',
         };
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->status === 'draft';
     }
 }

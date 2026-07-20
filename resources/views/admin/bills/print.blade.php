@@ -98,6 +98,36 @@
             background: #f8d7da;
             color: #721c24;
         }
+
+        .status-draft {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .draft-banner {
+            text-align: center;
+            background: #eff6ff;
+            border: 2px dashed #2563eb;
+            color: #1e40af;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .draft-watermark {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 72px;
+            font-weight: bold;
+            color: rgba(37, 99, 235, 0.12);
+            pointer-events: none;
+            z-index: 0;
+            white-space: nowrap;
+        }
         
         table {
             width: 100%;
@@ -230,7 +260,10 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    @if($bill->isDraft())
+        <div class="draft-watermark">DRAFT ESTIMATE</div>
+    @endif
+    <div class="container" style="position: relative; z-index: 1;">
         <!-- Header -->
         <div class="header">
             @if($settings['hospital_logo'])
@@ -248,6 +281,10 @@
                 </p>
             @endif
         </div>
+
+        @if($bill->isDraft())
+            <div class="draft-banner">Draft / Estimate — Not a formal invoice</div>
+        @endif
 
         <!-- Bill Info -->
         <div class="bill-info">

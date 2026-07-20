@@ -86,6 +86,10 @@ class DoctorShareService
     public static function calculate(Bill $bill): void
     {
         try {
+            if ($bill->isDraft()) {
+                return;
+            }
+
             $doctorId = self::resolveDoctorId($bill);
 
             if ($doctorId === null) {

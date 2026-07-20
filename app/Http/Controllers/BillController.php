@@ -12,13 +12,40 @@ use App\Models\Service;
 use App\Models\Visit;
 use App\Services\BillItemCategoryResolver;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class BillController extends Controller
 {
     public function index()
     {
-        $bills = Bill::with(['patient', 'visit'])->latest()->paginate(10);
-        return view('admin.bills.index', compact('bills'));
+        return view('admin.bills.index');
+    }
+
+    public function data()
+    {
+        $query = Bill::query()->with('patient');
+
+        return DataTables::eloquent($query)
+            ->filterColumn('patient', function ($query, $keyword) {
+                $query->whereHas('patient', function ($patientQuery) use ($keyword) {
+                    $patientQuery->where('name', 'like', "%{$keyword}%")
+                        ->orWhere('phone', 'like', "%{$keyword}%")
+                        ->orWhere('patient_no', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('total_amount', function ($query, $keyword) {
+                $normalized = preg_replace('/[^\d.]/', '', $keyword);
+
+                if ($normalized === '') {
+                    return;
+                }
+
+                $query->where(function ($amountQuery) use ($normalized) {
+                    $amountQuery->where('total_amount', 'like', "%{$normalized}%")
+                        ->orWhere('due_amount', 'like', "%{$normalized}%");
+                });
+            })
+            ->toJson();
     }
 
     public function create()
@@ -129,17 +156,21 @@ class BillController extends Controller
 
     public function update(UpdateBillRequest $request, Bill $bill)
     {
+        $isDraft = $bill->isDraft();
+
         // Void existing share items BEFORE bill_items are deleted.
         // If settled items exist, this throws and the update is aborted entirely —
         // no bill fields are changed, no items are deleted.
-        try {
-            \App\Services\DoctorShareService::voidForBill($bill, 'bill_updated');
-        } catch (\RuntimeException $e) {
-            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
+        if (! $isDraft) {
+            try {
+                \App\Services\DoctorShareService::voidForBill($bill, 'bill_updated');
+            } catch (\RuntimeException $e) {
+                return redirect()->back()->withErrors(['error' => $e->getMessage()]);
+            }
         }
 
         // All bill writes + accounting reconciliation in a single transaction
-        DB::connection('tenant')->transaction(function () use ($request, $bill) {
+        DB::connection('tenant')->transaction(function () use ($request, $bill, $isDraft) {
             $discountType       = $request->discount_type ?? 'fixed';
             $discountPercentage = $request->discount_percentage ?? 0;
 
@@ -174,6 +205,14 @@ class BillController extends Controller
 
             $bill->calculateTotals();
 
+            if ($isDraft) {
+                // Draft bills stay draft — no accounting / status transition yet.
+                $bill->status = 'draft';
+                $bill->save();
+
+                return;
+            }
+
             // --- Accounting Reconciliation: Reverse & Repost ---
             // Reverse old bill journal entry and post a fresh one with updated amounts.
             // This keeps full audit trail — old entries are never modified/deleted.
@@ -200,9 +239,13 @@ class BillController extends Controller
 
         // Share recalculation runs after the transaction commits — same reasoning
         // as store(): a share failure must not roll back a completed bill update
-        \App\Services\DoctorShareService::calculate($bill);
+        if (! $isDraft) {
+            \App\Services\DoctorShareService::calculate($bill);
+        }
 
-        return redirect()->route('bills.show', $bill)->with('success', 'Bill updated successfully');
+        return redirect()->route('bills.show', $bill)->with('success', $isDraft
+            ? 'Draft bill updated successfully.'
+            : 'Bill updated successfully');
     }
 
     public function destroy(Bill $bill)
@@ -258,6 +301,12 @@ class BillController extends Controller
 
     public function addPayment(AddBillPaymentRequest $request, Bill $bill)
     {
+        if ($bill->isDraft()) {
+            return redirect()->back()->withErrors([
+                'error' => 'Payments cannot be recorded on a draft bill. Finalize the bill at discharge first.',
+            ]);
+        }
+
         $payment = $bill->payments()->create([
             'payment_date' => $request->payment_date,
             'amount' => $request->amount,

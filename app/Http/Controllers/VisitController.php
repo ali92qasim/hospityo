@@ -29,25 +29,54 @@ use App\Models\Admission;
 use App\Models\Triage;
 use App\Models\Medicine;
 use App\Models\Prescription;
+use App\Services\IpdDraftBillService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class VisitController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $query = Visit::with(['patient', 'doctor']);
+        return view('admin.visits.index');
+    }
 
-        // If user is a doctor, only show visits assigned to them
+    public function data(Request $request)
+    {
+        $query = $this->visitsIndexQuery($request);
+
+        return DataTables::eloquent($query)
+            ->filter(function ($builder) use ($request) {
+                if ($search = $request->input('search.value')) {
+                    $builder->where(function ($q) use ($search) {
+                        $q->where('visit_no', 'like', "%{$search}%")
+                            ->orWhereHas('patient', function ($patientQuery) use ($search) {
+                                $patientQuery->where('name', 'like', "%{$search}%")
+                                    ->orWhere('patient_no', 'like', "%{$search}%")
+                                    ->orWhere('phone', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('doctor', function ($doctorQuery) use ($search) {
+                                $doctorQuery->where('name', 'like', "%{$search}%");
+                            });
+                    });
+                }
+            })
+            ->toJson();
+    }
+
+    private function visitsIndexQuery(Request $request)
+    {
+        $query = Visit::with(['patient', 'doctor.department']);
+
         if (auth()->user()->hasRole('Doctor')) {
             $doctor = Doctor::where('user_id', auth()->id())->first();
             if ($doctor) {
                 $query->where('doctor_id', $doctor->id);
             } else {
-                $query->whereNull('id'); // No visits if doctor record not found
+                $query->whereNull('id');
             }
         }
 
-        // Date filters
         if ($request->date_filter) {
             switch ($request->date_filter) {
                 case 'today':
@@ -59,48 +88,31 @@ class VisitController extends Controller
                 case 'this_week':
                     $query->whereBetween('visit_datetime', [
                         now()->startOfWeek(),
-                        now()->endOfWeek()
+                        now()->endOfWeek(),
                     ]);
                     break;
                 case 'last_week':
                     $query->whereBetween('visit_datetime', [
                         now()->subWeek()->startOfWeek(),
-                        now()->subWeek()->endOfWeek()
+                        now()->subWeek()->endOfWeek(),
                     ]);
                     break;
                 case 'this_month':
                     $query->whereMonth('visit_datetime', now()->month)
-                          ->whereYear('visit_datetime', now()->year);
+                        ->whereYear('visit_datetime', now()->year);
                     break;
                 case 'last_month':
                     $query->whereMonth('visit_datetime', now()->subMonth()->month)
-                          ->whereYear('visit_datetime', now()->subMonth()->year);
+                        ->whereYear('visit_datetime', now()->subMonth()->year);
                     break;
             }
         }
 
-        // Custom date range
         if ($request->start_date && $request->end_date) {
             $query->whereBetween('visit_datetime', [
                 $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59'
+                $request->end_date . ' 23:59:59',
             ]);
-        }
-
-        // Search functionality
-        if ($request->search) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('visit_no', 'like', "%{$search}%")
-                  ->orWhereHas('patient', function($patientQuery) use ($search) {
-                      $patientQuery->where('name', 'like', "%{$search}%")
-                                   ->orWhere('patient_no', 'like', "%{$search}%")
-                                   ->orWhere('phone', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('doctor', function($doctorQuery) use ($search) {
-                      $doctorQuery->where('name', 'like', "%{$search}%");
-                  });
-            });
         }
 
         if ($request->visit_type) {
@@ -111,8 +123,7 @@ class VisitController extends Controller
             $query->where('status', $request->status);
         }
 
-        $visits = $query->latest()->paginate(10)->withQueryString();
-        return view('admin.visits.index', compact('visits'));
+        return $query;
     }
 
     public function create()
@@ -167,6 +178,7 @@ class VisitController extends Controller
             'labOrders.items.investigation',
             'labOrders.items.result',
             'admission.bed.ward',
+            'draftBill',
             'triage',
             'prescriptions.items.medicine',
         ]);
@@ -347,18 +359,28 @@ class VisitController extends Controller
     // IPD Methods
     public function admitPatient(AdmitPatientRequest $request, Visit $visit)
     {
-        $bed = Bed::findOrFail($request->bed_id);
-        $bed->update(['status' => 'occupied']);
+        try {
+            DB::connection('tenant')->transaction(function () use ($request, $visit) {
+                $bed = Bed::findOrFail($request->bed_id);
+                $bed->update(['status' => 'occupied']);
 
-        $visit->admission()->create([
-            'bed_id' => $request->bed_id,
-            'admission_date' => now(),
-            'admission_notes' => $request->admission_notes
-        ]);
+                $visit->admission()->create([
+                    'bed_id' => $request->bed_id,
+                    'admission_date' => now(),
+                    'admission_notes' => $request->admission_notes,
+                ]);
 
-        $visit->update(['status' => 'admitted']);
+                $visit->update(['status' => 'admitted']);
 
-        return back()->with('success', 'Patient admitted successfully.');
+                IpdDraftBillService::ensureForVisit($visit->fresh());
+            });
+
+            return back()->with('success', 'Patient admitted successfully. An IPD draft bill has been created.');
+        } catch (\Exception $e) {
+            \Log::error('Failed to admit patient: ' . $e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to admit patient. Please try again.']);
+        }
     }
 
     public function dischargePatient(DischargePatientRequest $request, Visit $visit)

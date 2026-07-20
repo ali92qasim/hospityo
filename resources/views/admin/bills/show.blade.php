@@ -3,9 +3,30 @@
 @section('title', 'Bill Details')
 
 @section('content')
-<div class="mb-6">
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <h1 class="text-2xl font-bold text-gray-800">Bill #{{ $bill->bill_number }}</h1>
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ route('bills.edit', $bill) }}" class="inline-flex items-center px-3 py-1.5 text-sm bg-medical-blue text-white rounded-lg hover:bg-blue-700">
+            <i class="fas fa-edit mr-1"></i>Edit
+        </a>
+        <a href="{{ route('bills.print', $bill) }}" target="_blank" class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50">
+            <i class="fas fa-print mr-1"></i>{{ $bill->isDraft() ? 'Print Draft' : 'Print' }}
+        </a>
+    </div>
 </div>
+
+@if($bill->isDraft())
+<div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+    <i class="fas fa-file-alt text-blue-500 mt-0.5"></i>
+    <div>
+        <p class="text-sm font-medium text-blue-800">Draft Bill (Estimate)</p>
+        <p class="text-sm text-blue-700">
+            This is a running IPD draft for the admission — not a formal invoice.
+            Add charges during the stay. Accounting and payments are deferred until discharge finalization.
+        </p>
+    </div>
+</div>
+@endif
 
 @if($bill->paid_amount > $bill->total_amount)
 <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3" id="overpayment-banner">
@@ -125,7 +146,12 @@
     </div>
 
     <div>
-        @if($bill->due_amount > 0)
+        @if($bill->isDraft())
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+            <h3 class="text-lg font-semibold text-blue-800 mb-2">Draft — Payments Disabled</h3>
+            <p class="text-sm text-blue-700">Payments will be available after this draft is finalized at discharge.</p>
+        </div>
+        @elseif($bill->due_amount > 0)
         <div class="bg-white rounded-lg shadow p-6 mb-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Add Payment</h3>
             <form method="POST" action="{{ route('bills.add-payment', $bill) }}">

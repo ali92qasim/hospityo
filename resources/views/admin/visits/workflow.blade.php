@@ -320,6 +320,26 @@
                                     <span class="ml-2">{{ $visit->admission->admission_date->format('M d, Y h:i A') }}</span>
                                 </div>
                             </div>
+
+                            @if($visit->draftBill)
+                                <div class="mt-4 pt-4 border-t border-purple-200 flex flex-wrap gap-2">
+                                    <a href="{{ route('bills.show', $visit->draftBill) }}"
+                                       class="inline-flex items-center px-3 py-1.5 text-sm bg-medical-blue text-white rounded-lg hover:bg-blue-700">
+                                        <i class="fas fa-file-invoice-dollar mr-1"></i>View Draft Bill
+                                    </a>
+                                    <a href="{{ route('bills.edit', $visit->draftBill) }}"
+                                       class="inline-flex items-center px-3 py-1.5 text-sm border border-medical-blue text-medical-blue bg-white rounded-lg hover:bg-blue-50">
+                                        <i class="fas fa-edit mr-1"></i>Add Charges
+                                    </a>
+                                    <a href="{{ route('bills.print', $visit->draftBill) }}" target="_blank"
+                                       class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50">
+                                        <i class="fas fa-print mr-1"></i>Print Draft
+                                    </a>
+                                    <span class="inline-flex items-center text-xs text-purple-700 ml-1">
+                                        {{ $visit->draftBill->bill_number }} · {{ format_currency($visit->draftBill->total_amount) }}
+                                    </span>
+                                </div>
+                            @endif
                         </div>
                         
                         @if($visit->admission->status === 'active')

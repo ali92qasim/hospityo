@@ -10,13 +10,21 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use App\Models\Role;
+use Yajra\DataTables\Facades\DataTables;
 
 class DoctorController extends Controller
 {
     public function index(): View
     {
-        $doctors = Doctor::latest()->paginate(10);
-        return view('admin.doctors.index', compact('doctors'));
+        return view('admin.doctors.index');
+    }
+
+    public function data()
+    {
+        $query = Doctor::query();
+
+        return DataTables::eloquent($query)
+            ->toJson();
     }
 
     public function create(): View

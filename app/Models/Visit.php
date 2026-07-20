@@ -101,4 +101,14 @@ class Visit extends Model
     {
         return $this->hasMany(InvestigationOrder::class);
     }
+
+    public function bills(): HasMany
+    {
+        return $this->hasMany(Bill::class);
+    }
+
+    public function draftBill(): HasOne
+    {
+        return $this->hasOne(Bill::class)->where('status', 'draft')->latestOfMany();
+    }
 }

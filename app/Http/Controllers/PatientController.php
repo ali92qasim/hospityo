@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\Facades\DataTables;
 
 class PatientController extends Controller
 {
@@ -19,30 +20,15 @@ class PatientController extends Controller
 
     public function index(): View
     {
-        try {
-            $search = request('search');
-            
-            $patients = Patient::query()
-                ->when($search, function ($query, $search) {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('patient_no', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                })
-                ->latest()
-                ->paginate(10);
-            
-            return view('admin.patients.index', compact('patients'));
-        } catch (\Throwable $e) {
-            Log::error('Failed to load patients', [
-                'error' => $e->getMessage(),
-                'user_id' => auth()->id(),
-            ]);
-            
-            // Return view with empty collection and error message
-            return view('admin.patients.index', [
-                'patients' => Patient::paginate(0)
-            ])->with('error', 'Failed to load patients. Please try again.');
-        }
+        return view('admin.patients.index');
+    }
+
+    public function data()
+    {
+        $query = Patient::query();
+
+        return DataTables::eloquent($query)
+            ->toJson();
     }
 
     public function create(): View
