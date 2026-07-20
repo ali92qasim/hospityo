@@ -187,6 +187,53 @@
         </div>
         @endif
 
+        @php
+            $ipdAdmission = $bill->bill_type === 'ipd' ? $bill->visit?->admission : null;
+        @endphp
+        @if($ipdAdmission && ($ipdAdmission->advances->count() > 0 || $ipdAdmission->refund_amount > 0))
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">IPD Admission Settlement</h3>
+            <p class="text-sm text-gray-600 mb-4">
+                Advance payments are recorded on the admission. At discharge, advances are applied to this bill and any unused credit is refunded separately.
+            </p>
+
+            @if($ipdAdmission->advances->count() > 0)
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Advances Received During Stay</h4>
+                <div class="space-y-2">
+                    @foreach($ipdAdmission->advances as $advance)
+                    <div class="flex justify-between text-sm border-l-4 border-blue-400 pl-3 py-1">
+                        <div>
+                            <span class="font-medium">{{ format_currency($advance->amount) }}</span>
+                            <span class="text-gray-500"> · {{ $advance->payment_date->format('M d, Y') }}</span>
+                            <span class="text-gray-500"> · {{ ucfirst(str_replace('_', ' ', $advance->payment_method)) }}</span>
+                            @if($advance->reference_number)
+                                <span class="text-gray-400"> · {{ $advance->reference_number }}</span>
+                            @endif
+                        </div>
+                        <span class="text-xs text-gray-500">{{ $advance->receivedBy?->name }}</span>
+                    </div>
+                    @endforeach
+                </div>
+                <div class="mt-2 text-sm font-medium text-gray-800">
+                    Total advances: {{ format_currency($ipdAdmission->total_advances) }}
+                </div>
+            </div>
+            @endif
+
+            @if($ipdAdmission->refund_amount > 0)
+            <div class="rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+                <i class="fas fa-hand-holding-usd mr-1"></i>
+                Refunded at discharge: <strong>{{ format_currency($ipdAdmission->refund_amount) }}</strong>
+                via {{ ucfirst(str_replace('_', ' ', $ipdAdmission->refund_method ?? 'cash')) }}
+                @if($ipdAdmission->refunded_at)
+                    on {{ $ipdAdmission->refunded_at->format('M d, Y h:i A') }}
+                @endif
+            </div>
+            @endif
+        </div>
+        @endif
+
         @if($bill->payments->count() > 0)
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Payment History</h3>
@@ -198,7 +245,11 @@
                         <span class="text-sm text-gray-500">{{ $payment->payment_date->format('M d, Y') }}</span>
                     </div>
                     <div class="text-sm text-gray-600">
-                        {{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
+                        @if($payment->payment_method === 'advance')
+                            Advance applied from admission
+                        @else
+                            {{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
+                        @endif
                         @if($payment->reference_number)
                             - {{ $payment->reference_number }}
                         @endif

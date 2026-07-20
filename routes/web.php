@@ -254,6 +254,7 @@ Route::middleware('auth')->group(function () {
     Route::post('visits/{visit}/check-patient', [VisitController::class, 'checkPatient'])->name('visits.check-patient')->middleware('permission:edit visits');
     Route::post('visits/{visit}/admit', [VisitController::class, 'admitPatient'])->name('visits.admit')->middleware('permission:edit visits');
     Route::post('visits/{visit}/discharge', [VisitController::class, 'dischargePatient'])->name('visits.discharge')->middleware('permission:edit visits');
+    Route::post('visits/{visit}/admission-advance', [VisitController::class, 'storeAdmissionAdvance'])->name('visits.admission-advance')->middleware('permission:edit visits');
     Route::post('visits/{visit}/triage', [VisitController::class, 'triagePatient'])->name('visits.triage')->middleware('permission:edit visits');
     Route::resource('appointments', AppointmentController::class)->middleware('permission:view appointments|create appointments|edit appointments|delete appointments');
     Route::get('calendar/events', [AppointmentController::class, 'getCalendarEvents'])->name('calendar.events')->middleware('permission:view appointments');

@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\Account;
+use App\Models\Admission;
 use App\Models\JournalEntry;
 use App\Models\Bill;
 use App\Models\Payment;
+use App\Models\AdmissionAdvance;
 use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Log;
 
@@ -257,6 +259,11 @@ class AccountingService
     public static function postPaymentEntry(Payment $payment): ?JournalEntry
     {
         try {
+            // Advance applications use a different journal (liability → AR), not cash.
+            if ($payment->payment_method === 'advance') {
+                return self::postAdvanceApplicationEntry($payment);
+            }
+
             $bill = $payment->bill;
             if (!$bill) return null;
 
@@ -317,6 +324,256 @@ class AccountingService
             return $entry;
         } catch (\Throwable $e) {
             Log::error('[Accounting] Failed to post payment entry', ['payment' => $payment->id, 'error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /**
+     * Post a journal entry for an IPD admission advance.
+     *
+     * DR: Cash/Bank (based on payment_method)
+     * CR: Advance from Patients (liability account 2300)
+     *
+     * This creates a patient credit balance for the admission/stay.
+     */
+    public static function postAdmissionAdvanceEntry(AdmissionAdvance $advance): ?JournalEntry
+    {
+        try {
+            // Prevent duplicate entries for the same advance.
+            $existing = JournalEntry::where('reference_type', 'AdmissionAdvance')
+                ->where('reference_id', $advance->id)
+                ->where('entry_type', 'original')
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
+            $cashAccountCode = match ($advance->payment_method) {
+                'cash' => '1100',
+                'card', 'credit_card', 'debit_card', 'upi', 'bank_transfer', 'bank', 'online' => '1110',
+                'insurance' => '1210',
+                default => '1100',
+            };
+
+            $cashAccount = Account::where('code', $cashAccountCode)->first();
+            $patientAdvance = Account::where('code', '2300')->first();
+
+            if (! $cashAccount || ! $patientAdvance) {
+                Log::warning('[Accounting] Cannot post admission advance — missing accounts', [
+                    'advance_id' => $advance->id,
+                    'payment_method' => $advance->payment_method,
+                ]);
+                return null;
+            }
+
+            $entry = JournalEntry::create([
+                'entry_date' => $advance->payment_date,
+                'reference_type' => 'AdmissionAdvance',
+                'reference_id' => $advance->id,
+                'description' => "Admission advance — {$advance->payment_date} (patient credit)",
+                'created_by' => $advance->received_by ?? auth()->id() ?? 1,
+                'is_auto' => true,
+                'entry_type' => 'original',
+            ]);
+
+            // DR: Cash/Bank
+            $entry->lines()->create([
+                'account_id' => $cashAccount->id,
+                'debit' => $advance->amount,
+                'credit' => 0,
+                'narration' => "Admission advance via {$advance->payment_method}",
+            ]);
+
+            // CR: Patient Advance liability
+            $entry->lines()->create([
+                'account_id' => $patientAdvance->id,
+                'debit' => 0,
+                'credit' => $advance->amount,
+                'narration' => "Advance credit — admission {$advance->admission_id}",
+            ]);
+
+            // Sub-ledger: Patient credit
+            $entry->subLedgerEntries()->create([
+                'ledger_type' => 'patient',
+                'ledger_id' => $advance->patient_id,
+                'debit' => 0,
+                'credit' => $advance->amount,
+                'narration' => "Admission advance (patient credit)",
+            ]);
+
+            return $entry;
+        } catch (\Throwable $e) {
+            Log::error('[Accounting] Failed to post admission advance', [
+                'advance_id' => $advance->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Apply patient advance liability against a finalized bill.
+     * Cash was already received when the advance was posted — do not DR cash again.
+     *
+     * DR: Advance from Patients (2300) — reduce liability
+     * CR: Accounts Receivable (1200) — settle patient debt
+     */
+    public static function postAdvanceApplicationEntry(Payment $payment): ?JournalEntry
+    {
+        try {
+            $bill = $payment->bill;
+            if (! $bill) {
+                return null;
+            }
+
+            $existing = JournalEntry::where('reference_type', 'Payment')
+                ->where('reference_id', $payment->id)
+                ->where('entry_type', 'original')
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
+            $patientAdvance = Account::where('code', '2300')->first();
+            $receivable = Account::where('code', '1200')->first();
+
+            if (! $patientAdvance || ! $receivable) {
+                Log::warning('[Accounting] Cannot apply advance — missing accounts (2300 or 1200)', [
+                    'payment_id' => $payment->id,
+                ]);
+
+                return null;
+            }
+
+            $entry = JournalEntry::create([
+                'entry_date' => $payment->payment_date,
+                'reference_type' => 'Payment',
+                'reference_id' => $payment->id,
+                'description' => "Advance applied to {$bill->bill_number}",
+                'created_by' => $payment->received_by ?? auth()->id() ?? 1,
+                'is_auto' => true,
+                'entry_type' => 'original',
+            ]);
+
+            $entry->lines()->create([
+                'account_id' => $patientAdvance->id,
+                'debit' => $payment->amount,
+                'credit' => 0,
+                'narration' => "Advance applied to {$bill->bill_number}",
+            ]);
+
+            $entry->lines()->create([
+                'account_id' => $receivable->id,
+                'debit' => 0,
+                'credit' => $payment->amount,
+                'narration' => "AR settled from advance — {$bill->bill_number}",
+            ]);
+
+            $entry->subLedgerEntries()->create([
+                'ledger_type' => 'patient',
+                'ledger_id' => $bill->patient_id,
+                'debit' => $payment->amount,
+                'credit' => 0,
+                'narration' => "Advance applied to {$bill->bill_number}",
+            ]);
+
+            return $entry;
+        } catch (\Throwable $e) {
+            Log::error('[Accounting] Failed to post advance application', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Refund leftover admission advance credit to the patient at discharge.
+     *
+     * DR: Advance from Patients (2300)
+     * CR: Cash/Bank (based on refund method)
+     */
+    public static function postAdvanceRefundEntry(
+        Admission $admission,
+        float $amount,
+        string $refundMethod,
+        ?int $userId = null,
+    ): ?JournalEntry {
+        try {
+            if ($amount <= 0) {
+                return null;
+            }
+
+            $existing = JournalEntry::where('reference_type', 'AdmissionRefund')
+                ->where('reference_id', $admission->id)
+                ->where('entry_type', 'original')
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
+            $patientAdvance = Account::where('code', '2300')->first();
+            $cashAccount = self::getPaymentAccount($refundMethod);
+
+            if (! $patientAdvance || ! $cashAccount) {
+                Log::warning('[Accounting] Cannot post advance refund — missing accounts', [
+                    'admission_id' => $admission->id,
+                    'refund_method' => $refundMethod,
+                ]);
+
+                return null;
+            }
+
+            $entry = JournalEntry::create([
+                'entry_date' => now()->toDateString(),
+                'reference_type' => 'AdmissionRefund',
+                'reference_id' => $admission->id,
+                'description' => "Advance refund on discharge — admission {$admission->id}",
+                'created_by' => $userId ?? auth()->id() ?? 1,
+                'is_auto' => true,
+                'entry_type' => 'original',
+            ]);
+
+            $entry->lines()->create([
+                'account_id' => $patientAdvance->id,
+                'debit' => $amount,
+                'credit' => 0,
+                'narration' => 'Refund of unused patient advance',
+            ]);
+
+            $entry->lines()->create([
+                'account_id' => $cashAccount->id,
+                'debit' => 0,
+                'credit' => $amount,
+                'narration' => "Refund via {$refundMethod}",
+            ]);
+
+            $patientId = $admission->patient_id
+                ?? $admission->visit?->patient_id
+                ?? $admission->advances()->value('patient_id');
+
+            if ($patientId) {
+                $entry->subLedgerEntries()->create([
+                    'ledger_type' => 'patient',
+                    'ledger_id' => $patientId,
+                    'debit' => $amount,
+                    'credit' => 0,
+                    'narration' => 'Advance refund on discharge',
+                ]);
+            }
+
+            return $entry;
+        } catch (\Throwable $e) {
+            Log::error('[Accounting] Failed to post advance refund', [
+                'admission_id' => $admission->id,
+                'error' => $e->getMessage(),
+            ]);
+
             return null;
         }
     }

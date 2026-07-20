@@ -109,6 +109,9 @@ class Visit extends Model
 
     public function draftBill(): HasOne
     {
-        return $this->hasOne(Bill::class)->where('status', 'draft')->latestOfMany();
+        return $this->hasOne(Bill::class)
+            ->where('status', 'draft')
+            ->where('bill_type', 'ipd')
+            ->latestOfMany();
     }
 }

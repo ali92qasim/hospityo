@@ -105,3 +105,36 @@ it('does not create a draft bill for opd visits', function () {
 
     expect(IpdDraftBillService::ensureForVisit($opd))->toBeNull();
 });
+
+it('preserves visit link when updating an ipd draft bill', function () {
+    $bill = IpdDraftBillService::ensureForVisit($this->visit);
+
+    $bill->update([
+        'patient_id' => $this->visit->patient_id,
+        'visit_id' => null,
+        'bill_type' => 'ipd',
+        'bill_date' => now()->toDateString(),
+        'tax_amount' => 0,
+        'discount_type' => 'fixed',
+        'discount_percentage' => 0,
+        'discount_amount' => 0,
+        'notes' => 'Simulated broken save',
+        'status' => 'draft',
+    ]);
+
+    $bill->billItems()->create([
+        'description' => 'Room charge',
+        'quantity' => 1,
+        'unit_price' => 3500,
+        'total_price' => 3500,
+        'item_category' => 'room',
+    ]);
+    $bill->calculateTotals();
+
+    $emptyDuplicate = IpdDraftBillService::ensureForVisit($this->visit);
+
+    expect($emptyDuplicate->id)->toBe($bill->id)
+        ->and($emptyDuplicate->visit_id)->toBe($this->visit->id)
+        ->and((float) $emptyDuplicate->total_amount)->toBe(3500.0)
+        ->and($this->visit->bills()->where('status', 'draft')->count())->toBe(1);
+});

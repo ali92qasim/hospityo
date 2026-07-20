@@ -11,6 +11,7 @@ use App\Http\Requests\AddTestOrdersRequest;
 use App\Http\Requests\UpdateTestResultRequest;
 use App\Http\Requests\AdmitPatientRequest;
 use App\Http\Requests\DischargePatientRequest;
+use App\Http\Requests\StoreAdmissionAdvanceRequest;
 use App\Http\Requests\TriagePatientRequest;
 use App\Http\Requests\CreatePrescriptionRequest;
 use App\Http\Requests\OrderMultipleLabTestsRequest;
@@ -30,6 +31,8 @@ use App\Models\Triage;
 use App\Models\Medicine;
 use App\Models\Prescription;
 use App\Services\IpdDraftBillService;
+use App\Services\IpdDischargeBillingService;
+use App\Services\AccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
@@ -178,6 +181,7 @@ class VisitController extends Controller
             'labOrders.items.investigation',
             'labOrders.items.result',
             'admission.bed.ward',
+                'admission.advances.receivedBy',
             'draftBill',
             'triage',
             'prescriptions.items.medicine',
@@ -192,6 +196,11 @@ class VisitController extends Controller
             });
         $investigations = Investigation::where('is_active', true)->orderBy('category')->orderBy('name')->get();
         $allergies = \App\Models\Allergy::orderBy('category')->orderBy('name')->get();
+
+        if ($visit->visit_type === 'ipd' && $visit->admission?->status === 'active') {
+            IpdDraftBillService::ensureForVisit($visit);
+            $visit->load('draftBill.billItems');
+        }
 
         $data = compact('visit', 'doctors', 'medicines', 'investigations', 'allergies');
 
@@ -387,21 +396,94 @@ class VisitController extends Controller
     {
         try {
             $admission = $visit->admission;
-            $admission->update([
-                'discharge_date' => now(),
-                'status' => 'discharged',
-                'discharge_notes' => $request->discharge_notes,
-                'discharge_summary' => $request->discharge_summary
-            ]);
+            if (! $admission) {
+                return back()->withErrors(['error' => 'Admission record not found.']);
+            }
 
-            $admission->bed->update(['status' => 'available']);
-            $visit->update(['status' => 'discharged']);
+            if ($admission->status === 'discharged') {
+                return back()->withErrors(['error' => 'Patient is already discharged.']);
+            }
 
-            return back()->with('success', 'Patient discharged successfully.');
+            $settlement = null;
+
+            DB::connection('tenant')->transaction(function () use ($request, $visit, $admission, &$settlement) {
+                if ($visit->visit_type === 'ipd') {
+                    $settlement = IpdDischargeBillingService::finalizeForDischarge(
+                        $visit->fresh(['admission.advances', 'draftBill']),
+                        $request->input('refund_method'),
+                        (float) ($request->input('additional_payment_amount') ?? 0),
+                        $request->input('additional_payment_method'),
+                    );
+                }
+
+                $admission->refresh();
+                $admission->update([
+                    'discharge_date' => now(),
+                    'status' => 'discharged',
+                    'discharge_notes' => $request->discharge_notes,
+                    'discharge_summary' => $request->discharge_summary,
+                ]);
+
+                $admission->bed->update(['status' => 'available']);
+                $visit->update(['status' => 'discharged']);
+            });
+
+            $message = 'Patient discharged successfully.';
+            if ($settlement) {
+                $message .= ' Final invoice '.$settlement['bill']->bill_number.' created.';
+                if ($settlement['advances_applied'] > 0) {
+                    $message .= ' Advances applied: '.format_currency($settlement['advances_applied']).'.';
+                }
+                if ($settlement['refund_amount'] > 0) {
+                    $message .= ' Refund issued: '.format_currency($settlement['refund_amount']).'.';
+                }
+                if ($settlement['amount_due'] > 0) {
+                    $message .= ' Remaining due: '.format_currency($settlement['amount_due']).'.';
+                }
+            }
+
+            if ($settlement && $settlement['bill']) {
+                return redirect()
+                    ->route('bills.show', $settlement['bill'])
+                    ->with('success', $message);
+            }
+
+            return back()->with('success', $message);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         } catch (\Exception $e) {
-            \Log::error('Failed to discharge patient: ' . $e->getMessage());
+            \Log::error('Failed to discharge patient: '.$e->getMessage());
+
             return back()->withErrors(['error' => 'Failed to discharge patient. Please try again.']);
         }
+    }
+
+    public function storeAdmissionAdvance(StoreAdmissionAdvanceRequest $request, Visit $visit)
+    {
+        if ($visit->visit_type !== 'ipd') {
+            return back()->withErrors(['error' => 'Advances can only be recorded for IPD visits.']);
+        }
+
+        $admission = $visit->admission;
+        if (! $admission) {
+            return back()->withErrors(['error' => 'Admission record not found for this IPD visit.']);
+        }
+
+        // Store advance as an audit trail on the admission.
+        $advance = $admission->advances()->create([
+            'patient_id' => $visit->patient_id,
+            'amount' => $request->amount,
+            'payment_date' => $request->payment_date,
+            'payment_method' => $request->payment_method,
+            'reference_number' => $request->reference_number,
+            'notes' => $request->notes,
+            'received_by' => auth()->id(),
+        ]);
+
+        // Post accounting (cash DR, patient advance liability CR).
+        AccountingService::postAdmissionAdvanceEntry($advance);
+
+        return back()->with('success', 'Advance payment recorded successfully.');
     }
 
     // Emergency Methods

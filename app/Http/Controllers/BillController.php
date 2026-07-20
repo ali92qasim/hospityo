@@ -142,7 +142,14 @@ class BillController extends Controller
 
     public function show(Bill $bill)
     {
-        $bill->load(['patient', 'visit', 'billItems.service', 'billItems.investigation', 'payments.receivedBy']);
+        $bill->load([
+            'patient',
+            'visit.admission.advances.receivedBy',
+            'billItems.service',
+            'billItems.investigation',
+            'payments.receivedBy',
+        ]);
+
         return view('admin.bills.show', compact('bill'));
     }
 
@@ -152,7 +159,7 @@ class BillController extends Controller
         $services = Service::active()->get();
         $investigations = \App\Models\Investigation::active()->orderBy('category')->orderBy('name')->get();
         $visits = Visit::with('patient')->latest()->take(50)->get();
-        $bill->load('billItems');
+        $bill->load(['billItems', 'patient']);
         return view('admin.bills.edit', compact('bill', 'patients', 'services', 'investigations', 'visits'));
     }
 
@@ -186,10 +193,14 @@ class BillController extends Controller
                 : ($request->discount_amount ?? 0);
 
             $bill->update([
-                'patient_id'          => $request->patient_id,
-                'visit_id'            => $request->visit_id,
+                'patient_id'          => ($isDraft && $bill->visit_id && $bill->bill_type === 'ipd')
+                    ? $bill->patient_id
+                    : $request->patient_id,
+                'visit_id'            => $request->input('visit_id', $bill->visit_id),
                 'bill_date'           => $request->bill_date,
-                'bill_type'           => $request->bill_type,
+                'bill_type'           => ($isDraft && $bill->visit_id && $bill->bill_type === 'ipd')
+                    ? 'ipd'
+                    : $request->bill_type,
                 'tax_amount'          => $request->tax_amount ?? 0,
                 'discount_type'       => $discountType,
                 'discount_percentage' => $discountPercentage,
@@ -245,7 +256,10 @@ class BillController extends Controller
             \App\Services\DoctorShareService::calculate($bill);
         }
 
-        return redirect()->route('bills.show', $bill)->with('success', $isDraft
+        return redirect()->route(
+            $isDraft && $bill->visit_id && $bill->bill_type === 'ipd' ? 'visits.workflow' : 'bills.show',
+            $isDraft && $bill->visit_id && $bill->bill_type === 'ipd' ? $bill->visit_id : $bill
+        )->with('success', $isDraft
             ? 'Draft bill updated successfully.'
             : 'Bill updated successfully');
     }
@@ -454,7 +468,9 @@ class BillController extends Controller
             'hospital_email'   => setting('hospital_email', ''),
             'hospital_logo'    => setting('hospital_logo', ''),
         ];
-        return view('admin.bills.print', compact('bill', 'settings'));
+        $isInterim = $bill->isDraft() && request()->boolean('interim');
+
+        return view('admin.bills.print', compact('bill', 'settings', 'isInterim'));
     }
 
     /**

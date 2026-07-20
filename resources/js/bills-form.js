@@ -4,9 +4,11 @@ select2(window, $);
 import flatpickr from 'flatpickr';
 import '../css/bills-form.css';
 
-let itemIndex = 1;
+let itemIndex = window._billItemCount ?? 1;
 let rawServiceOptions = '';
 let rawInvestigationOptions = '';
+const currencySymbol = window._currencySymbol || '';
+const paidAmount = parseFloat(window._billPaidAmount) || 0;
 
 $(function () {
     const $firstRow = $('.bill-item').first();
@@ -18,10 +20,16 @@ $(function () {
     $('#bill_type').select2({ placeholder: 'Select Type', allowClear: true, width: '100%', minimumResultsForSearch: Infinity });
 
     // Flatpickr on bill date
-    flatpickr('#bill_date', { dateFormat: 'Y-m-d', defaultDate: new Date(), allowInput: true });
+    flatpickr('#bill_date', {
+        dateFormat: 'Y-m-d',
+        defaultDate: window._billDate || new Date(),
+        allowInput: true,
+    });
 
-    // Init Select2 on first row
-    initSelect2OnRow($firstRow);
+    // Init Select2 on all existing rows
+    $('.bill-item').each(function () {
+        initSelect2OnRow($(this));
+    });
 
     // Add item
     $('#addItem').on('click', function () {
@@ -188,6 +196,8 @@ $(function () {
     $('#bill_type').on('change', function () {
         calculateTax();
     });
+
+    updateTotal();
 });
 
 function initSelect2OnRow(row) {
@@ -277,9 +287,33 @@ function updateTotal() {
 
     const tax = parseFloat($('#tax_amount').val()) || 0;
     const discount = parseFloat($('#discount_amount').val()) || 0;
-    var symbol = $('#totalAmount').text().charAt(0);
-    $('#totalAmount').text(symbol + (subtotal + tax - discount).toFixed(2));
+    const total = subtotal + tax - discount;
+    const symbol = currencySymbol || window.appConfig?.currency || '';
+
+    $('#totalAmount').text(symbol + total.toFixed(2));
+
+    updateOverpaymentWarning(total);
 
     // Recalculate tax when subtotal changes
     calculateTax();
+}
+
+function updateOverpaymentWarning(newTotal) {
+    if (paidAmount <= 0 || paidAmount <= newTotal) {
+        $('#overpayment-edit-warning').addClass('hidden');
+        return;
+    }
+
+    const credit = (paidAmount - newTotal).toFixed(2);
+    const symbol = currencySymbol || window.appConfig?.currency || '';
+
+    if (!$('#overpayment-edit-warning').length) {
+        $('#totalAmount').after(
+            '<div id="overpayment-edit-warning" class="mt-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3"></div>'
+        );
+    }
+
+    $('#overpayment-edit-warning')
+        .html('<i class="fas fa-info-circle mr-1"></i>Patient credit of <strong>' + symbol + credit + '</strong> will be recorded (paid exceeds new total).')
+        .removeClass('hidden');
 }

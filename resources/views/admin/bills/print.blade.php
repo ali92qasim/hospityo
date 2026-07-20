@@ -261,7 +261,7 @@
 </head>
 <body>
     @if($bill->isDraft())
-        <div class="draft-watermark">DRAFT ESTIMATE</div>
+        <div class="draft-watermark">{{ !empty($isInterim) ? 'INTERIM INVOICE' : 'DRAFT ESTIMATE' }}</div>
     @endif
     <div class="container" style="position: relative; z-index: 1;">
         <!-- Header -->
@@ -283,7 +283,13 @@
         </div>
 
         @if($bill->isDraft())
-            <div class="draft-banner">Draft / Estimate — Not a formal invoice</div>
+            <div class="draft-banner">
+                @if(!empty($isInterim))
+                    Interim Invoice — Mid-stay statement (draft bill remains open)
+                @else
+                    Draft / Estimate — Not a formal invoice
+                @endif
+            </div>
         @endif
 
         <!-- Bill Info -->
