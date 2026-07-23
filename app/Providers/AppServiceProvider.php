@@ -15,7 +15,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $importTemplateHelper = app_path('Helpers/ImportTemplateHelper.php');
+
+        if (is_file($importTemplateHelper)) {
+            require_once $importTemplateHelper;
+        }
     }
 
     /**
