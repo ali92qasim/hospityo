@@ -189,11 +189,7 @@ class VisitController extends Controller
         $doctors = Doctor::where('status', 'active')->get();
         $medicines = Medicine::where('status', 'active')
             ->orderBy('name')
-            ->get()
-            ->filter(function($medicine) {
-                // Show medicine if stock tracking is disabled OR if it has stock
-                return !$medicine->manage_stock || $medicine->getCurrentStock() > 0;
-            });
+            ->get();
         $investigations = Investigation::where('is_active', true)->orderBy('category')->orderBy('name')->get();
         $allergies = \App\Models\Allergy::orderBy('category')->orderBy('name')->get();
 
@@ -519,16 +515,6 @@ class VisitController extends Controller
             foreach ($request->medicines as $medicineData) {
                 $medicine = Medicine::find($medicineData['medicine_id']);
                 $quantity = (int) ($medicineData['quantity'] ?? 1);
-
-                // Check stock availability if stock tracking is enabled
-                if ($medicine->manage_stock) {
-                    $currentStock = $medicine->getCurrentStock();
-                    if ($currentStock < $quantity) {
-                        return back()->withErrors([
-                            'stock' => "Insufficient stock for {$medicine->name}. Available: {$currentStock}, Requested: {$quantity}"
-                        ])->withInput();
-                    }
-                }
 
                 // Get unit price from latest inventory transaction or default to 0
                 $latestTransaction = $medicine->inventoryTransactions()
