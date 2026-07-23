@@ -6,6 +6,7 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
@@ -42,6 +43,11 @@ class DoctorShareRule extends Model
         return $this->belongsTo(Service::class);
     }
 
+    public function services(): BelongsToMany
+    {
+        return $this->belongsToMany(Service::class, 'doctor_share_rule_service');
+    }
+
     public function investigation(): BelongsTo
     {
         return $this->belongsTo(Investigation::class);
@@ -73,5 +79,43 @@ class DoctorShareRule extends Model
             $sub->where('applies_to', $billType)
                 ->orWhere('applies_to', 'all');
         });
+    }
+
+    public function hasSpecificScope(): bool
+    {
+        if ($this->relationLoaded('services')) {
+            if ($this->services->isNotEmpty()) {
+                return true;
+            }
+        } elseif ($this->services()->exists()) {
+            return true;
+        }
+
+        return $this->service_id !== null || $this->investigation_id !== null;
+    }
+
+    public function scopeSummary(): string
+    {
+        $services = $this->relationLoaded('services')
+            ? $this->services
+            : $this->services()->orderBy('name')->get();
+
+        if ($services->isNotEmpty()) {
+            return $services->pluck('name')->join(', ');
+        }
+
+        if ($this->investigation) {
+            return $this->investigation->name;
+        }
+
+        if ($this->service) {
+            return $this->service->name;
+        }
+
+        if ($this->doctor_id) {
+            return 'All';
+        }
+
+        return 'All (global default)';
     }
 }

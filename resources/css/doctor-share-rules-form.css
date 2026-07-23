@@ -1,0 +1,124 @@
+@import 'select2/dist/css/select2.min.css';
+
+.doctor-share-rules-form .select2-container {
+    width: 100% !important;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--single,
+.doctor-share-rules-form .select2-container--default .select2-selection--multiple {
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    min-height: 42px;
+    background-color: #fff;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--single {
+    height: 42px;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 40px;
+    padding-left: 12px;
+    padding-right: 28px;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #374151;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px;
+    right: 8px;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--single .select2-selection__clear {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--multiple {
+    padding: 4px 8px;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--multiple .select2-selection__placeholder {
+    color: #374151;
+    margin: 0;
+    line-height: 30px;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #0066CC;
+    border-color: #0066CC;
+    color: #fff;
+    border-radius: 0.375rem;
+    padding: 2px 8px;
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: #fff;
+    margin-right: 4px;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+    color: #fff;
+    background-color: #0052a3;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-search--inline .select2-search__field {
+    margin: 0;
+    padding: 4px 0;
+    min-height: 30px;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.doctor-share-rules-form .select2-container--default.select2-container--focus .select2-selection--single,
+.doctor-share-rules-form .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #0066CC;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.doctor-share-rules-form .select2-container--default.select2-container--disabled .select2-selection--single,
+.doctor-share-rules-form .select2-container--default.select2-container--disabled .select2-selection--multiple {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 6px 8px;
+    font-size: 0.875rem;
+}
+
+.doctor-share-rules-form .select2-dropdown {
+    border-color: #d1d5db;
+    border-radius: 0.5rem;
+    z-index: 50;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-results__option {
+    font-size: 0.875rem;
+    padding: 8px 12px;
+}
+
+.doctor-share-rules-form .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #0066CC;
+    color: #fff;
+}

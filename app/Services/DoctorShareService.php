@@ -265,24 +265,29 @@ class DoctorShareService
         string $billType
     ): ?DoctorShareRule {
         // Level 1 — most specific
-        if ($serviceId !== null || $investigationId !== null) {
+        if ($serviceId !== null) {
             $rule = DoctorShareRule::active()
                 ->forBillType($billType)
                 ->where('doctor_id', $doctorId)
-                ->where(function ($q) use ($serviceId, $investigationId) {
-                    if ($serviceId !== null) {
-                        $q->orWhere(function ($sub) use ($serviceId) {
-                            $sub->where('service_id', $serviceId)
-                                ->whereNull('investigation_id');
-                        });
-                    }
-                    if ($investigationId !== null) {
-                        $q->orWhere(function ($sub) use ($investigationId) {
-                            $sub->where('investigation_id', $investigationId)
-                                ->whereNull('service_id');
-                        });
-                    }
+                ->whereNull('investigation_id')
+                ->where(function ($q) use ($serviceId) {
+                    $q->whereHas('services', fn ($sub) => $sub->where('services.id', $serviceId))
+                        ->orWhere('service_id', $serviceId);
                 })
+                ->first();
+
+            if ($rule !== null) {
+                return $rule;
+            }
+        }
+
+        if ($investigationId !== null) {
+            $rule = DoctorShareRule::active()
+                ->forBillType($billType)
+                ->where('doctor_id', $doctorId)
+                ->where('investigation_id', $investigationId)
+                ->whereNull('service_id')
+                ->whereDoesntHave('services')
                 ->first();
 
             if ($rule !== null) {
@@ -296,6 +301,7 @@ class DoctorShareService
             ->where('doctor_id', $doctorId)
             ->whereNull('service_id')
             ->whereNull('investigation_id')
+            ->whereDoesntHave('services')
             ->first();
 
         if ($rule !== null) {
@@ -308,6 +314,7 @@ class DoctorShareService
             ->whereNull('doctor_id')
             ->whereNull('service_id')
             ->whereNull('investigation_id')
+            ->whereDoesntHave('services')
             ->first();
     }
 
@@ -483,8 +490,10 @@ class DoctorShareService
      */
     private static function snapshot(DoctorShareRule $rule): array
     {
+        $rule->loadMissing('services');
+
         $level = match (true) {
-            $rule->doctor_id !== null && ($rule->service_id !== null || $rule->investigation_id !== null)
+            $rule->doctor_id !== null && ($rule->services->isNotEmpty() || $rule->service_id !== null || $rule->investigation_id !== null)
                 => 'doctor_service',
             $rule->doctor_id !== null
                 => 'doctor_default',
@@ -500,6 +509,7 @@ class DoctorShareService
             'applies_to'       => $rule->applies_to,
             'doctor_id'        => $rule->doctor_id,
             'service_id'       => $rule->service_id,
+            'service_ids'      => $rule->services->pluck('id')->all(),
             'investigation_id' => $rule->investigation_id,
         ];
     }

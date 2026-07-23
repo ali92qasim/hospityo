@@ -10,12 +10,87 @@ use App\Services\LabReportBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Yajra\DataTables\Facades\DataTables;
 
 class LabResultController extends Controller
 {
     public function index(Request $request)
     {
-        // Query InvestigationOrders that have at least one pending item
+        $pendingOrders = $this->pendingOrdersGrouped($request);
+
+        return view('admin.lab.results.index', compact('pendingOrders'));
+    }
+
+    public function data(Request $request)
+    {
+        $query = LabResult::query()
+            ->select('lab_results.*')
+            ->with([
+                'investigationOrder:id,order_number,patient_id',
+                'investigationOrder.patient:id,name,phone',
+                'investigationOrder.items:id,investigation_order_id,investigation_id',
+                'investigationOrder.items.investigation:id,name',
+            ])
+            ->orderByDesc('lab_results.id');
+
+        return DataTables::eloquent($query)
+            ->addColumn('order_number', function (LabResult $result) {
+                return $result->investigationOrder?->order_number ?? 'N/A';
+            })
+            ->addColumn('patient_name', function (LabResult $result) {
+                return $result->investigationOrder?->patient?->name ?? 'Unknown Patient';
+            })
+            ->addColumn('tests_list', function (LabResult $result) {
+                $tests = $result->investigationOrder?->items
+                    ->map(fn ($item) => $item->investigation?->name)
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                return $tests && $tests->isNotEmpty()
+                    ? $tests->join(', ')
+                    : 'Unknown Test';
+            })
+            ->filter(function ($query) use ($request) {
+                $keyword = trim((string) $request->input('search.value', ''));
+
+                if ($keyword === '') {
+                    return;
+                }
+
+                $query->where(function ($builder) use ($keyword) {
+                    $builder->where('lab_results.status', 'like', "%{$keyword}%")
+                        ->orWhereHas('investigationOrder', function ($orderQuery) use ($keyword) {
+                            $orderQuery->where('order_number', 'like', "%{$keyword}%");
+                        })
+                        ->orWhereHas('investigationOrder', function ($orderQuery) use ($keyword) {
+                            $orderQuery->whereHas('patient', function ($patientQuery) use ($keyword) {
+                                $patientQuery->where('name', 'like', "%{$keyword}%")
+                                    ->orWhere('phone', 'like', "%{$keyword}%");
+                            });
+                        })
+                        ->orWhereHas('investigationOrder', function ($orderQuery) use ($keyword) {
+                            $orderQuery->whereHas('items.investigation', function ($investigationQuery) use ($keyword) {
+                                $investigationQuery->where('name', 'like', "%{$keyword}%");
+                            });
+                        });
+                });
+            }, false)
+            ->makeHidden(['investigationOrder', 'technician', 'labOrder', 'resultItems'])
+            ->only([
+                'id',
+                'order_number',
+                'patient_name',
+                'tests_list',
+                'status',
+                'reported_at',
+                'tested_at',
+            ])
+            ->toJson();
+    }
+
+    private function pendingOrdersGrouped(Request $request)
+    {
         $pendingOrdersQuery = InvestigationOrder::with([
                 'patient',
                 'visit',
@@ -25,28 +100,10 @@ class LabResultController extends Controller
                 $q->whereNotIn('status', ['reported', 'verified', 'cancelled']);
             });
 
-        if ($request->patient_search) {
-            $pendingOrdersQuery->whereHas('patient', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->patient_search . '%')
-                  ->orWhere('phone', 'like', '%' . $request->patient_search . '%');
-            });
-        }
-
-        // Group by patient + visit so the view can render one card per patient/visit
-        $pendingOrders = $pendingOrdersQuery->get()
+        return $pendingOrdersQuery->get()
             ->groupBy(function ($order) {
                 return $order->patient_id . '_' . $order->visit_id;
             });
-
-        $completedResults = LabResult::with([
-                'investigationOrder.patient',
-                'investigationOrder.items.investigation',
-                'technician',
-            ])
-            ->latest()
-            ->paginate(10);
-
-        return view('admin.lab.results.index', compact('pendingOrders', 'completedResults'));
     }
 
     public function createBatch(Request $request)

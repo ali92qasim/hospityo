@@ -490,6 +490,9 @@ Route::middleware('auth')->group(function () {
     Route::post('lab-orders/{labOrder}/receive-sample', [LabOrderController::class, 'receiveSample'])->name('lab-orders.receive-sample')->middleware('permission:edit lab orders');
 
     // Lab Results - Custom routes BEFORE resource route
+    Route::get('/lab-results/data', [LabResultController::class, 'data'])
+        ->name('lab-results.data')
+        ->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
     Route::get('investigation-orders/{investigationOrder}/report', [LabResultController::class, 'orderReport'])->name('investigation-orders.report')->middleware('permission:view lab results');
     Route::get('lab-results/create-batch', [LabResultController::class, 'createBatch'])->name('lab-results.create-batch')->middleware('permission:create lab results');
     Route::post('lab-results/store-batch', [LabResultController::class, 'storeBatch'])->name('lab-results.store-batch')->middleware('permission:create lab results');

@@ -77,7 +77,7 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         @if(is_null($rule->doctor_id))
                             <span class="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800">Global</span>
-                        @elseif($rule->doctor_id && ($rule->service_id || $rule->investigation_id))
+                        @elseif($rule->doctor_id && $rule->hasSpecificScope())
                             <span class="text-xs px-2 py-1 rounded bg-green-100 text-green-800">Specific</span>
                         @else
                             <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">Doctor Default</span>
@@ -86,8 +86,8 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ $rule->doctor->name ?? '— Global —' }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $rule->service->name ?? ($rule->investigation->name ?? '— All —') }}
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        {{ $rule->scopeSummary() }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @if($rule->share_type === 'percentage')

@@ -28,7 +28,7 @@ class DoctorShareController extends Controller
      */
     public function rulesIndex(Request $request): View
     {
-        $query = DoctorShareRule::with(['doctor', 'service', 'investigation'])
+        $query = DoctorShareRule::with(['doctor', 'service', 'services', 'investigation'])
             ->latest();
 
         if ($request->filled('doctor_id')) {
@@ -64,40 +64,19 @@ class DoctorShareController extends Controller
      */
     public function rulesStore(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'doctor_id'        => ['nullable', Rule::exists(Doctor::class, 'id')],
-            'service_id'       => ['nullable', Rule::exists(Service::class, 'id')],
-            'investigation_id' => ['nullable', Rule::exists(Investigation::class, 'id')],
-            'share_type'       => ['required', 'in:percentage,fixed'],
-            'share_value'      => ['required', 'numeric', 'min:0.01'],
-            'applies_to'       => ['required', 'in:opd,ipd,investigation,emergency,all'],
-            'notes'            => ['nullable', 'string', 'max:1000'],
-        ]);
+        $validated = $this->validateRuleRequest($request);
 
-        // Percentage cap
-        if ($validated['share_type'] === 'percentage' && $validated['share_value'] > 100) {
-            return back()->withInput()->withErrors([
-                'share_value' => 'Share value cannot exceed 100 for percentage type.',
-            ]);
+        if ($error = $this->validateRuleScope($validated)) {
+            return back()->withInput()->withErrors(['doctor_id' => $error]);
         }
 
-        // Unique combination check
-        $exists = DoctorShareRule::where('doctor_id', $validated['doctor_id'] ?? null)
-            ->where('service_id', $validated['service_id'] ?? null)
-            ->where('investigation_id', $validated['investigation_id'] ?? null)
-            ->where('applies_to', $validated['applies_to'])
-            ->exists();
-
-        if ($exists) {
-            return back()->withInput()->withErrors([
-                'doctor_id' => 'A rule with this combination already exists.',
-            ]);
-        }
-
+        $serviceIds = $validated['service_ids'];
+        unset($validated['service_ids']);
+        $validated['service_id'] = null;
         $validated['created_by'] = auth()->id();
 
-        // DoctorShareRule uses the Auditable trait — audit log is written automatically
-        DoctorShareRule::create($validated);
+        $rule = DoctorShareRule::create($validated);
+        $rule->services()->sync($serviceIds);
 
         return redirect()->route('doctor-share.rules.index')
             ->with('success', 'Share rule created successfully.');
@@ -109,7 +88,7 @@ class DoctorShareController extends Controller
      */
     public function rulesEdit(DoctorShareRule $rule): View
     {
-        $rule->load(['doctor', 'service', 'investigation']);
+        $rule->load(['doctor', 'service', 'services', 'investigation']);
 
         $doctors        = Doctor::orderBy('name')->get();
         $services       = Service::orderBy('name')->get();
@@ -132,39 +111,18 @@ class DoctorShareController extends Controller
      */
     public function rulesUpdate(Request $request, DoctorShareRule $rule): RedirectResponse
     {
-        $validated = $request->validate([
-            'doctor_id'        => ['nullable', Rule::exists(Doctor::class, 'id')],
-            'service_id'       => ['nullable', Rule::exists(Service::class, 'id')],
-            'investigation_id' => ['nullable', Rule::exists(Investigation::class, 'id')],
-            'share_type'       => ['required', 'in:percentage,fixed'],
-            'share_value'      => ['required', 'numeric', 'min:0.01'],
-            'applies_to'       => ['required', 'in:opd,ipd,investigation,emergency,all'],
-            'notes'            => ['nullable', 'string', 'max:1000'],
-        ]);
+        $validated = $this->validateRuleRequest($request);
 
-        // Percentage cap
-        if ($validated['share_type'] === 'percentage' && $validated['share_value'] > 100) {
-            return back()->withInput()->withErrors([
-                'share_value' => 'Share value cannot exceed 100 for percentage type.',
-            ]);
+        if ($error = $this->validateRuleScope($validated, $rule->id)) {
+            return back()->withInput()->withErrors(['doctor_id' => $error]);
         }
 
-        // Unique combination check — exclude current rule
-        $exists = DoctorShareRule::where('doctor_id', $validated['doctor_id'] ?? null)
-            ->where('service_id', $validated['service_id'] ?? null)
-            ->where('investigation_id', $validated['investigation_id'] ?? null)
-            ->where('applies_to', $validated['applies_to'])
-            ->where('id', '!=', $rule->id)
-            ->exists();
+        $serviceIds = $validated['service_ids'];
+        unset($validated['service_ids']);
+        $validated['service_id'] = null;
 
-        if ($exists) {
-            return back()->withInput()->withErrors([
-                'doctor_id' => 'A rule with this combination already exists.',
-            ]);
-        }
-
-        // DoctorShareRule uses the Auditable trait — audit log is written automatically
         $rule->update($validated);
+        $rule->services()->sync($serviceIds);
 
         return redirect()->route('doctor-share.rules.index')
             ->with('success', 'Share rule updated successfully.');
@@ -538,5 +496,94 @@ class DoctorShareController extends Controller
             : (clone $baseQuery)->get();
 
         return [$summary, $details, $doctors];
+    }
+
+    private function validateRuleRequest(Request $request): array
+    {
+        $validated = $request->validate([
+            'doctor_id'        => ['nullable', Rule::exists(Doctor::class, 'id')],
+            'service_ids'      => ['nullable', 'array'],
+            'service_ids.*'    => [Rule::exists(Service::class, 'id')],
+            'investigation_id' => ['nullable', Rule::exists(Investigation::class, 'id')],
+            'share_type'       => ['required', 'in:percentage,fixed'],
+            'share_value'      => ['required', 'numeric', 'min:0.01'],
+            'applies_to'       => ['required', 'in:opd,ipd,investigation,emergency,all'],
+            'notes'            => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        if ($validated['share_type'] === 'percentage' && $validated['share_value'] > 100) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'share_value' => 'Share value cannot exceed 100 for percentage type.',
+            ]);
+        }
+
+        $validated['service_ids'] = collect($validated['service_ids'] ?? [])
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $validated['doctor_id'] = $validated['doctor_id'] ?? null;
+        $validated['investigation_id'] = $validated['investigation_id'] ?? null;
+
+        return $validated;
+    }
+
+    private function validateRuleScope(array $validated, ?int $excludeRuleId = null): ?string
+    {
+        $doctorId = $validated['doctor_id'] ?? null;
+        $investigationId = $validated['investigation_id'] ?? null;
+        $serviceIds = $validated['service_ids'];
+        $appliesTo = $validated['applies_to'];
+
+        if ($investigationId && $serviceIds !== []) {
+            return 'Select either specific services or a specific investigation, not both.';
+        }
+
+        if ($serviceIds === [] && ! $investigationId) {
+            $exists = DoctorShareRule::query()
+                ->where('doctor_id', $doctorId)
+                ->whereNull('investigation_id')
+                ->where('applies_to', $appliesTo)
+                ->whereDoesntHave('services')
+                ->when($excludeRuleId, fn ($query) => $query->where('id', '!=', $excludeRuleId))
+                ->exists();
+
+            if ($exists) {
+                return 'A default rule with this doctor and bill type already exists.';
+            }
+
+            return null;
+        }
+
+        if ($investigationId) {
+            $exists = DoctorShareRule::query()
+                ->where('doctor_id', $doctorId)
+                ->where('investigation_id', $investigationId)
+                ->where('applies_to', $appliesTo)
+                ->when($excludeRuleId, fn ($query) => $query->where('id', '!=', $excludeRuleId))
+                ->exists();
+
+            if ($exists) {
+                return 'A rule for this investigation already exists for the selected doctor and bill type.';
+            }
+
+            return null;
+        }
+
+        $overlap = DoctorShareRule::query()
+            ->where('doctor_id', $doctorId)
+            ->where('applies_to', $appliesTo)
+            ->whereNull('investigation_id')
+            ->when($excludeRuleId, fn ($query) => $query->where('id', '!=', $excludeRuleId))
+            ->whereHas('services', fn ($query) => $query->whereIn('services.id', $serviceIds))
+            ->exists();
+
+        if ($overlap) {
+            return 'One or more selected services already belong to another rule for this doctor and bill type.';
+        }
+
+        return null;
     }
 }

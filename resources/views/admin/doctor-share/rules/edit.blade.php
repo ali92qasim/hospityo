@@ -3,11 +3,21 @@
 @section('title', 'Edit Share Rule')
 
 @section('content')
+<div class="doctor-share-rules-form">
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Edit Share Rule</h1>
     <a href="{{ route('doctor-share.rules.index') }}" class="text-gray-500 hover:text-gray-700 flex items-center">
         <i class="fas fa-arrow-left mr-2"></i>Back to Rules
     </a>
+</div>
+
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800">
+    <p class="font-medium mb-1">How rule scope works</p>
+    <ul class="list-disc list-inside space-y-1">
+        <li>Select one or more <strong>specific services</strong> to target only those bill items.</li>
+        <li>Select <strong>one specific investigation</strong> to target only that investigation — investigations are all-or-none (one or all, not multiple).</li>
+        <li>Leave both as <strong>All</strong> to apply the rule to every service and investigation for the selected doctor (or globally when no doctor is selected).</li>
+    </ul>
 </div>
 
 @if($hasPendingItems)
@@ -50,29 +60,33 @@
                 @error('applies_to')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
 
-            <div>
-                <label for="service_id" class="block text-sm font-medium text-gray-700 mb-2">Service</label>
-                <select id="service_id" name="service_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                    <option value="">— None —</option>
+            <div class="md:col-span-2">
+                <label for="service_ids" class="block text-sm font-medium text-gray-700 mb-2">Specific Services</label>
+                <select id="service_ids" name="service_ids[]" multiple class="w-full">
+                    @php
+                        $selectedServiceIds = collect(old('service_ids', $rule->services->pluck('id')->all()));
+                    @endphp
                     @foreach($services as $service)
-                        <option value="{{ $service->id }}" {{ old('service_id', $rule->service_id) == $service->id ? 'selected' : '' }}>
+                        <option value="{{ $service->id }}" {{ $selectedServiceIds->contains($service->id) ? 'selected' : '' }}>
                             {{ $service->name }}
                         </option>
                     @endforeach
                 </select>
-                @error('service_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                <p class="mt-1 text-xs text-gray-500">Optional. Select one or more specific services, or leave as <strong>All</strong> to apply to every service.</p>
+                @error('service_ids')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                @error('service_ids.*')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
 
-            <div>
-                <label for="investigation_id" class="block text-sm font-medium text-gray-700 mb-2">Investigation</label>
-                <select id="investigation_id" name="investigation_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                    <option value="">— None —</option>
+            <div class="md:col-span-2">
+                <label for="investigation_id" class="block text-sm font-medium text-gray-700 mb-2">Specific Investigation</label>
+                <select id="investigation_id" name="investigation_id" class="w-full">
                     @foreach($investigations as $investigation)
                         <option value="{{ $investigation->id }}" {{ old('investigation_id', $rule->investigation_id) == $investigation->id ? 'selected' : '' }}>
                             {{ $investigation->name }}
                         </option>
                     @endforeach
                 </select>
+                <p class="mt-1 text-xs text-gray-500">Optional. Select one investigation, or leave as <strong>All</strong> to apply to every investigation. Cannot be combined with specific services.</p>
                 @error('investigation_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
 
@@ -121,4 +135,8 @@
         </div>
     </form>
 </div>
+
+</div>
+
+@vite(['resources/js/doctor-share-rules-form.js'])
 @endsection
