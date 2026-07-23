@@ -34,7 +34,8 @@
     "autoload": {
         "files": [
             "app/Helpers/SettingsHelper.php",
-            "app/Helpers/TenantStorageHelper.php"
+            "app/Helpers/TenantStorageHelper.php",
+            "app/Helpers/ImportTemplateHelper.php"
         ],
         "psr-4": {
             "App\\": "app/",

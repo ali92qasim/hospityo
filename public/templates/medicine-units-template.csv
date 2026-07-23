@@ -1,0 +1,34 @@
+name,abbreviation,conversion_factor,type,is_active
+MISC.,MISC.,1,packaging,1
+INJECTION,INJ,1,packaging,1
+TAB/CAP,TAB/CAP,1,solid,1
+SATCHET,SACHET,1,packaging,1
+SUS/SYP,SUS/SYP,1,liquid,1
+DROPS/TOPICAL,DROPS,1,liquid,1
+"10 UNITS (MISC.)",10U,10,packaging,1
+"100 UNITS (MISC.)",100U,100,packaging,1
+"12 UNITS (MISC.)",12U,12,packaging,1
+"14 UNITS (MISC.)",14U,14,packaging,1
+"20 UNITS (MISC.)",20U,20,packaging,1
+"25 units (MISC.)",25u,25,packaging,1
+"28 UNITS (MISC.)",28U,28,packaging,1
+"30 UNITS (MISC.)",30U,30,packaging,1
+"5 UNITS (MISC.)",5U,5,packaging,1
+"50 UNITS (MISC.)",50U,50,packaging,1
+"INJ PACKING 10 (INJ.)","INJ P10",10,packaging,1
+"INJ PACKING 100 (INJ.)","INJ P100",100,packaging,1
+"INJ PACKING 25 (INJ.)","INJ P25",25,packaging,1
+"INJ PACKING 5 (INJ.)","INJ P5",5,packaging,1
+"INJ PACKING 6 (INJ.)","INJ P6",6,packaging,1
+"SATCHET PACKING 10 (SACHET.)","SP 10",10,packaging,1
+"SATCHET PACKING 5 (SACHET.)",SP5,5,packaging,1
+"PACKING 10 (TAB/CAP.)",P10,10,solid,1
+"PACKING 100 (TAB/CAP.)",P100,100,solid,1
+"PACKING 14 (TAB/CAP.)",T14,14,solid,1
+"PACKING 20 (TAB/CAP.)",P20,20,solid,1
+"PACKING 200 (TAB/CAP.)",P200,200,solid,1
+"PACKING 28 (TAB/CAP.)",P28,28,solid,1
+"PACKING 30 (TAB/CAP.)",P30,30,solid,1
+"PACKING 5 (TAB/CAP.)",P5,5,solid,1
+"PACKING 50 (TAB/CAP.)",P50,50,solid,1
+"PACKING 6 (TAB/CAP.)",P6,6,solid,1

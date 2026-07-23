@@ -1,50 +1,69 @@
 /**
- * Import Poller — persists investigation import progress across page navigations.
+ * Background import poller — tracks CSV/Excel imports across page navigations.
  *
- * localStorage keys written by the investigations index view:
- *   investigationImportKey       — server cache key to poll
- *   investigationImportStatusUrl — URL of the importStatus endpoint
- *   investigationImportIndexUrl  — investigations index URL (for post-done reload)
- *   investigationImportExpiry    — ms timestamp; keys are stale after this
- *
- * On every page load:
- *   1. If investigationImportDone flag exists → show result toast, clear flag.
- *   2. If import keys exist and not expired → start polling.
- *   3. If import keys exist but expired → clear silently (no toast).
- *
- * While polling:
- *   pending    → keep polling every 2 s
- *   done       → dismiss spinner, clear keys, reload index (or show toast elsewhere)
- *   failed     → dismiss spinner, clear keys, show error toast
- *   not_found  → dismiss spinner, clear keys silently (cache expired / key gone)
+ * Each import type stores keys in localStorage as `{type}ImportKey`, etc.
+ * On every admin page load the poller resumes active imports and shows a
+ * persistent toast so the rest of the application stays usable.
  */
 
-const KEYS = {
-    importKey:  'investigationImportKey',
-    statusUrl:  'investigationImportStatusUrl',
-    indexUrl:   'investigationImportIndexUrl',
-    expiry:     'investigationImportExpiry',
-    doneFlag:   'investigationImportDone',
-};
+const PROFILES = [
+    {
+        type: 'investigation',
+        label: 'investigations',
+        reloadOnDone: true,
+    },
+    {
+        type: 'medicine',
+        label: 'medicines',
+        reloadOnDone: false,
+        doneEvent: 'medicine-import-done',
+    },
+    {
+        type: 'openingStock',
+        label: 'opening stock batches',
+        reloadOnDone: false,
+        doneEvent: 'opening-stock-import-done',
+    },
+];
 
-const POLL_MS  = 2000;
+const POLL_MS = 2000;
 const RETRY_MS = 3000;
 
-// ---------------------------------------------------------------------------
-
-function clearAll() {
-    Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+function keysFor(type) {
+    return {
+        importKey: `${type}ImportKey`,
+        statusUrl: `${type}ImportStatusUrl`,
+        indexUrl: `${type}ImportIndexUrl`,
+        expiry: `${type}ImportExpiry`,
+        doneFlag: `${type}ImportDone`,
+    };
 }
 
-function isExpired() {
-    const exp = parseInt(localStorage.getItem(KEYS.expiry) || '0', 10);
-    return !exp || Date.now() > exp;
+function clearProfile(keys) {
+    Object.values(keys).forEach((key) => localStorage.removeItem(key));
 }
 
-function showResultToast(data) {
+function isExpired(keys) {
+    const expiry = parseInt(localStorage.getItem(keys.expiry) || '0', 10);
+    return !expiry || Date.now() > expiry;
+}
+
+function progressMessage(label, data) {
+    const processed = data.processed ?? 0;
+    const total = data.total ?? 0;
+
+    if (total > 0) {
+        const pct = Math.min(100, Math.round((processed / total) * 100));
+        return `Importing ${label}: ${processed.toLocaleString()} / ${total.toLocaleString()} (${pct}%)…`;
+    }
+
+    return `Importing ${label} in the background…`;
+}
+
+function showResultToast(data, label) {
     const created = data.created ?? 0;
     const updated = data.updated ?? 0;
-    const msg     = created + ' investigation(s) created, ' + updated + ' updated.';
+    const msg = `${created.toLocaleString()} ${label} created, ${updated.toLocaleString()} updated.`;
 
     if (data.status === 'failed') {
         window.Toast.error(data.message || 'Import failed. Please try again.');
@@ -52,102 +71,124 @@ function showResultToast(data) {
     }
 
     if (data.errors && data.errors.length) {
-        window.Toast.warning(msg + ' ' + data.errors.length + ' row(s) had errors.', 0);
-        console.group('[Investigation Import] Row errors');
-        data.errors.forEach(e => console.warn(e));
+        window.Toast.warning(`${msg} ${data.errors.length} row(s) had warnings.`, 8000);
+        console.group(`[${label} Import] Row warnings`);
+        data.errors.forEach((error) => console.warn(error));
         console.groupEnd();
-    } else {
-        window.Toast.success(msg || 'Investigations imported successfully.');
+        return;
     }
+
+    window.Toast.success(msg || `${label} imported successfully.`);
 }
 
-// ---------------------------------------------------------------------------
-// Show toast after a page reload triggered by a completed import
-// ---------------------------------------------------------------------------
+function handlePostReloadToast(profile) {
+    const keys = keysFor(profile.type);
+    const raw = localStorage.getItem(keys.doneFlag);
+    if (!raw) {
+        return;
+    }
 
-function handlePostReloadToast() {
-    const raw = localStorage.getItem(KEYS.doneFlag);
-    if (!raw) return;
-    localStorage.removeItem(KEYS.doneFlag);
+    localStorage.removeItem(keys.doneFlag);
+
     try {
-        showResultToast(JSON.parse(raw));
+        showResultToast(JSON.parse(raw), profile.label);
     } catch (_) {
-        window.Toast.success('Investigations imported successfully.');
+        window.Toast.success(`${profile.label} imported successfully.`);
     }
 }
 
-// ---------------------------------------------------------------------------
-// Polling
-// ---------------------------------------------------------------------------
-
-function startPolling(cacheKey, statusUrl, indexUrl) {
-    const spinner = window.Toast.loading(
-        'Import is processing in the background\u2026 investigations are being added.'
-    );
+function startPolling(profile, cacheKey, statusUrl, indexUrl) {
+    const keys = keysFor(profile.type);
+    const spinner = window.Toast.loading(progressMessage(profile.label, { status: 'pending' }), 0);
 
     function poll() {
-        // Stop if keys were cleared externally (another tab) or expired
-        if (!localStorage.getItem(KEYS.importKey) || isExpired()) {
+        if (!localStorage.getItem(keys.importKey) || isExpired(keys)) {
             spinner.dismiss();
-            clearAll();
+            clearProfile(keys);
             return;
         }
 
-        fetch(statusUrl + '?key=' + encodeURIComponent(cacheKey), {
+        fetch(`${statusUrl}?key=${encodeURIComponent(cacheKey)}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === 'pending') {
-                // Job still running — poll again
-                setTimeout(poll, POLL_MS);
-                return;
-            }
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === 'pending' || data.status === 'processing') {
+                    spinner.update(progressMessage(profile.label, data), 'info', true);
+                    setTimeout(poll, POLL_MS);
+                    return;
+                }
 
-            // Any terminal status: done, failed, not_found
-            spinner.dismiss();
-            clearAll();
+                spinner.dismiss();
+                clearProfile(keys);
 
-            if (data.status === 'not_found') {
-                // Cache expired before we could read it — stop silently
-                return;
-            }
+                if (data.status === 'not_found') {
+                    return;
+                }
 
-            // done or failed
-            let indexPath = '';
-            try { indexPath = new URL(indexUrl).pathname; } catch (_) { indexPath = indexUrl; }
+                let indexPath = '';
+                try {
+                    indexPath = new URL(indexUrl, window.location.origin).pathname;
+                } catch (_) {
+                    indexPath = indexUrl;
+                }
 
-            if (data.status === 'done' && window.location.pathname === indexPath) {
-                // Reload the index so the new rows appear, then show toast
-                localStorage.setItem(KEYS.doneFlag, JSON.stringify(data));
-                location.reload();
-            } else {
-                showResultToast(data);
-            }
-        })
-        .catch(() => setTimeout(poll, RETRY_MS));
+                const onIndexPage = window.location.pathname === indexPath;
+
+                if (data.status === 'done' && onIndexPage && profile.reloadOnDone) {
+                    localStorage.setItem(keys.doneFlag, JSON.stringify(data));
+                    window.location.reload();
+                    return;
+                }
+
+                if (profile.doneEvent && onIndexPage && (data.status === 'done' || data.status === 'failed')) {
+                    window.dispatchEvent(new CustomEvent(profile.doneEvent, { detail: data }));
+
+                    if (data.status === 'failed') {
+                        return;
+                    }
+                } else if (data.status === 'done' && profile.doneEvent) {
+                    window.dispatchEvent(new CustomEvent(profile.doneEvent, { detail: data }));
+                }
+
+                showResultToast(data, profile.label);
+            })
+            .catch(() => setTimeout(poll, RETRY_MS));
     }
 
     setTimeout(poll, POLL_MS);
 }
 
-// ---------------------------------------------------------------------------
-// Entry point
-// ---------------------------------------------------------------------------
+function bootstrapProfile(profile) {
+    handlePostReloadToast(profile);
 
-document.addEventListener('DOMContentLoaded', function () {
-    handlePostReloadToast();
-
-    const cacheKey = localStorage.getItem(KEYS.importKey);
-    if (!cacheKey) return;
-
-    if (isExpired()) {
-        clearAll();   // stale keys from a previous session — discard silently
+    const keys = keysFor(profile.type);
+    const cacheKey = localStorage.getItem(keys.importKey);
+    if (!cacheKey) {
         return;
     }
 
-    const statusUrl = localStorage.getItem(KEYS.statusUrl);
-    if (!statusUrl) { clearAll(); return; }
+    if (isExpired(keys)) {
+        clearProfile(keys);
+        return;
+    }
 
-    startPolling(cacheKey, statusUrl, localStorage.getItem(KEYS.indexUrl) || '');
+    const statusUrl = localStorage.getItem(keys.statusUrl);
+    if (!statusUrl) {
+        clearProfile(keys);
+        return;
+    }
+
+    startPolling(
+        profile,
+        cacheKey,
+        statusUrl,
+        localStorage.getItem(keys.indexUrl) || window.location.href,
+    );
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    PROFILES.forEach(bootstrapProfile);
 });
+
+export { keysFor, clearProfile, progressMessage };

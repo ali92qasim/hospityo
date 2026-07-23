@@ -19,14 +19,12 @@ class Medicine extends Model
         'generic_name',
         'brand_id',
         'category_id',
-        'dosage_form',
         'strength',
         'selling_price',
         'base_unit_id',
         'purchase_unit_id',
         'dispensing_unit_id',
         'reorder_level',
-        'manufacturer',
         'status',
         'manage_stock'
     ];
@@ -36,63 +34,101 @@ class Medicine extends Model
     ];
 
     /**
-     * Generate SKU based on medicine attributes
+     * Recommended SKU placeholder illustrating the HMIS / WHO ATC-inspired protocol.
+     * Format: {ATC}-{STRENGTH}-{FORM}-{BRAND}
      */
-    public static function generateSKU($name, $strength = null, $dosageForm = null, $brandId = null): string
-    {
-        // Create base from medicine name (first 3 letters, uppercase)
-        $nameCode = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $name), 0, 3));
+    public const SKU_PLACEHOLDER = 'N02BE01-500MG-TAB-GSK';
 
-        // Add strength if available
-        $strengthCode = $strength ? '-' . preg_replace('/[^A-Za-z0-9]/', '', $strength) : '';
+    /**
+     * Build a SKU base string using the HMIS clinical-attribute protocol (not enforced on manual entry).
+     *
+     * Segments: {THERAPEUTIC}-{STRENGTH?}-{FORM?}-{BRAND?}
+     * - THERAPEUTIC: WHO ATC code (e.g. N02BE01) when supplied, else generic/name token
+     * - STRENGTH:    Clinical dosage (e.g. 500MG)
+     * - FORM:        Dosage form / category code (e.g. TAB, INJ)
+     * - BRAND:       Optional manufacturer code (e.g. GSK)
+     */
+    public static function buildSkuFromAttributes(
+        string $name,
+        ?string $strength = null,
+        ?string $categoryCode = null,
+        ?string $brandName = null,
+        ?string $genericName = null,
+        ?string $atcCode = null,
+    ): string {
+        $segments = [];
 
-        // Add dosage form code if available
-        $dosageCode = '';
-        if ($dosageForm) {
-            $dosageMap = [
-                'tablet' => 'TAB',
-                'capsule' => 'CAP',
-                'syrup' => 'SYR',
-                'suspension' => 'SUS',
-                'injection' => 'INJ',
-                'cream' => 'CRM',
-                'ointment' => 'OIN',
-                'gel' => 'GEL',
-                'drops' => 'DRP',
-                'inhaler' => 'INH',
-                'powder' => 'PWD',
-                'solution' => 'SOL',
-                'lotion' => 'LOT',
-                'spray' => 'SPR',
-                'patch' => 'PAT',
-            ];
-            $dosageCode = '-' . ($dosageMap[$dosageForm] ?? strtoupper(substr($dosageForm, 0, 3)));
+        $therapeutic = self::resolveTherapeuticSegment($atcCode, $genericName, $name);
+        if ($therapeutic !== '') {
+            $segments[] = $therapeutic;
         }
 
-        // Add brand code if available
-        $brandCode = '';
-        if ($brandId) {
-            $brand = MedicineBrand::find($brandId);
-            if ($brand) {
-                $brandCode = '-' . strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $brand->name), 0, 3));
+        $strength = trim((string) $strength);
+        if ($strength !== '') {
+            $segments[] = strtoupper(preg_replace('/[^A-Za-z0-9.]/', '', $strength));
+        }
+
+        $categoryCode = strtoupper(trim((string) $categoryCode));
+        if ($categoryCode !== '') {
+            $segments[] = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $categoryCode));
+        }
+
+        $brandName = trim((string) $brandName);
+        if ($brandName !== '') {
+            $segments[] = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $brandName), 0, 3));
+        }
+
+        if ($segments === []) {
+            $fallback = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $name));
+
+            return substr($fallback, 0, min(8, strlen($fallback)));
+        }
+
+        return implode('-', $segments);
+    }
+
+    public static function skuPlaceholder(): string
+    {
+        return self::SKU_PLACEHOLDER;
+    }
+
+    public static function skuProtocolHint(): string
+    {
+        return 'Suggested HMIS format: ATC code – strength – dosage form – brand (e.g. '
+            . self::SKU_PLACEHOLDER
+            . '). Optional — leave blank to auto-generate, or enter any unique SKU.';
+    }
+
+    private static function resolveTherapeuticSegment(?string $atcCode, ?string $genericName, string $name): string
+    {
+        $atcCode = strtoupper(trim((string) $atcCode));
+        if ($atcCode !== '' && preg_match('/^[A-Z]\d{2}[A-Z]{0,2}\d{0,2}$/', $atcCode)) {
+            return $atcCode;
+        }
+
+        $generic = trim((string) $genericName);
+        if ($generic !== '') {
+            $token = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $generic));
+            if ($token !== '') {
+                return substr($token, 0, 7);
             }
         }
 
-        // Combine all parts
-        $baseSKU = $nameCode . $strengthCode . $dosageCode . $brandCode;
+        return strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $name), 0, 3));
+    }
 
-        // If SKU is too short (only name code), add more from the name
-        if (strlen($baseSKU) <= 3) {
-            // Use more characters from name if available
-            $fullNameCode = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $name));
-            $baseSKU = substr($fullNameCode, 0, min(8, strlen($fullNameCode)));
-        }
+    /**
+     * Append a numeric suffix when the base SKU is already taken.
+     */
+    public static function uniqueSku(string $baseSku, ?callable $exists = null): string
+    {
+        $exists ??= fn (string $sku) => self::where('sku', $sku)->exists();
 
-        // Check if SKU exists, if yes, add a number suffix
-        $sku = $baseSKU;
+        $sku = $baseSku;
         $counter = 1;
-        while (self::where('sku', $sku)->exists()) {
-            $sku = $baseSKU . '-' . str_pad($counter, 3, '0', STR_PAD_LEFT);
+
+        while ($exists($sku)) {
+            $sku = $baseSku . '-' . str_pad((string) $counter, 3, '0', STR_PAD_LEFT);
             $counter++;
         }
 
@@ -100,9 +136,34 @@ class Medicine extends Model
     }
 
     /**
+     * Generate SKU based on medicine attributes
+     */
+    public static function generateSKU($name, $strength = null, $categoryId = null, $brandId = null, $genericName = null, $atcCode = null): string
+    {
+        $categoryCode = $categoryId
+            ? MedicineCategory::find($categoryId)?->code
+            : null;
+
+        $brandName = $brandId
+            ? MedicineBrand::find($brandId)?->name
+            : null;
+
+        $baseSku = self::buildSkuFromAttributes(
+            $name,
+            $strength,
+            $categoryCode,
+            $brandName,
+            $genericName,
+            $atcCode,
+        );
+
+        return self::uniqueSku($baseSku);
+    }
+
+    /**
      * Check if a medicine with similar attributes already exists
      */
-    public static function checkDuplicate($name, $strength = null, $dosageForm = null, $brandId = null, $excludeId = null): ?self
+    public static function checkDuplicate($name, $strength = null, $categoryId = null, $brandId = null, $excludeId = null): ?self
     {
         $query = self::where('name', 'LIKE', $name);
 
@@ -113,11 +174,11 @@ class Medicine extends Model
             $query->whereNull('strength');
         }
 
-        // Check dosage form match
-        if ($dosageForm) {
-            $query->where('dosage_form', $dosageForm);
+        // Check category match
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
         } else {
-            $query->whereNull('dosage_form');
+            $query->whereNull('category_id');
         }
 
         // Check brand match
@@ -147,8 +208,9 @@ class Medicine extends Model
                 $medicine->sku = self::generateSKU(
                     $medicine->name,
                     $medicine->strength,
-                    $medicine->dosage_form,
-                    $medicine->brand_id
+                    $medicine->category_id,
+                    $medicine->brand_id,
+                    $medicine->generic_name,
                 );
             }
         });

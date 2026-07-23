@@ -92,12 +92,13 @@ class SidebarService
                 $this->item('Instructions', 'fa-file-prescription', 'prescription-instructions.index', ['prescription-instructions.*']),
                 $this->item('Units', 'fa-balance-scale', 'units.index', ['units.*']),
                 $this->item('Inventory', 'fa-boxes', 'inventory.index', ['inventory.*']),
+                $this->item('Opening Stock', 'fa-warehouse', 'inventory.opening-stock', ['inventory.opening-stock*']),
                 $this->item('Suppliers', 'fa-truck', 'suppliers.index', ['suppliers.*']),
                 $this->item('Purchase Orders', 'fa-shopping-cart', 'purchases.index', ['purchases.*']),
             ];
             $menu[] = $this->group('pharmacy', 'Pharmacy', $items, [
                 'medicine-categories.*', 'medicine-brands.*', 'medicines.*',
-                'prescription-instructions.*', 'units.*', 'inventory.*',
+                'prescription-instructions.*', 'units.*', 'inventory.*', 'inventory.opening-stock*',
                 'suppliers.*', 'purchases.*',
             ]);
         }

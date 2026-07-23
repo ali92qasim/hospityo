@@ -5,85 +5,103 @@
 @section('page-description', 'Manage medicine units and packaging')
 
 @section('content')
-<div class="flex justify-between items-center mb-6">
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div class="flex items-center">
-            <i class="fas fa-balance-scale text-blue-600 text-xl mr-3"></i>
-            <div>
-                <p class="text-sm text-blue-600">Total Units</p>
-                <p class="text-2xl font-semibold text-blue-800">{{ $units->total() }}</p>
-            </div>
-        </div>
+<div id="units-index"
+     data-import-pending="{{ session('import_pending') ? '1' : '0' }}"
+     data-import-cache-key="{{ session('import_cache_key') }}"
+     data-import-status-url="{{ route('units.import-status') }}"
+     data-import-index-url="{{ route('units.index') }}"
+     data-import-expiry="{{ session('import_pending') ? (string) (now()->addMinutes(25)->timestamp * 1000) : '' }}">
+
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-6 gap-4">
+    <div class="flex items-center flex-wrap gap-2">
+        @if($templateUrl = import_template_url('medicine-units-template'))
+        <a href="{{ $templateUrl }}" download
+           class="text-gray-500 hover:text-medical-blue px-3 py-2 border border-gray-300 rounded-lg text-sm inline-flex items-center"
+           title="Download import template">
+            <i class="fas fa-download mr-1"></i>Template
+        </a>
+        @endif
+
+        @can('manage pharmacy')
+        <button type="button"
+                data-unit-import-trigger
+                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm inline-flex items-center">
+            <i class="fas fa-file-upload mr-2"></i>Import CSV / Excel
+        </button>
+        @endcan
+
+        <a href="{{ route('units.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center text-sm">
+            <i class="fas fa-plus mr-2"></i>Add Unit
+        </a>
     </div>
-    
-    <a href="{{ route('units.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-        <i class="fas fa-plus mr-2"></i>Add Unit
-    </a>
 </div>
 
-<div class="bg-white rounded-lg shadow-sm overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Abbreviation</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Base Unit</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Conversion</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-            @forelse($units as $unit)
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ $unit->name }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $unit->abbreviation }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $unit->baseUnit ? $unit->baseUnit->name : 'Base Unit' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        @if($unit->baseUnit)
-                            1 {{ $unit->abbreviation }} = {{ $unit->conversion_factor }} {{ $unit->baseUnit->abbreviation }}
-                        @else
-                            Base Unit
-                        @endif
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
-                            {{ ucfirst($unit->type) }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 text-xs rounded-full {{ $unit->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                            {{ $unit->is_active ? 'Active' : 'Inactive' }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <a href="{{ route('units.edit', $unit) }}" class="text-yellow-600 hover:text-yellow-800 mr-3">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form action="{{ route('units.destroy', $unit) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-800">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No units found</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+@can('manage pharmacy')
+<form data-unit-import-form
+      action="{{ route('units.import') }}"
+      method="POST"
+      enctype="multipart/form-data"
+      class="hidden">
+    @csrf
+    <input type="file"
+           data-unit-import-file
+           name="file"
+           accept=".csv,.xlsx,.xls,.txt">
+</form>
+@endcan
+
+<div id="unit-import-progress" class="hidden mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center">
+    <svg class="animate-spin h-4 w-4 text-blue-600 mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+    </svg>
+    <span class="text-sm text-blue-800 font-medium">Importing units… this may take a moment.</span>
 </div>
 
-{{ $units->links() }}
+<div id="unit-import-result" class="hidden mb-4"></div>
+
+@if(session('success'))
+<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+    {{ session('success') }}
+</div>
+@endif
+
+@if(session('error'))
+<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    {{ session('error') }}
+</div>
+@endif
+
+@if($errors->any())
+<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    {{ $errors->first() }}
+</div>
+@endif
+
+<div class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+    <p class="font-medium text-gray-800">Import tips</p>
+    <ul class="mt-2 space-y-1 list-disc list-inside">
+        <li>Import base units first (rows without parentheses in the name).</li>
+        <li>Put the base unit abbreviation in parentheses, e.g. <span class="font-mono text-xs">10 UNITS (MISC.)</span> or <span class="font-mono text-xs">INJ PACKING 10 (INJ)</span>.</li>
+        <li>Natt Brothers exports with <span class="font-mono text-xs">Name</span> and <span class="font-mono text-xs">Short name</span> columns are supported directly.</li>
+    </ul>
+</div>
+
+<table class="units-table w-full invisible">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Abbreviation</th>
+            <th>Base Unit</th>
+            <th>Conversion</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+</table>
+
+</div>
+
+@vite(['resources/js/units-index.js'])
 @endsection

@@ -67,7 +67,7 @@
                         <tr>
                             <td class="px-4 py-3">
                                 <div class="font-medium text-gray-900">{{ $medicine->name }}</div>
-                                <div class="text-sm text-gray-500">{{ $medicine->strength }} - {{ $medicine->dosage_form }}</div>
+                                <div class="text-sm text-gray-500">{{ $medicine->strength }}</div>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-500">
                                 {{ $medicine->category ? $medicine->category->name : '-' }}

@@ -6,7 +6,7 @@
 <div class="max-w-3xl">
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Create Medicine Category</h1>
-        <p class="text-gray-600 mt-1">Add a new category for organizing medicines</p>
+        <p class="text-gray-600 mt-1">Add a new dosage form category for organizing medicines</p>
     </div>
 
     <div class="bg-white rounded-lg shadow-sm p-6">
@@ -24,7 +24,7 @@
                         id="name" 
                         value="{{ old('name') }}"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue @error('name') border-red-500 @enderror"
-                        placeholder="e.g., Antibiotics"
+                        placeholder="e.g., Tablets & Capsules"
                         required
                     >
                     @error('name')

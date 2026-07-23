@@ -13,7 +13,7 @@ class MedicineException extends Exception
     {
         return new static(
             "A medicine with similar details already exists: {$medicine->name} " .
-            "({$medicine->strength}, {$medicine->dosage_form}). " .
+            "({$medicine->strength}" . ($medicine->category?->name ? ", {$medicine->category->name}" : '') . "). " .
             "SKU: {$medicine->sku}"
         );
     }

@@ -52,6 +52,7 @@ use App\Http\Controllers\LabResultController;
 use App\Http\Controllers\PublicLabReportController;
 use App\Http\Controllers\RadiologyResultController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\OpeningStockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\PayrollController;
@@ -403,8 +404,26 @@ Route::middleware('auth')->group(function () {
     Route::get('/medicines/data', [MedicineController::class, 'data'])
         ->name('medicines.data')
         ->middleware('permission:view services|view pharmacy|manage pharmacy');
+    Route::post('medicine-categories/import', [MedicineCategoryController::class, 'import'])
+        ->name('medicine-categories.import')
+        ->middleware('permission:manage pharmacy');
+    Route::get('medicine-categories/import-status', [MedicineCategoryController::class, 'importStatus'])
+        ->name('medicine-categories.import-status')
+        ->middleware('permission:manage pharmacy');
     Route::resource('medicine-categories', MedicineCategoryController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
+    Route::post('medicine-brands/import', [MedicineBrandController::class, 'import'])
+        ->name('medicine-brands.import')
+        ->middleware('permission:manage pharmacy');
+    Route::get('medicine-brands/import-status', [MedicineBrandController::class, 'importStatus'])
+        ->name('medicine-brands.import-status')
+        ->middleware('permission:manage pharmacy');
     Route::resource('medicine-brands', MedicineBrandController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
+    Route::post('medicines/import', [MedicineController::class, 'import'])
+        ->name('medicines.import')
+        ->middleware('permission:manage pharmacy');
+    Route::get('medicines/import-status', [MedicineController::class, 'importStatus'])
+        ->name('medicines.import-status')
+        ->middleware('permission:manage pharmacy');
     Route::resource('medicines', MedicineController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
     Route::post('visits/{visit}/prescription', [VisitController::class, 'createPrescription'])->name('visits.prescription')->middleware('permission:edit visits');
     Route::post('visits/{visit}/order-multiple-lab-tests', [VisitController::class, 'orderMultipleLabTests'])->name('visits.order-multiple-lab-tests')->middleware('permission:edit visits');
@@ -414,9 +433,27 @@ Route::middleware('auth')->group(function () {
     Route::resource('prescription-instructions', PrescriptionInstructionController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
 
     // Unit Routes
+    Route::get('/units/data', [UnitController::class, 'data'])
+        ->name('units.data')
+        ->middleware('permission:view services|view pharmacy|manage pharmacy');
+    Route::post('units/import', [UnitController::class, 'import'])
+        ->name('units.import')
+        ->middleware('permission:manage pharmacy');
+    Route::get('units/import-status', [UnitController::class, 'importStatus'])
+        ->name('units.import-status')
+        ->middleware('permission:manage pharmacy');
     Route::resource('units', UnitController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
 
     // Inventory Routes
+    Route::get('inventory/opening-stock', [OpeningStockController::class, 'index'])
+        ->name('inventory.opening-stock')
+        ->middleware('permission:view services|view pharmacy|view inventory|manage inventory|manage pharmacy');
+    Route::post('inventory/opening-stock/import', [OpeningStockController::class, 'import'])
+        ->name('inventory.opening-stock.import')
+        ->middleware('permission:manage pharmacy|manage inventory');
+    Route::get('inventory/opening-stock/import-status', [OpeningStockController::class, 'importStatus'])
+        ->name('inventory.opening-stock.import-status')
+        ->middleware('permission:manage pharmacy|manage inventory');
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index')->middleware('permission:view services|view pharmacy|view inventory|manage inventory');
     Route::get('inventory/stock-in', [InventoryController::class, 'stockIn'])->name('inventory.stock-in')->middleware('permission:view services|manage pharmacy|manage inventory');
     Route::post('inventory/stock-in', [InventoryController::class, 'processStockIn'])->name('inventory.process-stock-in')->middleware('permission:view services|manage pharmacy|manage inventory');

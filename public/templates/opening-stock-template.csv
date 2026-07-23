@@ -1,0 +1,4 @@
+sku,quantity,unit_abbreviation,unit_cost,batch_no,expiry_date,supplier,reference_no,notes
+OXI-1GM-INJ,100,INJ,4.50,OPEN-BATCH-001,2027-06-30,Opening Balance,OPENING-2026,Initial shelf stock
+OXI-2GM-INJ,50,INJ,6.80,OPEN-BATCH-002,2027-06-30,Opening Balance,OPENING-2026,
+PAR-500MG-TAB,200,TAB,2.50,OPEN-BATCH-003,2028-01-15,Opening Balance,OPENING-2026,Example tablet batch

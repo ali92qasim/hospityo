@@ -3,12 +3,65 @@
 @section('title', 'Medicines Management')
 
 @section('content')
+<div id="medicines-index">
+
 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 gap-3">
     <h1 class="text-xl md:text-2xl font-bold text-gray-800">Medicines Management</h1>
-    <a href="{{ route('medicines.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center btn-touch">
-        <i class="fas fa-plus mr-2"></i>Add Medicine
-    </a>
+    <div class="flex items-center flex-wrap gap-2">
+        @if($templateUrl = import_template_url('medicines-template'))
+        <a href="{{ $templateUrl }}" download
+           class="text-gray-500 hover:text-medical-blue px-3 py-2 border border-gray-300 rounded-lg text-sm"
+           title="Download import template">
+            <i class="fas fa-download mr-1"></i>Template
+        </a>
+        @endif
+
+        @can('manage pharmacy')
+        <button type="button"
+                data-medicine-import-trigger
+                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm flex items-center justify-center btn-touch">
+            <i class="fas fa-file-upload mr-2"></i>Import CSV / Excel
+        </button>
+        @endcan
+
+        <a href="{{ route('medicines.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center btn-touch">
+            <i class="fas fa-plus mr-2"></i>Add Medicine
+        </a>
+    </div>
 </div>
+
+@can('manage pharmacy')
+<form data-medicine-import-form
+      action="{{ route('medicines.import') }}"
+      method="POST"
+      enctype="multipart/form-data"
+      class="hidden">
+    @csrf
+    <input type="file"
+           data-medicine-import-file
+           name="file"
+           accept=".csv,.xlsx,.xls,.txt">
+</form>
+@endcan
+
+@if(session('import_pending'))
+<script>
+(function () {
+    localStorage.setItem('medicineImportKey',       @json(session('import_cache_key')));
+    localStorage.setItem('medicineImportStatusUrl', @json(route('medicines.import-status')));
+    localStorage.setItem('medicineImportIndexUrl',  window.location.href);
+    localStorage.setItem('medicineImportExpiry',    String(Date.now() + 25 * 60 * 1000));
+})();
+</script>
+@endif
+
+<div id="medicine-import-result" class="hidden mb-4"></div>
+
+@if(session('error'))
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        {{ session('error') }}
+    </div>
+@endif
 
 <div class="bg-white rounded-lg shadow p-4 mb-6">
     <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
@@ -44,5 +97,6 @@
         </tr>
     </thead>
 </table>
+</div>
 @vite(['resources/js/medicines-index.js'])
 @endsection

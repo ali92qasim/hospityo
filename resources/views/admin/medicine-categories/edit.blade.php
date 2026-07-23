@@ -25,7 +25,7 @@
                         id="name" 
                         value="{{ old('name', $medicineCategory->name) }}"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue @error('name') border-red-500 @enderror"
-                        placeholder="e.g., Antibiotics"
+                        placeholder="e.g., Tablets & Capsules"
                         required
                     >
                     @error('name')

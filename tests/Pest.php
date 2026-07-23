@@ -31,7 +31,7 @@ uses()
             '--database' => 'tenant',
         ]);
     })
-    ->in('Feature/Accounting', 'Feature/HR', 'Feature/Billing', 'Feature/Lab');
+    ->in('Feature/Accounting', 'Feature/HR', 'Feature/Billing', 'Feature/Lab', 'Feature/Pharmacy');
 
 /*
 |--------------------------------------------------------------------------

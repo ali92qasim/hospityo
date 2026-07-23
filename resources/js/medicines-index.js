@@ -1,4 +1,5 @@
 import { initDataTable } from './datatable';
+import confirmDialog from './confirm-dialog';
 
 function capitalize(value) {
     if (!value) {
@@ -6,6 +7,57 @@ function capitalize(value) {
     }
 
     return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function showMedicineImportResult(type, html) {
+    const resultDiv = document.getElementById('medicine-import-result');
+    if (!resultDiv) {
+        return;
+    }
+
+    const styles = {
+        success: 'bg-green-50 border-green-200 text-green-800',
+        warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+        error: 'bg-red-50 border-red-200 text-red-800',
+    };
+
+    const icons = {
+        success: 'fa-check-circle',
+        warning: 'fa-exclamation-triangle',
+        error: 'fa-times-circle',
+    };
+
+    resultDiv.className = 'mb-4 border rounded-lg p-4 text-sm ' + (styles[type] || styles.warning);
+    resultDiv.innerHTML = '<i class="fas ' + (icons[type] || icons.warning) + ' mr-1"></i>' + html;
+    resultDiv.classList.remove('hidden');
+}
+
+function renderMedicineImportDoneResult(data) {
+    if (data.status === 'failed') {
+        showMedicineImportResult('error', data.message || 'Import failed. Please check your file and try again.');
+        return;
+    }
+
+    const msg = '<strong>' + (data.created ?? 0).toLocaleString() + '</strong> medicine(s) created, '
+        + '<strong>' + (data.updated ?? 0).toLocaleString() + '</strong> updated.';
+
+    if (data.errors && data.errors.length > 0) {
+        const list = data.errors
+            .map(function (error) { return '<li>' + error + '</li>'; })
+            .join('');
+
+        showMedicineImportResult(
+            'warning',
+            msg
+            + '<br><span class="font-medium mt-1 block">Warnings (' + data.errors.length + '):</span>'
+            + '<ul class="list-disc list-inside text-xs mt-1 space-y-0.5 max-h-40 overflow-y-auto">'
+            + list
+            + '</ul>'
+        );
+        return;
+    }
+
+    showMedicineImportResult('success', msg);
 }
 
 const filters = {
@@ -18,7 +70,7 @@ let medicinesTable = null;
 
 function reloadMedicinesTable() {
     if (medicinesTable) {
-        medicinesTable.ajax.reload();
+        medicinesTable.ajax.reload(null, false);
     }
 }
 
@@ -57,7 +109,55 @@ function bindFilters() {
     });
 }
 
+function bindMedicineImportForm(root) {
+    const importButton = root.querySelector('[data-medicine-import-trigger]');
+    const fileInput = root.querySelector('[data-medicine-import-file]');
+    const form = root.querySelector('[data-medicine-import-form]');
+
+    if (!importButton || !fileInput || !form) {
+        return;
+    }
+
+    importButton.addEventListener('click', function () {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function () {
+        if (!fileInput.files || !fileInput.files.length) {
+            return;
+        }
+
+        const fileName = fileInput.files[0].name;
+
+        confirmDialog({
+            title: 'Import medicines',
+            message: 'Import "' + fileName + '"?',
+            detail: 'The import runs in the background — you can continue using the application. Import categories, brands, and units first. Existing medicines with the same SKU will be updated.',
+            confirmText: 'Import',
+            cancelText: 'Cancel',
+            variant: 'success',
+        }).then(function (confirmed) {
+            if (confirmed) {
+                form.submit();
+                return;
+            }
+
+            fileInput.value = '';
+        });
+    });
+}
+
 $(document).ready(function () {
+    const root = document.getElementById('medicines-index');
+    if (root) {
+        bindMedicineImportForm(root);
+    }
+
+    window.addEventListener('medicine-import-done', function (event) {
+        renderMedicineImportDoneResult(event.detail);
+        reloadMedicinesTable();
+    });
+
     bindFilters();
 
     medicinesTable = initDataTable('.medicines-table', {
@@ -76,9 +176,7 @@ $(document).ready(function () {
             {
                 data: 'name',
                 render: function (data, type, row) {
-                    const strength = row.strength ?? '';
-                    const dosageForm = row.dosage_form ?? '';
-                    const details = [strength, dosageForm].filter(Boolean).join(' - ');
+                    const details = row.strength ?? '';
                     const brand = row.brand?.name
                         ? `<div class="text-xs text-gray-400">${row.brand.name}</div>`
                         : '';

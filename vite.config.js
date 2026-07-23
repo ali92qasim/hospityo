@@ -23,8 +23,13 @@ export default defineConfig({
                 'resources/js/wards-form.js',
                 'resources/js/inventory-form.js',
                 'resources/js/medicines-index.js',
+                'resources/js/medicine-categories-index.js',
+                'resources/js/medicine-brands-index.js',
+                'resources/js/opening-stock-index.js',
+                'resources/js/units-index.js',
                 'resources/js/purchases-form.js',
                 'resources/js/investigations-form.js',
+                'resources/js/investigation-orders-form.js',
                 'resources/js/bills-form.js',
                 'resources/js/bills-index.js',
                 'resources/js/bills-edit.js',
@@ -48,10 +53,11 @@ export default defineConfig({
         inject({
             $: 'jquery',
             jQuery: 'jquery',
+            include: ['**/*.{js,jsx,ts,tsx,mjs,cjs}'],
             exclude: [
                 '**/select2/**',
                 '**/node_modules/select2/**',
-            ]
+            ],
         }),
     ],
 });

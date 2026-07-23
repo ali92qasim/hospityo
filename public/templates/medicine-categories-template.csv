@@ -1,0 +1,7 @@
+code,name,description,is_active
+TAB_CAP,Tablets & Capsules,"Oral solid dosage forms including tablets and capsules. UltimatePOS mapping: UNIT TAB/CAP, CATEGORY tab/cap.",1
+INJ,Injections,"Injectable medicines including IV, IM, and SC formulations. UltimatePOS mapping: UNIT INJ, CATEGORY inj.",1
+SYP,Syrups & Suspensions,"Liquid oral medicines including syrups and suspensions. UltimatePOS mapping: UNIT SUS/SYP, CATEGORY Syrup.",1
+DROPS,Drops & Topical,"Eye, ear, nasal drops and topical liquid preparations. UltimatePOS mapping: UNIT DROPS, CATEGORY DROPS/TOPICAL.",1
+SACHET,Sachets,"Single-dose sachet and powder formulations. UltimatePOS mapping: UNIT SACHET, CATEGORY SATCHET.",1
+MISC,Miscellaneous,"Other pharmacy items not fitting standard form categories. UltimatePOS mapping: UNIT MISC., CATEGORY misclaneous.",1
