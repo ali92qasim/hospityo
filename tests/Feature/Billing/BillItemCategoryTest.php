@@ -224,3 +224,48 @@ it('applies investigation share rules to investigation lines on OPD bills', func
         ->and($investigationShare)->not->toBeNull()
         ->and((float) $investigationShare->share_amount)->toBe(150.0);
 });
+
+it('applies lab-scoped investigation share rules using OPD applies_to on visit bills', function () {
+    DoctorShareRule::create([
+        'doctor_id'            => $this->doctor->id,
+        'investigation_scope'  => 'lab',
+        'share_type'           => 'percentage',
+        'share_value'          => 25,
+        'applies_to'           => 'opd',
+        'is_active'            => true,
+        'created_by'           => $this->user->id,
+    ]);
+
+    $bill = Bill::create([
+        'patient_id' => $this->patient->id,
+        'visit_id' => $this->visit->id,
+        'bill_number' => 'BILL-LAB-SCOPE-001',
+        'bill_date' => now(),
+        'bill_type' => 'opd',
+        'subtotal' => 500,
+        'tax_amount' => 0,
+        'discount_amount' => 0,
+        'total_amount' => 500,
+        'paid_amount' => 0,
+        'due_amount' => 500,
+        'status' => 'pending',
+        'created_by' => $this->user->id,
+    ]);
+
+    $investigationItem = BillItem::create([
+        'bill_id' => $bill->id,
+        'investigation_id' => $this->investigation->id,
+        'item_category' => 'investigation',
+        'description' => 'CBC',
+        'quantity' => 1,
+        'unit_price' => 500,
+        'total_price' => 500,
+    ]);
+
+    DoctorShareService::calculate($bill);
+
+    $investigationShare = DoctorShareItem::where('bill_item_id', $investigationItem->id)->first();
+
+    expect($investigationShare)->not->toBeNull()
+        ->and((float) $investigationShare->share_amount)->toBe(125.0);
+});

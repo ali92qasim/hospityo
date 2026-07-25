@@ -34,7 +34,7 @@ use App\Services\IpdDraftBillService;
 use App\Services\IpdDischargeBillingService;
 use App\Services\AccountingService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Services\InvestigationOrderBillingService;
 use Yajra\DataTables\Facades\DataTables;
 
 class VisitController extends Controller
@@ -573,6 +573,8 @@ class VisitController extends Controller
                     'status'           => 'ordered',
                 ]);
             }
+
+            InvestigationOrderBillingService::syncOrderToBill($order->fresh(['visit', 'items.investigation']));
 
             $orderedCount = count($validated['tests']);
             $message = $orderedCount === 1

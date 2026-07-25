@@ -12,6 +12,7 @@ use App\Models\LabSample;
 use App\Models\Patient;
 use App\Models\Doctor;
 use Illuminate\Http\Request;
+use App\Services\InvestigationOrderBillingService;
 use Illuminate\Support\Facades\DB;
 
 class InvestigationOrderController extends Controller
@@ -44,7 +45,7 @@ class InvestigationOrderController extends Controller
 
     public function store(StoreLabOrderRequest $request)
     {
-        DB::connection('tenant')->transaction(function () use ($request) {
+        $order = DB::connection('tenant')->transaction(function () use ($request) {
             $order = InvestigationOrder::create([
                 'patient_id'           => $request->patient_id,
                 'doctor_id'            => $request->doctor_id,
@@ -68,7 +69,11 @@ class InvestigationOrderController extends Controller
                     'status'           => 'ordered',
                 ]);
             }
+
+            return $order;
         });
+
+        InvestigationOrderBillingService::syncOrderToBill($order->fresh(['visit', 'items.investigation']));
 
         return redirect()->route('investigation-orders.index')
             ->with('success', 'Investigation order created successfully.');

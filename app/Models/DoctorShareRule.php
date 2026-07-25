@@ -18,6 +18,7 @@ class DoctorShareRule extends Model
         'doctor_id',
         'service_id',
         'investigation_id',
+        'investigation_scope',
         'share_type',
         'share_value',
         'applies_to',
@@ -71,14 +72,35 @@ class DoctorShareRule extends Model
     }
 
     /**
-     * Rules that apply to a given bill type or to 'all'.
+     * Rules that apply to a given bill line category and parent bill type.
+     * Investigation lines use item category "investigation" but may match
+     * rules scoped to the visit bill type (e.g. OPD) as well.
+     */
+    public function scopeForBillContext(Builder $q, string $itemCategory, ?string $billType = null): Builder
+    {
+        return $q->where(function (Builder $sub) use ($itemCategory, $billType) {
+            $sub->where('applies_to', 'all')
+                ->orWhere('applies_to', $itemCategory);
+
+            if ($billType && $billType !== $itemCategory) {
+                if ($itemCategory === 'investigation') {
+                    $sub->orWhere(function (Builder $narrow) use ($billType) {
+                        $narrow->where('applies_to', $billType)
+                            ->whereIn('investigation_scope', ['lab', 'imaging']);
+                    });
+                } else {
+                    $sub->orWhere('applies_to', $billType);
+                }
+            }
+        });
+    }
+
+    /**
+     * @deprecated Use scopeForBillContext instead.
      */
     public function scopeForBillType(Builder $q, string $billType): Builder
     {
-        return $q->where(function (Builder $sub) use ($billType) {
-            $sub->where('applies_to', $billType)
-                ->orWhere('applies_to', 'all');
-        });
+        return $this->scopeForBillContext($q, $billType);
     }
 
     public function hasSpecificScope(): bool
@@ -91,7 +113,18 @@ class DoctorShareRule extends Model
             return true;
         }
 
-        return $this->service_id !== null || $this->investigation_id !== null;
+        return $this->service_id !== null
+            || $this->investigation_id !== null
+            || in_array($this->investigation_scope, ['lab', 'imaging'], true);
+    }
+
+    public function investigationScopeLabel(): string
+    {
+        return match ($this->investigation_scope) {
+            'lab' => 'Lab Tests Only',
+            'imaging' => 'Imaging Only',
+            default => 'All Investigations',
+        };
     }
 
     public function scopeSummary(): string
@@ -108,14 +141,18 @@ class DoctorShareRule extends Model
             return $this->investigation->name;
         }
 
+        if (in_array($this->investigation_scope, ['lab', 'imaging'], true)) {
+            return $this->investigationScopeLabel();
+        }
+
         if ($this->service) {
             return $this->service->name;
         }
 
         if ($this->doctor_id) {
-            return 'All';
+            return 'All Services & Investigations';
         }
 
-        return 'All (global default)';
+        return 'All Services & Investigations (global default)';
     }
 }

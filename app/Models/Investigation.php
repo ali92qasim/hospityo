@@ -69,4 +69,42 @@ class Investigation extends Model
     {
         return (bool) $this->is_active;
     }
+
+    /** @return list<string> */
+    public static function labCategories(): array
+    {
+        return [
+            'hematology',
+            'biochemistry',
+            'microbiology',
+            'immunology',
+            'pathology',
+            'histopathology',
+            'molecular',
+        ];
+    }
+
+    /** @return list<string> */
+    public static function imagingCategories(): array
+    {
+        return [
+            'x-ray',
+            'ultrasound',
+            'ct-scan',
+            'mri',
+            'radiology',
+            'cardiology',
+            'cardiac-diagnostics',
+        ];
+    }
+
+    public function isLabTest(): bool
+    {
+        return in_array($this->category, self::labCategories(), true);
+    }
+
+    public function isImaging(): bool
+    {
+        return in_array($this->category, self::imagingCategories(), true);
+    }
 }

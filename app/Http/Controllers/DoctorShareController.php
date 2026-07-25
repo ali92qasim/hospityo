@@ -7,7 +7,6 @@ use App\Models\Doctor;
 use App\Models\DoctorShareItem;
 use App\Models\DoctorShareRule;
 use App\Models\DoctorShareSettlement;
-use App\Models\Investigation;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -53,9 +52,8 @@ class DoctorShareController extends Controller
     {
         $doctors        = Doctor::orderBy('name')->get();
         $services       = Service::orderBy('name')->get();
-        $investigations = Investigation::orderBy('name')->get();
 
-        return view('admin.doctor-share.rules.create', compact('doctors', 'services', 'investigations'));
+        return view('admin.doctor-share.rules.create', compact('doctors', 'services'));
     }
 
     /**
@@ -92,7 +90,6 @@ class DoctorShareController extends Controller
 
         $doctors        = Doctor::orderBy('name')->get();
         $services       = Service::orderBy('name')->get();
-        $investigations = Investigation::orderBy('name')->get();
 
         $hasPendingItems = $rule->shareItems()->where('status', 'pending')->exists();
 
@@ -100,7 +97,6 @@ class DoctorShareController extends Controller
             'rule',
             'doctors',
             'services',
-            'investigations',
             'hasPendingItems'
         ));
     }
@@ -504,7 +500,7 @@ class DoctorShareController extends Controller
             'doctor_id'        => ['nullable', Rule::exists(Doctor::class, 'id')],
             'service_ids'      => ['nullable', 'array'],
             'service_ids.*'    => [Rule::exists(Service::class, 'id')],
-            'investigation_id' => ['nullable', Rule::exists(Investigation::class, 'id')],
+            'investigation_scope' => ['required', 'in:all,lab,imaging'],
             'share_type'       => ['required', 'in:percentage,fixed'],
             'share_value'      => ['required', 'numeric', 'min:0.01'],
             'applies_to'       => ['required', 'in:opd,ipd,investigation,emergency,all'],
@@ -524,8 +520,12 @@ class DoctorShareController extends Controller
             ->values()
             ->all();
 
+        if ($validated['service_ids'] !== []) {
+            $validated['investigation_scope'] = 'all';
+        }
+
         $validated['doctor_id'] = $validated['doctor_id'] ?? null;
-        $validated['investigation_id'] = $validated['investigation_id'] ?? null;
+        $validated['investigation_id'] = null;
 
         return $validated;
     }
@@ -533,40 +533,22 @@ class DoctorShareController extends Controller
     private function validateRuleScope(array $validated, ?int $excludeRuleId = null): ?string
     {
         $doctorId = $validated['doctor_id'] ?? null;
-        $investigationId = $validated['investigation_id'] ?? null;
+        $investigationScope = $validated['investigation_scope'] ?? 'all';
         $serviceIds = $validated['service_ids'];
         $appliesTo = $validated['applies_to'];
 
-        if ($investigationId && $serviceIds !== []) {
-            return 'Select either specific services or a specific investigation, not both.';
-        }
-
-        if ($serviceIds === [] && ! $investigationId) {
+        if ($serviceIds === []) {
             $exists = DoctorShareRule::query()
                 ->where('doctor_id', $doctorId)
                 ->whereNull('investigation_id')
+                ->where('investigation_scope', $investigationScope)
                 ->where('applies_to', $appliesTo)
                 ->whereDoesntHave('services')
                 ->when($excludeRuleId, fn ($query) => $query->where('id', '!=', $excludeRuleId))
                 ->exists();
 
             if ($exists) {
-                return 'A default rule with this doctor and bill type already exists.';
-            }
-
-            return null;
-        }
-
-        if ($investigationId) {
-            $exists = DoctorShareRule::query()
-                ->where('doctor_id', $doctorId)
-                ->where('investigation_id', $investigationId)
-                ->where('applies_to', $appliesTo)
-                ->when($excludeRuleId, fn ($query) => $query->where('id', '!=', $excludeRuleId))
-                ->exists();
-
-            if ($exists) {
-                return 'A rule for this investigation already exists for the selected doctor and bill type.';
+                return 'A rule with this doctor, bill type, and investigation scope already exists.';
             }
 
             return null;

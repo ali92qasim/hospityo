@@ -14,9 +14,9 @@
 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800">
     <p class="font-medium mb-1">How rule scope works</p>
     <ul class="list-disc list-inside space-y-1">
-        <li>Select one or more <strong>specific services</strong> to target only those bill items.</li>
-        <li>Select <strong>one specific investigation</strong> to target only that investigation — investigations are all-or-none (one or all, not multiple).</li>
-        <li>Leave both as <strong>All</strong> to apply the rule to every service and investigation for the selected doctor (or globally when no doctor is selected).</li>
+        <li><strong>Services:</strong> leave unselected for <strong>All Services</strong>, or pick one or more specific services.</li>
+        <li><strong>Investigations:</strong> choose <strong>All Investigations</strong>, <strong>Lab Tests Only</strong>, or <strong>Imaging Only</strong> — available only when all services apply.</li>
+        <li>Service and investigation scopes are independent; specific services disable investigation scope.</li>
     </ul>
 </div>
 
@@ -51,7 +51,7 @@
             </div>
 
             <div class="md:col-span-2">
-                <label for="service_ids" class="block text-sm font-medium text-gray-700 mb-2">Specific Services</label>
+                <label for="service_ids" class="block text-sm font-medium text-gray-700 mb-2">Service Scope</label>
                 <select id="service_ids" name="service_ids[]" multiple class="w-full">
                     @foreach($services as $service)
                         <option value="{{ $service->id }}" {{ collect(old('service_ids', []))->contains($service->id) ? 'selected' : '' }}>
@@ -59,22 +59,25 @@
                         </option>
                     @endforeach
                 </select>
-                <p class="mt-1 text-xs text-gray-500">Optional. Select one or more specific services, or leave as <strong>All</strong> to apply to every service.</p>
+                <p id="service-scope-hint" class="mt-2 text-sm text-gray-700">
+                    <span class="font-medium">Current scope:</span>
+                    <span id="service-scope-label" class="text-medical-blue">All Services</span>
+                </p>
                 @error('service_ids')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 @error('service_ids.*')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
 
             <div class="md:col-span-2">
-                <label for="investigation_id" class="block text-sm font-medium text-gray-700 mb-2">Specific Investigation</label>
-                <select id="investigation_id" name="investigation_id" class="w-full">
-                    @foreach($investigations as $investigation)
-                        <option value="{{ $investigation->id }}" {{ old('investigation_id') == $investigation->id ? 'selected' : '' }}>
-                            {{ $investigation->name }}
+                <label for="investigation_scope" class="block text-sm font-medium text-gray-700 mb-2">Investigation Scope</label>
+                <select id="investigation_scope" name="investigation_scope" class="w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                    @foreach(['all' => 'All Investigations', 'lab' => 'Lab Tests Only', 'imaging' => 'Imaging Only'] as $value => $label)
+                        <option value="{{ $value }}" {{ old('investigation_scope', 'all') === $value ? 'selected' : '' }}>
+                            {{ $label }}
                         </option>
                     @endforeach
                 </select>
-                <p class="mt-1 text-xs text-gray-500">Optional. Select one investigation, or leave as <strong>All</strong> to apply to every investigation. Cannot be combined with specific services.</p>
-                @error('investigation_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                <p class="mt-1 text-xs text-gray-500">Choose which investigation types this rule applies to.</p>
+                @error('investigation_scope')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
 
             <div>

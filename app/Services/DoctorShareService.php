@@ -7,6 +7,7 @@ use App\Models\BillItem;
 use App\Models\DoctorShareAllocation;
 use App\Models\DoctorShareItem;
 use App\Models\DoctorShareRule;
+use App\Models\Investigation;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -262,12 +263,15 @@ class DoctorShareService
         int $doctorId,
         ?int $serviceId,
         ?int $investigationId,
-        string $billType
+        string $itemCategory,
+        ?string $billType = null
     ): ?DoctorShareRule {
+        $billType ??= $itemCategory;
+
         // Level 1 — most specific
         if ($serviceId !== null) {
             $rule = DoctorShareRule::active()
-                ->forBillType($billType)
+                ->forBillContext($itemCategory, $billType)
                 ->where('doctor_id', $doctorId)
                 ->whereNull('investigation_id')
                 ->where(function ($q) use ($serviceId) {
@@ -283,7 +287,7 @@ class DoctorShareService
 
         if ($investigationId !== null) {
             $rule = DoctorShareRule::active()
-                ->forBillType($billType)
+                ->forBillContext($itemCategory, $billType)
                 ->where('doctor_id', $doctorId)
                 ->where('investigation_id', $investigationId)
                 ->whereNull('service_id')
@@ -293,15 +297,54 @@ class DoctorShareService
             if ($rule !== null) {
                 return $rule;
             }
+
+            $investigation = Investigation::find($investigationId);
+
+            if ($investigation?->isLabTest()) {
+                $rule = DoctorShareRule::active()
+                    ->forBillContext($itemCategory, $billType)
+                    ->where('doctor_id', $doctorId)
+                    ->whereNull('investigation_id')
+                    ->where('investigation_scope', 'lab')
+                    ->whereNull('service_id')
+                    ->whereDoesntHave('services')
+                    ->first();
+
+                if ($rule !== null) {
+                    return $rule;
+                }
+            }
+
+            if ($investigation?->isImaging()) {
+                $rule = DoctorShareRule::active()
+                    ->forBillContext($itemCategory, $billType)
+                    ->where('doctor_id', $doctorId)
+                    ->whereNull('investigation_id')
+                    ->where('investigation_scope', 'imaging')
+                    ->whereNull('service_id')
+                    ->whereDoesntHave('services')
+                    ->first();
+
+                if ($rule !== null) {
+                    return $rule;
+                }
+            }
         }
 
-        // Level 2 — doctor default
+        // Level 2 — doctor default (all services & all investigations)
+        $defaultAppliesTo = $itemCategory === 'investigation'
+            ? ['investigation', 'all']
+            : array_values(array_unique([$itemCategory, $billType, 'all']));
+
         $rule = DoctorShareRule::active()
-            ->forBillType($billType)
+            ->forBillContext($itemCategory, $billType)
             ->where('doctor_id', $doctorId)
             ->whereNull('service_id')
             ->whereNull('investigation_id')
+            ->where('investigation_scope', 'all')
+            ->whereIn('applies_to', $defaultAppliesTo)
             ->whereDoesntHave('services')
+            ->orderByRaw('CASE applies_to WHEN ? THEN 0 WHEN \'all\' THEN 1 ELSE 2 END', [$itemCategory])
             ->first();
 
         if ($rule !== null) {
@@ -310,10 +353,11 @@ class DoctorShareService
 
         // Level 3 — global default
         return DoctorShareRule::active()
-            ->forBillType($billType)
+            ->forBillContext($itemCategory, $billType)
             ->whereNull('doctor_id')
             ->whereNull('service_id')
             ->whereNull('investigation_id')
+            ->where('investigation_scope', 'all')
             ->whereDoesntHave('services')
             ->first();
     }
@@ -345,7 +389,8 @@ class DoctorShareService
             $doctorId,
             $item->service_id,
             $item->investigation_id,
-            $itemCategory
+            $itemCategory,
+            $bill->bill_type
         );
 
         if ($rule === null) {
@@ -493,7 +538,12 @@ class DoctorShareService
         $rule->loadMissing('services');
 
         $level = match (true) {
-            $rule->doctor_id !== null && ($rule->services->isNotEmpty() || $rule->service_id !== null || $rule->investigation_id !== null)
+            $rule->doctor_id !== null && (
+                $rule->services->isNotEmpty()
+                || $rule->service_id !== null
+                || $rule->investigation_id !== null
+                || in_array($rule->investigation_scope, ['lab', 'imaging'], true)
+            )
                 => 'doctor_service',
             $rule->doctor_id !== null
                 => 'doctor_default',
@@ -511,6 +561,7 @@ class DoctorShareService
             'service_id'       => $rule->service_id,
             'service_ids'      => $rule->services->pluck('id')->all(),
             'investigation_id' => $rule->investigation_id,
+            'investigation_scope' => $rule->investigation_scope ?? 'all',
         ];
     }
 
