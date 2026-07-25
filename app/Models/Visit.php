@@ -18,6 +18,7 @@ class Visit extends Model
         'visit_no',
         'patient_id',
         'doctor_id',
+        'duty_doctor_id',
         'visit_type',
         'status',
         'visit_datetime',
@@ -55,6 +56,11 @@ class Visit extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
+    }
+
+    public function dutyDoctor(): BelongsTo
+    {
+        return $this->belongsTo(Doctor::class, 'duty_doctor_id');
     }
 
     public function vitalSigns(): HasOne
@@ -113,5 +119,15 @@ class Visit extends Model
             ->where('status', 'draft')
             ->where('bill_type', 'ipd')
             ->latestOfMany();
+    }
+
+    public function ipdGpeRecords(): HasMany
+    {
+        return $this->hasMany(IpdGpeRecord::class)->latest();
+    }
+
+    public function ipdConsultantVisits(): HasMany
+    {
+        return $this->hasMany(IpdConsultantVisit::class)->latest();
     }
 }

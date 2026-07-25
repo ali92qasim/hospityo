@@ -60,4 +60,16 @@ class Patient extends Model
     {
         return $this->hasManyThrough(Admission::class, Visit::class);
     }
+
+    public function activeComplaints()
+    {
+        return $this->hasMany(PatientComplaint::class)
+            ->where('status', 'active')
+            ->latest();
+    }
+
+    public function complaints()
+    {
+        return $this->hasMany(PatientComplaint::class)->latest();
+    }
 }

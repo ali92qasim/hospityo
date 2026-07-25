@@ -15,6 +15,11 @@ use App\Http\Requests\StoreAdmissionAdvanceRequest;
 use App\Http\Requests\TriagePatientRequest;
 use App\Http\Requests\CreatePrescriptionRequest;
 use App\Http\Requests\OrderMultipleLabTestsRequest;
+use App\Http\Requests\StorePatientComplaintRequest;
+use App\Http\Requests\AssignDutyDoctorRequest;
+use App\Http\Requests\StoreIpdGpeRecordRequest;
+use App\Http\Requests\StoreIpdConsultantVisitRequest;
+use App\Http\Requests\UpdateIpdConsultantVisitRequest;
 use App\Models\Visit;
 use App\Models\Patient;
 use App\Models\Doctor;
@@ -30,10 +35,15 @@ use App\Models\Admission;
 use App\Models\Triage;
 use App\Models\Medicine;
 use App\Models\Prescription;
+use App\Models\IpdGpeRecord;
+use App\Models\IpdConsultantVisit;
+use App\Models\PatientComplaint;
 use App\Services\IpdDraftBillService;
 use App\Services\IpdDischargeBillingService;
+use App\Services\IpdClinicalService;
 use App\Services\AccountingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Services\InvestigationOrderBillingService;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -174,6 +184,7 @@ class VisitController extends Controller
         $visit->load([
             'patient',
             'doctor.department',
+            'dutyDoctor.department',
             'vitalSigns',
             'allVitalSigns.user',
             'consultation.allergies',
@@ -185,6 +196,10 @@ class VisitController extends Controller
             'draftBill',
             'triage',
             'prescriptions.items.medicine',
+            'ipdGpeRecords.doctor',
+            'ipdGpeRecords.recordedBy',
+            'ipdConsultantVisits.consultantDoctor',
+            'ipdConsultantVisits.recordedBy',
         ]);
         $doctors = Doctor::where('status', 'active')->get();
         $medicines = Medicine::where('status', 'active')
@@ -203,6 +218,8 @@ class VisitController extends Controller
         // Add type-specific data
         if ($visit->visit_type === 'ipd') {
             $data['availableBeds'] = Bed::with('ward')->where('status', 'available')->get();
+            $data['activeComplaints'] = IpdClinicalService::activeComplaintsForPatient($visit->patient_id);
+            $data['authDoctor'] = IpdClinicalService::authDoctor();
         }
 
         return view('admin.visits.workflow', $data);
@@ -265,6 +282,20 @@ class VisitController extends Controller
         // Extract allergies from validated data
         $allergyNames = $validated['allergies'] ?? [];
         unset($validated['allergies']);
+
+        if ($visit->visit_type === 'ipd') {
+            foreach ([
+                'gpe_chest', 'gpe_abdomen', 'gpe_cvs', 'gpe_cns', 'gpe_pupils',
+                'gpe_conjunctiva', 'gpe_nails', 'gpe_throat', 'gpe_sclera', 'gpe_gcs',
+            ] as $gpeField) {
+                unset($validated[$gpeField]);
+            }
+
+            IpdClinicalService::syncComplaintFromConsultation(
+                $visit,
+                $validated['presenting_complaints'] ?? null
+            );
+        }
 
         // Update or create consultation
         $consultation = $visit->consultation()->updateOrCreate(
@@ -585,6 +616,162 @@ class VisitController extends Controller
         } catch (\Exception $e) {
             \Log::error('Failed to order investigations: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to order investigations. Please try again.']);
+        }
+    }
+
+    public function assignDutyDoctor(AssignDutyDoctorRequest $request, Visit $visit)
+    {
+        try {
+            IpdClinicalService::ensureIpdVisit($visit);
+
+            $visit->update(['duty_doctor_id' => $request->duty_doctor_id]);
+
+            return back()->with('success', 'Duty doctor assigned successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Failed to assign duty doctor: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to assign duty doctor. Please try again.']);
+        }
+    }
+
+    public function storePatientComplaint(StorePatientComplaintRequest $request, Visit $visit)
+    {
+        try {
+            IpdClinicalService::ensureIpdVisit($visit);
+
+            PatientComplaint::create([
+                'patient_id'  => $visit->patient_id,
+                'visit_id'    => $visit->id,
+                'complaint'   => $request->complaint,
+                'status'      => 'active',
+                'recorded_by' => auth()->id(),
+            ]);
+
+            return back()->with('success', 'Complaint recorded successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Failed to store patient complaint: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to record complaint. Please try again.']);
+        }
+    }
+
+    public function resolvePatientComplaint(Visit $visit, PatientComplaint $complaint)
+    {
+        try {
+            IpdClinicalService::ensureIpdVisit($visit);
+
+            if ((int) $complaint->patient_id !== (int) $visit->patient_id) {
+                abort(404);
+            }
+
+            if ($complaint->status === 'resolved') {
+                return back()->with('warning', 'This complaint is already resolved.');
+            }
+
+            $complaint->update([
+                'status'      => 'resolved',
+                'resolved_by' => auth()->id(),
+                'resolved_at' => now(),
+            ]);
+
+            return back()->with('success', 'Complaint marked as resolved.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Failed to resolve patient complaint: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to resolve complaint. Please try again.']);
+        }
+    }
+
+    public function storeIpdGpeRecord(StoreIpdGpeRecordRequest $request, Visit $visit)
+    {
+        try {
+            IpdClinicalService::ensureIpdVisit($visit);
+
+            $authDoctor = IpdClinicalService::authDoctor();
+            $doctorId = $authDoctor?->id ?? $request->doctor_id;
+
+            if (! $doctorId) {
+                return back()->withErrors(['doctor_id' => 'Please select the examining doctor.']);
+            }
+
+            $visit->ipdGpeRecords()->create([
+                ...$request->safe()->except(['doctor_id']),
+                'doctor_id'   => $doctorId,
+                'recorded_by' => auth()->id(),
+            ]);
+
+            return back()->with('success', 'GPE record saved successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Failed to store IPD GPE record: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to save GPE record. Please try again.']);
+        }
+    }
+
+    public function storeIpdConsultantVisit(StoreIpdConsultantVisitRequest $request, Visit $visit)
+    {
+        try {
+            IpdClinicalService::ensureIpdVisit($visit);
+
+            $consultantDoctorId = IpdClinicalService::resolveConsultantDoctorId(
+                $request->consultant_doctor_id ? (int) $request->consultant_doctor_id : null
+            );
+
+            $visit->ipdConsultantVisits()->create([
+                'consultant_doctor_id' => $consultantDoctorId,
+                'recorded_by'          => auth()->id(),
+                'visit_notes'          => $request->visit_notes,
+                'orders'               => $request->orders,
+                'status'               => 'pending',
+                'consultant_seen_at'   => $request->consultant_seen_at ?? now(),
+            ]);
+
+            return back()->with('success', 'Consultant visit recorded successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Failed to store IPD consultant visit: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to record consultant visit. Please try again.']);
+        }
+    }
+
+    public function updateIpdConsultantVisit(
+        UpdateIpdConsultantVisitRequest $request,
+        Visit $visit,
+        IpdConsultantVisit $consultantVisit
+    ) {
+        try {
+            IpdClinicalService::ensureIpdVisit($visit);
+
+            if ((int) $consultantVisit->visit_id !== (int) $visit->id) {
+                abort(404);
+            }
+
+            IpdClinicalService::assertCanManageConsultantVisit($consultantVisit);
+
+            $consultantVisit->update([
+                'visit_notes'        => $request->visit_notes,
+                'orders'             => $request->orders,
+                'status'             => $request->status,
+                'consultant_seen_at' => $request->consultant_seen_at ?? $consultantVisit->consultant_seen_at,
+            ]);
+
+            return back()->with('success', 'Consultant visit updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Failed to update IPD consultant visit: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to update consultant visit. Please try again.']);
         }
     }
 

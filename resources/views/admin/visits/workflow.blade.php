@@ -117,6 +117,14 @@
                 <button onclick="showTab('vitals')" id="vitals-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm {{ $visit->visit_type !== 'emergency' && $visit->visit_type !== 'ipd' ? 'border-medical-blue text-medical-blue' : 'border-transparent text-gray-500' }}">
                     <i class="fas fa-heartbeat mr-2"></i>Vital Signs
                 </button>
+                @if($visit->visit_type === 'ipd')
+                    <button onclick="showTab('gpe-records')" id="gpe-records-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-stethoscope mr-2"></i>GPE
+                    </button>
+                    <button onclick="showTab('consultant-visits')" id="consultant-visits-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-user-md mr-2"></i>Consultant Visits
+                    </button>
+                @endif
                 <button onclick="showTab('consultation')" id="consultation-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
                     <i class="fas fa-stethoscope mr-2"></i>{{ $visit->visit_type === 'emergency' ? 'Emergency Care' : 'Consultation' }}
                 </button>
@@ -192,6 +200,8 @@
             <!-- IPD Admission Tab -->
             @if($visit->visit_type === 'ipd')
             <div id="admission-content" class="tab-content {{ $visit->visit_type === 'ipd' ? '' : 'hidden' }}">
+                @include('admin.visits.partials.ipd-active-complaints')
+
                 @if(!$visit->admission)
                     <div class="space-y-6">
                         <h4 class="text-lg font-medium text-gray-800 mb-4">Select Bed for Admission</h4>
@@ -322,6 +332,8 @@
                         $availableCredit = $admission->credit_balance;
                     @endphp
                     <div class="space-y-6">
+                        @include('admin.visits.partials.ipd-duty-doctor')
+
                         <div class="bg-purple-50 border border-purple-200 rounded-lg p-6">
                             <h4 class="text-lg font-medium text-purple-800 mb-4">Patient Admitted</h4>
                             <div class="grid grid-cols-2 gap-4">
@@ -682,6 +694,8 @@
 
                     <div>
                         @if($visit->visit_type === 'ipd')
+                            @include('admin.visits.partials.ipd-duty-doctor')
+
                             <!-- Doctor Assignment for IPD -->
                             <h4 class="text-lg font-medium text-gray-800 mb-4">Doctor Assignment</h4>
                             @if(!$visit->doctor_id || ($visit->doctor_id && $visit->status !== 'completed' && $visit->status !== 'discharged'))
@@ -920,6 +934,7 @@
                         </div>
 
                         <!-- GPE (General Physical Examination) Accordion -->
+                        @if($visit->visit_type !== 'ipd')
                         <div class="border border-gray-200 rounded-lg mb-4">
                             <button type="button" onclick="toggleAccordion('gpe')" class="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 flex justify-between items-center">
                                 <span class="font-medium text-gray-800">GPE (General Physical Examination)</span>
@@ -979,6 +994,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
 
                         <!-- Next Visit Date -->
                         <div class="mb-4">
@@ -1436,6 +1452,11 @@
                 </div>
             </div>
             @endif
+
+            @if($visit->visit_type === 'ipd')
+                @include('admin.visits.partials.ipd-gpe-records')
+                @include('admin.visits.partials.ipd-consultant-visits')
+            @endif
         </div>
     </div>
 </div>
@@ -1625,5 +1646,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-@vite(['resources/css/visits-form.css', 'resources/js/visits-form.js', 'resources/js/prescription-form.js'])
+@vite(['resources/css/visits-form.css', 'resources/css/visit-workflow-ipd.css', 'resources/js/visits-form.js', 'resources/js/visit-workflow-ipd.js', 'resources/js/prescription-form.js'])
 @endsection
