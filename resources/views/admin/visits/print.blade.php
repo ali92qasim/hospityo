@@ -104,11 +104,12 @@
                 @if($settings['hospital_logo'])<img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Logo">@endif
             </div>
             <div class="doctor-info">
-                @if($visit->doctor)
-                    <div class="doctor-header-name">Dr. {{ $visit->doctor->name }}</div>
-                    <div class="doctor-credentials">{{ $visit->doctor->qualification }}</div>
-                    <div class="doctor-header-specialization">{{ $visit->doctor->specialization }}</div>
-                    @if($visit->doctor->pmdc_number)<div class="doctor-header-specialization">PMDC: {{ $visit->doctor->pmdc_number }}</div>@endif
+                @php $attendingDoctor = $visit->attendingDoctor(); @endphp
+                @if($attendingDoctor)
+                    <div class="doctor-header-name">Dr. {{ $attendingDoctor->name }}</div>
+                    <div class="doctor-credentials">{{ $attendingDoctor->qualification }}</div>
+                    <div class="doctor-header-specialization">{{ $attendingDoctor->specialization }}</div>
+                    @if($attendingDoctor->pmdc_number)<div class="doctor-header-specialization">PMDC: {{ $attendingDoctor->pmdc_number }}</div>@endif
                 @endif
             </div>
         </div>

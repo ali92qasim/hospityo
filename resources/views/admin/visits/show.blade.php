@@ -100,22 +100,27 @@
                         Medical Team
                     </h4>
                     <div class="space-y-4">
+                        @php $attendingDoctor = $visit->attendingDoctor(); @endphp
+                        @if($attendingDoctor)
                         <div class="flex justify-between py-2 border-b border-gray-100">
                             <span class="text-gray-600">Doctor:</span>
-                            <span class="font-medium">Dr. {{ $visit->doctor->name }}</span>
+                            <span class="font-medium">Dr. {{ $attendingDoctor->name }}</span>
                         </div>
                         <div class="flex justify-between py-2 border-b border-gray-100">
                             <span class="text-gray-600">Specialization:</span>
-                            <span class="font-medium">{{ $visit->doctor->specialization }}</span>
+                            <span class="font-medium">{{ $attendingDoctor->specialization }}</span>
                         </div>
                         <div class="flex justify-between py-2 border-b border-gray-100">
                             <span class="text-gray-600">Department:</span>
-                            <span class="font-medium">{{ $visit->doctor->department->name ?? 'No Department' }}</span>
+                            <span class="font-medium">{{ $attendingDoctor->department->name ?? 'No Department' }}</span>
                         </div>
                         <div class="flex justify-between py-2 border-b border-gray-100">
                             <span class="text-gray-600">Consultation Fee:</span>
-                            <span class="font-medium">{{ format_currency($visit->doctor->consultation_fee) }}</span>
+                            <span class="font-medium">{{ format_currency($attendingDoctor->consultation_fee) }}</span>
                         </div>
+                        @else
+                        <p class="text-gray-500 text-sm">No attending doctor assigned.</p>
+                        @endif
                     </div>
                 </div>
 

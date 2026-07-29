@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AssignDutyDoctorRequest extends FormRequest
+class SetPrimaryDoctorRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,7 +14,7 @@ class AssignDutyDoctorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'duty_doctor_id' => ['required', 'exists:tenant.doctors,id'],
+            'doctor_id' => ['required', 'exists:tenant.doctors,id'],
         ];
     }
 }

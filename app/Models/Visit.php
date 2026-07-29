@@ -18,7 +18,6 @@ class Visit extends Model
         'visit_no',
         'patient_id',
         'doctor_id',
-        'duty_doctor_id',
         'visit_type',
         'status',
         'visit_datetime',
@@ -53,14 +52,47 @@ class Visit extends Model
         return $this->belongsTo(Patient::class);
     }
 
+    /** @deprecated Use primaryDoctor() / careTeam() for IPD. Kept for OPD/emergency and legacy data. */
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
     }
 
-    public function dutyDoctor(): BelongsTo
+    public function careTeam(): HasMany
     {
-        return $this->belongsTo(Doctor::class, 'duty_doctor_id');
+        return $this->hasMany(IpdCareTeam::class)->active()->latest('added_at');
+    }
+
+    public function primaryDoctor(): HasOne
+    {
+        return $this->hasOne(IpdCareTeam::class)
+            ->active()
+            ->primary();
+    }
+
+    public function doctorVisitNotes(): HasMany
+    {
+        return $this->hasMany(IpdDoctorVisitNote::class)->latest('visited_at');
+    }
+
+    public function hasActiveCareTeam(): bool
+    {
+        if ($this->relationLoaded('careTeam')) {
+            return $this->careTeam->isNotEmpty();
+        }
+
+        return $this->careTeam()->exists();
+    }
+
+    public function attendingDoctor(): ?Doctor
+    {
+        if ($this->visit_type === 'ipd') {
+            $this->loadMissing('primaryDoctor.doctor');
+
+            return $this->primaryDoctor?->doctor;
+        }
+
+        return $this->doctor;
     }
 
     public function vitalSigns(): HasOne
@@ -124,10 +156,5 @@ class Visit extends Model
     public function ipdGpeRecords(): HasMany
     {
         return $this->hasMany(IpdGpeRecord::class)->latest();
-    }
-
-    public function ipdConsultantVisits(): HasMany
-    {
-        return $this->hasMany(IpdConsultantVisit::class)->latest();
     }
 }

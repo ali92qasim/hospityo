@@ -16,10 +16,11 @@ use App\Http\Requests\TriagePatientRequest;
 use App\Http\Requests\CreatePrescriptionRequest;
 use App\Http\Requests\OrderMultipleLabTestsRequest;
 use App\Http\Requests\StorePatientComplaintRequest;
-use App\Http\Requests\AssignDutyDoctorRequest;
+use App\Http\Requests\AddDoctorToCareTeamRequest;
+use App\Http\Requests\SetPrimaryDoctorRequest;
 use App\Http\Requests\StoreIpdGpeRecordRequest;
-use App\Http\Requests\StoreIpdConsultantVisitRequest;
-use App\Http\Requests\UpdateIpdConsultantVisitRequest;
+use App\Http\Requests\StoreIpdDoctorVisitNoteRequest;
+use App\Http\Requests\UpdateIpdDoctorVisitNoteRequest;
 use App\Models\Visit;
 use App\Models\Patient;
 use App\Models\Doctor;
@@ -36,7 +37,8 @@ use App\Models\Triage;
 use App\Models\Medicine;
 use App\Models\Prescription;
 use App\Models\IpdGpeRecord;
-use App\Models\IpdConsultantVisit;
+use App\Models\IpdDoctorVisitNote;
+use App\Models\IpdCareTeam;
 use App\Models\PatientComplaint;
 use App\Services\IpdDraftBillService;
 use App\Services\IpdDischargeBillingService;
@@ -84,7 +86,13 @@ class VisitController extends Controller
         if (auth()->user()->hasRole('Doctor')) {
             $doctor = Doctor::where('user_id', auth()->id())->first();
             if ($doctor) {
-                $query->where('doctor_id', $doctor->id);
+                $query->where(function ($q) use ($doctor) {
+                    $q->where('doctor_id', $doctor->id)
+                        ->orWhere(function ($ipdQuery) use ($doctor) {
+                            $ipdQuery->where('visit_type', 'ipd')
+                                ->whereHas('careTeam', fn ($team) => $team->where('doctor_id', $doctor->id));
+                        });
+                });
             } else {
                 $query->whereNull('id');
             }
@@ -160,7 +168,7 @@ class VisitController extends Controller
 
     public function show(Visit $visit)
     {
-        $visit->load(['patient', 'doctor.department', 'vitalSigns', 'consultation', 'testOrders']);
+        $visit->load(['patient', 'doctor.department', 'primaryDoctor.doctor.department', 'vitalSigns', 'consultation', 'testOrders']);
         return view('admin.visits.show', compact('visit'));
     }
 
@@ -184,7 +192,9 @@ class VisitController extends Controller
         $visit->load([
             'patient',
             'doctor.department',
-            'dutyDoctor.department',
+            'primaryDoctor.doctor.department',
+            'careTeam.doctor.department',
+            'careTeam.addedBy',
             'vitalSigns',
             'allVitalSigns.user',
             'consultation.allergies',
@@ -198,8 +208,8 @@ class VisitController extends Controller
             'prescriptions.items.medicine',
             'ipdGpeRecords.doctor',
             'ipdGpeRecords.recordedBy',
-            'ipdConsultantVisits.consultantDoctor',
-            'ipdConsultantVisits.recordedBy',
+            'doctorVisitNotes.doctor',
+            'doctorVisitNotes.createdBy',
         ]);
         $doctors = Doctor::where('status', 'active')->get();
         $medicines = Medicine::where('status', 'active')
@@ -378,7 +388,14 @@ class VisitController extends Controller
         }
 
         $doctor = Doctor::where('user_id', auth()->id())->first();
-        if (!$doctor || $visit->doctor_id !== $doctor->id) {
+        if (! $doctor) {
+            abort(403);
+        }
+
+        $canAccess = (int) $visit->doctor_id === (int) $doctor->id
+            || ($visit->visit_type === 'ipd' && IpdClinicalService::isOnCareTeam($visit, (int) $doctor->id));
+
+        if (! $canAccess) {
             abort(403);
         }
 
@@ -535,9 +552,14 @@ class VisitController extends Controller
     public function createPrescription(CreatePrescriptionRequest $request, Visit $visit)
     {
         try {
+            $doctorId = IpdClinicalService::resolveOrderDoctorId(
+                $visit,
+                $request->doctor_id ? (int) $request->doctor_id : null
+            );
+
             $prescription = $visit->prescriptions()->create([
                 'patient_id' => $visit->patient_id,
-                'doctor_id' => $visit->doctor_id,
+                'doctor_id' => $doctorId,
                 'prescribed_date' => now(),
                 'notes' => $request->notes,
                 'status' => 'pending'
@@ -570,6 +592,8 @@ class VisitController extends Controller
             }
 
             return back()->with('success', 'Prescription created successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Failed to create prescription. Please try again. Error: ' . $e->getMessage()]);
         }
@@ -586,9 +610,14 @@ class VisitController extends Controller
                 ? 'stat'
                 : (in_array('urgent', $priorities) ? 'urgent' : 'routine');
 
+            $doctorId = IpdClinicalService::resolveOrderDoctorId(
+                $visit,
+                $request->doctor_id ? (int) $request->doctor_id : null
+            );
+
             $order = $visit->labOrders()->create([
                 'patient_id'  => $visit->patient_id,
-                'doctor_id'   => $visit->doctor_id,
+                'doctor_id'   => $doctorId,
                 'priority'    => $overallPriority,
                 'status'      => 'ordered',
                 'ordered_at'  => now(),
@@ -613,26 +642,74 @@ class VisitController extends Controller
                 : "{$orderedCount} investigations ordered successfully.";
 
             return back()->with('success', $message);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             \Log::error('Failed to order investigations: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to order investigations. Please try again.']);
         }
     }
 
-    public function assignDutyDoctor(AssignDutyDoctorRequest $request, Visit $visit)
+    public function addDoctorToCareTeam(AddDoctorToCareTeamRequest $request, Visit $visit)
     {
         try {
             IpdClinicalService::ensureIpdVisit($visit);
 
-            $visit->update(['duty_doctor_id' => $request->duty_doctor_id]);
+            $doctor = Doctor::findOrFail($request->doctor_id);
 
-            return back()->with('success', 'Duty doctor assigned successfully.');
+            IpdClinicalService::addDoctorToCareTeam($visit, $doctor, auth()->id());
+
+            return back()->with('success', 'Doctor added to care team successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            \Log::error('Failed to assign duty doctor: '.$e->getMessage());
+            \Log::error('Failed to add doctor to care team: '.$e->getMessage());
 
-            return back()->withErrors(['error' => 'Failed to assign duty doctor. Please try again.']);
+            return back()->withErrors(['error' => 'Failed to add doctor to care team. Please try again.']);
+        }
+    }
+
+    public function removeDoctorFromCareTeam(Visit $visit, IpdCareTeam $careTeamMember)
+    {
+        try {
+            IpdClinicalService::ensureIpdVisit($visit);
+
+            if ((int) $careTeamMember->visit_id !== (int) $visit->id) {
+                abort(404);
+            }
+
+            if ($careTeamMember->removed_at !== null) {
+                return back()->with('warning', 'This doctor is no longer on the care team.');
+            }
+
+            IpdClinicalService::removeDoctorFromCareTeam($visit, $careTeamMember->doctor);
+
+            return back()->with('success', 'Doctor removed from care team successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Failed to remove doctor from care team: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to remove doctor from care team. Please try again.']);
+        }
+    }
+
+    public function setPrimaryDoctor(SetPrimaryDoctorRequest $request, Visit $visit)
+    {
+        try {
+            IpdClinicalService::ensureIpdVisit($visit);
+
+            $doctor = Doctor::findOrFail($request->doctor_id);
+
+            IpdClinicalService::setPrimaryDoctor($visit, $doctor);
+
+            return back()->with('success', 'Primary doctor updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Failed to set primary doctor: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to set primary doctor. Please try again.']);
         }
     }
 
@@ -693,12 +770,10 @@ class VisitController extends Controller
         try {
             IpdClinicalService::ensureIpdVisit($visit);
 
-            $authDoctor = IpdClinicalService::authDoctor();
-            $doctorId = $authDoctor?->id ?? $request->doctor_id;
-
-            if (! $doctorId) {
-                return back()->withErrors(['doctor_id' => 'Please select the examining doctor.']);
-            }
+            $doctorId = IpdClinicalService::resolveGpeDoctorId(
+                $visit,
+                $request->doctor_id ? (int) $request->doctor_id : null
+            );
 
             $visit->ipdGpeRecords()->create([
                 ...$request->safe()->except(['doctor_id']),
@@ -716,70 +791,107 @@ class VisitController extends Controller
         }
     }
 
-    public function storeIpdConsultantVisit(StoreIpdConsultantVisitRequest $request, Visit $visit)
+    public function storeIpdDoctorVisitNote(StoreIpdDoctorVisitNoteRequest $request, Visit $visit)
     {
         try {
             IpdClinicalService::ensureIpdVisit($visit);
 
-            $consultantDoctorId = IpdClinicalService::resolveConsultantDoctorId(
-                $request->consultant_doctor_id ? (int) $request->consultant_doctor_id : null
+            $doctorId = IpdClinicalService::resolveVisitNoteDoctorId(
+                $visit,
+                $request->doctor_id ? (int) $request->doctor_id : null
             );
 
-            $visit->ipdConsultantVisits()->create([
-                'consultant_doctor_id' => $consultantDoctorId,
-                'recorded_by'          => auth()->id(),
-                'visit_notes'          => $request->visit_notes,
-                'orders'               => $request->orders,
-                'status'               => 'pending',
-                'consultant_seen_at'   => $request->consultant_seen_at ?? now(),
-            ]);
+            $doctor = Doctor::findOrFail($doctorId);
 
-            return back()->with('success', 'Consultant visit recorded successfully.');
+            IpdClinicalService::addDoctorVisitNote(
+                $visit,
+                $doctor,
+                $request->notes,
+                $request->orders,
+                auth()->id()
+            );
+
+            return back()->with('success', 'Doctor visit note recorded successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            \Log::error('Failed to store IPD consultant visit: '.$e->getMessage());
+            \Log::error('Failed to store IPD doctor visit note: '.$e->getMessage());
 
-            return back()->withErrors(['error' => 'Failed to record consultant visit. Please try again.']);
+            return back()->withErrors(['error' => 'Failed to record doctor visit note. Please try again.']);
         }
     }
 
-    public function updateIpdConsultantVisit(
-        UpdateIpdConsultantVisitRequest $request,
+    public function updateIpdDoctorVisitNote(
+        UpdateIpdDoctorVisitNoteRequest $request,
         Visit $visit,
-        IpdConsultantVisit $consultantVisit
+        IpdDoctorVisitNote $doctorVisitNote
     ) {
         try {
             IpdClinicalService::ensureIpdVisit($visit);
 
-            if ((int) $consultantVisit->visit_id !== (int) $visit->id) {
+            if ((int) $doctorVisitNote->visit_id !== (int) $visit->id) {
                 abort(404);
             }
 
-            IpdClinicalService::assertCanManageConsultantVisit($consultantVisit);
+            IpdClinicalService::assertCanManageDoctorVisitNote($doctorVisitNote);
 
-            $consultantVisit->update([
-                'visit_notes'        => $request->visit_notes,
-                'orders'             => $request->orders,
-                'status'             => $request->status,
-                'consultant_seen_at' => $request->consultant_seen_at ?? $consultantVisit->consultant_seen_at,
+            $doctorVisitNote->update([
+                'notes'  => $request->notes,
+                'orders' => $request->orders,
+                'status' => $request->status,
             ]);
 
-            return back()->with('success', 'Consultant visit updated successfully.');
+            return back()->with('success', 'Doctor visit note updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            \Log::error('Failed to update IPD consultant visit: '.$e->getMessage());
+            \Log::error('Failed to update IPD doctor visit note: '.$e->getMessage());
 
-            return back()->withErrors(['error' => 'Failed to update consultant visit. Please try again.']);
+            return back()->withErrors(['error' => 'Failed to update doctor visit note. Please try again.']);
         }
     }
 
     public function print(Visit $visit)
     {
+        $settings = [
+            'hospital_name' => cache('settings.hospital_name', config('app.name', 'Hospital Management System')),
+            'hospital_address' => cache('settings.hospital_address', ''),
+            'hospital_phone' => cache('settings.hospital_phone', ''),
+            'hospital_email' => cache('settings.hospital_email', ''),
+            'hospital_logo' => cache('settings.hospital_logo', null),
+        ];
+
+        if ($visit->visit_type === 'ipd') {
+            $visit->load([
+                'patient',
+                'doctor.department',
+                'primaryDoctor.doctor.department',
+                'careTeam.doctor',
+                'allVitalSigns.user',
+                'consultation.allergies',
+                'admission.bed.ward',
+                'prescriptions.doctor',
+                'prescriptions.items.medicine',
+                'prescriptions.items.prescriptionInstruction',
+                'ipdGpeRecords.doctor',
+                'ipdGpeRecords.recordedBy',
+                'doctorVisitNotes.doctor',
+                'doctorVisitNotes.createdBy',
+                'labOrders' => fn ($query) => $query->orderBy('ordered_at'),
+                'labOrders.doctor',
+                'labOrders.items.investigation',
+                'labOrders.items.result.resultItems.parameter',
+                'labOrders.results.resultItems.parameter',
+                'labOrders.radiologyResult',
+            ]);
+
+            return view('admin.visits.print-ipd', compact('visit', 'settings'));
+        }
+
         $visit->load([
             'patient',
             'doctor.department',
+            'primaryDoctor.doctor.department',
             'vitalSigns',
             'allVitalSigns.user',
             'consultation',
@@ -790,15 +902,6 @@ class VisitController extends Controller
             'prescriptions.items.medicine',
             'prescriptions.items.prescriptionInstruction',
         ]);
-
-        // Get hospital settings
-        $settings = [
-            'hospital_name' => cache('settings.hospital_name', config('app.name', 'Hospital Management System')),
-            'hospital_address' => cache('settings.hospital_address', ''),
-            'hospital_phone' => cache('settings.hospital_phone', ''),
-            'hospital_email' => cache('settings.hospital_email', ''),
-            'hospital_logo' => cache('settings.hospital_logo', null)
-        ];
 
         return view('admin.visits.print', compact('visit', 'settings'));
     }

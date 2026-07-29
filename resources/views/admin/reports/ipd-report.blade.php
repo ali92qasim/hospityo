@@ -287,7 +287,7 @@
                         <div class="text-xs text-gray-500">Bed {{ $admission->bed->bed_number }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">{{ $admission->visit->doctor->name ?? 'N/A' }}</div>
+                        <div class="text-sm text-gray-900">{{ $admission->visit->attendingDoctor()?->name ?? 'N/A' }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ \Carbon\Carbon::parse($admission->admission_date)->format('d M Y') }}

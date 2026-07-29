@@ -23,10 +23,15 @@ class InvestigationOrderBillingService
         }
 
         try {
-            $order->loadMissing(['visit', 'items.investigation']);
+            $order->loadMissing(['visit.primaryDoctor', 'items.investigation']);
 
             $visit = $order->visit;
-            if (! $visit?->doctor_id || $order->items->isEmpty()) {
+            $orderingDoctorId = $order->doctor_id
+                ?? ($visit?->visit_type === 'ipd'
+                    ? $visit->primaryDoctor?->doctor_id
+                    : $visit?->doctor_id);
+
+            if (! $orderingDoctorId || $order->items->isEmpty()) {
                 return;
             }
 

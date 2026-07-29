@@ -35,7 +35,7 @@
                         {{ ucfirst(str_replace('_', ' ', $visit->status)) }}
                     </span>
                     <a href="{{ route('visits.print', $visit) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-print mr-2"></i>Print Report
+                        <i class="fas fa-print mr-2"></i>{{ $visit->visit_type === 'ipd' ? 'Print IPD Report' : 'Print Report' }}
                     </a>
                     <a href="{{ route('visits.index') }}" class="text-gray-600 hover:text-gray-800">
                         <i class="fas fa-arrow-left mr-2"></i>Back to Visits
@@ -118,11 +118,11 @@
                     <i class="fas fa-heartbeat mr-2"></i>Vital Signs
                 </button>
                 @if($visit->visit_type === 'ipd')
-                    <button onclick="showTab('gpe-records')" id="gpe-records-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
+                    <button onclick="showTab('gpe-tab')" id="gpe-tab-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
                         <i class="fas fa-stethoscope mr-2"></i>GPE
                     </button>
-                    <button onclick="showTab('consultant-visits')" id="consultant-visits-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-user-md mr-2"></i>Consultant Visits
+                    <button onclick="showTab('care-team')" id="care-team-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-users mr-2"></i>Care Team
                     </button>
                 @endif
                 <button onclick="showTab('consultation')" id="consultation-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
@@ -200,8 +200,6 @@
             <!-- IPD Admission Tab -->
             @if($visit->visit_type === 'ipd')
             <div id="admission-content" class="tab-content {{ $visit->visit_type === 'ipd' ? '' : 'hidden' }}">
-                @include('admin.visits.partials.ipd-active-complaints')
-
                 @if(!$visit->admission)
                     <div class="space-y-6">
                         <h4 class="text-lg font-medium text-gray-800 mb-4">Select Bed for Admission</h4>
@@ -332,8 +330,6 @@
                         $availableCredit = $admission->credit_balance;
                     @endphp
                     <div class="space-y-6">
-                        @include('admin.visits.partials.ipd-duty-doctor')
-
                         <div class="bg-purple-50 border border-purple-200 rounded-lg p-6">
                             <h4 class="text-lg font-medium text-purple-800 mb-4">Patient Admitted</h4>
                             <div class="grid grid-cols-2 gap-4">
@@ -694,48 +690,7 @@
 
                     <div>
                         @if($visit->visit_type === 'ipd')
-                            @include('admin.visits.partials.ipd-duty-doctor')
-
-                            <!-- Doctor Assignment for IPD -->
-                            <h4 class="text-lg font-medium text-gray-800 mb-4">Doctor Assignment</h4>
-                            @if(!$visit->doctor_id || ($visit->doctor_id && $visit->status !== 'completed' && $visit->status !== 'discharged'))
-                                <form action="{{ route('visits.assign-doctor', $visit) }}" method="POST" class="mb-6">
-                                    @csrf
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                                            {{ $visit->doctor_id ? 'Change Doctor' : 'Assign Doctor' }}
-                                        </label>
-                                        <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                                            <option value="">Select Doctor</option>
-                                            @foreach($doctors as $doctor)
-                                            <option value="{{ $doctor->id }}" {{ $visit->doctor_id == $doctor->id ? 'selected' : '' }}>
-                                                Dr. {{ $doctor->name }} - {{ $doctor->specialization }}
-                                            </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                                        <i class="fas fa-user-md mr-2"></i>{{ $visit->doctor_id ? 'Update Doctor' : 'Assign Doctor' }}
-                                    </button>
-                                </form>
-                            @else
-                                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                                            <div>
-                                                <p class="font-medium text-green-800">Dr. {{ $visit->doctor->name }}</p>
-                                                <p class="text-sm text-green-600">{{ $visit->doctor->specialization }}</p>
-                                            </div>
-                                        </div>
-                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                            <i class="fas fa-lock mr-1"></i>Locked
-                                        </span>
-                                    </div>
-                                </div>
-                            @endif
-                            
-                            <!-- Vital Signs History -->
+                            <!-- Vital Signs History for IPD -->
                             <h4 class="text-lg font-medium text-gray-800 mb-4">Vital Signs History</h4>
                             <div class="space-y-4 max-h-96 overflow-y-auto">
                                 @forelse($visit->allVitalSigns as $vital)
@@ -820,9 +775,24 @@
                 </div>
             </div>
 
+            @if($visit->visit_type === 'ipd')
+                @include('admin.visits.partials.ipd-gpe-records')
+                @include('admin.visits.partials.ipd-care-team')
+            @endif
+
             <!-- Consultation Tab -->
             <div id="consultation-content" class="tab-content hidden">
-                @if($visit->doctor_id)
+                @if($visit->visit_type === 'ipd')
+                    @include('admin.visits.partials.ipd-active-complaints')
+                @endif
+
+                @php
+                    $canConsult = $visit->visit_type === 'ipd'
+                        ? $visit->hasActiveCareTeam()
+                        : (bool) $visit->doctor_id;
+                @endphp
+
+                @if($canConsult)
                     <form action="{{ route('visits.consultation', $visit) }}" method="POST">
                         @csrf
                         
@@ -1016,14 +986,25 @@
                 @else
                     <div class="text-center py-8">
                         <i class="fas fa-user-md text-4xl text-gray-300 mb-4"></i>
-                        <p class="text-gray-500">Please assign a doctor first to start consultation.</p>
+                        @if($visit->visit_type === 'ipd')
+                            <p class="text-gray-500">Add at least one doctor to the Care Team before starting consultation.</p>
+                        @else
+                            <p class="text-gray-500">Please assign a doctor first to start consultation.</p>
+                        @endif
                     </div>
                 @endif
             </div>
 
             <!-- Prescription Tab -->
             <div id="prescription-content" class="tab-content hidden">
-                @if($visit->doctor_id)
+                @php
+                    $canPrescribe = $visit->visit_type === 'ipd'
+                        ? $visit->hasActiveCareTeam()
+                        : (bool) $visit->doctor_id;
+                    $showOrderDoctorPicker = $visit->visit_type === 'ipd'
+                        && (empty($authDoctor) || ! $visit->careTeam->contains('doctor_id', $authDoctor->id ?? null));
+                @endphp
+                @if($canPrescribe)
                     <div class="space-y-6">
                         @if($visit->prescriptions->count() > 0)
                             <div>
@@ -1067,6 +1048,22 @@
                             <h4 class="text-lg font-medium text-gray-800 mb-4">Create New Prescription</h4>
                             <form action="{{ route('visits.prescription', $visit) }}" method="POST" id="prescription-form">
                                 @csrf
+                                @if($showOrderDoctorPicker)
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Prescribing Doctor (from care team)</label>
+                                        <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                                            <option value="">Select Doctor</option>
+                                            @foreach($visit->careTeam as $member)
+                                                <option value="{{ $member->doctor_id }}">
+                                                    Dr. {{ $member->doctor->name }} - {{ $member->doctor->specialization }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('doctor_id')
+                                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                @endif
                                 <div id="prescription-items">
                                     <div class="prescription-item border border-gray-200 rounded-lg p-3 mb-3">
                                         <div class="flex items-start gap-3">
@@ -1148,7 +1145,11 @@
                 @else
                     <div class="text-center py-8">
                         <i class="fas fa-user-md text-4xl text-gray-300 mb-4"></i>
-                        <p class="text-gray-500">Please assign a doctor first to create prescriptions.</p>
+                        @if($visit->visit_type === 'ipd')
+                            <p class="text-gray-500">Add at least one doctor to the Care Team before creating prescriptions.</p>
+                        @else
+                            <p class="text-gray-500">Please assign a doctor first to create prescriptions.</p>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -1157,7 +1158,12 @@
             @if($visit->visit_type !== 'emergency')
             <div id="tests-content" class="tab-content hidden">
                 <div class="max-w-7xl mx-auto">
-                    @if($visit->doctor_id)
+                    @php
+                        $canOrderLabs = $visit->visit_type === 'ipd'
+                            ? $visit->hasActiveCareTeam()
+                            : (bool) $visit->doctor_id;
+                    @endphp
+                    @if($canOrderLabs)
                         <!-- Order Investigations Form -->
                         <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
                             <div class="flex items-center justify-between mb-6">
@@ -1170,6 +1176,23 @@
                                 
                                 <form action="{{ route('visits.order-multiple-lab-tests', $visit) }}" method="POST" id="lab-tests-form">
                                     @csrf
+
+                                    @if($visit->visit_type === 'ipd' && (empty($authDoctor) || ! $visit->careTeam->contains('doctor_id', $authDoctor->id ?? null)))
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Ordering Doctor (from care team)</label>
+                                            <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                                                <option value="">Select Doctor</option>
+                                                @foreach($visit->careTeam as $member)
+                                                    <option value="{{ $member->doctor_id }}">
+                                                        Dr. {{ $member->doctor->name }} - {{ $member->doctor->specialization }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('doctor_id')
+                                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    @endif
                                     
                                     <!-- Dynamic Test Table -->
                                     <div class="bg-gray-50 rounded-lg p-4 mb-6">
@@ -1277,7 +1300,11 @@
                             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                                 <div class="flex items-center">
                                     <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
-                                    <p class="text-yellow-800">Doctor must be assigned to order investigations.</p>
+                                    @if($visit->visit_type === 'ipd')
+                                        <p class="text-yellow-800">Add at least one doctor to the Care Team before ordering investigations.</p>
+                                    @else
+                                        <p class="text-yellow-800">Doctor must be assigned to order investigations.</p>
+                                    @endif
                                 </div>
                             </div>
                         @endif
@@ -1452,11 +1479,6 @@
                 </div>
             </div>
             @endif
-
-            @if($visit->visit_type === 'ipd')
-                @include('admin.visits.partials.ipd-gpe-records')
-                @include('admin.visits.partials.ipd-consultant-visits')
-            @endif
         </div>
     </div>
 </div>
@@ -1468,18 +1490,21 @@ let testRowIndex = 1;
 
 function showTab(tabName) {
     activeTab = tabName;
-    
+
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
     });
-    
+
     document.querySelectorAll('.tab-button').forEach(button => {
         button.classList.remove('border-medical-blue', 'text-medical-blue');
         button.classList.add('border-transparent', 'text-gray-500');
     });
-    
-    document.getElementById(tabName + '-content').classList.remove('hidden');
-    
+
+    const content = document.getElementById(tabName + '-content');
+    if (content) {
+        content.classList.remove('hidden');
+    }
+
     const activeTabButton = document.getElementById(tabName + '-tab');
     if (activeTabButton) {
         activeTabButton.classList.remove('border-transparent', 'text-gray-500');
@@ -1622,7 +1647,7 @@ document.addEventListener('DOMContentLoaded', function() {
     @elseif($visit->visit_type === 'ipd')
         @if($visit->admission)
             defaultTab = 'vitals';
-            @if($visit->doctor_id)
+            @if($visit->hasActiveCareTeam())
                 defaultTab = 'consultation';
             @endif
         @endif
@@ -1632,15 +1657,13 @@ document.addEventListener('DOMContentLoaded', function() {
         @endif
     @endif
     
-    // Only use saved tab if it exists and is valid, otherwise use default
-    const savedTab = localStorage.getItem('activeTab');
-    const tabToShow = (savedTab && document.getElementById(savedTab + '-tab')) ? savedTab : defaultTab;
-    
-    showTab(tabToShow);
-    
-    // Clear saved tab after using it
-    localStorage.removeItem('activeTab');
-    
+    // Restore tab after form submit, otherwise use workflow default
+    if (typeof window.restoreVisitWorkflowTab === 'function') {
+        window.restoreVisitWorkflowTab(defaultTab);
+    } else {
+        showTab(defaultTab);
+    }
+
     // Initialize test count display
     updateTestCount();
 });

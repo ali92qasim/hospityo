@@ -257,12 +257,14 @@ Route::middleware('auth')->group(function () {
     Route::post('visits/{visit}/discharge', [VisitController::class, 'dischargePatient'])->name('visits.discharge')->middleware('permission:edit visits');
     Route::post('visits/{visit}/admission-advance', [VisitController::class, 'storeAdmissionAdvance'])->name('visits.admission-advance')->middleware('permission:edit visits');
     Route::post('visits/{visit}/triage', [VisitController::class, 'triagePatient'])->name('visits.triage')->middleware('permission:edit visits');
-    Route::post('visits/{visit}/duty-doctor', [VisitController::class, 'assignDutyDoctor'])->name('visits.duty-doctor')->middleware('permission:edit visits');
+    Route::post('visits/{visit}/care-team', [VisitController::class, 'addDoctorToCareTeam'])->name('visits.care-team.store')->middleware('permission:edit visits');
+    Route::delete('visits/{visit}/care-team/{careTeamMember}', [VisitController::class, 'removeDoctorFromCareTeam'])->name('visits.care-team.remove')->middleware('permission:edit visits');
+    Route::post('visits/{visit}/care-team/primary', [VisitController::class, 'setPrimaryDoctor'])->name('visits.care-team.primary')->middleware('permission:edit visits');
     Route::post('visits/{visit}/complaints', [VisitController::class, 'storePatientComplaint'])->name('visits.complaints.store')->middleware('permission:edit visits');
     Route::post('visits/{visit}/complaints/{complaint}/resolve', [VisitController::class, 'resolvePatientComplaint'])->name('visits.complaints.resolve')->middleware('permission:edit visits');
     Route::post('visits/{visit}/gpe-records', [VisitController::class, 'storeIpdGpeRecord'])->name('visits.gpe-records.store')->middleware('permission:edit visits');
-    Route::post('visits/{visit}/consultant-visits', [VisitController::class, 'storeIpdConsultantVisit'])->name('visits.consultant-visits.store')->middleware('permission:edit visits');
-    Route::put('visits/{visit}/consultant-visits/{consultantVisit}', [VisitController::class, 'updateIpdConsultantVisit'])->name('visits.consultant-visits.update')->middleware('permission:edit visits');
+    Route::post('visits/{visit}/doctor-visit-notes', [VisitController::class, 'storeIpdDoctorVisitNote'])->name('visits.doctor-visit-notes.store')->middleware('permission:edit visits');
+    Route::put('visits/{visit}/doctor-visit-notes/{doctorVisitNote}', [VisitController::class, 'updateIpdDoctorVisitNote'])->name('visits.doctor-visit-notes.update')->middleware('permission:edit visits');
     Route::resource('appointments', AppointmentController::class)->middleware('permission:view appointments|create appointments|edit appointments|delete appointments');
     Route::get('calendar/events', [AppointmentController::class, 'getCalendarEvents'])->name('calendar.events')->middleware('permission:view appointments');
 

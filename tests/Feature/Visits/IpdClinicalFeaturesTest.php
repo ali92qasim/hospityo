@@ -3,14 +3,22 @@
 use App\Models\Admission;
 use App\Models\Department;
 use App\Models\Doctor;
-use App\Models\IpdConsultantVisit;
+use App\Models\IpdCareTeam;
+use App\Models\IpdDoctorVisitNote;
 use App\Models\IpdGpeRecord;
+use App\Models\Investigation;
+use App\Models\InvestigationOrder;
+use App\Models\Medicine;
 use App\Models\Patient;
 use App\Models\PatientComplaint;
+use App\Models\Prescription;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\Bed;
 use App\Models\Ward;
+use App\Services\IpdClinicalService;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
@@ -95,25 +103,52 @@ beforeEach(function () {
 
     $this->visit = Visit::create([
         'patient_id' => $this->patient->id,
-        'doctor_id' => $this->doctor->id,
+        'doctor_id' => null,
         'visit_type' => 'ipd',
         'status' => 'admitted',
         'visit_datetime' => now(),
     ]);
 });
 
-it('assigns a duty doctor to an ipd visit', function () {
-    $response = $this->post(route('visits.duty-doctor', $this->visit), [
-        'duty_doctor_id' => $this->doctor->id,
-    ]);
+it('makes the first doctor added to care team primary automatically', function () {
+    $this->post(route('visits.care-team.store', $this->visit), [
+        'doctor_id' => $this->doctor->id,
+    ])->assertRedirect()->assertSessionHas('success');
 
-    $response->assertRedirect();
-    $response->assertSessionHas('success');
+    $member = IpdCareTeam::first();
 
-    expect($this->visit->fresh()->duty_doctor_id)->toBe($this->doctor->id);
+    expect($member)->not->toBeNull()
+        ->and($member->is_primary)->toBeTrue()
+        ->and($member->doctor_id)->toBe($this->doctor->id);
 });
 
-it('rejects duty doctor assignment for opd visits', function () {
+it('does not make the second doctor added primary', function () {
+    $this->post(route('visits.care-team.store', $this->visit), [
+        'doctor_id' => $this->doctor->id,
+    ])->assertSessionHas('success');
+
+    $this->post(route('visits.care-team.store', $this->visit), [
+        'doctor_id' => $this->consultant->id,
+    ])->assertSessionHas('success');
+
+    expect(IpdCareTeam::where('visit_id', $this->visit->id)->active()->where('is_primary', true)->count())->toBe(1)
+        ->and(IpdCareTeam::where('visit_id', $this->visit->id)->active()->where('doctor_id', $this->consultant->id)->first()->is_primary)->toBeFalse();
+});
+
+it('prevents duplicate active care team membership with a validation message', function () {
+    $this->post(route('visits.care-team.store', $this->visit), [
+        'doctor_id' => $this->doctor->id,
+    ])->assertSessionHas('success');
+
+    $response = $this->post(route('visits.care-team.store', $this->visit), [
+        'doctor_id' => $this->doctor->id,
+    ]);
+
+    $response->assertSessionHasErrors('doctor_id');
+    expect(IpdCareTeam::where('visit_id', $this->visit->id)->active()->count())->toBe(1);
+});
+
+it('rejects care team assignment for opd visits', function () {
     $opd = Visit::create([
         'patient_id' => $this->patient->id,
         'doctor_id' => $this->doctor->id,
@@ -122,54 +157,223 @@ it('rejects duty doctor assignment for opd visits', function () {
         'visit_datetime' => now(),
     ]);
 
-    $response = $this->post(route('visits.duty-doctor', $opd), [
-        'duty_doctor_id' => $this->doctor->id,
-    ]);
-
-    $response->assertSessionHasErrors();
+    $this->post(route('visits.care-team.store', $opd), [
+        'doctor_id' => $this->doctor->id,
+    ])->assertSessionHasErrors();
 });
 
-it('stores multiple gpe records for the same ipd visit', function () {
+it('does not auto-promote another doctor when the primary is removed', function () {
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->doctor->id]);
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->consultant->id]);
+
+    $primaryMember = IpdCareTeam::where('visit_id', $this->visit->id)->active()->where('doctor_id', $this->doctor->id)->first();
+
+    $this->delete(route('visits.care-team.remove', [$this->visit, $primaryMember]))
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect(IpdCareTeam::where('visit_id', $this->visit->id)->active()->where('is_primary', true)->count())->toBe(0)
+        ->and(IpdCareTeam::where('visit_id', $this->visit->id)->active()->where('doctor_id', $this->consultant->id)->first()->is_primary)->toBeFalse();
+});
+
+it('transfers primary flag via set primary doctor', function () {
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->doctor->id]);
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->consultant->id]);
+
+    $this->post(route('visits.care-team.primary', $this->visit), [
+        'doctor_id' => $this->consultant->id,
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect(IpdCareTeam::where('visit_id', $this->visit->id)->active()->where('is_primary', true)->value('doctor_id'))
+        ->toBe($this->consultant->id);
+});
+
+it('re-adds a removed doctor as a new care team row', function () {
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->doctor->id]);
+    $member = IpdCareTeam::first();
+    $this->delete(route('visits.care-team.remove', [$this->visit, $member]));
+
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->doctor->id])
+        ->assertSessionHas('success');
+
+    expect(IpdCareTeam::where('visit_id', $this->visit->id)->count())->toBe(2)
+        ->and(IpdCareTeam::where('visit_id', $this->visit->id)->active()->count())->toBe(1);
+});
+
+it('rejects gpe when no care team members are assigned', function () {
     $this->post(route('visits.gpe-records.store', $this->visit), [
         'doctor_id' => $this->doctor->id,
         'gpe_chest' => 'Clear',
-        'remarks' => 'First examination',
-    ])->assertRedirect()->assertSessionHas('success');
+    ])->assertSessionHasErrors('doctor_id');
 
-    $this->post(route('visits.gpe-records.store', $this->visit), [
-        'doctor_id' => $this->doctor->id,
-        'gpe_abdomen' => 'Soft',
-        'remarks' => 'Follow-up examination',
-    ])->assertRedirect()->assertSessionHas('success');
-
-    $records = IpdGpeRecord::where('visit_id', $this->visit->id)->get();
-
-    expect($records)->toHaveCount(2)
-        ->and($records->pluck('remarks')->all())->toContain('First examination', 'Follow-up examination');
+    expect(IpdGpeRecord::count())->toBe(0);
 });
 
-it('stores consultant visits with consultant identity and timestamp', function () {
-    $seenAt = now()->subHours(2)->format('Y-m-d H:i:s');
+it('rejects gpe for a doctor not on the care team', function () {
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->doctor->id]);
 
-    $response = $this->post(route('visits.consultant-visits.store', $this->visit), [
-        'consultant_doctor_id' => $this->consultant->id,
-        'visit_notes' => 'Reviewed patient condition',
+    $this->post(route('visits.gpe-records.store', $this->visit), [
+        'doctor_id' => $this->consultant->id,
+        'gpe_chest' => 'Clear',
+    ])->assertSessionHasErrors('doctor_id');
+});
+
+it('stores doctor visit notes with server-generated visited_at', function () {
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->consultant->id]);
+
+    $response = $this->post(route('visits.doctor-visit-notes.store', $this->visit), [
+        'doctor_id' => $this->consultant->id,
+        'notes' => 'Reviewed patient condition',
         'orders' => 'Continue current medications',
-        'consultant_seen_at' => $seenAt,
+        'visited_at' => now()->subHours(5)->format('Y-m-d H:i:s'),
     ]);
 
     $response->assertRedirect()->assertSessionHas('success');
 
-    $record = IpdConsultantVisit::first();
+    $record = IpdDoctorVisitNote::first();
 
     expect($record)->not->toBeNull()
-        ->and($record->consultant_doctor_id)->toBe($this->consultant->id)
-        ->and($record->visit_notes)->toBe('Reviewed patient condition')
+        ->and($record->doctor_id)->toBe($this->consultant->id)
+        ->and($record->notes)->toBe('Reviewed patient condition')
         ->and($record->orders)->toBe('Continue current medications')
-        ->and($record->consultant_seen_at->format('Y-m-d H:i'))->toBe(now()->subHours(2)->format('Y-m-d H:i'));
+        ->and($record->visited_at->greaterThan(now()->subMinute()))->toBeTrue()
+        ->and($record->visited_at->format('Y-m-d H:i'))->not->toBe(now()->subHours(5)->format('Y-m-d H:i'));
+});
+
+it('rejects doctor visit notes for a doctor not on the active care team', function () {
+    $this->post(route('visits.doctor-visit-notes.store', $this->visit), [
+        'doctor_id' => $this->consultant->id,
+        'notes' => 'Should fail',
+    ])->assertSessionHasErrors('doctor_id');
+
+    expect(IpdDoctorVisitNote::count())->toBe(0);
+});
+
+it('requires prescription doctor_id to be an active care team member for ipd', function () {
+    $medicine = Medicine::create([
+        'name' => 'Paracetamol',
+        'generic_name' => 'Paracetamol',
+        'category_id' => null,
+        'unit' => 'tablet',
+        'strength' => '500mg',
+        'status' => 'active',
+        'manage_stock' => false,
+    ]);
+
+    $this->post(route('visits.prescription', $this->visit), [
+        'doctor_id' => $this->doctor->id,
+        'medicines' => [
+            ['medicine_id' => $medicine->id, 'quantity' => 1],
+        ],
+    ])->assertSessionHasErrors('doctor_id');
+
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->doctor->id]);
+
+    $this->post(route('visits.prescription', $this->visit), [
+        'doctor_id' => $this->consultant->id,
+        'medicines' => [
+            ['medicine_id' => $medicine->id, 'quantity' => 1],
+        ],
+    ])->assertSessionHasErrors('doctor_id');
+
+    $this->post(route('visits.prescription', $this->visit), [
+        'doctor_id' => $this->doctor->id,
+        'medicines' => [
+            ['medicine_id' => $medicine->id, 'quantity' => 1],
+        ],
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect(Prescription::first()->doctor_id)->toBe($this->doctor->id);
+});
+
+it('requires investigation order doctor_id to be an active care team member for ipd', function () {
+    $investigation = Investigation::create([
+        'name' => 'CBC',
+        'code' => 'CBC-001',
+        'category' => 'hematology',
+        'sample_type' => 'blood',
+        'price' => 500,
+        'turnaround_time' => '24',
+        'is_active' => true,
+        'type' => 'lab',
+    ]);
+
+    $payload = [
+        'doctor_id' => $this->doctor->id,
+        'tests' => [
+            [
+                'lab_test_id' => $investigation->id,
+                'quantity' => 1,
+                'priority' => 'routine',
+            ],
+        ],
+    ];
+
+    $this->post(route('visits.order-multiple-lab-tests', $this->visit), $payload)
+        ->assertSessionHasErrors('doctor_id');
+
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->doctor->id]);
+
+    $this->post(route('visits.order-multiple-lab-tests', $this->visit), $payload)
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect(InvestigationOrder::first()->doctor_id)->toBe($this->doctor->id);
+});
+
+it('serializes concurrent add care team calls so only one becomes primary', function () {
+    DB::connection('tenant')->transaction(function () {
+        IpdClinicalService::addDoctorToCareTeam($this->visit, $this->doctor, $this->user->id);
+
+        DB::connection('tenant')->transaction(function () {
+            IpdClinicalService::addDoctorToCareTeam($this->visit, $this->consultant, $this->user->id);
+        });
+    });
+
+    expect(IpdCareTeam::where('visit_id', $this->visit->id)->active()->where('is_primary', true)->count())->toBe(1)
+        ->and(IpdCareTeam::where('visit_id', $this->visit->id)->active()->where('doctor_id', $this->doctor->id)->first()->is_primary)->toBeTrue()
+        ->and(IpdCareTeam::where('visit_id', $this->visit->id)->active()->where('doctor_id', $this->consultant->id)->first()->is_primary)->toBeFalse();
+});
+
+it('enforces duplicate active membership at the database index level', function () {
+    IpdCareTeam::create([
+        'visit_id' => $this->visit->id,
+        'doctor_id' => $this->doctor->id,
+        'is_primary' => true,
+        'added_at' => now(),
+        'added_by' => $this->user->id,
+    ]);
+
+    expect(fn () => IpdCareTeam::create([
+        'visit_id' => $this->visit->id,
+        'doctor_id' => $this->doctor->id,
+        'is_primary' => false,
+        'added_at' => now(),
+        'added_by' => $this->user->id,
+    ]))->toThrow(QueryException::class);
+});
+
+it('enforces single active primary at the database index level', function () {
+    IpdCareTeam::create([
+        'visit_id' => $this->visit->id,
+        'doctor_id' => $this->doctor->id,
+        'is_primary' => true,
+        'added_at' => now(),
+        'added_by' => $this->user->id,
+    ]);
+
+    expect(fn () => IpdCareTeam::create([
+        'visit_id' => $this->visit->id,
+        'doctor_id' => $this->consultant->id,
+        'is_primary' => true,
+        'added_at' => now(),
+        'added_by' => $this->user->id,
+    ]))->toThrow(QueryException::class);
 });
 
 it('syncs active complaints from ipd consultation presenting complaints', function () {
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->doctor->id]);
+
     $response = $this->post(route('visits.consultation', $this->visit), [
         'presenting_complaints' => "Fever\nChest pain",
         'history' => 'Patient history',
@@ -204,7 +408,19 @@ it('stores and resolves patient complaints for ipd visits', function () {
     expect($complaint->fresh()->status)->toBe('resolved');
 });
 
-it('prevents a doctor from updating another consultants visit record', function () {
+it('prevents a doctor from updating another doctors visit note', function () {
+    $this->post(route('visits.care-team.store', $this->visit), ['doctor_id' => $this->consultant->id]);
+
+    $visitNote = IpdDoctorVisitNote::create([
+        'visit_id' => $this->visit->id,
+        'doctor_id' => $this->consultant->id,
+        'created_by' => $this->user->id,
+        'notes' => 'Initial notes',
+        'orders' => 'Initial orders',
+        'status' => 'pending',
+        'visited_at' => now(),
+    ]);
+
     $otherDoctorUser = User::create([
         'name' => 'Other Doctor User',
         'email' => 'other-doctor@example.com',
@@ -212,7 +428,7 @@ it('prevents a doctor from updating another consultants visit record', function 
         'email_verified_at' => now(),
     ]);
 
-    $otherDoctor = Doctor::create([
+    Doctor::create([
         'name' => 'Dr. Other',
         'doctor_no' => 'DOC-003',
         'specialization' => 'Neurology',
@@ -229,28 +445,38 @@ it('prevents a doctor from updating another consultants visit record', function 
         'user_id' => $otherDoctorUser->id,
     ]);
 
-    $consultantVisit = IpdConsultantVisit::create([
-        'visit_id' => $this->visit->id,
-        'consultant_doctor_id' => $this->consultant->id,
-        'recorded_by' => $this->user->id,
-        'visit_notes' => 'Initial notes',
-        'orders' => 'Initial orders',
-        'status' => 'pending',
-        'consultant_seen_at' => now(),
-    ]);
-
-    Permission::findOrCreate('edit visits', 'web');
     $otherDoctorUser->givePermissionTo('edit visits');
-
     $this->actingAs($otherDoctorUser);
 
-    $response = $this->put(route('visits.consultant-visits.update', [$this->visit, $consultantVisit]), [
-        'visit_notes' => 'Unauthorized edit',
+    $this->put(route('visits.doctor-visit-notes.update', [$this->visit, $visitNote]), [
+        'notes' => 'Unauthorized edit',
         'orders' => 'Unauthorized orders',
         'status' => 'completed',
+    ])->assertSessionHasErrors();
+
+    expect($visitNote->fresh()->notes)->toBe('Initial notes');
+});
+
+it('records gpe as the logged-in care team doctor without a dropdown', function () {
+    $doctorUser = User::create([
+        'name' => 'Care Team Doctor User',
+        'email' => 'care-team-doctor@example.com',
+        'password' => bcrypt('password'),
+        'email_verified_at' => now(),
     ]);
 
-    $response->assertSessionHasErrors();
+    $this->doctor->update(['user_id' => $doctorUser->id]);
+    $doctorUser->givePermissionTo('edit visits');
+    $this->actingAs($doctorUser);
 
-    expect($consultantVisit->fresh()->visit_notes)->toBe('Initial notes');
+    $this->post(route('visits.care-team.store', $this->visit), [
+        'doctor_id' => $this->doctor->id,
+    ])->assertSessionHas('success');
+
+    $this->post(route('visits.gpe-records.store', $this->visit), [
+        'gpe_chest' => 'Clear',
+        'remarks' => 'Duty round',
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect(IpdGpeRecord::first()->doctor_id)->toBe($this->doctor->id);
 });

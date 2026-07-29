@@ -14,6 +14,7 @@ class CreatePrescriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'doctor_id' => ['nullable', 'exists:tenant.doctors,id'],
             'medicines' => 'required|array|min:1',
             'medicines.*.medicine_id' => 'required|exists:tenant.medicines,id',
             'medicines.*.instruction_id' => 'nullable|exists:tenant.prescription_instructions,id',

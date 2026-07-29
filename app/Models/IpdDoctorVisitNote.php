@@ -7,22 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
-class IpdConsultantVisit extends Model
+class IpdDoctorVisitNote extends Model
 {
     use Auditable, UsesTenantConnection;
 
     protected $fillable = [
         'visit_id',
-        'consultant_doctor_id',
-        'recorded_by',
-        'visit_notes',
+        'doctor_id',
+        'notes',
         'orders',
         'status',
-        'consultant_seen_at',
+        'visited_at',
+        'created_by',
     ];
 
     protected $casts = [
-        'consultant_seen_at' => 'datetime',
+        'visited_at' => 'datetime',
     ];
 
     public function visit(): BelongsTo
@@ -30,14 +30,14 @@ class IpdConsultantVisit extends Model
         return $this->belongsTo(Visit::class);
     }
 
-    public function consultantDoctor(): BelongsTo
+    public function doctor(): BelongsTo
     {
-        return $this->belongsTo(Doctor::class, 'consultant_doctor_id');
+        return $this->belongsTo(Doctor::class);
     }
 
-    public function recordedBy(): BelongsTo
+    public function createdBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'recorded_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function statusLabel(): string
