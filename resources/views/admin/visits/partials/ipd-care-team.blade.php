@@ -70,7 +70,7 @@
                     @csrf
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Add Doctor to Care Team</label>
-                        <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                        <select name="doctor_id" class="visit-workflow-select w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                             <option value="">Select Doctor</option>
                             @foreach($doctors as $doctor)
                                 @if(! in_array($doctor->id, $assignedDoctorIds))
@@ -114,7 +114,7 @@
                     @if(empty($authDoctor) || ! in_array($authDoctor->id, $assignedDoctorIds))
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Doctor (from care team)</label>
-                            <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                            <select name="doctor_id" class="visit-workflow-select w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                                 <option value="">Select Doctor</option>
                                 @foreach($careTeamDoctors as $member)
                                     <option value="{{ $member->doctor_id }}" @selected(old('doctor_id') == $member->doctor_id)>
@@ -135,16 +135,8 @@
 
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Visit Notes</label>
-                        <textarea name="notes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Assessment, findings, recommendations...">{{ old('notes') }}</textarea>
+                        <textarea name="notes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Assessment, findings, recommendations..." required>{{ old('notes') }}</textarea>
                         @error('notes')
-                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Orders</label>
-                        <textarea name="orders" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Medications, investigations, procedures, nursing orders...">{{ old('orders') }}</textarea>
-                        @error('orders')
                             <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
@@ -220,13 +212,8 @@
                                 </div>
 
                                 <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Orders</label>
-                                    <textarea name="orders" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">{{ $visitNote->orders }}</textarea>
-                                </div>
-
-                                <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                                    <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
+                                    <select name="status" class="visit-workflow-select w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                         <option value="pending" @selected($visitNote->status === 'pending')>Pending</option>
                                         <option value="completed" @selected($visitNote->status === 'completed')>Completed</option>
                                         <option value="cancelled" @selected($visitNote->status === 'cancelled')>Cancelled</option>

@@ -139,7 +139,6 @@ class IpdClinicalService
         Visit $visit,
         Doctor $doctor,
         ?string $notes,
-        ?string $orders,
         ?int $createdBy
     ): IpdDoctorVisitNote {
         self::ensureIpdVisit($visit);
@@ -150,16 +149,16 @@ class IpdClinicalService
             ]);
         }
 
-        if (blank($notes) && blank($orders)) {
+        if (blank($notes)) {
             throw ValidationException::withMessages([
-                'notes' => 'Enter visit notes or orders.',
+                'notes' => 'Enter visit notes.',
             ]);
         }
 
         return $visit->doctorVisitNotes()->create([
             'doctor_id'  => $doctor->id,
             'notes'      => $notes,
-            'orders'     => $orders,
+            'orders'     => null,
             'status'     => 'pending',
             'visited_at' => now(),
             'created_by' => $createdBy,

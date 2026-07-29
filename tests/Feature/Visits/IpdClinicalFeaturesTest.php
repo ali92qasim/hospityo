@@ -224,7 +224,6 @@ it('stores doctor visit notes with server-generated visited_at', function () {
     $response = $this->post(route('visits.doctor-visit-notes.store', $this->visit), [
         'doctor_id' => $this->consultant->id,
         'notes' => 'Reviewed patient condition',
-        'orders' => 'Continue current medications',
         'visited_at' => now()->subHours(5)->format('Y-m-d H:i:s'),
     ]);
 
@@ -235,7 +234,6 @@ it('stores doctor visit notes with server-generated visited_at', function () {
     expect($record)->not->toBeNull()
         ->and($record->doctor_id)->toBe($this->consultant->id)
         ->and($record->notes)->toBe('Reviewed patient condition')
-        ->and($record->orders)->toBe('Continue current medications')
         ->and($record->visited_at->greaterThan(now()->subMinute()))->toBeTrue()
         ->and($record->visited_at->format('Y-m-d H:i'))->not->toBe(now()->subHours(5)->format('Y-m-d H:i'));
 });
@@ -450,7 +448,6 @@ it('prevents a doctor from updating another doctors visit note', function () {
 
     $this->put(route('visits.doctor-visit-notes.update', [$this->visit, $visitNote]), [
         'notes' => 'Unauthorized edit',
-        'orders' => 'Unauthorized orders',
         'status' => 'completed',
     ])->assertSessionHasErrors();
 

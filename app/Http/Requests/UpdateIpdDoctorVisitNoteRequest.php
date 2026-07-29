@@ -16,7 +16,6 @@ class UpdateIpdDoctorVisitNoteRequest extends FormRequest
     {
         return [
             'notes'  => ['nullable', 'string', 'max:5000'],
-            'orders' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::in(['pending', 'completed', 'cancelled'])],
         ];
     }

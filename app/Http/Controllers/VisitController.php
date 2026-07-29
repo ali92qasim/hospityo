@@ -807,7 +807,6 @@ class VisitController extends Controller
                 $visit,
                 $doctor,
                 $request->notes,
-                $request->orders,
                 auth()->id()
             );
 
@@ -837,7 +836,6 @@ class VisitController extends Controller
 
             $doctorVisitNote->update([
                 'notes'  => $request->notes,
-                'orders' => $request->orders,
                 'status' => $request->status,
             ]);
 

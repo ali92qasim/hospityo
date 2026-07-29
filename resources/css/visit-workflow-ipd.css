@@ -1,1 +1,27 @@
 /* IPD workflow – minimal helpers (Tailwind handles layout in Blade) */
+
+#visit-workflow .select2-container {
+    width: 100% !important;
+}
+
+#visit-workflow .select2-container--default .select2-selection--single {
+    min-height: 38px;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+}
+
+#visit-workflow .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 36px;
+    padding-left: 12px;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+#visit-workflow .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+}
+
+#visit-workflow .select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #0066CC;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}

@@ -5,7 +5,7 @@
 @section('page-description', 'Manage patient visit workflow')
 
 @section('content')
-<div class="max-w-6xl mx-auto">
+<div id="visit-workflow" class="max-w-6xl mx-auto">
     <!-- Visit Header -->
     <div class="bg-white rounded-lg shadow-sm mb-6">
         <div class="p-6 border-b border-gray-200">
@@ -259,57 +259,6 @@
                         </form>
                     </div>
                     
-                    <script>
-                        // Bed selection functionality
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const bedCards = document.querySelectorAll('.bed-card');
-                            const selectedBedId = document.getElementById('selected-bed-id');
-                            const selectedBedInfo = document.getElementById('selected-bed-info');
-                            const selectedBedDetails = document.getElementById('selected-bed-details');
-                            const admitBtn = document.getElementById('admit-btn');
-                            const wardFilter = document.getElementById('ward-filter');
-                            
-                            // Bed selection
-                            bedCards.forEach(card => {
-                                card.addEventListener('click', function() {
-                                    // Remove previous selection
-                                    bedCards.forEach(c => {
-                                        c.classList.remove('border-medical-blue', 'bg-medical-light');
-                                        c.classList.add('border-gray-200');
-                                    });
-                                    
-                                    // Select current bed
-                                    this.classList.remove('border-gray-200');
-                                    this.classList.add('border-medical-blue', 'bg-medical-light');
-                                    
-                                    // Update form
-                                    const bedId = this.dataset.bedId;
-                                    const bedNumber = this.querySelector('.font-medium').textContent;
-                                    const wardName = this.dataset.ward;
-                                    const bedType = this.querySelector('.text-medical-blue').textContent;
-                                    const dailyRate = this.querySelector('.text-gray-600').textContent;
-                                    
-                                    selectedBedId.value = bedId;
-                                    selectedBedDetails.textContent = `${bedNumber} - ${wardName} (${bedType}) - ${dailyRate}`;
-                                    selectedBedInfo.classList.remove('hidden');
-                                    admitBtn.disabled = false;
-                                });
-                            });
-                            
-                            // Ward filter
-                            wardFilter.addEventListener('change', function() {
-                                const selectedWard = this.value;
-                                
-                                bedCards.forEach(card => {
-                                    if (selectedWard === '' || card.dataset.ward === selectedWard) {
-                                        card.style.display = 'block';
-                                    } else {
-                                        card.style.display = 'none';
-                                    }
-                                });
-                            });
-                        });
-                    </script>
                 @else
                     @php
                         $admission = $visit->admission;
@@ -1569,7 +1518,11 @@ function addTestRow() {
     `;
     tbody.appendChild(newRow);
     testRowIndex++;
-    
+
+    if (typeof window.initVisitWorkflowSelect2 === 'function') {
+        window.initVisitWorkflowSelect2(newRow);
+    }
+
     updateRemoveButtons();
     updateTestCount();
 }
@@ -1669,5 +1622,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-@vite(['resources/css/visits-form.css', 'resources/css/visit-workflow-ipd.css', 'resources/js/visits-form.js', 'resources/js/visit-workflow-ipd.js', 'resources/js/prescription-form.js'])
+@vite(['resources/css/visits-form.css', 'resources/css/visit-workflow-ipd.css', 'resources/js/visits-form.js', 'resources/js/visit-workflow-ipd.js', 'resources/js/visit-workflow-select2.js', 'resources/js/visit-workflow-admission.js', 'resources/js/prescription-form.js'])
 @endsection
