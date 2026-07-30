@@ -2,7 +2,7 @@
 
 return [
     // Common
-    'welcome' => 'Willkommen bei Hospityo',
+    'welcome' => 'Willkommen bei UseClinicSync',
     'dashboard' => 'Dashboard',
     'logout' => 'Abmelden',
     'profile' => 'Profil',

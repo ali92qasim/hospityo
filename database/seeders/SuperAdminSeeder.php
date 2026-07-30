@@ -10,7 +10,7 @@ class SuperAdminSeeder extends Seeder
     public function run(): void
     {
         SuperAdmin::firstOrCreate(
-            ['email' => 'superadmin@hospityo.com'],
+            ['email' => 'superadmin@useclinicsync.com'],
             [
                 'name'     => 'Qasim Ali',
                 'password' => bcrypt('password'),

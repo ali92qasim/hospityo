@@ -2,7 +2,7 @@
 
 return [
     // Common
-    'welcome' => 'Welcome to Hospityo',
+    'welcome' => 'Welcome to UseClinicSync',
     'dashboard' => 'Dashboard',
     'logout' => 'Logout',
     'profile' => 'Profile',

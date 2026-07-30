@@ -49,7 +49,7 @@ class PageSeeder extends Seeder
     private function getTermsContent(): string
     {
         return <<<'HTML'
-<p>Welcome to Hospityo. These Terms &amp; Conditions ("Terms") govern your access to and use of the Hospityo cloud-based hospital management platform ("Service"), operated by Hospityo ("we", "us", or "our"). By registering for or using the Service, you agree to be bound by these Terms.</p>
+<p>Welcome to UseClinicSync. These Terms &amp; Conditions ("Terms") govern your access to and use of the UseClinicSync cloud-based hospital management platform ("Service"), operated by UseClinicSync ("we", "us", or "our"). By registering for or using the Service, you agree to be bound by these Terms.</p>
 
 <h2>1. Definitions</h2>
 <ul>
@@ -100,12 +100,12 @@ class PageSeeder extends Seeder
 <p>7.2. In the event of data loss due to system failure, we will make reasonable efforts to restore data from the most recent backup.</p>
 
 <h2>8. Intellectual Property</h2>
-<p>8.1. The Service, including its design, code, features, and documentation, is the intellectual property of Hospityo and is protected by applicable copyright and trademark laws.</p>
+<p>8.1. The Service, including its design, code, features, and documentation, is the intellectual property of UseClinicSync and is protected by applicable copyright and trademark laws.</p>
 <p>8.2. Your Subscription grants you a limited, non-exclusive, non-transferable licence to use the Service for the duration of your active subscription.</p>
 
 <h2>9. Limitation of Liability</h2>
 <p>9.1. The Service is provided "as is" without warranties of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement.</p>
-<p>9.2. To the maximum extent permitted by law, Hospityo shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.</p>
+<p>9.2. To the maximum extent permitted by law, UseClinicSync shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.</p>
 <p>9.3. Our total liability for any claim arising from the Service shall not exceed the amount paid by you in the twelve (12) months preceding the claim.</p>
 <p>9.4. The Service is a management tool and does not provide medical advice. Clinical decisions remain the sole responsibility of qualified healthcare professionals.</p>
 
@@ -125,8 +125,8 @@ class PageSeeder extends Seeder
 <h2>13. Contact Information</h2>
 <p>For questions or concerns regarding these Terms, please contact us at:</p>
 <ul>
-    <li>Email: <a href="mailto:legal@hospityo.com">legal@hospityo.com</a></li>
-    <li>Website: <a href="https://hospityo.com">hospityo.com</a></li>
+    <li>Email: <a href="mailto:legal@useclinicsync.com">legal@useclinicsync.com</a></li>
+    <li>Website: <a href="https://useclinicsync.com">useclinicsync.com</a></li>
 </ul>
 
 <p><em>These Terms are effective as of April 10, 2026.</em></p>
@@ -136,7 +136,7 @@ HTML;
     private function getPrivacyContent(): string
     {
         return <<<'HTML'
-<p>This Privacy Policy describes how Hospityo ("we", "us", or "our") collects, uses, stores, and protects information when you use our cloud-based hospital management platform ("Service"). We are committed to safeguarding the privacy of all users and the patients whose data is managed through our platform.</p>
+<p>This Privacy Policy describes how UseClinicSync ("we", "us", or "our") collects, uses, stores, and protects information when you use our cloud-based hospital management platform ("Service"). We are committed to safeguarding the privacy of all users and the patients whose data is managed through our platform.</p>
 
 <h2>1. Information We Collect</h2>
 <h3>1.1 Tenant Registration Data</h3>
@@ -214,7 +214,7 @@ HTML;
     <li>PayFast Pakistan — for processing subscription payments (only billing-related data, never patient data)</li>
     <li>Hosting providers — for infrastructure and server management (data remains encrypted)</li>
 </ul>
-<p>5.3. We may disclose information if required by law, court order, or government regulation, or to protect the rights, safety, or property of Hospityo, our users, or the public.</p>
+<p>5.3. We may disclose information if required by law, court order, or government regulation, or to protect the rights, safety, or property of UseClinicSync, our users, or the public.</p>
 
 <h2>6. Data Retention</h2>
 <p>6.1. Active Tenant data is retained for the duration of the subscription.</p>
@@ -231,7 +231,7 @@ HTML;
     <li>Request deletion of your Tenant account and all associated data</li>
     <li>Manage user access and permissions within your organisation</li>
 </ul>
-<p>To exercise any of these rights, contact us at <a href="mailto:privacy@hospityo.com">privacy@hospityo.com</a>.</p>
+<p>To exercise any of these rights, contact us at <a href="mailto:privacy@useclinicsync.com">privacy@useclinicsync.com</a>.</p>
 
 <h2>8. Patient Rights</h2>
 <p>8.1. Patients whose data is stored in the Service should direct any data access, correction, or deletion requests to the Tenant (hospital/clinic) that manages their records.</p>
@@ -255,8 +255,8 @@ HTML;
 <h2>13. Contact Us</h2>
 <p>For privacy-related questions, concerns, or data requests, please contact:</p>
 <ul>
-    <li>Email: <a href="mailto:privacy@hospityo.com">privacy@hospityo.com</a></li>
-    <li>Website: <a href="https://hospityo.com">hospityo.com</a></li>
+    <li>Email: <a href="mailto:privacy@useclinicsync.com">privacy@useclinicsync.com</a></li>
+    <li>Website: <a href="https://useclinicsync.com">useclinicsync.com</a></li>
 </ul>
 
 <p><em>This Privacy Policy is effective as of April 10, 2026.</em></p>
@@ -266,7 +266,7 @@ HTML;
     private function getRefundContent(): string
     {
         return <<<'HTML'
-<p>This Refund Policy outlines the terms under which Hospityo ("we", "us", or "our") processes refunds for subscriptions to our cloud-based hospital management platform ("Service"). By subscribing to the Service, you agree to the refund terms described below.</p>
+<p>This Refund Policy outlines the terms under which UseClinicSync ("we", "us", or "our") processes refunds for subscriptions to our cloud-based hospital management platform ("Service"). By subscribing to the Service, you agree to the refund terms described below.</p>
 
 <h2>1. Free Trial &amp; Starter Plan</h2>
 <p>1.1. The Starter plan is offered free of charge. Since no payment is collected, no refund applies.</p>
@@ -315,12 +315,12 @@ HTML;
 
 <h2>8. Duplicate Payments</h2>
 <p>8.1. If you are charged more than once for the same billing period due to a system error, the duplicate amount will be refunded in full within 7-10 business days.</p>
-<p>8.2. Please contact us at <a href="mailto:billing@hospityo.com">billing@hospityo.com</a> with your payment receipt to report duplicate charges.</p>
+<p>8.2. Please contact us at <a href="mailto:billing@useclinicsync.com">billing@useclinicsync.com</a> with your payment receipt to report duplicate charges.</p>
 
 <h2>9. How to Request a Refund</h2>
 <p>To request a refund (where eligible), please:</p>
 <ol>
-    <li>Email <a href="mailto:billing@hospityo.com">billing@hospityo.com</a> with the subject line "Refund Request".</li>
+    <li>Email <a href="mailto:billing@useclinicsync.com">billing@useclinicsync.com</a> with the subject line "Refund Request".</li>
     <li>Include your hospital name, registered email address, subscription plan, and the reason for your request.</li>
     <li>Attach a copy of the payment receipt or transaction reference number.</li>
 </ol>
@@ -346,8 +346,8 @@ HTML;
 <h2>13. Contact Us</h2>
 <p>For billing enquiries or refund requests:</p>
 <ul>
-    <li>Email: <a href="mailto:billing@hospityo.com">billing@hospityo.com</a></li>
-    <li>Website: <a href="https://hospityo.com">hospityo.com</a></li>
+    <li>Email: <a href="mailto:billing@useclinicsync.com">billing@useclinicsync.com</a></li>
+    <li>Website: <a href="https://useclinicsync.com">useclinicsync.com</a></li>
 </ul>
 
 <p><em>This Refund Policy is effective as of April 10, 2026.</em></p>
@@ -357,10 +357,10 @@ HTML;
     private function getServiceContent(): string
     {
         return <<<'HTML'
-<p>This Service Policy describes the scope, standards, and commitments governing the delivery of the Hospityo cloud-based hospital management platform ("Service"). It defines what you can expect from us and what we expect from you as a Tenant.</p>
+<p>This Service Policy describes the scope, standards, and commitments governing the delivery of the UseClinicSync cloud-based hospital management platform ("Service"). It defines what you can expect from us and what we expect from you as a Tenant.</p>
 
 <h2>1. Service Description</h2>
-<p>Hospityo is a multi-tenant, cloud-based hospital management system that provides the following core capabilities:</p>
+<p>UseClinicSync is a multi-tenant, cloud-based hospital management system that provides the following core capabilities:</p>
 <ul>
     <li>Patient registration and electronic medical records</li>
     <li>OPD, IPD, and Emergency visit workflows</li>
@@ -389,7 +389,7 @@ HTML;
 <h2>3. Tenant Provisioning</h2>
 <p>3.1. Upon registration, each Tenant receives:</p>
 <ul>
-    <li>A dedicated subdomain (e.g., <code>your-hospital.hospityo.com</code>)</li>
+    <li>A dedicated subdomain (e.g., <code>your-hospital.useclinicsync.com</code>)</li>
     <li>An isolated database with no data shared across Tenants</li>
     <li>Pre-configured roles (Admin, Doctor, Nurse, Receptionist, Lab Technician, Pharmacist)</li>
     <li>Default system settings and seed data for immediate use</li>
@@ -400,7 +400,7 @@ HTML;
 <h2>4. Data Management</h2>
 <p>4.1. All Tenant data is stored in isolated databases. We do not co-mingle patient or operational data between Tenants.</p>
 <p>4.2. Automated daily backups are performed for all Tenant databases. Backups are retained for 30 days.</p>
-<p>4.3. In the event of accidental data loss or corruption, we will restore from the most recent available backup upon request. Restoration requests should be submitted to <a href="mailto:support@hospityo.com">support@hospityo.com</a>.</p>
+<p>4.3. In the event of accidental data loss or corruption, we will restore from the most recent available backup upon request. Restoration requests should be submitted to <a href="mailto:support@useclinicsync.com">support@useclinicsync.com</a>.</p>
 <p>4.4. Tenants may request a full data export at any time. Exports are provided in standard formats (CSV, JSON) within 5 business days of the request.</p>
 
 <h2>5. Security Standards</h2>
@@ -457,7 +457,7 @@ HTML;
 <p>Support does not cover:</p>
 <ul>
     <li>Custom software development or feature requests (these are evaluated for the product roadmap)</li>
-    <li>Third-party integrations not officially supported by Hospityo</li>
+    <li>Third-party integrations not officially supported by UseClinicSync</li>
     <li>Training for clinical or medical procedures</li>
     <li>Issues caused by Tenant-side hardware, network, or browser configurations</li>
 </ul>
@@ -494,8 +494,8 @@ HTML;
 <h2>12. Contact Us</h2>
 <p>For questions about this Service Policy or to report a service issue:</p>
 <ul>
-    <li>Email: <a href="mailto:support@hospityo.com">support@hospityo.com</a></li>
-    <li>Website: <a href="https://hospityo.com">hospityo.com</a></li>
+    <li>Email: <a href="mailto:support@useclinicsync.com">support@useclinicsync.com</a></li>
+    <li>Website: <a href="https://useclinicsync.com">useclinicsync.com</a></li>
 </ul>
 
 <p><em>This Service Policy is effective as of April 10, 2026.</em></p>
