@@ -646,7 +646,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Backup & Restore Routes
-    Route::prefix('backup')->name('backup.')->middleware('role:Super Admin|Hospital Administrator')->group(function () {
+    Route::prefix('backup')->name('backup.')->middleware('permission:manage backup')->group(function () {
         Route::get('/', [BackupController::class, 'index'])->name('index');
         Route::post('/create', [BackupController::class, 'create'])->name('create');
         Route::get('/download/{filename}', [BackupController::class, 'download'])->name('download');

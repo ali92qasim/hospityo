@@ -124,6 +124,9 @@ class RolePermissionSeeder extends Seeder
         // ── Settings ──────────────────────────────────────────────────────────
         'manage settings',
 
+        // ── Backup ────────────────────────────────────────────────────────────
+        'manage backup',
+
         // ── Surgical Checklists ───────────────────────────────────────────────
         'manage surgical checklists',
 
@@ -174,6 +177,7 @@ class RolePermissionSeeder extends Seeder
             'manage doctor shares',
             'manage user roles',
             'manage settings',
+            'manage backup',
             'manage surgical checklists',
             'manage ot consumables',
             'manage sterilization',

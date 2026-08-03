@@ -222,7 +222,7 @@ class SidebarService
         }
 
         // ── Backup & Restore ──────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'backup') && $user->hasAnyRole(['Super Admin', 'Hospital Administrator'])) {
+        if ($this->hasModule($tenant, 'backup') && $user->can('manage backup')) {
             $menu[] = $this->link('backup', 'Backup & Restore', 'fa-database', 'backup.index', ['backup.*']);
         }
 
