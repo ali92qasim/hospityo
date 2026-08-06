@@ -52,4 +52,26 @@ class TenantUser extends Model
             'tenant_id' => $tenantId,
         ]);
     }
+
+    /**
+     * Update the email on a user-tenant mapping (e.g. after a tenant user email change).
+     */
+    public static function updateEmail(string $oldEmail, string $newEmail, int $tenantId): void
+    {
+        static::where('email', strtolower($oldEmail))
+            ->where('tenant_id', $tenantId)
+            ->delete();
+
+        static::register($newEmail, $tenantId);
+    }
+
+    /**
+     * Remove a user-tenant mapping (e.g. after a tenant user is deleted).
+     */
+    public static function unregister(string $email, int $tenantId): void
+    {
+        static::where('email', strtolower($email))
+            ->where('tenant_id', $tenantId)
+            ->delete();
+    }
 }

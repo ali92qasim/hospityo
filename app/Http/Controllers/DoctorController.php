@@ -86,10 +86,11 @@ class DoctorController extends Controller
                 'email' => $validated['email']
             ]);
 
-            if ($doctor->user->wasChanged('email')) {
-                $tenant = \App\Models\Tenant::current();
-                \App\Models\TenantUser::where('email', $oldEmail)
-                    ->where('tenant_id', $tenant->id)->delete();
+            $tenant = \App\Models\Tenant::current();
+            if ($tenant) {
+                if ($doctor->user->wasChanged('email')) {
+                    \App\Models\TenantUser::unregister($oldEmail, $tenant->id);
+                }
                 \App\Models\TenantUser::register($doctor->user->email, $tenant->id);
             }
         }
@@ -102,8 +103,12 @@ class DoctorController extends Controller
 
     public function destroy(Doctor $doctor): RedirectResponse
     {
-        // Delete associated user account
+        // Delete associated user account and landlord login mapping
         if ($doctor->user) {
+            $tenant = \App\Models\Tenant::current();
+            if ($tenant) {
+                \App\Models\TenantUser::unregister($doctor->user->email, $tenant->id);
+            }
             $doctor->user->delete();
         }
         

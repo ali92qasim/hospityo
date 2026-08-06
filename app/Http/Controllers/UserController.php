@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Role;
+use App\Models\Tenant;
+use App\Models\TenantUser;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
@@ -41,9 +43,9 @@ class UserController extends Controller
         $user->syncRoles($request->roles ?? []);
 
         // Register email → tenant mapping for central login
-        $tenant = \App\Models\Tenant::current();
+        $tenant = Tenant::current();
         if ($tenant) {
-            \App\Models\TenantUser::register($user->email, $tenant->id);
+            TenantUser::register($user->email, $tenant->id);
         }
 
         return redirect()->route('users.index')->with('success', 'User created successfully');
@@ -62,6 +64,8 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user)
     {
+        $oldEmail = $user->email;
+
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
@@ -70,11 +74,25 @@ class UserController extends Controller
 
         $user->syncRoles($request->roles ?? []);
 
+        // Keep landlord email → tenant mapping in sync for central login
+        $tenant = Tenant::current();
+        if ($tenant) {
+            if ($user->wasChanged('email')) {
+                TenantUser::unregister($oldEmail, $tenant->id);
+            }
+            TenantUser::register($user->email, $tenant->id);
+        }
+
         return redirect()->route('users.index')->with('success', 'User updated successfully');
     }
 
     public function destroy(User $user)
     {
+        $tenant = Tenant::current();
+        if ($tenant) {
+            TenantUser::unregister($user->email, $tenant->id);
+        }
+
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User deleted successfully');
     }
