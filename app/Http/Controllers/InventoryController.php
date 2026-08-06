@@ -7,6 +7,7 @@ use App\Http\Requests\StockOutRequest;
 use App\Models\Medicine;
 use App\Models\InventoryTransaction;
 use App\Models\Unit;
+use App\Services\MedicineStockConversion;
 use Illuminate\Http\Request;
 
 class InventoryController extends Controller
@@ -52,19 +53,20 @@ class InventoryController extends Controller
 
         $unit = Unit::findOrFail($validated['unit_id']);
 
-        // Convert to base unit for storage
-        $baseQuantity = $unit->convertToBaseUnit($validated['quantity']);
-        $baseUnitCost = $validated['unit_cost'] / $unit->conversion_factor;
-        $totalCost    = $validated['quantity'] * $validated['unit_cost'];
+        $converted = MedicineStockConversion::toBaseUnits(
+            $unit,
+            (int) $validated['quantity'],
+            (float) $validated['unit_cost']
+        );
 
         try {
             InventoryTransaction::create([
                 'medicine_id'        => $validated['medicine_id'],
                 'type'               => 'stock_in',
-                'quantity'           => $baseQuantity,
-                'remaining_quantity' => $baseQuantity, // FIFO: starts fully available
-                'unit_cost'          => $baseUnitCost,
-                'total_cost'         => $totalCost,
+                'quantity'           => $converted['base_quantity'],
+                'remaining_quantity' => $converted['base_quantity'],
+                'unit_cost'          => $converted['base_unit_cost'],
+                'total_cost'         => $converted['total_cost'],
                 'supplier'           => $validated['supplier'],
                 'batch_no'           => $validated['batch_no'] ?? null,
                 'expiry_date'        => $validated['expiry_date'] ?? null,
