@@ -42,7 +42,7 @@
                     <select name="unit_id" id="unit-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent select2-unit" required>
                         <option value="">Select Unit</option>
                         @foreach($units as $unit)
-                            <option value="{{ $unit->id }}" data-base-unit="{{ $unit->base_unit_id ?? $unit->id }}" data-factor="{{ $unit->conversion_factor }}">
+                            <option value="{{ $unit->id }}" data-base-unit="{{ $unit->base_unit_id ?? $unit->id }}" data-factor="{{ $unit->conversion_factor }}" data-abbrev="{{ $unit->abbreviation }}">
                                 {{ $unit->name }} ({{ $unit->abbreviation }})
                             </option>
                         @endforeach
@@ -54,7 +54,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
+                        <label id="quantity-label" class="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
                         <input type="number" name="quantity" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                         @error('quantity')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -62,8 +62,9 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Unit Cost ({{ currency_symbol() }}) *</label>
+                        <label id="unit-cost-label" class="block text-sm font-medium text-gray-700 mb-2">Unit Cost ({{ currency_symbol() }}) *</label>
                         <input type="number" name="unit_cost" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
+                        <p id="unit-cost-hint" class="text-xs text-gray-500 mt-1 hidden"></p>
                         @error('unit_cost')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror
@@ -184,7 +185,7 @@ $(document).ready(function() {
         placeholder: 'Select Unit',
         allowClear: true,
         width: '100%'
-    });
+    }).on('change', updateUnitLabels);
     
     $('.select2-supplier').select2({
         placeholder: 'Select Supplier',
@@ -205,20 +206,30 @@ $(document).ready(function() {
 function updateUnits() {
     const medicineSelect = document.getElementById('medicine-select');
     const unitSelect = document.getElementById('unit-select');
-    
+
     if (!medicineSelect.value) {
-        // Reset to show all units
         unitSelect.disabled = false;
         return;
     }
-    
-    const selectedOption = medicineSelect.options[medicineSelect.selectedIndex];
-    const purchaseUnitId = selectedOption.dataset.purchaseUnit;
-    
-    // If medicine has a purchase unit, pre-select it
-    if (purchaseUnitId) {
-        $('.select2-unit').val(purchaseUnitId).trigger('change');
+}
+
+function updateUnitLabels() {
+    const unitSelect = document.getElementById('unit-select');
+    const opt = unitSelect.options[unitSelect.selectedIndex];
+    const abbrev = opt?.dataset?.abbrev || '';
+
+    if (!abbrev) {
+        document.getElementById('quantity-label').textContent = 'Quantity *';
+        document.getElementById('unit-cost-label').textContent = 'Unit Cost ({{ currency_symbol() }}) *';
+        document.getElementById('unit-cost-hint').classList.add('hidden');
+        return;
     }
+
+    document.getElementById('quantity-label').textContent = 'Quantity (' + abbrev + ') *';
+    document.getElementById('unit-cost-label').textContent = 'Cost per ' + abbrev + ' ({{ currency_symbol() }}) *';
+    const hint = document.getElementById('unit-cost-hint');
+    hint.textContent = 'Enter the price for one ' + abbrev + ' — not per tablet unless ' + abbrev + ' is your base unit.';
+    hint.classList.remove('hidden');
 }
 </script>
 @endpush
