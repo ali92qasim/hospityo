@@ -13,7 +13,7 @@
 
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Unit/Services');
 
 /*
 |--------------------------------------------------------------------------
@@ -31,7 +31,7 @@ uses()
             '--database' => 'tenant',
         ]);
     })
-    ->in('Feature/Accounting', 'Feature/HR', 'Feature/Billing', 'Feature/Lab', 'Feature/Pharmacy', 'Feature/Visits');
+    ->in('Feature/Accounting', 'Feature/HR', 'Feature/Billing', 'Feature/Lab', 'Feature/Pharmacy', 'Feature/Visits', 'Unit/Services');
 
 /*
 |--------------------------------------------------------------------------
