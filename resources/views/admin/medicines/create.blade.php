@@ -11,7 +11,7 @@
     <form method="POST" action="{{ route('medicines.store') }}">
         @csrf
         
-        <div class="responsive-form">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Medicine Name <span class="text-red-500">*</span></label>
                 <input type="text" id="name" name="name" value="{{ old('name') }}" 
@@ -109,11 +109,18 @@
             </div>
 
             <div>
-                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
-                    <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                </select>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label class="flex items-center h-[42px]">
+                    <input type="hidden" name="status" value="inactive">
+                    <input 
+                        type="checkbox" 
+                        name="status" 
+                        value="active"
+                        {{ old('status', 'active') === 'active' ? 'checked' : '' }}
+                        class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue"
+                    >
+                    <span class="ml-2 text-sm text-gray-600">Active</span>
+                </label>
                 @error('status')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
