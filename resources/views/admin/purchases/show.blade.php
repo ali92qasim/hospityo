@@ -141,10 +141,11 @@
                                 <span class="text-xs font-mono text-gray-600">{{ $item->medicine->sku ?? '-' }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $item->quantity }} {{ $item->medicine->unit }}
+                                {{ $item->quantity }} {{ $item->unit?->abbreviation ?? '—' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ format_currency($item->unit_price) }}
+                                <div class="text-xs text-gray-500">per {{ $item->unit?->abbreviation ?? 'unit' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ format_currency($item->total_price) }}
