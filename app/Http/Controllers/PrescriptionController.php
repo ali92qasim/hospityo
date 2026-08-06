@@ -35,6 +35,7 @@ class PrescriptionController extends Controller
         // Only show medicines that have available stock (FIFO-aware)
         $medicines = Medicine::where('status', 'active')
             ->where('manage_stock', true)
+            ->with(['baseUnit', 'dispensingUnit'])
             ->get()
             ->filter(fn($m) => $m->getTotalAvailableStock() > 0)
             ->values();

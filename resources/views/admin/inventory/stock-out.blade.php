@@ -25,8 +25,8 @@
                     <select name="medicine_id" id="medicine-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                         <option value="">Select Medicine</option>
                         @foreach($medicines as $medicine)
-                            <option value="{{ $medicine->id }}" data-stock="{{ $medicine->getCurrentStock() }}" data-unit="{{ $medicine->unit }}">
-                                {{ $medicine->name }} (Available: {{ $medicine->getCurrentStock() }} {{ $medicine->unit }})
+                            <option value="{{ $medicine->id }}" data-stock="{{ $medicine->getCurrentStock() }}" data-unit="{{ $medicine->baseUnit?->abbreviation ?? '' }}">
+                                {{ $medicine->name }} (Available: {{ $medicine->getCurrentStock() }} {{ $medicine->baseUnit?->abbreviation ?? '' }})
                             </option>
                         @endforeach
                     </select>

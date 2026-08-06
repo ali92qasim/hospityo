@@ -60,8 +60,9 @@
                             <select name="medicines[0][medicine_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                                 <option value="">Select Medicine</option>
                                 @foreach($medicines as $medicine)
-                                    <option value="{{ $medicine->id }}" data-price="{{ $medicine->unit_price }}">
-                                        {{ $medicine->name }} - {{ $medicine->strength }} (Stock: {{ $medicine->stock_quantity }})
+                                    <option value="{{ $medicine->id }}" data-price="{{ $medicine->getSellingPrice() }}">
+                                        {{ $medicine->name }} - {{ $medicine->strength }}
+                                        (Stock: {{ $medicine->getCurrentStock() }} {{ $medicine->dispensingUnit?->abbreviation ?? $medicine->baseUnit?->abbreviation ?? '' }})
                                     </option>
                                 @endforeach
                             </select>
@@ -135,8 +136,9 @@ function addMedicineRow() {
                 <select name="medicines[${medicineRowIndex}][medicine_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="">Select Medicine</option>
                     @foreach($medicines as $medicine)
-                        <option value="{{ $medicine->id }}" data-price="{{ $medicine->unit_price }}">
-                            {{ $medicine->name }} - {{ $medicine->strength }} (Stock: {{ $medicine->stock_quantity }})
+                        <option value="{{ $medicine->id }}" data-price="{{ $medicine->getSellingPrice() }}">
+                            {{ $medicine->name }} - {{ $medicine->strength }}
+                            (Stock: {{ $medicine->getCurrentStock() }} {{ $medicine->dispensingUnit?->abbreviation ?? $medicine->baseUnit?->abbreviation ?? '' }})
                         </option>
                     @endforeach
                 </select>

@@ -90,6 +90,7 @@ class InventoryController extends Controller
     {
         $medicines = Medicine::where('status', 'active')
             ->where('manage_stock', true)
+            ->with('baseUnit')
             ->get()
             ->filter(function($medicine) {
                 return $medicine->getCurrentStock() > 0;
