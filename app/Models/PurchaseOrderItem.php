@@ -14,6 +14,7 @@ class PurchaseOrderItem extends Model
     protected $fillable = [
         'purchase_order_id',
         'medicine_id',
+        'unit_id',
         'quantity',
         'unit_price',
         'total_price'
@@ -32,5 +33,10 @@ class PurchaseOrderItem extends Model
     public function medicine()
     {
         return $this->belongsTo(Medicine::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 }
