@@ -8,6 +8,8 @@ use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
 use App\Models\Medicine;
 use App\Models\InventoryTransaction;
+use App\Models\Unit;
+use App\Services\MedicineStockConversion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -61,6 +63,7 @@ class PurchaseController extends Controller
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $purchaseOrder->id,
                     'medicine_id' => $item['medicine_id'],
+                    'unit_id' => $item['unit_id'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'total_price' => $totalPrice
@@ -93,27 +96,43 @@ class PurchaseController extends Controller
             return back()->withErrors(['error' => 'Only approved orders can be received.']);
         }
 
-        DB::transaction(function () use ($purchase) {
-            foreach ($purchase->items as $item) {
-                // Create inventory transaction
-                InventoryTransaction::create([
-                    'medicine_id' => $item->medicine_id,
-                    'type' => 'stock_in',
-                    'quantity' => $item->quantity,
-                    'unit_cost' => $item->unit_price,
-                    'total_cost' => $item->total_price,
-                    'supplier' => $purchase->supplier->name,
-                    'reference_no' => $purchase->po_number,
-                    'notes' => 'Purchase order received',
-                    'created_by' => auth()->id()
-                ]);
-            }
+        try {
+            DB::transaction(function () use ($purchase) {
+                $purchase->load(['items', 'supplier']);
 
-            $purchase->update(['status' => 'received']);
+                foreach ($purchase->items as $item) {
+                    if (!$item->unit_id) {
+                        throw new \InvalidArgumentException('Cannot receive order: line items missing unit.');
+                    }
 
-            // Auto-post accounting journal entry
-            \App\Services\AccountingService::postPurchaseEntry($purchase);
-        });
+                    $unit = Unit::findOrFail($item->unit_id);
+                    $converted = MedicineStockConversion::toBaseUnits(
+                        $unit,
+                        (int) $item->quantity,
+                        (float) $item->unit_price
+                    );
+
+                    InventoryTransaction::create([
+                        'medicine_id'        => $item->medicine_id,
+                        'type'               => 'stock_in',
+                        'quantity'           => $converted['base_quantity'],
+                        'remaining_quantity' => $converted['base_quantity'],
+                        'unit_cost'          => $converted['base_unit_cost'],
+                        'total_cost'         => $converted['total_cost'],
+                        'supplier'           => $purchase->supplier->name,
+                        'reference_no'       => $purchase->po_number,
+                        'notes'              => 'Purchase order received',
+                        'created_by'         => auth()->id(),
+                    ]);
+                }
+
+                $purchase->update(['status' => 'received']);
+
+                \App\Services\AccountingService::postPurchaseEntry($purchase);
+            });
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
 
         return back()->with('success', 'Purchase order received and stock updated.');
     }

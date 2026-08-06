@@ -20,6 +20,7 @@ class StorePurchaseOrderRequest extends FormRequest
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.medicine_id' => 'required|exists:tenant.medicines,id',
+            'items.*.unit_id' => 'required|exists:tenant.units,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0'
         ];
