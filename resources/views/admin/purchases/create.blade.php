@@ -65,8 +65,9 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Medicine</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit</th>
                                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Quantity</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit Price ({{ currency_symbol() }})</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700 price-header">Price ({{ currency_symbol() }})</th>
                                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Total ({{ currency_symbol() }})</th>
                                 <th class="px-4 py-3 text-center text-sm font-medium text-gray-700">Action</th>
                             </tr>
@@ -79,6 +80,11 @@
                                         @foreach($medicines as $medicine)
                                             <option value="{{ $medicine->id }}">{{ $medicine->name }} ({{ $medicine->generic_name }})</option>
                                         @endforeach
+                                    </select>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <select name="items[0][unit_id]" class="unit-select w-full px-2 py-1 border border-gray-300 rounded text-sm" required>
+                                        <option value="">Select unit</option>
                                     </select>
                                 </td>
                                 <td class="px-4 py-3">
@@ -119,6 +125,20 @@
         </form>
     </div>
 </div>
+
+<script>
+window._purchaseMedicineUnits = @json($medicines->mapWithKeys(fn ($m) => [
+    $m->id => [
+        'base_unit_id' => $m->base_unit_id,
+    ],
+])->all());
+window._allUnits = @json($units->map(fn ($u) => [
+    'id' => $u->id,
+    'abbreviation' => $u->abbreviation,
+    'name' => $u->name,
+    'base_unit_id' => $u->base_unit_id ?? $u->id,
+])->values());
+</script>
 
 @vite(['resources/js/purchases-form.js'])
 @endsection

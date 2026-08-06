@@ -36,8 +36,9 @@ class PurchaseController extends Controller
     public function create()
     {
         $suppliers = Supplier::active()->get();
-        $medicines = Medicine::where('status', 'active')->get();
-        return view('admin.purchases.create', compact('suppliers', 'medicines'));
+        $medicines = Medicine::where('status', 'active')->with('baseUnit')->get();
+        $units = Unit::active()->get();
+        return view('admin.purchases.create', compact('suppliers', 'medicines', 'units'));
     }
 
     public function store(StorePurchaseOrderRequest $request)
@@ -86,7 +87,7 @@ class PurchaseController extends Controller
 
     public function show(PurchaseOrder $purchase)
     {
-        $purchase->load(['supplier', 'items.medicine', 'user']);
+        $purchase->load(['supplier', 'items.medicine', 'items.unit', 'user']);
         return view('admin.purchases.show', compact('purchase'));
     }
 
