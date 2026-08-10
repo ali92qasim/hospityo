@@ -47,6 +47,7 @@ use App\Services\AccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\InvestigationOrderBillingService;
+use App\Workflows\VisitHandlerFactory;
 use Yajra\DataTables\Facades\DataTables;
 
 class VisitController extends Controller
@@ -189,6 +190,9 @@ class VisitController extends Controller
 
     public function workflow(Visit $visit)
     {
+        $handler = VisitHandlerFactory::for($visit);
+        $workflowData = $handler->workflowData($visit);
+
         $visit->load([
             'patient',
             'doctor.department',
@@ -202,7 +206,7 @@ class VisitController extends Controller
             'labOrders.items.investigation',
             'labOrders.items.result',
             'admission.bed.ward',
-                'admission.advances.receivedBy',
+            'admission.advances.receivedBy',
             'draftBill',
             'triage',
             'prescriptions.items.medicine',
@@ -210,8 +214,12 @@ class VisitController extends Controller
             'ipdGpeRecords.recordedBy',
             'doctorVisitNotes.doctor',
             'doctorVisitNotes.createdBy',
+            'opdDetails',
+            'ipdDetails',
+            'emergencyDetails',
         ]);
-        $doctors = Doctor::where('status', 'active')->get();
+
+        $doctors = $handler->resolveDoctors($visit);
         $medicines = Medicine::where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -223,11 +231,10 @@ class VisitController extends Controller
             $visit->load('draftBill.billItems');
         }
 
-        $data = compact('visit', 'doctors', 'medicines', 'investigations', 'allergies');
+        $data = compact('visit', 'doctors', 'medicines', 'investigations', 'allergies', 'handler', 'workflowData');
 
-        // Add type-specific data
         if ($visit->visit_type === 'ipd') {
-            $data['availableBeds'] = Bed::with('ward')->where('status', 'available')->get();
+            $data['availableBeds'] = $workflowData['available_beds'] ?? Bed::with('ward')->where('status', 'available')->get();
             $data['activeComplaints'] = IpdClinicalService::activeComplaintsForPatient($visit->patient_id);
             $data['authDoctor'] = IpdClinicalService::authDoctor();
         }

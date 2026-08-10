@@ -48,28 +48,7 @@
         <div class="p-6">
             <div class="flex items-center justify-between">
                 @php
-                    $steps = match($visit->visit_type) {
-                        'opd' => [
-                            'registered' => 'Registration',
-                            'vitals_recorded' => 'Vital Signs',
-                            'with_doctor' => 'Consultation',
-                            'completed' => 'Completed'
-                        ],
-                        'ipd' => [
-                            'registered' => 'Registration',
-                            'vitals_recorded' => 'Vital Signs',
-                            'admitted' => 'Admitted',
-                            'with_doctor' => 'Treatment',
-                            'discharged' => 'Discharged'
-                        ],
-                        'emergency' => [
-                            'registered' => 'Registration',
-                            'triaged' => 'Triaged',
-                            'vitals_recorded' => 'Vital Signs',
-                            'with_doctor' => 'Emergency Care',
-                            'completed' => 'Completed'
-                        ]
-                    };
+                    $steps = $workflowData['steps'];
                     $currentStep = array_search($visit->status, array_keys($steps));
                 @endphp
                 @foreach($steps as $status => $label)
@@ -126,12 +105,12 @@
                     </button>
                 @endif
                 <button onclick="showTab('consultation')" id="consultation-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-stethoscope mr-2"></i>{{ $visit->visit_type === 'emergency' ? 'Emergency Care' : 'Consultation' }}
+                    <i class="fas fa-stethoscope mr-2"></i>{{ $workflowData['consultation_label'] }}
                 </button>
                 <button onclick="showTab('prescription')" id="prescription-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
                     <i class="fas fa-prescription mr-2"></i>Prescription
                 </button>
-                @if($visit->visit_type !== 'emergency')
+                @if($workflowData['show_investigations'])
                     <button onclick="showTab('tests')" id="tests-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
                         <i class="fas fa-flask mr-2"></i>Investigations
                     </button>

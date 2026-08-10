@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\VisitTypeDetailSyncService;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,10 +22,13 @@ class Visit extends Model
         'visit_type',
         'status',
         'visit_datetime',
+        'closed_at',
+        'priority',
     ];
 
     protected $casts = [
         'visit_datetime' => 'datetime',
+        'closed_at' => 'datetime',
     ];
 
     protected static function boot(): void
@@ -44,6 +48,18 @@ class Visit extends Model
                 '0',
                 STR_PAD_LEFT
             );
+        });
+
+        static::created(function (Visit $visit) {
+            if (config('visits.dual_write_enabled')) {
+                VisitTypeDetailSyncService::createForVisit($visit);
+            }
+        });
+
+        static::updated(function (Visit $visit) {
+            if (config('visits.dual_write_enabled')) {
+                VisitTypeDetailSyncService::syncLegacyToChild($visit, $visit->getChanges());
+            }
         });
     }
 
@@ -93,6 +109,54 @@ class Visit extends Model
         }
 
         return $this->doctor;
+    }
+
+    public function assignedDoctor(): ?Doctor
+    {
+        if ($this->visit_type === 'ipd') {
+            return $this->attendingDoctor();
+        }
+
+        return $this->doctor;
+    }
+
+    public function opdDetails(): HasOne
+    {
+        return $this->hasOne(OpdVisit::class, 'visit_id');
+    }
+
+    public function ipdDetails(): HasOne
+    {
+        return $this->hasOne(IpdVisit::class, 'visit_id');
+    }
+
+    public function emergencyDetails(): HasOne
+    {
+        return $this->hasOne(EmergencyVisit::class, 'visit_id');
+    }
+
+    public function classHistories(): HasMany
+    {
+        return $this->hasMany(VisitClassHistory::class);
+    }
+
+    public function typeDetails(): HasOne
+    {
+        return match ($this->visit_type) {
+            'opd' => $this->opdDetails(),
+            'ipd' => $this->ipdDetails(),
+            'emergency' => $this->emergencyDetails(),
+            default => throw new \InvalidArgumentException("Unknown visit type: {$this->visit_type}"),
+        };
+    }
+
+    public function queuePriority(): string
+    {
+        if ($this->visit_type === 'opd' && config('visits.read_from_child.opd')) {
+            return $this->opdDetails?->queue_priority ?? 'medium';
+        }
+
+        return $this->priority ?? 'medium';
     }
 
     public function vitalSigns(): HasOne
