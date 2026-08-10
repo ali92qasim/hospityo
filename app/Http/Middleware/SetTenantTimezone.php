@@ -13,7 +13,7 @@ class SetTenantTimezone
     {
         if (Tenant::checkCurrent()) {
             try {
-                $timezone = cache('settings.timezone', config('app.timezone', 'Asia/Karachi'));
+                $timezone = setting('timezone', config('app.timezone', 'Asia/Karachi'));
                 config(['app.timezone' => $timezone]);
                 date_default_timezone_set($timezone);
             } catch (\Exception $e) {

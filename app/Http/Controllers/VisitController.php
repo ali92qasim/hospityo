@@ -852,11 +852,11 @@ class VisitController extends Controller
     public function print(Visit $visit)
     {
         $settings = [
-            'hospital_name' => cache('settings.hospital_name', config('app.name', 'Hospital Management System')),
-            'hospital_address' => cache('settings.hospital_address', ''),
-            'hospital_phone' => cache('settings.hospital_phone', ''),
-            'hospital_email' => cache('settings.hospital_email', ''),
-            'hospital_logo' => cache('settings.hospital_logo', null),
+            'hospital_name' => setting('hospital_name', config('app.name', 'Hospital Management System')),
+            'hospital_address' => setting('hospital_address', ''),
+            'hospital_phone' => setting('hospital_phone', ''),
+            'hospital_email' => setting('hospital_email', ''),
+            'hospital_logo' => setting('hospital_logo', null),
         ];
 
         if ($visit->visit_type === 'ipd') {
