@@ -2,7 +2,7 @@
 
 return [
     'dual_write_enabled' => env('VISITS_DUAL_WRITE', true),
-    'dual_write_legacy_columns' => env('VISITS_DUAL_WRITE_LEGACY', true),
+    'dual_write_legacy_columns' => env('VISITS_DUAL_WRITE_LEGACY', false),
     'log_child_mismatches' => env('VISITS_LOG_CHILD_MISMATCHES', true),
     'read_from_child' => [
         'opd' => env('VISITS_READ_OPD_CHILD', false),

@@ -62,10 +62,11 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
                     <select name="priority" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
-                        <option value="low" {{ old('priority', $visit->priority) == 'low' ? 'selected' : '' }}>Low</option>
-                        <option value="medium" {{ old('priority', $visit->priority) == 'medium' ? 'selected' : '' }}>Medium</option>
-                        <option value="high" {{ old('priority', $visit->priority) == 'high' ? 'selected' : '' }}>High</option>
-                        <option value="critical" {{ old('priority', $visit->priority) == 'critical' ? 'selected' : '' }}>Critical</option>
+                        @php $selectedPriority = old('priority', $visitAdmin['display_priority']); @endphp
+                        <option value="low" {{ $selectedPriority == 'low' ? 'selected' : '' }}>Low</option>
+                        <option value="medium" {{ $selectedPriority == 'medium' ? 'selected' : '' }}>Medium</option>
+                        <option value="high" {{ $selectedPriority == 'high' ? 'selected' : '' }}>High</option>
+                        <option value="critical" {{ $selectedPriority == 'critical' ? 'selected' : '' }}>Critical</option>
                     </select>
                 </div>
 
@@ -81,6 +82,7 @@
                     </select>
                 </div>
 
+                @if($visitAdmin['requires_doctor'])
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Doctor *</label>
                     <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
@@ -91,6 +93,13 @@
                         @endforeach
                     </select>
                 </div>
+                @else
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                        Attending doctors for IPD visits are managed through the visit workflow care team.
+                    </p>
+                </div>
+                @endif
 
                 <!-- Dates -->
                 <div>
@@ -102,30 +111,32 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Discharge Date & Time</label>
-                    <input type="text" name="discharge_datetime" value="{{ old('discharge_datetime', $visit->discharge_datetime?->format('Y-m-d H:i')) }}" 
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Closed At</label>
+                    <input type="text" name="closed_at" value="{{ old('closed_at', $visit->closed_at?->format('Y-m-d H:i')) }}" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            placeholder="YYYY-MM-DD HH:MM">
                 </div>
 
-                <!-- Room & Bed -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Room Number</label>
-                    <input type="text" name="room_no" value="{{ old('room_no', $visit->room_no) }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Bed Number</label>
-                    <input type="text" name="bed_no" value="{{ old('bed_no', $visit->bed_no) }}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                </div>
-
+                @if($visitAdmin['bed_number'] || $visitAdmin['ward_name'])
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Total Charges ($)</label>
-                    <input type="number" name="total_charges" value="{{ old('total_charges', $visit->total_charges) }}" min="0" step="0.01"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700">
+                        @if($visitAdmin['ward_name'])
+                            <div><span class="font-medium">Ward:</span> {{ $visitAdmin['ward_name'] }}</div>
+                        @endif
+                        @if($visitAdmin['bed_number'])
+                            <div><span class="font-medium">Bed:</span> {{ $visitAdmin['bed_number'] }}</div>
+                        @endif
+                    </div>
                 </div>
+                @endif
+
+                @if($visitAdmin['total_charges'] > 0)
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Total Charges (from bills)</label>
+                    <input type="text" value="{{ format_currency($visitAdmin['total_charges']) }}" readonly
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                </div>
+                @endif
 
                 <!-- Medical Information -->
                 <div class="md:col-span-2 mt-6">
@@ -138,25 +149,25 @@
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Chief Complaint</label>
                     <textarea name="chief_complaint" rows="3" 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('chief_complaint', $visit->chief_complaint) }}</textarea>
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('chief_complaint', $visitAdmin['chief_complaint']) }}</textarea>
                 </div>
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Diagnosis</label>
                     <textarea name="diagnosis" rows="3" 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('diagnosis', $visit->diagnosis) }}</textarea>
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('diagnosis', $visitAdmin['diagnosis']) }}</textarea>
                 </div>
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Treatment</label>
                     <textarea name="treatment" rows="3" 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('treatment', $visit->treatment) }}</textarea>
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('treatment', $visitAdmin['treatment']) }}</textarea>
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Clinical Notes</label>
                     <textarea name="notes" rows="3" 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('notes', $visit->notes) }}</textarea>
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">{{ old('notes', $visitAdmin['clinical_notes']) }}</textarea>
                 </div>
             </div>
 

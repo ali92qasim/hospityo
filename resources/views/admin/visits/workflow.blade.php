@@ -34,8 +34,11 @@
                     <span class="px-3 py-1 text-sm rounded-full {{ $statusColors[$visit->status] ?? 'bg-gray-100 text-gray-800' }}">
                         {{ ucfirst(str_replace('_', ' ', $visit->status)) }}
                     </span>
+                    @if($workflowData['show_opd_ui'] ?? false)
+                        @include('admin.visits.workflow.opd._queue-priority')
+                    @endif
                     <a href="{{ route('visits.print', $visit) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-print mr-2"></i>{{ $visit->visit_type === 'ipd' ? 'Print IPD Report' : 'Print Report' }}
+                        <i class="fas fa-print mr-2"></i>{{ $workflowData['print_label'] }}
                     </a>
                     <a href="{{ route('visits.index') }}" class="text-gray-600 hover:text-gray-800">
                         <i class="fas fa-arrow-left mr-2"></i>Back to Visits
@@ -83,27 +86,15 @@
     <div class="bg-white rounded-lg shadow-sm">
         <div class="border-b border-gray-200">
             <nav class="flex space-x-8 px-6" aria-label="Tabs">
-                @if($visit->visit_type === 'emergency')
-                    <button onclick="showTab('triage')" id="triage-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-medical-blue text-medical-blue">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>Triage
-                    </button>
+                @if($workflowData['show_emergency_ui'] ?? false)
+                    @include('admin.visits.workflow.emergency._tabs')
                 @endif
-                @if($visit->visit_type === 'ipd')
-                    <button onclick="showTab('admission')" id="admission-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm {{ $visit->visit_type === 'ipd' ? 'border-medical-blue text-medical-blue' : 'border-transparent text-gray-500' }}">
-                        <i class="fas fa-bed mr-2"></i>Admission
-                    </button>
+                @if($workflowData['show_ipd_ui'] ?? false)
+                    @include('admin.visits.workflow.ipd._tabs')
                 @endif
-                <button onclick="showTab('vitals')" id="vitals-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm {{ $visit->visit_type !== 'emergency' && $visit->visit_type !== 'ipd' ? 'border-medical-blue text-medical-blue' : 'border-transparent text-gray-500' }}">
+                <button onclick="showTab('vitals')" id="vitals-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm {{ ($workflowData['vitals_tab_default_visible'] ?? false) ? 'border-medical-blue text-medical-blue' : 'border-transparent text-gray-500' }}">
                     <i class="fas fa-heartbeat mr-2"></i>Vital Signs
                 </button>
-                @if($visit->visit_type === 'ipd')
-                    <button onclick="showTab('gpe-tab')" id="gpe-tab-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-stethoscope mr-2"></i>GPE
-                    </button>
-                    <button onclick="showTab('care-team')" id="care-team-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-users mr-2"></i>Care Team
-                    </button>
-                @endif
                 <button onclick="showTab('consultation')" id="consultation-tab" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
                     <i class="fas fa-stethoscope mr-2"></i>{{ $workflowData['consultation_label'] }}
                 </button>
@@ -121,441 +112,21 @@
         <!-- Tab Content -->
         <div class="p-6">
             <!-- Emergency Triage Tab -->
-            @if($visit->visit_type === 'emergency')
+            @if($workflowData['show_emergency_ui'] ?? false)
             <div id="triage-content" class="tab-content">
-                @if(!$visit->triage)
-                    <form action="{{ route('visits.triage', $visit) }}" method="POST">
-                        @csrf
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Priority Level</label>
-                                <select name="priority_level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                                    <option value="">Select Priority</option>
-                                    <option value="critical" class="text-red-600">Critical - Immediate</option>
-                                    <option value="urgent" class="text-orange-600">Urgent - 15 mins</option>
-                                    <option value="less_urgent" class="text-yellow-600">Less Urgent - 60 mins</option>
-                                    <option value="non_urgent" class="text-green-600">Non-Urgent - 120 mins</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Pain Scale (0-10)</label>
-                                <input type="number" name="pain_scale" min="0" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
-                            </div>
-                            <div class="lg:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Chief Complaint</label>
-                                <input type="text" name="chief_complaint" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                            </div>
-                            <div class="lg:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Triage Notes</label>
-                                <textarea name="triage_notes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue"></textarea>
-                            </div>
-                        </div>
-                        <button type="submit" class="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>Complete Triage
-                        </button>
-                    </form>
-                @else
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-6">
-                        <h4 class="text-lg font-medium text-red-800 mb-4">Triage Completed</h4>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <span class="text-sm text-red-600">Priority:</span>
-                                <span class="ml-2 px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">{{ ucfirst(str_replace('_', ' ', $visit->triage->priority_level)) }}</span>
-                            </div>
-                            <div>
-                                <span class="text-sm text-red-600">Pain Scale:</span>
-                                <span class="ml-2 font-medium">{{ $visit->triage->pain_scale ?? 'N/A' }}/10</span>
-                            </div>
-                            <div class="col-span-2">
-                                <span class="text-sm text-red-600">Chief Complaint:</span>
-                                <p class="mt-1">{{ $visit->triage->chief_complaint }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+                @include('admin.visits.workflow.emergency._triage')
             </div>
             @endif
 
             <!-- IPD Admission Tab -->
-            @if($visit->visit_type === 'ipd')
-            <div id="admission-content" class="tab-content {{ $visit->visit_type === 'ipd' ? '' : 'hidden' }}">
-                @if(!$visit->admission)
-                    <div class="space-y-6">
-                        <h4 class="text-lg font-medium text-gray-800 mb-4">Select Bed for Admission</h4>
-                        
-                        <form action="{{ route('visits.admit', $visit) }}" method="POST" id="admission-form">
-                            @csrf
-                            <input type="hidden" name="bed_id" id="selected-bed-id">
-                            
-                            <!-- Ward Filter -->
-                            <div class="mb-6">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Ward</label>
-                                <select id="ward-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
-                                    <option value="">All Wards</option>
-                                    @foreach($availableBeds->groupBy('ward.name') as $wardName => $beds)
-                                        <option value="{{ $wardName }}">{{ $wardName }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            
-                            <!-- Bed Grid -->
-                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6" id="bed-grid">
-                                @foreach($availableBeds ?? [] as $bed)
-                                    <div class="bed-card border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-medical-blue transition-colors" 
-                                         data-bed-id="{{ $bed->id }}" 
-                                         data-ward="{{ $bed->ward->name }}">
-                                        <div class="text-center">
-                                            <div class="w-12 h-12 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
-                                                <i class="fas fa-bed text-green-600 text-lg"></i>
-                                            </div>
-                                            <div class="font-medium text-gray-800">{{ $bed->bed_number }}</div>
-                                            <div class="text-xs text-gray-500 mb-1">{{ $bed->ward->name }}</div>
-                                            <div class="text-xs font-medium text-medical-blue">{{ ucfirst($bed->bed_type) }}</div>
-                                            <div class="text-xs text-gray-600 mt-1">{{ currency_symbol() }}{{ number_format($bed->daily_rate, 0) }}/day</div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                            
-                            <!-- Selected Bed Info -->
-                            <div id="selected-bed-info" class="hidden bg-medical-light border border-medical-blue rounded-lg p-4 mb-4">
-                                <div class="flex items-center">
-                                    <i class="fas fa-bed text-medical-blue mr-2"></i>
-                                    <span class="font-medium text-medical-blue">Selected: </span>
-                                    <span id="selected-bed-details" class="ml-2"></span>
-                                </div>
-                            </div>
-                            
-                            <!-- Admission Notes -->
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Admission Notes</label>
-                                <textarea name="admission_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter admission notes..."></textarea>
-                            </div>
-                            
-                            <button type="submit" id="admit-btn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                <i class="fas fa-bed mr-2"></i>Admit Patient
-                            </button>
-                        </form>
-                    </div>
-                    
-                @else
-                    @php
-                        $admission = $visit->admission;
-                        $ipdBill = \App\Services\IpdDraftBillService::resolveForVisit($visit) ?? $visit->draftBill;
-                        $finalBill = null;
-                        if (! $ipdBill && $admission->status === 'discharged') {
-                            $finalBill = $visit->bills()
-                                ->where('bill_type', 'ipd')
-                                ->where('status', '!=', 'draft')
-                                ->latest('id')
-                                ->first();
-                        }
-                        $settlement = $admission->status === 'active'
-                            ? \App\Services\IpdDischargeBillingService::preview($visit)
-                            : null;
-                        $totalAdvances = $admission->total_advances;
-                        $draftCharges = $admission->draft_bill_charges;
-                        $availableCredit = $admission->credit_balance;
-                    @endphp
-                    <div class="space-y-6">
-                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-6">
-                            <h4 class="text-lg font-medium text-purple-800 mb-4">Patient Admitted</h4>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <span class="text-sm text-purple-600">Ward:</span>
-                                    <span class="ml-2 font-medium">{{ $admission->bed->ward->name }}</span>
-                                </div>
-                                <div>
-                                    <span class="text-sm text-purple-600">Bed:</span>
-                                    <span class="ml-2 font-medium">{{ $admission->bed->bed_number }}</span>
-                                </div>
-                                <div>
-                                    <span class="text-sm text-purple-600">Admitted:</span>
-                                    <span class="ml-2">{{ $admission->admission_date->format('M d, Y h:i A') }}</span>
-                                </div>
-                                @if($admission->discharge_date)
-                                <div>
-                                    <span class="text-sm text-purple-600">Discharged:</span>
-                                    <span class="ml-2">{{ $admission->discharge_date->format('M d, Y h:i A') }}</span>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        {{-- IPD Billing panel --}}
-                        <div class="bg-white border border-gray-200 rounded-lg p-6">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                                <h4 class="text-lg font-semibold text-gray-800 flex items-center">
-                                    <i class="fas fa-file-invoice-dollar text-medical-blue mr-2"></i>IPD Billing
-                                </h4>
-                                @if($ipdBill)
-                                    <span class="text-sm text-gray-600">
-                                        {{ $ipdBill->bill_number }} ·
-                                        <span class="font-semibold text-medical-blue">{{ format_currency($ipdBill->total_amount) }}</span>
-                                        <span class="ml-1 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Draft</span>
-                                    </span>
-                                @elseif($finalBill)
-                                    <span class="text-sm text-gray-600">
-                                        {{ $finalBill->bill_number }} ·
-                                        <span class="font-semibold text-medical-blue">{{ format_currency($finalBill->total_amount) }}</span>
-                                        <span class="ml-1 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full capitalize">{{ $finalBill->status }}</span>
-                                    </span>
-                                @endif
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                                <div class="rounded-lg bg-blue-50 border border-blue-100 p-3">
-                                    <div class="text-xs text-blue-600 uppercase font-medium">Advances</div>
-                                    <div class="text-lg font-bold text-blue-900">{{ format_currency($totalAdvances) }}</div>
-                                </div>
-                                <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
-                                    <div class="text-xs text-gray-500 uppercase font-medium">{{ $ipdBill ? 'Draft Charges' : 'Bill Total' }}</div>
-                                    <div class="text-lg font-bold text-gray-900">{{ format_currency($draftCharges) }}</div>
-                                </div>
-                                <div class="rounded-lg {{ $availableCredit >= 0 ? 'bg-green-50 border-green-100' : 'bg-amber-50 border-amber-100' }} border p-3">
-                                    <div class="text-xs uppercase font-medium {{ $availableCredit >= 0 ? 'text-green-600' : 'text-amber-700' }}">
-                                        {{ $availableCredit >= 0 ? 'Available Credit' : 'Amount Due' }}
-                                    </div>
-                                    <div class="text-lg font-bold {{ $availableCredit >= 0 ? 'text-green-800' : 'text-amber-800' }}">
-                                        {{ format_currency(abs($availableCredit)) }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-wrap gap-2">
-                                @if($ipdBill)
-                                    <a href="{{ route('bills.show', $ipdBill) }}"
-                                       class="inline-flex items-center px-3 py-1.5 text-sm bg-medical-blue text-white rounded-lg hover:bg-blue-700">
-                                        <i class="fas fa-eye mr-1"></i>View Draft Bill
-                                    </a>
-                                    <a href="{{ route('bills.edit', $ipdBill) }}"
-                                       class="inline-flex items-center px-3 py-1.5 text-sm border border-medical-blue text-medical-blue bg-white rounded-lg hover:bg-blue-50">
-                                        <i class="fas fa-edit mr-1"></i>Add Charges
-                                    </a>
-                                    <a href="{{ route('bills.print', $ipdBill) }}" target="_blank"
-                                       class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50">
-                                        <i class="fas fa-print mr-1"></i>Print Draft
-                                    </a>
-                                    <a href="{{ route('bills.print', ['bill' => $ipdBill, 'interim' => 1]) }}" target="_blank"
-                                       class="inline-flex items-center px-3 py-1.5 text-sm border border-purple-300 text-purple-700 bg-white rounded-lg hover:bg-purple-50">
-                                        <i class="fas fa-file-alt mr-1"></i>Interim Invoice
-                                    </a>
-                                @elseif($finalBill)
-                                    <a href="{{ route('bills.show', $finalBill) }}"
-                                       class="inline-flex items-center px-3 py-1.5 text-sm bg-medical-blue text-white rounded-lg hover:bg-blue-700">
-                                        <i class="fas fa-file-invoice-dollar mr-1"></i>View Final Invoice
-                                    </a>
-                                    <a href="{{ route('bills.print', $finalBill) }}" target="_blank"
-                                       class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50">
-                                        <i class="fas fa-print mr-1"></i>Print Invoice
-                                    </a>
-                                @else
-                                    <p class="text-sm text-amber-700">No draft bill found for this admission.</p>
-                                @endif
-                            </div>
-
-                            @if($admission->refund_amount > 0)
-                                <div class="mt-4 rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-800">
-                                    <i class="fas fa-hand-holding-usd mr-1"></i>
-                                    Refund issued at discharge:
-                                    <strong>{{ format_currency($admission->refund_amount) }}</strong>
-                                    via {{ str_replace('_', ' ', ucfirst($admission->refund_method ?? 'cash')) }}
-                                    @if($admission->refunded_at)
-                                        on {{ $admission->refunded_at->format('M d, Y h:i A') }}
-                                    @endif
-                                </div>
-                            @endif
-                        </div>
-
-                        {{-- Advances --}}
-                        <div class="bg-white border border-gray-200 rounded-lg p-6">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                                <h4 class="text-md font-semibold text-gray-800 flex items-center">
-                                    <i class="fas fa-hand-holding-usd mr-2 text-medical-blue"></i>Patient Advances
-                                </h4>
-                                <div class="px-3 py-1 text-sm rounded-full {{ $availableCredit >= 0 ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800' }} font-medium">
-                                    {{ $availableCredit >= 0 ? 'Credit' : 'Due' }}: {{ format_currency(abs($availableCredit)) }}
-                                </div>
-                            </div>
-
-                            @if($admission->status === 'active')
-                                <form action="{{ route('visits.admission-advance', $visit) }}" method="POST" class="space-y-3">
-                                    @csrf
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Advance Amount</label>
-                                            <input type="number" name="amount" step="0.01" min="0.01" required
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-                                            <select name="payment_method" required
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                                                <option value="">Select</option>
-                                                <option value="cash">Cash</option>
-                                                <option value="card">Card</option>
-                                                <option value="upi">UPI</option>
-                                                <option value="bank_transfer">Bank Transfer</option>
-                                                <option value="cheque">Cheque</option>
-                                                <option value="insurance">Insurance</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Payment Date</label>
-                                            <input type="date" name="payment_date" value="{{ date('Y-m-d') }}" required
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Reference Number</label>
-                                            <input type="text" name="reference_number" placeholder="Optional"
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                                        <textarea name="notes" rows="2" placeholder="Optional"
-                                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"></textarea>
-                                    </div>
-
-                                    <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                                        <i class="fas fa-plus mr-2"></i>Add Advance
-                                    </button>
-                                </form>
-                            @endif
-
-                            @if($admission->advances && $admission->advances->count() > 0)
-                                <div class="mt-5">
-                                    <div class="text-sm font-semibold text-gray-800 mb-2">Advance History</div>
-                                    <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
-                                        <table class="w-full">
-                                            <thead class="bg-gray-50">
-                                                <tr>
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-gray-200">
-                                                @foreach($admission->advances as $adv)
-                                                    <tr>
-                                                        <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">{{ $adv->payment_date->format('M d, Y') }}</td>
-                                                        <td class="px-4 py-2 text-sm text-gray-900 whitespace-nowrap">{{ format_currency($adv->amount) }}</td>
-                                                        <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">{{ str_replace('_', ' ', ucfirst($adv->payment_method)) }}</td>
-                                                        <td class="px-4 py-2 text-sm text-gray-600">{{ $adv->reference_number ?? '-' }}</td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-
-                        @if($admission->status === 'active')
-                        <form action="{{ route('visits.discharge', $visit) }}" method="POST" class="bg-white border border-orange-200 rounded-lg p-6">
-                            @csrf
-                            <h4 class="text-lg font-semibold text-orange-800 mb-4">
-                                <i class="fas fa-sign-out-alt mr-2"></i>Discharge & Finalize Bill
-                            </h4>
-
-                            @if($settlement)
-                            <div class="mb-5 rounded-lg bg-orange-50 border border-orange-100 p-4">
-                                <div class="text-sm font-semibold text-orange-900 mb-2">Settlement Preview</div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-orange-900">
-                                    <div>Final bill total: <strong>{{ format_currency($settlement['bill_total']) }}</strong></div>
-                                    <div>Advances to apply: <strong>{{ format_currency($settlement['advances_applied']) }}</strong></div>
-                                    @if($settlement['refund_amount'] > 0)
-                                        <div class="sm:col-span-2 text-green-800">
-                                            Refund due to patient: <strong>{{ format_currency($settlement['refund_amount']) }}</strong>
-                                        </div>
-                                    @endif
-                                    @if($settlement['amount_due'] > 0)
-                                        <div class="sm:col-span-2 text-amber-800">
-                                            Remaining due after advances: <strong>{{ format_currency($settlement['amount_due']) }}</strong>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                            @endif
-
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Discharge Summary</label>
-                                    <textarea name="discharge_summary" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>{{ old('discharge_summary') }}</textarea>
-                                    @error('discharge_summary')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Discharge Notes</label>
-                                    <textarea name="discharge_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">{{ old('discharge_notes') }}</textarea>
-                                </div>
-
-                                @if(($settlement['refund_amount'] ?? 0) > 0)
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Refund Method <span class="text-red-500">*</span>
-                                        <span class="text-xs text-gray-500 font-normal">({{ format_currency($settlement['refund_amount']) }} to refund)</span>
-                                    </label>
-                                    <select name="refund_method" required
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
-                                        <option value="">Select refund method</option>
-                                        <option value="cash" @selected(old('refund_method') === 'cash')>Cash</option>
-                                        <option value="card" @selected(old('refund_method') === 'card')>Card</option>
-                                        <option value="upi" @selected(old('refund_method') === 'upi')>UPI</option>
-                                        <option value="bank_transfer" @selected(old('refund_method') === 'bank_transfer')>Bank Transfer</option>
-                                        <option value="cheque" @selected(old('refund_method') === 'cheque')>Cheque</option>
-                                    </select>
-                                    @error('refund_method')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                                </div>
-                                @endif
-
-                                @if(($settlement['amount_due'] ?? 0) > 0)
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">
-                                    <div class="sm:col-span-2 text-sm text-amber-800">
-                                        Optional: collect part/all of the remaining due ({{ format_currency($settlement['amount_due']) }}) now.
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Additional Payment</label>
-                                        <input type="number" name="additional_payment_amount" step="0.01" min="0" max="{{ $settlement['amount_due'] }}"
-                                               value="{{ old('additional_payment_amount') }}"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
-                                        @error('additional_payment_amount')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-                                        <select name="additional_payment_method"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
-                                            <option value="">Select</option>
-                                            <option value="cash" @selected(old('additional_payment_method') === 'cash')>Cash</option>
-                                            <option value="card" @selected(old('additional_payment_method') === 'card')>Card</option>
-                                            <option value="upi" @selected(old('additional_payment_method') === 'upi')>UPI</option>
-                                            <option value="bank_transfer" @selected(old('additional_payment_method') === 'bank_transfer')>Bank Transfer</option>
-                                            <option value="cheque" @selected(old('additional_payment_method') === 'cheque')>Cheque</option>
-                                            <option value="insurance" @selected(old('additional_payment_method') === 'insurance')>Insurance</option>
-                                        </select>
-                                        @error('additional_payment_method')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                                    </div>
-                                </div>
-                                @endif
-
-                                <button type="submit" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
-                                        onclick="return confirm('Discharge patient and finalize the IPD bill?')">
-                                    <i class="fas fa-sign-out-alt mr-2"></i>Discharge & Finalize Invoice
-                                </button>
-                            </div>
-                        </form>
-                        @endif
-                    </div>
-                @endif
+            @if($workflowData['show_ipd_ui'] ?? false)
+            <div id="admission-content" class="tab-content">
+                @include('admin.visits.workflow.ipd._admission')
             </div>
             @endif
 
             <!-- Vital Signs Tab -->
-            <div id="vitals-content" class="tab-content {{ $visit->visit_type === 'opd' ? '' : 'hidden' }}">
+            <div id="vitals-content" class="tab-content {{ ($workflowData['vitals_tab_default_visible'] ?? false) ? '' : 'hidden' }}">
                 @if(session('warning'))
                     <div class="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg flex items-start">
                         <i class="fas fa-exclamation-triangle mr-3 mt-0.5"></i>
@@ -565,162 +136,81 @@
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
-                        <h4 class="text-lg font-medium text-gray-800 mb-4">{{ $visit->visit_type === 'ipd' ? 'Record New Vital Signs' : 'Record Vital Signs' }}</h4>
+                        <h4 class="text-lg font-medium text-gray-800 mb-4">{{ ($workflowData['append_only_vitals'] ?? false) ? 'Record New Vital Signs' : 'Record Vital Signs' }}</h4>
                         <form action="{{ route('visits.vitals', $visit) }}" method="POST">
                             @csrf
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Blood Pressure</label>
-                                    <input type="text" name="blood_pressure" value="{{ $visit->visit_type === 'ipd' ? '' : old('blood_pressure', $visit->vitalSigns?->blood_pressure) }}" 
+                                    <input type="text" name="blood_pressure" value="{{ ($workflowData['append_only_vitals'] ?? false) ? '' : old('blood_pressure', $visit->vitalSigns?->blood_pressure) }}" 
                                            placeholder="120/80" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Temperature (°F)</label>
-                                    <input type="number" name="temperature" value="{{ $visit->visit_type === 'ipd' ? '' : old('temperature', $visit->vitalSigns?->temperature) }}" 
+                                    <input type="number" name="temperature" value="{{ ($workflowData['append_only_vitals'] ?? false) ? '' : old('temperature', $visit->vitalSigns?->temperature) }}" 
                                            step="0.1" placeholder="98.6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Pulse Rate (bpm)</label>
-                                    <input type="number" name="pulse_rate" value="{{ $visit->visit_type === 'ipd' ? '' : old('pulse_rate', $visit->vitalSigns?->pulse_rate) }}" 
+                                    <input type="number" name="pulse_rate" value="{{ ($workflowData['append_only_vitals'] ?? false) ? '' : old('pulse_rate', $visit->vitalSigns?->pulse_rate) }}" 
                                            placeholder="72" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">SpO<sub>2</sub> (%)</label>
-                                    <input type="number" name="spo2" value="{{ $visit->visit_type === 'ipd' ? '' : old('spo2', $visit->vitalSigns?->spo2) }}" 
+                                    <input type="number" name="spo2" value="{{ ($workflowData['append_only_vitals'] ?? false) ? '' : old('spo2', $visit->vitalSigns?->spo2) }}" 
                                            min="0" max="100" placeholder="98" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">BSR (%)</label>
-                                    <input type="number" name="bsr" value="{{ $visit->visit_type === 'ipd' ? '' : old('bsr', $visit->vitalSigns?->bsr) }}" 
+                                    <input type="number" name="bsr" value="{{ ($workflowData['append_only_vitals'] ?? false) ? '' : old('bsr', $visit->vitalSigns?->bsr) }}" 
                                            step="0.01" min="0" placeholder="120" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
-                                    <input type="number" name="weight" value="{{ $visit->visit_type === 'ipd' ? '' : old('weight', $visit->vitalSigns?->weight) }}" 
+                                    <input type="number" name="weight" value="{{ ($workflowData['append_only_vitals'] ?? false) ? '' : old('weight', $visit->vitalSigns?->weight) }}" 
                                            step="0.1" placeholder="70.5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Height (ft)</label>
-                                    <input type="number" name="height" value="{{ $visit->visit_type === 'ipd' ? '' : old('height', $visit->vitalSigns?->height) }}" 
+                                    <input type="number" name="height" value="{{ ($workflowData['append_only_vitals'] ?? false) ? '' : old('height', $visit->vitalSigns?->height) }}" 
                                            step="0.01" placeholder="5.6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                     <p class="text-xs text-gray-500 mt-1">Example: 5.6 for 5'6"</p>
                                 </div>
                             </div>
                             <div class="mt-4">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                                <textarea name="notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">{{ $visit->visit_type === 'ipd' ? '' : old('notes', $visit->vitalSigns?->notes) }}</textarea>
+                                <textarea name="notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">{{ ($workflowData['append_only_vitals'] ?? false) ? '' : old('notes', $visit->vitalSigns?->notes) }}</textarea>
                             </div>
                             <button type="submit" class="mt-4 bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                                <i class="fas fa-save mr-2"></i>{{ $visit->visit_type === 'ipd' ? 'Add Vital Signs' : 'Save Vital Signs' }}
+                                <i class="fas fa-save mr-2"></i>{{ ($workflowData['append_only_vitals'] ?? false) ? 'Add Vital Signs' : 'Save Vital Signs' }}
                             </button>
                         </form>
                     </div>
 
                     <div>
-                        @if($visit->visit_type === 'ipd')
-                            <!-- Vital Signs History for IPD -->
-                            <h4 class="text-lg font-medium text-gray-800 mb-4">Vital Signs History</h4>
-                            <div class="space-y-4 max-h-96 overflow-y-auto">
-                                @forelse($visit->allVitalSigns as $vital)
-                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                        <div class="flex justify-between items-start mb-3">
-                                            <h5 class="font-medium text-blue-800">{{ $vital->created_at->format('M d, Y h:i A') }}</h5>
-                                            <span class="text-xs text-blue-600">{{ $vital->user?->name ?? 'Unknown' }}</span>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-2 text-sm">
-                                            @if($vital->blood_pressure)
-                                                <div><span class="text-blue-600">BP:</span> {{ $vital->blood_pressure }}</div>
-                                            @endif
-                                            @if($vital->temperature)
-                                                <div><span class="text-blue-600">Temp:</span> {{ $vital->temperature }}°F</div>
-                                            @endif
-                                            @if($vital->pulse_rate)
-                                                <div><span class="text-blue-600">Pulse:</span> {{ $vital->pulse_rate }} bpm</div>
-                                            @endif
-                                            @if($vital->spo2)
-                                                <div><span class="text-blue-600">SpO<sub>2</sub>:</span> {{ $vital->spo2 }}%</div>
-                                            @endif
-                                            @if($vital->bsr)
-                                                <div><span class="text-blue-600">BSR:</span> {{ $vital->bsr }}%</div>
-                                            @endif
-                                            @if($vital->weight)
-                                                <div><span class="text-blue-600">Weight:</span> {{ $vital->weight }} kg</div>
-                                            @endif
-                                            @if($vital->height)
-                                                <div><span class="text-blue-600">Height:</span> {{ $vital->height }} ft</div>
-                                            @endif
-                                        </div>
-                                        @if($vital->notes)
-                                            <div class="mt-2 text-sm text-blue-700">
-                                                <span class="font-medium">Notes:</span> {{ $vital->notes }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                @empty
-                                    <p class="text-gray-500 text-center py-4">No vital signs recorded yet.</p>
-                                @endforelse
-                            </div>
-                        @else
-                            <h4 class="text-lg font-medium text-gray-800 mb-4">Doctor Assignment</h4>
-                            @if(!$visit->doctor_id || ($visit->doctor_id && $visit->status !== 'completed'))
-                                <form action="{{ route('visits.assign-doctor', $visit) }}" method="POST">
-                                    @csrf
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                                            {{ $visit->doctor_id ? 'Change Doctor' : 'Assign Doctor' }}
-                                        </label>
-                                        <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                                            <option value="">Select Doctor</option>
-                                            @foreach($doctors as $doctor)
-                                            <option value="{{ $doctor->id }}" {{ $visit->doctor_id == $doctor->id ? 'selected' : '' }}>
-                                                Dr. {{ $doctor->name }} - {{ $doctor->specialization }}
-                                            </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                                        <i class="fas fa-user-md mr-2"></i>{{ $visit->doctor_id ? 'Update Doctor' : 'Assign Doctor' }}
-                                    </button>
-                                </form>
-                            @else
-                                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                                            <div>
-                                                <p class="font-medium text-green-800">Dr. {{ $visit->doctor->name }}</p>
-                                                <p class="text-sm text-green-600">{{ $visit->doctor->specialization }}</p>
-                                            </div>
-                                        </div>
-                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                            <i class="fas fa-lock mr-1"></i>Locked
-                                        </span>
-                                    </div>
-                                </div>
-                            @endif
+                        @if($workflowData['append_only_vitals'] ?? false)
+                            @include('admin.visits.workflow.ipd._vitals-history')
+                        @elseif($workflowData['show_opd_ui'] ?? false)
+                            @include('admin.visits.workflow.opd._vitals')
+                        @elseif($workflowData['show_emergency_ui'] ?? false)
+                            @include('admin.visits.workflow.emergency._vitals')
                         @endif
                     </div>
                 </div>
             </div>
 
-            @if($visit->visit_type === 'ipd')
+            @if($workflowData['show_ipd_ui'] ?? false)
                 @include('admin.visits.partials.ipd-gpe-records')
                 @include('admin.visits.partials.ipd-care-team')
             @endif
 
             <!-- Consultation Tab -->
             <div id="consultation-content" class="tab-content hidden">
-                @if($visit->visit_type === 'ipd')
+                @if($workflowData['show_active_complaints'] ?? false)
                     @include('admin.visits.partials.ipd-active-complaints')
                 @endif
 
-                @php
-                    $canConsult = $visit->visit_type === 'ipd'
-                        ? $visit->hasActiveCareTeam()
-                        : (bool) $visit->doctor_id;
-                @endphp
-
-                @if($canConsult)
+                @if($workflowData['can_consult'])
                     <form action="{{ route('visits.consultation', $visit) }}" method="POST">
                         @csrf
                         
@@ -832,66 +322,10 @@
                         </div>
 
                         <!-- GPE (General Physical Examination) Accordion -->
-                        @if($visit->visit_type !== 'ipd')
-                        <div class="border border-gray-200 rounded-lg mb-4">
-                            <button type="button" onclick="toggleAccordion('gpe')" class="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 flex justify-between items-center">
-                                <span class="font-medium text-gray-800">GPE (General Physical Examination)</span>
-                                <i id="gpe-icon" class="fas fa-chevron-down text-gray-500"></i>
-                            </button>
-                            <div id="gpe-content" class="hidden p-4">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Chest</label>
-                                        <input type="text" name="gpe_chest" value="{{ old('gpe_chest', $visit->consultation?->gpe_chest) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter chest examination findings">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Abdomen</label>
-                                        <input type="text" name="gpe_abdomen" value="{{ old('gpe_abdomen', $visit->consultation?->gpe_abdomen) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter abdomen examination findings">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">CVS</label>
-                                        <input type="text" name="gpe_cvs" value="{{ old('gpe_cvs', $visit->consultation?->gpe_cvs) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter CVS examination findings">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">CNS</label>
-                                        <input type="text" name="gpe_cns" value="{{ old('gpe_cns', $visit->consultation?->gpe_cns) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter CNS examination findings">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Pupils</label>
-                                        <input type="text" name="gpe_pupils" value="{{ old('gpe_pupils', $visit->consultation?->gpe_pupils) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter pupils examination findings">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Conjunctiva</label>
-                                        <input type="text" name="gpe_conjunctiva" value="{{ old('gpe_conjunctiva', $visit->consultation?->gpe_conjunctiva) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter conjunctiva examination findings">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nails</label>
-                                        <input type="text" name="gpe_nails" value="{{ old('gpe_nails', $visit->consultation?->gpe_nails) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter nails examination findings">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Throat</label>
-                                        <input type="text" name="gpe_throat" value="{{ old('gpe_throat', $visit->consultation?->gpe_throat) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter throat examination findings">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Sclera</label>
-                                        <input type="text" name="gpe_sclera" value="{{ old('gpe_sclera', $visit->consultation?->gpe_sclera) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter sclera examination findings">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">GCS</label>
-                                        <input type="text" name="gpe_gcs" value="{{ old('gpe_gcs', $visit->consultation?->gpe_gcs) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Enter GCS score">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        @if($workflowData['show_opd_ui'] ?? false)
+                            @include('admin.visits.workflow.opd._consultation')
+                        @elseif($workflowData['show_emergency_ui'] ?? false)
+                            @include('admin.visits.workflow.emergency._care')
                         @endif
 
                         <!-- Next Visit Date -->
@@ -904,7 +338,7 @@
                             <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                                 <i class="fas fa-save mr-2"></i>Save Consultation
                             </button>
-                            @if(in_array($visit->status, ['with_doctor', 'triaged']) && $visit->visit_type !== 'ipd')
+                            @if(in_array($visit->status, ['with_doctor', 'triaged']) && ($workflowData['show_complete_visit_button'] ?? false))
                                 <a href="{{ route('visits.complete', $visit) }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
                                     <i class="fas fa-check mr-2"></i>Complete Visit
                                 </a>
@@ -914,8 +348,8 @@
                 @else
                     <div class="text-center py-8">
                         <i class="fas fa-user-md text-4xl text-gray-300 mb-4"></i>
-                        @if($visit->visit_type === 'ipd')
-                            <p class="text-gray-500">Add at least one doctor to the Care Team before starting consultation.</p>
+                        @if($workflowData['care_team_consult_message'] ?? false)
+                            <p class="text-gray-500">{{ $workflowData['care_team_consult_message'] }}</p>
                         @else
                             <p class="text-gray-500">Please assign a doctor first to start consultation.</p>
                         @endif
@@ -925,14 +359,7 @@
 
             <!-- Prescription Tab -->
             <div id="prescription-content" class="tab-content hidden">
-                @php
-                    $canPrescribe = $visit->visit_type === 'ipd'
-                        ? $visit->hasActiveCareTeam()
-                        : (bool) $visit->doctor_id;
-                    $showOrderDoctorPicker = $visit->visit_type === 'ipd'
-                        && (empty($authDoctor) || ! $visit->careTeam->contains('doctor_id', $authDoctor->id ?? null));
-                @endphp
-                @if($canPrescribe)
+                @if($workflowData['can_prescribe'])
                     <div class="space-y-6">
                         @if($visit->prescriptions->count() > 0)
                             <div>
@@ -976,7 +403,7 @@
                             <h4 class="text-lg font-medium text-gray-800 mb-4">Create New Prescription</h4>
                             <form action="{{ route('visits.prescription', $visit) }}" method="POST" id="prescription-form">
                                 @csrf
-                                @if($showOrderDoctorPicker)
+                                @if($workflowData['show_order_doctor_picker'] ?? false)
                                     <div class="mb-4">
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Prescribing Doctor (from care team)</label>
                                         <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
@@ -1073,8 +500,8 @@
                 @else
                     <div class="text-center py-8">
                         <i class="fas fa-user-md text-4xl text-gray-300 mb-4"></i>
-                        @if($visit->visit_type === 'ipd')
-                            <p class="text-gray-500">Add at least one doctor to the Care Team before creating prescriptions.</p>
+                        @if($workflowData['care_team_prescribe_message'] ?? false)
+                            <p class="text-gray-500">{{ $workflowData['care_team_prescribe_message'] }}</p>
                         @else
                             <p class="text-gray-500">Please assign a doctor first to create prescriptions.</p>
                         @endif
@@ -1082,329 +509,10 @@
                 @endif
             </div>
 
-            <!-- Tests Tab (OPD & IPD only) -->
-            @if($visit->visit_type !== 'emergency')
+            <!-- Tests Tab -->
+            @if($workflowData['show_investigations'])
             <div id="tests-content" class="tab-content hidden">
-                <div class="max-w-7xl mx-auto">
-                    @php
-                        $canOrderLabs = $visit->visit_type === 'ipd'
-                            ? $visit->hasActiveCareTeam()
-                            : (bool) $visit->doctor_id;
-                    @endphp
-                    @if($canOrderLabs)
-                        <!-- Order Investigations Form -->
-                        <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
-                            <div class="flex items-center justify-between mb-6">
-                                <div class="flex items-center">
-                                    <i class="fas fa-plus-circle text-medical-blue mr-2"></i>
-                                    <h5 class="font-semibold text-gray-800">Order Investigations</h5>
-                                </div>
-                                <span class="text-xs text-gray-500">Select multiple investigations to order at once</span>
-                            </div>
-                                
-                                <form action="{{ route('visits.order-multiple-lab-tests', $visit) }}" method="POST" id="lab-tests-form">
-                                    @csrf
-
-                                    @if($visit->visit_type === 'ipd' && (empty($authDoctor) || ! $visit->careTeam->contains('doctor_id', $authDoctor->id ?? null)))
-                                        <div class="mb-4">
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Ordering Doctor (from care team)</label>
-                                            <select name="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
-                                                <option value="">Select Doctor</option>
-                                                @foreach($visit->careTeam as $member)
-                                                    <option value="{{ $member->doctor_id }}">
-                                                        Dr. {{ $member->doctor->name }} - {{ $member->doctor->specialization }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('doctor_id')
-                                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                                            @enderror
-                                        </div>
-                                    @endif
-                                    
-                                    <!-- Dynamic Test Table -->
-                                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                                        <div class="flex items-center justify-between mb-4">
-                                            <h6 class="text-sm font-medium text-gray-700 flex items-center">
-                                                <i class="fas fa-flask text-gray-500 mr-2"></i>
-                                                Test Selection
-                                            </h6>
-                                            <button type="button" onclick="addTestRow()" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-medical-blue bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors">
-                                                <i class="fas fa-plus mr-1"></i>Add Test
-                                            </button>
-                                        </div>
-                                        
-                                        <div class="overflow-x-auto">
-                                            <table class="w-full" id="tests-table">
-                                                <thead>
-                                                    <tr class="text-xs font-semibold text-gray-600 uppercase tracking-wider border-b-2 border-gray-200">
-                                                        <th class="text-left py-3 pr-4">Investigation</th>
-                                                        <th class="text-center py-3 px-3 w-20">Qty</th>
-                                                        <th class="text-center py-3 px-3 w-32">Priority</th>
-                                                        <th class="text-left py-3 px-3">Clinical Notes</th>
-                                                        <th class="w-10"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="test-rows">
-                                                    <tr class="test-row border-b border-gray-100 hover:bg-gray-25">
-                                                        <td class="py-3 pr-4">
-                                                            <select name="tests[0][lab_test_id]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
-                                                                <option value="">Select investigation...</option>
-                                                                @php
-                                                                    $groupedInvestigations = $investigations->groupBy('category');
-                                                                    $categoryLabels = [
-                                                                        'hematology'        => 'Hematology',
-                                                                        'biochemistry'      => 'Biochemistry',
-                                                                        'microbiology'      => 'Microbiology',
-                                                                        'immunology'        => 'Immunology',
-                                                                        'pathology'         => 'Pathology',
-                                                                        'histopathology'    => 'Histopathology',
-                                                                        'molecular'         => 'Molecular Biology',
-                                                                        'x-ray'             => 'X-Ray',
-                                                                        'ultrasound'        => 'Ultrasound',
-                                                                        'ct-scan'           => 'CT Scan',
-                                                                        'mri'               => 'MRI',
-                                                                        'cardiology'        => 'Cardiology',
-                                                                        'cardiac-diagnostics' => 'Cardiac Diagnostics',
-                                                                        'radiology'         => 'Radiology',
-                                                                    ];
-                                                                @endphp
-                                                                @foreach($groupedInvestigations as $cat => $catInvestigations)
-                                                                    <optgroup label="{{ $categoryLabels[$cat] ?? ucwords(str_replace('-', ' ', $cat)) }}">
-                                                                        @foreach($catInvestigations as $investigation)
-                                                                        <option value="{{ $investigation->id }}">
-                                                                            {{ $investigation->name }} - {{ currency_symbol() }}{{ number_format($investigation->price, 0) }}
-                                                                        </option>
-                                                                        @endforeach
-                                                                    </optgroup>
-                                                                @endforeach
-                                                            </select>
-                                                        </td>
-                                                        <td class="py-3 px-3 text-center">
-                                                            <input type="number" name="tests[0][quantity]" value="1" min="1" max="10" class="w-full px-2 py-2 text-sm text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
-                                                        </td>
-                                                        <td class="py-3 px-3">
-                                                            <select name="tests[0][priority]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors priority-select" required>
-                                                                <option value="routine">Routine</option>
-                                                                <option value="urgent">Urgent</option>
-                                                                <option value="stat">STAT</option>
-                                                            </select>
-                                                        </td>
-                                                        <td class="py-3 px-3">
-                                                            <input type="text" name="tests[0][clinical_notes]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" placeholder="Optional notes...">
-                                                        </td>
-                                                        <td class="py-3 text-center">
-                                                            <button type="button" onclick="removeTestRow(this)" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors" style="display: none;" title="Remove test">
-                                                                <i class="fas fa-times"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        
-                                        <!-- Test Count Display -->
-                                        <div class="mt-3 pt-3 border-t border-gray-200">
-                                            <div class="flex items-center justify-between text-xs text-gray-500">
-                                                <span id="test-count">1 test selected</span>
-                                                <span>Use "Add Test" to select multiple tests</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Single Submit Button -->
-                                    <div class="flex flex-col sm:flex-row gap-3">
-                                        <button type="submit" class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-medical-blue text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm">
-                                            <i class="fas fa-flask mr-2"></i>
-                                            Order Investigations
-                                        </button>
-                                        <button type="button" onclick="resetForm()" class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 transition-all duration-200">
-                                            <i class="fas fa-undo mr-2"></i>
-                                            Reset
-                                        </button>
-                                    </div>
-                                </form>
-                        @else
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <div class="flex items-center">
-                                    <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
-                                    @if($visit->visit_type === 'ipd')
-                                        <p class="text-yellow-800">Add at least one doctor to the Care Team before ordering investigations.</p>
-                                    @else
-                                        <p class="text-yellow-800">Doctor must be assigned to order investigations.</p>
-                                    @endif
-                                </div>
-                            </div>
-                        @endif
-
-                    <!-- Display All Investigation Orders -->
-                    <div class="mt-8">
-                        @php
-                            // Flatten all items across all orders for this visit
-                            $allOrderItems = $visit->labOrders->flatMap(fn($order) => $order->items->map(fn($item) => $item->setRelation('order', $order)));
-                            $pendingOrders   = $allOrderItems->whereIn('status', ['ordered', 'collected', 'testing']);
-                            $completedOrders = $allOrderItems->whereIn('status', ['verified', 'reported']);
-                        @endphp
-
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-lg font-medium text-gray-800">Ordered Investigations</h4>
-                            <span class="text-sm text-gray-500">{{ $allOrderItems->count() }} {{ Str::plural('investigation', $allOrderItems->count()) }}</span>
-                        </div>
-                        
-                        <div class="space-y-6">
-                            <!-- Pending Investigations -->
-                            @if($pendingOrders->count() > 0)
-                                <section aria-labelledby="pending-tests-heading">
-                                    <div class="flex flex-col sm:flex-row sm:items-center mb-4 gap-2">
-                                        <div class="flex items-center">
-                                            <div class="w-2 h-2 bg-yellow-500 rounded-full mr-3 animate-pulse"></div>
-                                            <h5 id="pending-tests-heading" class="text-base font-semibold text-gray-900">Pending Results</h5>
-                                        </div>
-                                        <span class="px-2.5 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">{{ $pendingOrders->count() }}</span>
-                                    </div>
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                                        @foreach($pendingOrders as $labOrder)
-                                            <div class="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
-                                                <div class="flex justify-between items-start mb-3">
-                                                    <div class="flex-1 min-w-0">
-                                                        <h6 class="text-base font-semibold text-gray-900 truncate mb-2">{{ $labOrder->investigation->name }}</h6>
-                                                        <div class="flex flex-wrap items-center gap-2 mb-2">
-                                                            @php
-                                                                $typeConfig = [
-                                                                    'hematology'   => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'biochemistry' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'microbiology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'immunology'   => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'pathology'    => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'molecular'    => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'x-ray'        => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'ultrasound'   => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'ct-scan'      => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'mri'          => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'radiology'    => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'cardiology'   => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
-                                                                ];
-                                                                $type = $labOrder->investigation->category ?? 'pathology';
-                                                                $typeStyle = $typeConfig[$type] ?? $typeConfig['pathology'];
-                                                            @endphp
-                                                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $typeStyle['bg'] }} {{ $typeStyle['text'] }}">
-                                                                <i class="fas {{ $typeStyle['icon'] }} mr-1"></i>
-                                                                {{ ucfirst($type) }}
-                                                            </span>
-                                                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
-                                                                {{ $labOrder->priority === 'stat' ? 'bg-red-600 text-white' : 
-                                                                   ($labOrder->priority === 'urgent' ? 'bg-orange-600 text-white' : 'bg-blue-600 text-white') }}">
-                                                                {{ strtoupper($labOrder->priority) }}
-                                                            </span>
-                                                        </div>
-                                                        <p class="text-xs text-gray-600">
-                                                            <i class="fas fa-calendar-alt mr-1"></i>
-                                                            {{ $labOrder->order->ordered_at->format('M d, h:i A') }}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                @if($labOrder->clinical_notes)
-                                                    <div class="bg-white rounded p-2 mb-3 text-xs text-gray-700">
-                                                        <i class="fas fa-notes-medical text-yellow-600 mr-1"></i>
-                                                        {{ Str::limit($labOrder->clinical_notes, 60) }}
-                                                    </div>
-                                                @endif
-                                                
-                                                @if($labOrder->test_location === 'indoor')
-                                                    <div class="mt-3 pt-3 border-t border-yellow-200">
-                                                        <a href="{{ route('lab-orders.results.create', $labOrder) }}" 
-                                                           class="inline-flex items-center px-3 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all w-full justify-center">
-                                                            <i class="fas fa-plus mr-2"></i>
-                                                            Add Result
-                                                        </a>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </section>
-                            @endif
-                            
-                            <!-- Completed Investigations -->
-                            @if($completedOrders->count() > 0)
-                                <section aria-labelledby="completed-tests-heading" class="mt-6">
-                                    <div class="flex flex-col sm:flex-row sm:items-center mb-4 gap-2">
-                                        <div class="flex items-center">
-                                            <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                            <h5 id="completed-tests-heading" class="text-base font-semibold text-gray-900">Completed Results</h5>
-                                        </div>
-                                        <span class="px-2.5 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">{{ $completedOrders->count() }}</span>
-                                    </div>
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                                        @foreach($completedOrders as $labOrder)
-                                            <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
-                                                <div class="flex justify-between items-start mb-3">
-                                                    <div class="flex-1 min-w-0">
-                                                        <h6 class="text-base font-semibold text-gray-900 truncate mb-2">{{ $labOrder->investigation->name }}</h6>
-                                                        <div class="flex flex-wrap items-center gap-2 mb-2">
-                                                            @php
-                                                                $typeConfig = [
-                                                                    'hematology'   => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'biochemistry' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'microbiology' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'immunology'   => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'pathology'    => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'molecular'    => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'icon' => 'fa-microscope'],
-                                                                    'x-ray'        => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'ultrasound'   => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'ct-scan'      => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'mri'          => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'radiology'    => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-x-ray'],
-                                                                    'cardiology'   => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-heartbeat']
-                                                                ];
-                                                                $type = $labOrder->investigation->category ?? 'pathology';
-                                                                $typeStyle = $typeConfig[$type] ?? $typeConfig['pathology'];
-                                                            @endphp
-                                                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $typeStyle['bg'] }} {{ $typeStyle['text'] }}">
-                                                                <i class="fas {{ $typeStyle['icon'] }} mr-1"></i>
-                                                                {{ ucfirst($type) }}
-                                                            </span>
-                                                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium bg-green-200 text-green-900">
-                                                                <i class="fas fa-check-circle mr-1"></i>
-                                                                Reported
-                                                            </span>
-                                                        </div>
-                                                        <p class="text-xs text-gray-600">
-                                                            <i class="fas fa-calendar-alt mr-1"></i>
-                                                            {{ $labOrder->order->ordered_at->format('M d, h:i A') }}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                
-                                                @if($labOrder->result)
-                                                    <div class="mt-3 pt-3 border-t border-green-200 flex gap-2">
-                                                        <a href="{{ route('lab-results.report', $labOrder->result) }}" 
-                                                           class="flex-1 inline-flex items-center justify-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-all">
-                                                            <i class="fas fa-file-medical mr-2"></i>View
-                                                        </a>
-                                                        <a href="{{ route('lab-results.report', $labOrder->result) }}?print=1" 
-                                                           target="_blank"
-                                                           class="inline-flex items-center justify-center px-3 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-all">
-                                                            <i class="fas fa-print"></i>
-                                                        </a>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </section>
-                            @endif
-                            
-                            <!-- Empty State -->
-                            @if($allOrderItems->count() === 0)
-                                <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
-                                    <i class="fas fa-clipboard-list text-gray-400 text-3xl mb-3"></i>
-                                    <p class="text-gray-500">No investigations ordered yet</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
+                @include('admin.visits.workflow.opd._investigations')
             </div>
             @endif
         </div>
@@ -1412,7 +520,7 @@
 </div>
 
 <script>
-let activeTab = '{{ $visit->visit_type === "emergency" ? "triage" : ($visit->visit_type === "ipd" ? "admission" : "vitals") }}';
+let activeTab = '{{ $workflowData['resolved_initial_tab'] ?? $workflowData['default_tab'] }}';
 let itemIndex = 1;
 let testRowIndex = 1;
 
@@ -1567,27 +675,7 @@ function removeItem(button) {
 // Restore active tab on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Determine the correct starting tab based on visit status and completion
-    let defaultTab = '{{ $visit->visit_type === "emergency" ? "triage" : ($visit->visit_type === "ipd" ? "admission" : "vitals") }}';
-    
-    @if($visit->visit_type === 'emergency')
-        @if($visit->triage)
-            defaultTab = 'vitals';
-            @if($visit->vitalSigns)
-                defaultTab = 'consultation';
-            @endif
-        @endif
-    @elseif($visit->visit_type === 'ipd')
-        @if($visit->admission)
-            defaultTab = 'vitals';
-            @if($visit->hasActiveCareTeam())
-                defaultTab = 'consultation';
-            @endif
-        @endif
-    @else
-        @if($visit->vitalSigns && $visit->doctor_id)
-            defaultTab = 'consultation';
-        @endif
-    @endif
+    let defaultTab = '{{ $workflowData['resolved_initial_tab'] ?? $workflowData['default_tab'] }}';
     
     // Restore tab after form submit, otherwise use workflow default
     if (typeof window.restoreVisitWorkflowTab === 'function') {

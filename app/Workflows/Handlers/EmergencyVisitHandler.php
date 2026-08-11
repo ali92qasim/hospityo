@@ -30,6 +30,22 @@ class EmergencyVisitHandler implements VisitTypeHandler
             'default_tab' => 'triage',
             'show_investigations' => false,
             'consultation_label' => 'Emergency Care',
+            'show_opd_ui' => false,
+            'show_ipd_ui' => false,
+            'show_emergency_ui' => true,
+            'append_only_vitals' => false,
+            'show_consultation_gpe' => true,
+            'show_doctor_assignment_in_vitals' => false,
+            'show_active_complaints' => false,
+            'show_complete_visit_button' => true,
+            'print_label' => 'Print Report',
+            'vitals_tab_default_visible' => false,
+            'care_team_consult_message' => null,
+            'care_team_prescribe_message' => null,
+            'care_team_labs_message' => null,
+            'has_emergency_detail' => (bool) $visit->emergencyDetails,
+            'triage_completed' => (bool) $visit->triage,
+            'triage_priority_level' => $visit->triage?->priority_level,
         ];
     }
 
@@ -41,5 +57,38 @@ class EmergencyVisitHandler implements VisitTypeHandler
     public function canComplete(Visit $visit): bool
     {
         return in_array($visit->status, ['with_doctor', 'triaged'], true);
+    }
+
+    public function canConsult(Visit $visit): bool
+    {
+        return (bool) $visit->doctor_id;
+    }
+
+    public function canPrescribe(Visit $visit): bool
+    {
+        return (bool) $visit->doctor_id;
+    }
+
+    public function canOrderLabs(Visit $visit): bool
+    {
+        return (bool) $visit->doctor_id;
+    }
+
+    public function resolveInitialTab(Visit $visit): string
+    {
+        if (! $visit->triage) {
+            return 'triage';
+        }
+
+        if ($visit->vitalSigns) {
+            return 'consultation';
+        }
+
+        return 'vitals';
+    }
+
+    public function showOrderDoctorPicker(Visit $visit, ?Doctor $authDoctor): bool
+    {
+        return false;
     }
 }

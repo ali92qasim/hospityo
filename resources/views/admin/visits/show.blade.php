@@ -30,24 +30,30 @@
                         <p class="text-sm text-gray-600">{{ strtoupper($visit->visit_type) }} Visit</p>
                         @php
                             $statusColors = [
+                                'registered' => 'bg-blue-100 text-blue-800',
+                                'triaged' => 'bg-red-100 text-red-800',
+                                'vitals_recorded' => 'bg-green-100 text-green-800',
+                                'admitted' => 'bg-purple-100 text-purple-800',
+                                'with_doctor' => 'bg-indigo-100 text-indigo-800',
+                                'discharged' => 'bg-orange-100 text-orange-800',
+                                'completed' => 'bg-gray-100 text-gray-800',
                                 'active' => 'bg-blue-100 text-blue-800',
-                                'completed' => 'bg-green-100 text-green-800',
-                                'discharged' => 'bg-gray-100 text-gray-800',
-                                'transferred' => 'bg-yellow-100 text-yellow-800'
+                                'transferred' => 'bg-yellow-100 text-yellow-800',
                             ];
                             $priorityColors = [
                                 'low' => 'bg-gray-100 text-gray-800',
                                 'medium' => 'bg-blue-100 text-blue-800',
                                 'high' => 'bg-orange-100 text-orange-800',
-                                'critical' => 'bg-red-100 text-red-800'
+                                'critical' => 'bg-red-100 text-red-800',
+                                'urgent' => 'bg-red-100 text-red-800',
                             ];
                         @endphp
                         <div class="flex space-x-2 mt-1">
-                            <span class="px-2 py-1 text-xs rounded-full {{ $statusColors[$visit->status] }}">
+                            <span class="px-2 py-1 text-xs rounded-full {{ $statusColors[$visit->status] ?? 'bg-gray-100 text-gray-800' }}">
                                 {{ ucfirst($visit->status) }}
                             </span>
-                            <span class="px-2 py-1 text-xs rounded-full {{ $priorityColors[$visit->priority] }}">
-                                {{ ucfirst($visit->priority) }} Priority
+                            <span class="px-2 py-1 text-xs rounded-full {{ $priorityColors[$visitAdmin['display_priority']] ?? 'bg-gray-100 text-gray-800' }}">
+                                {{ ucfirst(str_replace('_', ' ', $visitAdmin['display_priority'])) }} Priority
                             </span>
                         </div>
                     </div>
@@ -150,30 +156,30 @@
                             </div>
                         </div>
                         <div class="space-y-4">
-                            @if($visit->room_no || $visit->bed_no)
-                                @if($visit->room_no)
+                            @if($visitAdmin['ward_name'] || $visitAdmin['bed_number'])
+                                @if($visitAdmin['ward_name'])
                                 <div class="flex justify-between py-2 border-b border-gray-100">
-                                    <span class="text-gray-600">Room Number:</span>
-                                    <span class="font-medium">{{ $visit->room_no }}</span>
+                                    <span class="text-gray-600">Ward:</span>
+                                    <span class="font-medium">{{ $visitAdmin['ward_name'] }}</span>
                                 </div>
                                 @endif
-                                @if($visit->bed_no)
+                                @if($visitAdmin['bed_number'])
                                 <div class="flex justify-between py-2 border-b border-gray-100">
                                     <span class="text-gray-600">Bed Number:</span>
-                                    <span class="font-medium">{{ $visit->bed_no }}</span>
+                                    <span class="font-medium">{{ $visitAdmin['bed_number'] }}</span>
                                 </div>
                                 @endif
                             @endif
-                            @if($visit->discharge_datetime)
+                            @if($visitAdmin['discharge_at'])
                             <div class="flex justify-between py-2 border-b border-gray-100">
                                 <span class="text-gray-600">Discharge Date:</span>
-                                <span class="font-medium">{{ $visit->discharge_datetime->format('M d, Y h:i A') }}</span>
+                                <span class="font-medium">{{ $visitAdmin['discharge_at']->format('M d, Y h:i A') }}</span>
                             </div>
                             @endif
-                            @if($visit->total_charges > 0)
+                            @if($visitAdmin['total_charges'] > 0)
                             <div class="flex justify-between py-2 border-b border-gray-100">
                                 <span class="text-gray-600">Total Charges:</span>
-                                <span class="font-medium text-green-600">{{ format_currency($visit->total_charges) }}</span>
+                                <span class="font-medium text-green-600">{{ format_currency($visitAdmin['total_charges']) }}</span>
                             </div>
                             @endif
                         </div>
@@ -181,43 +187,42 @@
                 </div>
 
                 <!-- Medical Information -->
-                @if($visit->chief_complaint || $visit->diagnosis || $visit->treatment)
+                @if($visitAdmin['chief_complaint'] || $visitAdmin['diagnosis'] || $visitAdmin['treatment'])
                 <div class="md:col-span-2">
                     <h4 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-stethoscope mr-2 text-red-500"></i>
                         Medical Information
                     </h4>
                     <div class="space-y-4">
-                        @if($visit->chief_complaint)
+                        @if($visitAdmin['chief_complaint'])
                         <div>
                             <h5 class="text-sm font-medium text-gray-700 mb-2">Chief Complaint</h5>
-                            <p class="text-gray-600 bg-gray-50 p-3 rounded-lg">{{ $visit->chief_complaint }}</p>
+                            <p class="text-gray-600 bg-gray-50 p-3 rounded-lg">{{ $visitAdmin['chief_complaint'] }}</p>
                         </div>
                         @endif
-                        @if($visit->diagnosis)
+                        @if($visitAdmin['diagnosis'])
                         <div>
                             <h5 class="text-sm font-medium text-gray-700 mb-2">Diagnosis</h5>
-                            <p class="text-gray-600 bg-blue-50 p-3 rounded-lg">{{ $visit->diagnosis }}</p>
+                            <p class="text-gray-600 bg-blue-50 p-3 rounded-lg">{{ $visitAdmin['diagnosis'] }}</p>
                         </div>
                         @endif
-                        @if($visit->treatment)
+                        @if($visitAdmin['treatment'])
                         <div>
                             <h5 class="text-sm font-medium text-gray-700 mb-2">Treatment</h5>
-                            <p class="text-gray-600 bg-green-50 p-3 rounded-lg">{{ $visit->treatment }}</p>
+                            <p class="text-gray-600 bg-green-50 p-3 rounded-lg">{{ $visitAdmin['treatment'] }}</p>
                         </div>
                         @endif
                     </div>
                 </div>
                 @endif
 
-                <!-- Notes -->
-                @if($visit->notes)
+                @if($visitAdmin['clinical_notes'])
                 <div class="md:col-span-2">
                     <h4 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-sticky-note mr-2 text-yellow-500"></i>
-                        Additional Notes
+                        Clinical Notes
                     </h4>
-                    <p class="text-gray-600 bg-yellow-50 p-4 rounded-lg">{{ $visit->notes }}</p>
+                    <p class="text-gray-600 bg-yellow-50 p-4 rounded-lg">{{ $visitAdmin['clinical_notes'] }}</p>
                 </div>
                 @endif
 

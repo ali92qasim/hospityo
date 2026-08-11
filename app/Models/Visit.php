@@ -159,9 +159,28 @@ class Visit extends Model
         return $this->priority ?? 'medium';
     }
 
+    public function readsTypeDetailFromChild(): bool
+    {
+        return (bool) config("visits.read_from_child.{$this->visit_type}", false);
+    }
+
+    public function typeDetailForRead(): ?Model
+    {
+        if (! $this->readsTypeDetailFromChild()) {
+            return null;
+        }
+
+        return match ($this->visit_type) {
+            'opd' => $this->opdDetails,
+            'ipd' => $this->ipdDetails,
+            'emergency' => $this->emergencyDetails,
+            default => null,
+        };
+    }
+
     public function vitalSigns(): HasOne
     {
-        return $this->hasOne(VitalSign::class);
+        return $this->hasOne(VitalSign::class)->latestOfMany();
     }
 
     public function allVitalSigns(): HasMany
@@ -169,9 +188,19 @@ class Visit extends Model
         return $this->hasMany(VitalSign::class)->latest();
     }
 
+    public function consultations(): HasMany
+    {
+        return $this->hasMany(Consultation::class);
+    }
+
+    public function currentConsultation(): HasOne
+    {
+        return $this->hasOne(Consultation::class)->where('is_current', true);
+    }
+
     public function consultation(): HasOne
     {
-        return $this->hasOne(Consultation::class);
+        return $this->currentConsultation();
     }
 
     public function testOrders(): HasMany

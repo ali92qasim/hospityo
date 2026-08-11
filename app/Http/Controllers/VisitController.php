@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\VisitType;
 use App\Http\Requests\StoreVisitRequest;
 use App\Http\Requests\UpdateVisitRequest;
 use App\Http\Requests\UpdateVitalsRequest;
@@ -44,9 +45,10 @@ use App\Services\IpdDraftBillService;
 use App\Services\IpdDischargeBillingService;
 use App\Services\IpdClinicalService;
 use App\Services\AccountingService;
+use App\Services\InvestigationOrderBillingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\InvestigationOrderBillingService;
+use App\Services\VisitAdminViewService;
 use App\Workflows\VisitHandlerFactory;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -169,20 +171,23 @@ class VisitController extends Controller
 
     public function show(Visit $visit)
     {
-        $visit->load(['patient', 'doctor.department', 'primaryDoctor.doctor.department', 'vitalSigns', 'consultation', 'testOrders']);
-        return view('admin.visits.show', compact('visit'));
+        $visitAdmin = VisitAdminViewService::present($visit);
+
+        return view('admin.visits.show', compact('visit', 'visitAdmin'));
     }
 
     public function edit(Visit $visit)
     {
+        $visitAdmin = VisitAdminViewService::present($visit);
         $patients = Patient::all();
         $doctors = Doctor::where('status', 'active')->with('department')->get();
-        return view('admin.visits.edit', compact('visit', 'patients', 'doctors'));
+
+        return view('admin.visits.edit', compact('visit', 'visitAdmin', 'patients', 'doctors'));
     }
 
     public function update(UpdateVisitRequest $request, Visit $visit)
     {
-        $visit->update($request->validated());
+        VisitAdminViewService::update($visit, $request->validated());
 
         return redirect()->route('visits.index')
             ->with('success', 'Visit updated successfully.');
@@ -219,6 +224,25 @@ class VisitController extends Controller
             'emergencyDetails',
         ]);
 
+        $authDoctor = null;
+
+        if ($handler->type() === VisitType::Ipd) {
+            if ($visit->admission?->status === 'active') {
+                IpdDraftBillService::ensureForVisit($visit);
+                $visit->load('draftBill.billItems');
+            }
+
+            $authDoctor = IpdClinicalService::authDoctor();
+        }
+
+        $workflowData = array_merge($workflowData, [
+            'can_consult' => $handler->canConsult($visit),
+            'can_prescribe' => $handler->canPrescribe($visit),
+            'can_order_labs' => $handler->canOrderLabs($visit),
+            'show_order_doctor_picker' => $handler->showOrderDoctorPicker($visit, $authDoctor),
+            'resolved_initial_tab' => $handler->resolveInitialTab($visit),
+        ]);
+
         $doctors = $handler->resolveDoctors($visit);
         $medicines = Medicine::where('status', 'active')
             ->orderBy('name')
@@ -226,17 +250,11 @@ class VisitController extends Controller
         $investigations = Investigation::where('is_active', true)->orderBy('category')->orderBy('name')->get();
         $allergies = \App\Models\Allergy::orderBy('category')->orderBy('name')->get();
 
-        if ($visit->visit_type === 'ipd' && $visit->admission?->status === 'active') {
-            IpdDraftBillService::ensureForVisit($visit);
-            $visit->load('draftBill.billItems');
-        }
+        $data = compact('visit', 'doctors', 'medicines', 'investigations', 'allergies', 'handler', 'workflowData', 'authDoctor');
 
-        $data = compact('visit', 'doctors', 'medicines', 'investigations', 'allergies', 'handler', 'workflowData');
-
-        if ($visit->visit_type === 'ipd') {
+        if ($handler->type() === VisitType::Ipd) {
             $data['availableBeds'] = $workflowData['available_beds'] ?? Bed::with('ward')->where('status', 'available')->get();
             $data['activeComplaints'] = IpdClinicalService::activeComplaintsForPatient($visit->patient_id);
-            $data['authDoctor'] = IpdClinicalService::authDoctor();
         }
 
         return view('admin.visits.workflow', $data);
@@ -261,19 +279,11 @@ class VisitController extends Controller
             return back()->with('warning', 'Please fill in at least one vital sign measurement before saving. All fields are currently empty.');
         }
 
-        // For IPD patients, create new vital signs record each time
-        if ($visit->visit_type === 'ipd') {
-            $visit->allVitalSigns()->create([
-                ...$validated,
-                'recorded_by' => auth()->id()
-            ]);
-        } else {
-            // For OPD/Emergency, update or create single record
-            $visit->vitalSigns()->updateOrCreate(
-                ['visit_id' => $visit->id],
-                [...$validated, 'recorded_by' => auth()->id()]
-            );
-        }
+        // Append-only vitals for all visit types
+        $visit->allVitalSigns()->create([
+            ...$validated,
+            'recorded_by' => auth()->id(),
+        ]);
 
         $visit->update(['status' => 'vitals_recorded']);
 
@@ -314,11 +324,8 @@ class VisitController extends Controller
             );
         }
 
-        // Update or create consultation
-        $consultation = $visit->consultation()->updateOrCreate(
-            ['visit_id' => $visit->id],
-            $validated
-        );
+        // Append-only consultation versioning
+        $consultation = Consultation::recordForVisit($visit, $validated);
 
         // Handle allergies
         if (!empty($allergyNames)) {

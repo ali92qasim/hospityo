@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\DB;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class Consultation extends Model
@@ -15,6 +16,8 @@ class Consultation extends Model
 
     protected $fillable = [
         'visit_id',
+        'is_current',
+        'superseded_at',
         'chief_complaint',
         'presenting_complaints',
         'history',
@@ -43,8 +46,27 @@ class Consultation extends Model
     ];
 
     protected $casts = [
-        'next_visit_date' => 'date'
+        'next_visit_date' => 'date',
+        'is_current' => 'boolean',
+        'superseded_at' => 'datetime',
     ];
+
+    public static function recordForVisit(Visit $visit, array $attributes): self
+    {
+        return DB::transaction(function () use ($visit, $attributes) {
+            $visit->consultations()
+                ->where('is_current', true)
+                ->update([
+                    'is_current' => false,
+                    'superseded_at' => now(),
+                ]);
+
+            return $visit->consultations()->create([
+                ...$attributes,
+                'is_current' => true,
+            ]);
+        });
+    }
 
     public function visit(): BelongsTo
     {
