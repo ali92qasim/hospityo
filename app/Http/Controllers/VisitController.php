@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Http\Requests\StoreVisitRequest;
 use App\Http\Requests\UpdateVisitRequest;
@@ -49,6 +50,7 @@ use App\Services\InvestigationOrderBillingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\VisitAdminViewService;
+use App\Services\VisitWorkflowService;
 use App\Workflows\VisitHandlerFactory;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -241,6 +243,10 @@ class VisitController extends Controller
             'can_order_labs' => $handler->canOrderLabs($visit),
             'show_order_doctor_picker' => $handler->showOrderDoctorPicker($visit, $authDoctor),
             'resolved_initial_tab' => $handler->resolveInitialTab($visit),
+            'allowed_status_transitions' => array_map(
+                fn (VisitStatus $status) => $status->value,
+                VisitWorkflowService::for($visit)->allowedTransitions($visit)
+            ),
         ]);
 
         $doctors = $handler->resolveDoctors($visit);
@@ -285,7 +291,7 @@ class VisitController extends Controller
             'recorded_by' => auth()->id(),
         ]);
 
-        $visit->update(['status' => 'vitals_recorded']);
+        VisitWorkflowService::for($visit)->transition($visit, VisitStatus::VitalsRecorded);
 
         return back()->with('success', 'Vital signs recorded successfully.');
     }
@@ -294,10 +300,8 @@ class VisitController extends Controller
     {
         $doctor = Doctor::findOrFail($request->doctor_id);
 
-        $visit->update([
-            'doctor_id' => $request->doctor_id,
-            'status' => 'with_doctor'
-        ]);
+        $visit->update(['doctor_id' => $request->doctor_id]);
+        VisitWorkflowService::for($visit)->transition($visit, VisitStatus::WithDoctor);
 
         return back()->with('success', 'Doctor assigned successfully.');
     }
@@ -388,7 +392,7 @@ class VisitController extends Controller
         $allTestsCompleted = $visit->testOrders()->where('status', 'ordered')->count() === 0;
 
         if ($allTestsCompleted) {
-            $visit->update(['status' => 'tests_completed']);
+            VisitWorkflowService::for($visit)->transition($visit, VisitStatus::TestsCompleted);
         }
 
         return back()->with('success', 'Test result updated successfully.');
@@ -413,13 +417,13 @@ class VisitController extends Controller
             abort(403);
         }
 
-        $visit->update(['status' => 'completed']);
+        VisitWorkflowService::for($visit)->transition($visit, VisitStatus::Completed);
         return redirect()->back()->with('success', 'Patient checked successfully.');
     }
 
     public function completeVisit(Visit $visit)
     {
-        $visit->update(['status' => 'completed']);
+        VisitWorkflowService::for($visit)->transition($visit, VisitStatus::Completed);
         return redirect()->route('visits.index')->with('success', 'Visit completed successfully.');
     }
 
@@ -437,7 +441,7 @@ class VisitController extends Controller
                     'admission_notes' => $request->admission_notes,
                 ]);
 
-                $visit->update(['status' => 'admitted']);
+                VisitWorkflowService::for($visit)->transition($visit, VisitStatus::Admitted);
 
                 IpdDraftBillService::ensureForVisit($visit->fresh());
             });
@@ -483,7 +487,7 @@ class VisitController extends Controller
                 ]);
 
                 $admission->bed->update(['status' => 'available']);
-                $visit->update(['status' => 'discharged']);
+                VisitWorkflowService::for($visit)->transition($visit, VisitStatus::Discharged);
             });
 
             $message = 'Patient discharged successfully.';
@@ -554,7 +558,7 @@ class VisitController extends Controller
                 'triaged_at' => now()
             ]);
 
-            $visit->update(['status' => 'triaged']);
+            VisitWorkflowService::for($visit)->transition($visit, VisitStatus::Triaged);
 
             return back()->with('success', 'Patient triaged successfully.');
         } catch (\Exception $e) {

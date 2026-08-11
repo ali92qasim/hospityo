@@ -3,6 +3,7 @@
 namespace App\Workflows\Handlers;
 
 use App\Contracts\VisitTypeHandler;
+use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Bed;
 use App\Models\Doctor;
@@ -15,6 +16,28 @@ class IpdVisitHandler implements VisitTypeHandler
     public function type(): VisitType
     {
         return VisitType::Ipd;
+    }
+
+    public function workflowSteps(): array
+    {
+        return [
+            VisitStatus::Registered->value => 'Registration',
+            VisitStatus::VitalsRecorded->value => 'Vital Signs',
+            VisitStatus::Admitted->value => 'Admitted',
+            VisitStatus::WithDoctor->value => 'Treatment',
+            VisitStatus::Discharged->value => 'Discharged',
+        ];
+    }
+
+    public function allowedTransitions(Visit $visit): array
+    {
+        return match ($visit->statusEnum()) {
+            VisitStatus::Registered => [VisitStatus::VitalsRecorded, VisitStatus::Admitted],
+            VisitStatus::VitalsRecorded => [VisitStatus::Admitted],
+            VisitStatus::Admitted => [VisitStatus::WithDoctor],
+            VisitStatus::WithDoctor => [VisitStatus::Discharged],
+            default => [],
+        };
     }
 
     public function workflowData(Visit $visit): array
@@ -44,13 +67,7 @@ class IpdVisitHandler implements VisitTypeHandler
         }
 
         return [
-            'steps' => [
-                'registered' => 'Registration',
-                'vitals_recorded' => 'Vital Signs',
-                'admitted' => 'Admitted',
-                'with_doctor' => 'Treatment',
-                'discharged' => 'Discharged',
-            ],
+            'steps' => $this->workflowSteps(),
             'default_tab' => 'admission',
             'show_investigations' => true,
             'consultation_label' => 'Consultation',

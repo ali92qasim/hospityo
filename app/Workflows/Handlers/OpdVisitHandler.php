@@ -3,6 +3,7 @@
 namespace App\Workflows\Handlers;
 
 use App\Contracts\VisitTypeHandler;
+use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Doctor;
 use App\Models\Visit;
@@ -15,17 +16,34 @@ class OpdVisitHandler implements VisitTypeHandler
         return VisitType::Opd;
     }
 
+    public function workflowSteps(): array
+    {
+        return [
+            VisitStatus::Registered->value => 'Registration',
+            VisitStatus::VitalsRecorded->value => 'Vital Signs',
+            VisitStatus::WithDoctor->value => 'Consultation',
+            VisitStatus::Completed->value => 'Completed',
+        ];
+    }
+
+    public function allowedTransitions(Visit $visit): array
+    {
+        return match ($visit->statusEnum()) {
+            VisitStatus::Registered => [VisitStatus::VitalsRecorded, VisitStatus::WithDoctor],
+            VisitStatus::VitalsRecorded => [VisitStatus::WithDoctor, VisitStatus::Completed],
+            VisitStatus::WithDoctor => [VisitStatus::TestsOrdered, VisitStatus::TestsCompleted, VisitStatus::Completed],
+            VisitStatus::TestsOrdered => [VisitStatus::TestsCompleted, VisitStatus::Completed],
+            VisitStatus::TestsCompleted => [VisitStatus::Completed],
+            default => [],
+        };
+    }
+
     public function workflowData(Visit $visit): array
     {
         $visit->loadMissing(['opdDetails', 'doctor', 'consultation', 'vitalSigns']);
 
         return [
-            'steps' => [
-                'registered' => 'Registration',
-                'vitals_recorded' => 'Vital Signs',
-                'with_doctor' => 'Consultation',
-                'completed' => 'Completed',
-            ],
+            'steps' => $this->workflowSteps(),
             'default_tab' => 'vitals',
             'show_investigations' => true,
             'consultation_label' => 'Consultation',
@@ -53,7 +71,7 @@ class OpdVisitHandler implements VisitTypeHandler
 
     public function canComplete(Visit $visit): bool
     {
-        return in_array($visit->status, ['with_doctor', 'vitals_recorded'], true);
+        return in_array($visit->statusEnum(), [VisitStatus::WithDoctor, VisitStatus::VitalsRecorded], true);
     }
 
     public function canConsult(Visit $visit): bool

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\VisitStatus;
 use App\Services\VisitTypeDetailSyncService;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -147,6 +148,11 @@ class Visit extends Model
             'emergency' => $this->emergencyDetails(),
             default => throw new \InvalidArgumentException("Unknown visit type: {$this->visit_type}"),
         };
+    }
+
+    public function statusEnum(): ?VisitStatus
+    {
+        return VisitStatus::tryFrom($this->status);
     }
 
     public function queuePriority(): string

@@ -9,4 +9,5 @@ return [
         'ipd' => env('VISITS_READ_IPD_CHILD', false),
         'emergency' => env('VISITS_READ_EMERGENCY_CHILD', false),
     ],
+    'enforce_workflow_transitions' => env('VISITS_ENFORCE_WORKFLOW', false),
 ];

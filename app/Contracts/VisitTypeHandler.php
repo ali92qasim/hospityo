@@ -2,6 +2,7 @@
 
 namespace App\Contracts;
 
+use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Visit;
 use Illuminate\Support\Collection;
@@ -9,6 +10,12 @@ use Illuminate\Support\Collection;
 interface VisitTypeHandler
 {
     public function type(): VisitType;
+
+    /** @return array<string, string> */
+    public function workflowSteps(): array;
+
+    /** @return array<VisitStatus> */
+    public function allowedTransitions(Visit $visit): array;
 
     /** @return array<string, mixed> */
     public function workflowData(Visit $visit): array;
