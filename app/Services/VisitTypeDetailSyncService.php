@@ -16,7 +16,7 @@ class VisitTypeDetailSyncService
             match ($visit->visit_type) {
                 'opd' => OpdVisit::firstOrCreate(
                     ['visit_id' => $visit->id],
-                    ['queue_priority' => self::normalizePriority($visit->priority ?? 'medium')]
+                    ['queue_priority' => 'medium']
                 ),
                 'ipd' => IpdVisit::firstOrCreate(['visit_id' => $visit->id]),
                 'emergency' => EmergencyVisit::firstOrCreate(['visit_id' => $visit->id]),
@@ -33,28 +33,11 @@ class VisitTypeDetailSyncService
             return;
         }
 
-        if ($visit->visit_type === 'opd' && array_key_exists('priority', $changedAttributes)) {
-            $visit->opdDetails()?->update([
-                'queue_priority' => self::normalizePriority($visit->priority ?? 'medium'),
-            ]);
-        }
-
-        if (array_key_exists('discharge_datetime', $changedAttributes) && $visit->discharge_datetime) {
-            $visit->updateQuietly(['closed_at' => $visit->discharge_datetime]);
-        }
-
         VisitTypeDetailMismatchLogger::audit($visit->fresh(['opdDetails']));
     }
 
     public static function resolveQueuePriority(Visit $visit): string
     {
         return $visit->queuePriority();
-    }
-
-    private static function normalizePriority(?string $priority): string
-    {
-        return in_array($priority, ['low', 'medium', 'high', 'critical'], true)
-            ? $priority
-            : 'medium';
     }
 }

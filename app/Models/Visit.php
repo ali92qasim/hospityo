@@ -23,7 +23,6 @@ class Visit extends Model
         'status',
         'visit_datetime',
         'closed_at',
-        'priority',
     ];
 
     protected $casts = [
@@ -152,11 +151,11 @@ class Visit extends Model
 
     public function queuePriority(): string
     {
-        if ($this->visit_type === 'opd' && config('visits.read_from_child.opd')) {
-            return $this->opdDetails?->queue_priority ?? 'medium';
+        if ($this->visit_type !== 'opd') {
+            return 'medium';
         }
 
-        return $this->priority ?? 'medium';
+        return $this->opdDetails?->queue_priority ?? 'medium';
     }
 
     public function readsTypeDetailFromChild(): bool

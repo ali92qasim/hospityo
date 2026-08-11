@@ -49,7 +49,7 @@ beforeEach(function () {
     ]);
 });
 
-it('backfill maps spine priority to opd queue_priority', function () {
+it('backfill creates opd child row with default queue priority', function () {
     config(['visits.dual_write_enabled' => false]);
 
     $visit = Visit::create([
@@ -58,13 +58,14 @@ it('backfill maps spine priority to opd queue_priority', function () {
         'visit_datetime' => now(),
         'status' => 'registered',
         'doctor_id' => $this->doctor->id,
-        'priority' => 'high',
     ]);
+
+    OpdVisit::where('visit_id', $visit->id)->delete();
 
     $this->artisan('visits:backfill-type-details', ['type' => 'opd'])
         ->assertSuccessful();
 
-    expect(OpdVisit::where('visit_id', $visit->id)->value('queue_priority'))->toBe('high');
+    expect(OpdVisit::where('visit_id', $visit->id)->value('queue_priority'))->toBe('medium');
 });
 
 it('verify reports zero mismatches after backfill', function () {
@@ -75,7 +76,6 @@ it('verify reports zero mismatches after backfill', function () {
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'medium',
     ]);
 
     Visit::create([

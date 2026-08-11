@@ -46,7 +46,6 @@ function createOpdVisitForVitals(Patient $patient): Visit
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'medium',
     ]);
 
     OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'medium']);
@@ -94,7 +93,6 @@ it('creates a new emergency vitals row on each save', function () {
         'visit_type' => 'emergency',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'high',
     ]);
 
     \App\Models\EmergencyVisit::create(['visit_id' => $visit->id]);

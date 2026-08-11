@@ -13,12 +13,7 @@ it('contains no legacy visit spine column reads in app and admin views', functio
         'discharge_datetime',
     ];
 
-    $allowlisted = [
-        'app/Console/Commands/BackfillVisitTypeDetails.php',
-        'app/Services/VisitTypeDetailSyncService.php',
-        'app/Services/VisitTypeDetailMismatchLogger.php',
-        'app/Models/Visit.php',
-    ];
+    $allowlisted = [];
 
     $scanRoots = [
         base_path('app'),

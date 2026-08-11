@@ -38,31 +38,14 @@ beforeEach(function () {
     ]);
 });
 
-it('reads queue priority from spine when read flag is off', function () {
-    config(['visits.dual_write_enabled' => false, 'visits.read_from_child.opd' => false]);
+it('reads queue priority from opd child table', function () {
+    config(['visits.dual_write_enabled' => false]);
 
     $visit = Visit::create([
         'patient_id' => $this->patient->id,
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'low',
-    ]);
-
-    OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'critical']);
-
-    expect($visit->queuePriority())->toBe('low');
-});
-
-it('reads queue priority from opd child when read flag is on', function () {
-    config(['visits.dual_write_enabled' => false, 'visits.read_from_child.opd' => true]);
-
-    $visit = Visit::create([
-        'patient_id' => $this->patient->id,
-        'visit_type' => 'opd',
-        'visit_datetime' => now(),
-        'status' => 'registered',
-        'priority' => 'low',
     ]);
 
     OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'critical']);
@@ -70,15 +53,27 @@ it('reads queue priority from opd child when read flag is on', function () {
     expect($visit->fresh(['opdDetails'])->queuePriority())->toBe('critical');
 });
 
-it('exposes child queue priority in opd handler workflow data', function () {
-    config(['visits.dual_write_enabled' => false, 'visits.read_from_child.opd' => true]);
+it('defaults queue priority to medium when opd child missing', function () {
+    config(['visits.dual_write_enabled' => false]);
 
     $visit = Visit::create([
         'patient_id' => $this->patient->id,
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'low',
+    ]);
+
+    expect($visit->queuePriority())->toBe('medium');
+});
+
+it('exposes child queue priority in opd handler workflow data', function () {
+    config(['visits.dual_write_enabled' => false]);
+
+    $visit = Visit::create([
+        'patient_id' => $this->patient->id,
+        'visit_type' => 'opd',
+        'visit_datetime' => now(),
+        'status' => 'registered',
     ]);
 
     OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'high']);
@@ -89,14 +84,13 @@ it('exposes child queue priority in opd handler workflow data', function () {
 });
 
 it('resolve queue priority service delegates to visit accessor', function () {
-    config(['visits.dual_write_enabled' => false, 'visits.read_from_child.opd' => true]);
+    config(['visits.dual_write_enabled' => false]);
 
     $visit = Visit::create([
         'patient_id' => $this->patient->id,
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'medium',
     ]);
 
     OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'critical']);

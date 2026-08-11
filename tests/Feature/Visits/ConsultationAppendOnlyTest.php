@@ -43,7 +43,6 @@ beforeEach(function () {
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'with_doctor',
-        'priority' => 'medium',
     ]);
 
     OpdVisit::create(['visit_id' => $this->visit->id, 'queue_priority' => 'medium']);

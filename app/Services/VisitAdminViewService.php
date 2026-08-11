@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Consultation;
+use App\Models\OpdVisit;
 use App\Models\Visit;
 
 class VisitAdminViewService
@@ -47,7 +48,6 @@ class VisitAdminViewService
             'visit_type' => $validated['visit_type'],
             'visit_datetime' => $validated['visit_datetime'],
             'status' => $validated['status'],
-            'priority' => $validated['priority'],
             'doctor_id' => $validated['visit_type'] === 'ipd'
                 ? null
                 : ($validated['doctor_id'] ?? null),
@@ -58,6 +58,17 @@ class VisitAdminViewService
         }
 
         $visit->update($spine);
+
+        if ($validated['visit_type'] === 'opd') {
+            OpdVisit::updateOrCreate(
+                ['visit_id' => $visit->id],
+                ['queue_priority' => $validated['priority']]
+            );
+        }
+
+        if ($validated['visit_type'] === 'emergency' && $visit->triage) {
+            $visit->triage->update(['priority_level' => $validated['priority']]);
+        }
 
         $consultationPayload = array_filter([
             'chief_complaint' => $validated['chief_complaint'] ?? null,

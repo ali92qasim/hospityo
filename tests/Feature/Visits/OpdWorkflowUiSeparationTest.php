@@ -71,7 +71,6 @@ it('renders opd workflow with handler-driven ui flags', function () {
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'medium',
         'doctor_id' => $doctor->id,
     ]);
 
@@ -93,7 +92,6 @@ it('opd handler exposes show_opd_ui and child queue priority', function () {
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'low',
     ]);
 
     OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'critical']);

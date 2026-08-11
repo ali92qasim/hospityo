@@ -2,11 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\EmergencyVisit;
-use App\Models\IpdVisit;
-use App\Models\OpdVisit;
 use App\Models\Visit;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class VisitTypeDetailMismatchLogger
@@ -17,26 +13,16 @@ class VisitTypeDetailMismatchLogger
             return;
         }
 
-        $visit->loadMissing(['opdDetails']);
+        $visit->loadMissing(['opdDetails', 'ipdDetails', 'emergencyDetails']);
 
-        if ($visit->visit_type !== 'opd') {
-            return;
-        }
+        $missingChild = match ($visit->visit_type) {
+            'opd' => $visit->opdDetails === null,
+            'ipd' => $visit->ipdDetails === null,
+            'emergency' => $visit->emergencyDetails === null,
+            default => false,
+        };
 
-        $childPriority = $visit->opdDetails?->queue_priority;
-        $spinePriority = $visit->priority ?? 'medium';
-
-        if ($childPriority !== null && $childPriority !== $spinePriority) {
-            Log::warning('visit_type_detail_mismatch', [
-                'visit_id' => $visit->id,
-                'visit_type' => $visit->visit_type,
-                'field' => 'queue_priority',
-                'spine_value' => $spinePriority,
-                'child_value' => $childPriority,
-            ]);
-        }
-
-        if ($visit->opdDetails === null) {
+        if ($missingChild) {
             Log::warning('visit_type_detail_mismatch', [
                 'visit_id' => $visit->id,
                 'visit_type' => $visit->visit_type,

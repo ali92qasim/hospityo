@@ -94,11 +94,11 @@ it('assign doctor updates spine doctor_id only', function () {
         ->and(Schema::connection('tenant')->hasColumn('opd_visits', 'doctor_id'))->toBeFalse();
 });
 
-it('logs mismatch when spine priority differs from opd child', function () {
+it('logs mismatch when opd child row is missing', function () {
     Log::shouldReceive('warning')
         ->once()
         ->withArgs(fn ($message, $context) => $message === 'visit_type_detail_mismatch'
-            && ($context['field'] ?? null) === 'queue_priority');
+            && ($context['field'] ?? null) === 'missing_child_row');
 
     config(['visits.log_child_mismatches' => true, 'visits.dual_write_enabled' => false]);
 
@@ -107,10 +107,9 @@ it('logs mismatch when spine priority differs from opd child', function () {
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'high',
     ]);
 
-    OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'low']);
+    OpdVisit::where('visit_id', $visit->id)->delete();
 
     VisitTypeDetailMismatchLogger::audit($visit->fresh(['opdDetails']));
 });

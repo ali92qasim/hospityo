@@ -55,18 +55,14 @@ class BackfillVisitTypeDetails extends Command
                 }
 
                 if ($type === 'opd') {
-                    OpdVisit::updateOrCreate(
+                    OpdVisit::firstOrCreate(
                         ['visit_id' => $visit->id],
-                        ['queue_priority' => $this->mapPriority($visit->priority)]
+                        ['queue_priority' => 'medium']
                     );
                 } elseif ($type === 'ipd') {
                     IpdVisit::firstOrCreate(['visit_id' => $visit->id]);
                 } else {
                     EmergencyVisit::firstOrCreate(['visit_id' => $visit->id]);
-                }
-
-                if ($visit->discharge_datetime && ! $visit->closed_at) {
-                    $visit->updateQuietly(['closed_at' => $visit->discharge_datetime]);
                 }
 
                 $count++;
@@ -94,25 +90,6 @@ class BackfillVisitTypeDetails extends Command
             } else {
                 $this->info("{$type}: {$spineCount} rows matched");
             }
-
-            if ($type === 'opd') {
-                $priorityMismatches = Visit::where('visit_type', 'opd')
-                    ->with('opdDetails')
-                    ->get()
-                    ->filter(function (Visit $visit) {
-                        if (! $visit->opdDetails) {
-                            return true;
-                        }
-
-                        return $visit->opdDetails->queue_priority !== $this->mapPriority($visit->priority);
-                    })
-                    ->count();
-
-                if ($priorityMismatches > 0) {
-                    $this->error("opd queue_priority mismatches: {$priorityMismatches}");
-                    $mismatches += $priorityMismatches;
-                }
-            }
         }
 
         if ($mismatches > 0) {
@@ -124,12 +101,5 @@ class BackfillVisitTypeDetails extends Command
         $this->info('Verification passed: 0 mismatches');
 
         return self::SUCCESS;
-    }
-
-    private function mapPriority(?string $priority): string
-    {
-        return in_array($priority, ['low', 'medium', 'high', 'critical'], true)
-            ? $priority
-            : 'medium';
     }
 }

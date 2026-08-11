@@ -105,15 +105,10 @@ it('show and edit blades contain no legacy spine column reads', function () {
 it('show displays bed from admission not legacy spine bed_no', function () {
     $visit = createAdmittedIpdVisit($this->patient, $this->bed);
 
-    DB::connection('tenant')->table('visits')->where('id', $visit->id)->update([
-        'bed_no' => 'LEGACY-99',
-    ]);
-
     $this->get(route('visits.show', $visit))
         ->assertOk()
         ->assertSee('ADM-01')
-        ->assertSee('Admin Ward')
-        ->assertDontSee('LEGACY-99');
+        ->assertSee('Admin Ward');
 });
 
 it('show displays charges from bills not legacy spine total_charges', function () {
@@ -122,7 +117,6 @@ it('show displays charges from bills not legacy spine total_charges', function (
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'completed',
-        'priority' => 'medium',
     ]);
 
     OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'medium']);
@@ -143,25 +137,17 @@ it('show displays charges from bills not legacy spine total_charges', function (
         'created_by' => $this->user->id,
     ]);
 
-    DB::connection('tenant')->table('visits')->where('id', $visit->id)->update([
-        'total_charges' => 999,
-    ]);
-
     $this->get(route('visits.show', $visit))
         ->assertOk()
-        ->assertSee(format_currency(5000))
-        ->assertDontSee('999');
+        ->assertSee(format_currency(5000));
 });
 
-it('show displays opd queue priority from child when read flag is on', function () {
-    config(['visits.read_from_child.opd' => true]);
-
+it('show displays opd queue priority from child table', function () {
     $visit = Visit::create([
         'patient_id' => $this->patient->id,
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'low',
     ]);
 
     OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'critical']);
@@ -177,11 +163,10 @@ it('admin update persists clinical fields to consultation not spine', function (
         'visit_type' => 'opd',
         'visit_datetime' => now(),
         'status' => 'registered',
-        'priority' => 'medium',
         'doctor_id' => null,
     ]);
 
-    OpdVisit::create(['visit_id' => $visit->id]);
+    OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'medium']);
 
     $department = Department::first();
     $doctor = \App\Models\Doctor::create([
@@ -219,7 +204,6 @@ it('admin update persists clinical fields to consultation not spine', function (
         ->and($consultation->chief_complaint)->toBe('Persistent cough')
         ->and($consultation->provisional_diagnosis)->toBe('Upper respiratory infection')
         ->and($consultation->treatment)->toBe('Rest and fluids')
-        ->and($consultation->notes)->toBe('Follow up in one week');
-
-    expect(DB::connection('tenant')->table('visits')->where('id', $visit->id)->value('chief_complaint'))->toBeNull();
+        ->and($consultation->notes)->toBe('Follow up in one week')
+        ->and(OpdVisit::where('visit_id', $visit->id)->value('queue_priority'))->toBe('high');
 });
