@@ -1,18 +1,20 @@
 @extends('admin.layout')
 
 @section('title', 'Visits - Hospital Management System')
-@section('page-title', 'Patient Visits')
-@section('page-description', 'Manage patient visits workflow')
+@section('page-title', $pageTitle ?? 'Patient Visits')
 
 @push('styles')
 @vite(['resources/css/visits-form.css'])
 @endpush
 
 @section('content')
-<div class="mb-6">
+<div id="visits-index"
+     class="mb-6"
+     @if(!empty($visitType)) data-visit-type="{{ $visitType }}" @endif
+     @if(!empty($simplifiedList)) data-default-date-filter="today" data-simplified-list="1" @endif>
     <div class="flex justify-between items-center mb-4">
         <div>
-            <h3 class="text-lg font-semibold text-gray-800">Patient Visits</h3>
+            <h3 class="text-lg font-semibold text-gray-800">{{ $pageTitle ?? 'Patient Visits' }}</h3>
         </div>
         <div class="flex items-center space-x-3">
             <div class="relative">
@@ -27,13 +29,91 @@
                     <i class="fas fa-times text-gray-400 hover:text-gray-600"></i>
                 </div>
             </div>
-            <a href="{{ route('visits.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+            @can('create visits')
+            <a href="{{ route('visits.create', ['visit_type' => $visitType ?? 'opd']) }}"
+               class="bg-medical-blue text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm font-medium shadow-sm">
                 <i class="fas fa-plus mr-2"></i>
-                Register Visit
+                + {{ $newPatientLabel ?? 'New Patient' }}
             </a>
+            @endcan
         </div>
     </div>
 
+    @if(!empty($simplifiedList))
+    <div class="mb-4">
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+            <div class="flex flex-wrap gap-2">
+                <button type="button" data-status-group-filter data-filter-value="" class="visit-filter-btn px-4 py-1.5 text-sm rounded-full bg-gray-800 text-white">
+                    All
+                </button>
+                <button type="button" data-status-group-filter data-filter-value="waiting" class="visit-filter-btn px-4 py-1.5 text-sm rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200">
+                    Waiting
+                </button>
+                <button type="button" data-status-group-filter data-filter-value="with_doctor" class="visit-filter-btn px-4 py-1.5 text-sm rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200">
+                    With doctor
+                </button>
+                <button type="button" data-status-group-filter data-filter-value="finished" class="visit-filter-btn px-4 py-1.5 text-sm rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    Finished
+                </button>
+            </div>
+            <div class="flex flex-wrap gap-2 ml-auto">
+                <button type="button" data-date-filter data-filter-value="today" class="visit-filter-btn px-3 py-1 text-sm rounded-full bg-blue-500 text-white">
+                    Today
+                </button>
+                <button type="button" id="toggle-more-dates" class="visit-filter-btn px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    <i class="fas fa-calendar-alt mr-1"></i>More dates
+                </button>
+            </div>
+        </div>
+
+        <div id="more-date-filters" class="hidden">
+            <div class="flex flex-wrap gap-2 mb-3">
+                <button type="button" data-date-filter data-filter-value="" class="visit-filter-btn px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    All Time
+                </button>
+                <button type="button" data-date-filter data-filter-value="yesterday" class="visit-filter-btn px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200">
+                    Yesterday
+                </button>
+                <button type="button" data-date-filter data-filter-value="this_week" class="visit-filter-btn px-3 py-1 text-sm rounded-full bg-green-100 text-green-700 hover:bg-green-200">
+                    This Week
+                </button>
+                <button type="button" data-date-filter data-filter-value="last_week" class="visit-filter-btn px-3 py-1 text-sm rounded-full bg-green-100 text-green-700 hover:bg-green-200">
+                    Last Week
+                </button>
+                <button type="button" data-date-filter data-filter-value="this_month" class="visit-filter-btn px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200">
+                    This Month
+                </button>
+                <button type="button" data-date-filter data-filter-value="last_month" class="visit-filter-btn px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200">
+                    Last Month
+                </button>
+                <button type="button" data-date-filter data-filter-value="custom" class="visit-filter-btn px-3 py-1 text-sm rounded-full bg-orange-100 text-orange-700 hover:bg-orange-200">
+                    <i class="fas fa-calendar-alt mr-1"></i>Custom Range
+                </button>
+            </div>
+        </div>
+
+        <div id="custom-date-range" class="hidden mt-3 p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-end gap-3 flex-wrap">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <input type="date" name="start_date"
+                           class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <input type="date" name="end_date"
+                           class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue text-sm">
+                </div>
+                <button type="button" id="apply-custom-date-range" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                    <i class="fas fa-filter mr-1"></i>Apply
+                </button>
+                <button type="button" id="clear-custom-date-range" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm">
+                    <i class="fas fa-times mr-1"></i>Clear
+                </button>
+            </div>
+        </div>
+    </div>
+    @else
     <div class="mb-4">
         <div class="flex items-center space-x-2 mb-3">
             <i class="fas fa-calendar text-gray-500"></i>
@@ -109,6 +189,7 @@
             Completed
         </button>
     </div>
+    @endif
 </div>
 
 <table class="visits-table w-full invisible">

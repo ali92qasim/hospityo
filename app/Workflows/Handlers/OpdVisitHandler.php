@@ -61,6 +61,7 @@ class OpdVisitHandler implements VisitTypeHandler
             'care_team_consult_message' => null,
             'care_team_prescribe_message' => null,
             'care_team_labs_message' => null,
+            'workflow_accordion' => true,
         ];
     }
 
@@ -96,6 +97,19 @@ class OpdVisitHandler implements VisitTypeHandler
         }
 
         return 'vitals';
+    }
+
+    public function resolveInitialSection(Visit $visit): string
+    {
+        if (! $visit->vitalSigns) {
+            return 'vitals';
+        }
+
+        if (! $visit->consultation) {
+            return 'consultation';
+        }
+
+        return 'prescription';
     }
 
     public function showOrderDoctorPicker(Visit $visit, ?Doctor $authDoctor): bool

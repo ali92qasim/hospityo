@@ -241,6 +241,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/visits/data', [VisitController::class, 'data'])
         ->name('visits.data')
         ->middleware('permission:view visits|create visits|edit visits|delete visits');
+    Route::post('visits/quick-register', [VisitController::class, 'quickRegister'])
+        ->name('visits.quick-register')
+        ->middleware('permission:create visits');
     Route::resource('visits', VisitController::class)->middleware('permission:view visits|create visits|edit visits|delete visits');
     Route::get('visits/{visit}/workflow', [VisitController::class, 'workflow'])->name('visits.workflow')->middleware('permission:view visits');
     Route::get('visits/{visit}/print', [VisitController::class, 'print'])->name('visits.print')->middleware('permission:view visits');

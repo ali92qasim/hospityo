@@ -12,16 +12,22 @@ class UpdateVisitRequest extends FormRequest
         return auth()->check();
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->offsetUnset('visit_type');
+    }
+
     public function rules(): array
     {
+        $visit = $this->route('visit');
+
         return [
             'patient_id' => 'required|exists:tenant.patients,id',
             'doctor_id' => [
-                Rule::requiredIf(fn () => $this->input('visit_type') !== 'ipd'),
+                Rule::requiredIf(fn () => $visit && $visit->visit_type !== 'ipd'),
                 'nullable',
                 'exists:tenant.doctors,id',
             ],
-            'visit_type' => 'required|in:opd,ipd,emergency',
             'visit_datetime' => 'required|date',
             'status' => 'required|string',
             'priority' => 'required|in:low,medium,high,critical',

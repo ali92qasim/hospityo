@@ -1,6 +1,7 @@
 @php
     $currentTenant = \App\Models\Tenant::current();
-    $sidebarMenu   = app(\App\Services\SidebarService::class)->build(auth()->user(), $currentTenant);
+    $sidebarService = app(\App\Services\SidebarService::class);
+    $sidebarMenu   = $sidebarService->build(auth()->user(), $currentTenant);
 @endphp
 
 <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-white shadow-lg border-r border-gray-200 overflow-y-auto z-40 -translate-x-full lg:translate-x-0 transition-transform duration-300">
@@ -15,10 +16,10 @@
                 @if($menuItem['type'] === 'link')
                     {{-- Standalone link --}}
                     @php
-                        $isActive = collect($menuItem['patterns'])->contains(fn($p) => request()->routeIs($p));
+                        $isActive = $sidebarService->isMenuItemActive($menuItem);
                     @endphp
                     <li {{ $loop->first ? '' : 'class="pt-1"' }}>
-                        <a href="{{ route($menuItem['route']) }}"
+                        <a href="{{ route($menuItem['route'], $menuItem['route_params'] ?? []) }}"
                            class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ $isActive ? 'bg-medical-light text-medical-blue' : '' }}">
                             <i class="fas {{ $menuItem['icon'] }} mr-3 w-5"></i>
                             <span>{{ $menuItem['label'] }}</span>
@@ -28,7 +29,7 @@
                 @elseif($menuItem['type'] === 'group')
                     {{-- Collapsible group --}}
                     @php
-                        $groupActive = collect($menuItem['patterns'])->contains(fn($p) => request()->routeIs($p));
+                        $groupActive = $sidebarService->isGroupActive($menuItem);
                     @endphp
                     <li class="pt-4">
                         <button onclick="toggleSubmenu('{{ $menuItem['id'] }}')"
@@ -42,10 +43,10 @@
                          class="space-y-1 {{ $groupActive ? '' : 'hidden' }}">
                         @foreach($menuItem['items'] as $child)
                             @php
-                                $childActive = collect($child['patterns'])->contains(fn($p) => request()->routeIs($p));
+                                $childActive = $sidebarService->isMenuItemActive($child);
                             @endphp
                             <li>
-                                <a href="{{ route($child['route']) }}"
+                                <a href="{{ route($child['route'], $child['route_params'] ?? []) }}"
                                    class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ $childActive ? 'bg-medical-light text-medical-blue' : '' }}">
                                     <i class="fas {{ $child['icon'] }} mr-3 text-xs w-5"></i>
                                     <span>{{ $child['label'] }}</span>

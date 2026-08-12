@@ -63,7 +63,25 @@ class EmergencyVisitHandler implements VisitTypeHandler
             'has_emergency_detail' => (bool) $visit->emergencyDetails,
             'triage_completed' => (bool) $visit->triage,
             'triage_priority_level' => $visit->triage?->priority_level,
+            'workflow_accordion' => true,
         ];
+    }
+
+    public function resolveInitialSection(Visit $visit): string
+    {
+        if (! $visit->triage) {
+            return 'vitals';
+        }
+
+        if (! $visit->vitalSigns) {
+            return 'vitals';
+        }
+
+        if (! $visit->consultation) {
+            return 'consultation';
+        }
+
+        return 'prescription';
     }
 
     public function resolveDoctors(Visit $visit): Collection

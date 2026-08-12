@@ -5,6 +5,9 @@
 @section('page-description', 'Manage patient records and information')
 
 @section('content')
+<div id="patients-index"
+     @can('create visits') data-can-create-visits="1" @endcan
+     data-quick-register-url="{{ route('visits.quick-register') }}">
 <div class="flex justify-between items-center mb-6">
     <div>
         <h3 class="text-base sm:text-lg font-semibold text-gray-800">Patient Records</h3>
@@ -25,5 +28,6 @@
         </tr>
     </thead>
 </table>
+</div>
 @vite(['resources/js/patients-index.js'])
 @endsection

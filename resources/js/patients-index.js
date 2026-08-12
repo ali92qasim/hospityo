@@ -8,6 +8,37 @@ function capitalize(value) {
     return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function buildVisitRegisterLinks(id) {
+    const root = document.getElementById('patients-index');
+
+    if (root?.dataset.canCreateVisits !== '1') {
+        return '';
+    }
+
+    const quickRegisterUrl = root.dataset.quickRegisterUrl;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+    if (!quickRegisterUrl || !csrf) {
+        return '';
+    }
+
+    const buildForm = (visitType, iconClass, title, buttonClass) => `
+        <form method="POST" action="${quickRegisterUrl}" class="inline">
+            <input type="hidden" name="_token" value="${csrf}">
+            <input type="hidden" name="patient_id" value="${id}">
+            <input type="hidden" name="visit_type" value="${visitType}">
+            <button type="submit" class="${buttonClass}" title="${title}">
+                <i class="fas ${iconClass}"></i>
+            </button>
+        </form>
+    `;
+
+    return `
+        ${buildForm('opd', 'fa-stethoscope', 'Register OPD visit and open workflow', 'text-blue-600 hover:text-blue-800')}
+        ${buildForm('emergency', 'fa-ambulance', 'Register Emergency visit and open workflow', 'text-red-600 hover:text-red-800')}
+    `;
+}
+
 $(document).ready(function () {
     initDataTable('.patients-table', {
         ajax: '/patients/data',
@@ -69,6 +100,7 @@ $(document).ready(function () {
                 render: function (id) {
                     return `
                         <div class="flex items-center space-x-3">
+                            ${buildVisitRegisterLinks(id)}
                             <a href="/patients/${id}" class="text-medical-blue hover:text-blue-700" title="View Details">
                                 <i class="fas fa-eye"></i>
                             </a>

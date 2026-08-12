@@ -196,7 +196,7 @@ it('admin update persists clinical fields to consultation not spine', function (
         'diagnosis' => 'Upper respiratory infection',
         'treatment' => 'Rest and fluids',
         'notes' => 'Follow up in one week',
-    ])->assertRedirect(route('visits.index'));
+    ])->assertRedirect(route('visits.index', ['visit_type' => 'opd']));
 
     $consultation = Consultation::where('visit_id', $visit->id)->where('is_current', true)->first();
 

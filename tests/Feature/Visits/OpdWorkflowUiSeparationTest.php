@@ -78,6 +78,10 @@ it('renders opd workflow with handler-driven ui flags', function () {
 
     $this->get(route('visits.workflow', $visit))
         ->assertOk()
+        ->assertSee('data-workflow-layout="opd"', false)
+        ->assertSee('data-landmark="opd-workflow-layout"', false)
+        ->assertDontSee('data-landmark="ipd-episode-sidebar"', false)
+        ->assertDontSee('data-landmark="emergency-triage-banner"', false)
         ->assertSee('High Queue Priority')
         ->assertSee('Record Vital Signs')
         ->assertSee('Doctor Assignment')

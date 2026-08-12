@@ -88,7 +88,25 @@ class IpdVisitHandler implements VisitTypeHandler
             'draft_bill' => $draftBill,
             'settlement' => $settlement,
             'expected_discharge_date' => $visit->ipdDetails?->expected_discharge_date,
+            'workflow_accordion' => true,
         ];
+    }
+
+    public function resolveInitialSection(Visit $visit): string
+    {
+        if (! $visit->admission) {
+            return 'admission';
+        }
+
+        if ($visit->allVitalSigns->isEmpty()) {
+            return 'vitals';
+        }
+
+        if ($visit->hasActiveCareTeam()) {
+            return 'consultation';
+        }
+
+        return 'vitals';
     }
 
     public function resolveDoctors(Visit $visit): Collection

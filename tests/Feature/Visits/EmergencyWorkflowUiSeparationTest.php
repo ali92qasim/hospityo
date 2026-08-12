@@ -88,6 +88,10 @@ it('renders emergency workflow with handler-driven ui flags', function () {
 
     $this->get(route('visits.workflow', $visit))
         ->assertOk()
+        ->assertSee('data-workflow-layout="emergency"', false)
+        ->assertSee('data-landmark="emergency-workflow-layout"', false)
+        ->assertSee('data-landmark="emergency-triage-banner"', false)
+        ->assertDontSee('data-landmark="ipd-episode-sidebar"', false)
         ->assertSee('Triage Completed')
         ->assertSee('Severe trauma')
         ->assertSee('Doctor Assignment')

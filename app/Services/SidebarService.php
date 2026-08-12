@@ -47,9 +47,30 @@ class SidebarService
             $menu[] = $this->link('departments', 'Departments', 'fa-building', 'departments.index', ['departments.*']);
         }
 
-        // ── Visits ────────────────────────────────────────────────────────────
+        // ── OPD (single sidebar link → typed list) ───────────────────────────
         if ($this->hasModule($tenant, 'visits') && $user->can('view visits')) {
-            $menu[] = $this->link('visits', 'Visits', 'fa-clipboard-list', 'visits.index', ['visits.*']);
+            $menu[] = $this->link(
+                'opd',
+                'OPD',
+                'fa-stethoscope',
+                'visits.index',
+                ['visits.index', 'visits.create', 'visits.workflow', 'visits.show', 'visits.edit'],
+                ['visit_type' => 'opd'],
+                'opd',
+            );
+        }
+
+        // ── Emergency (single sidebar link → typed list) ─────────────────────
+        if ($this->hasModule($tenant, 'visits') && $user->can('view visits')) {
+            $menu[] = $this->link(
+                'emergency',
+                'Emergency',
+                'fa-ambulance',
+                'visits.index',
+                ['visits.index', 'visits.create', 'visits.workflow', 'visits.show', 'visits.edit'],
+                ['visit_type' => 'emergency'],
+                'emergency',
+            );
         }
 
         // ── Appointments ──────────────────────────────────────────────────────
@@ -57,18 +78,19 @@ class SidebarService
             $menu[] = $this->link('appointments', 'Appointments', 'fa-calendar-check', 'appointments.index', ['appointments.*']);
         }
 
-        // ── IPD Management ────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'ipd') && ($user->can('view wards') || $user->can('view beds'))) {
-            $items = [];
-            if ($user->can('view wards')) {
-                $items[] = $this->item('Wards', 'fa-hospital', 'wards.index', ['wards.*']);
-            }
-            if ($user->can('view beds')) {
-                $items[] = $this->item('Beds', 'fa-bed', 'beds.index', ['beds.*']);
-            }
-            if (!empty($items)) {
-                $menu[] = $this->group('ipd', 'IPD Management', $items, ['wards.*', 'beds.*']);
-            }
+        // ── IPD Management (ipd module + visit list requires visits module too) ─
+        $ipdItems = [];
+        if ($this->hasModule($tenant, 'ipd') && $this->hasModule($tenant, 'visits') && $user->can('view visits')) {
+            $ipdItems[] = $this->item('Admitted Patients', 'fa-procedures', 'visits.index', ['visits.index'], ['visit_type' => 'ipd'], 'ipd');
+        }
+        if ($this->hasModule($tenant, 'ipd') && $user->can('view wards')) {
+            $ipdItems[] = $this->item('Wards', 'fa-hospital', 'wards.index', ['wards.*']);
+        }
+        if ($this->hasModule($tenant, 'ipd') && $user->can('view beds')) {
+            $ipdItems[] = $this->item('Beds', 'fa-bed', 'beds.index', ['beds.*']);
+        }
+        if (! empty($ipdItems)) {
+            $menu[] = $this->group('ipd', 'IPD Management', $ipdItems, ['wards.*', 'beds.*', 'visits.index', 'visits.create', 'visits.workflow', 'visits.show', 'visits.edit']);
         }
 
         // ── Operation Theatre ─────────────────────────────────────────────────
@@ -229,6 +251,43 @@ class SidebarService
         return $menu;
     }
 
+    /**
+     * Whether a sidebar child link should render as active.
+     */
+    public function isMenuItemActive(array $item): bool
+    {
+        $visit = request()->route('visit');
+        $visitType = $item['visit_type'] ?? null;
+
+        if ($visitType) {
+            if ($visit && request()->routeIs('visits.workflow', 'visits.show', 'visits.edit', 'visits.print')) {
+                return $visit->visit_type === $visitType;
+            }
+
+            if (request()->routeIs('visits.index', 'visits.create')) {
+                return request()->query('visit_type') === $visitType;
+            }
+
+            return false;
+        }
+
+        return collect($item['patterns'])->contains(fn ($pattern) => request()->routeIs($pattern));
+    }
+
+    /**
+     * Whether a collapsible sidebar group should render expanded/active.
+     */
+    public function isGroupActive(array $group): bool
+    {
+        foreach ($group['items'] as $item) {
+            if ($this->isMenuItemActive($item)) {
+                return true;
+            }
+        }
+
+        return collect($group['patterns'])->contains(fn ($pattern) => request()->routeIs($pattern));
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function hasModule(?Tenant $tenant, string $module): bool
@@ -237,15 +296,24 @@ class SidebarService
     }
 
     /** A standalone link (no children) */
-    private function link(string $id, string $label, string $icon, string $route, array $patterns): array
-    {
+    private function link(
+        string $id,
+        string $label,
+        string $icon,
+        string $route,
+        array $patterns,
+        array $routeParams = [],
+        ?string $visitType = null,
+    ): array {
         return [
-            'type'     => 'link',
-            'id'       => $id,
-            'label'    => $label,
-            'icon'     => $icon,
-            'route'    => $route,
-            'patterns' => $patterns,
+            'type'         => 'link',
+            'id'           => $id,
+            'label'        => $label,
+            'icon'         => $icon,
+            'route'        => $route,
+            'patterns'     => $patterns,
+            'route_params' => $routeParams,
+            'visit_type'   => $visitType,
         ];
     }
 
@@ -262,13 +330,21 @@ class SidebarService
     }
 
     /** A child item inside a group */
-    private function item(string $label, string $icon, string $route, array $patterns): array
-    {
+    private function item(
+        string $label,
+        string $icon,
+        string $route,
+        array $patterns,
+        array $routeParams = [],
+        ?string $visitType = null,
+    ): array {
         return [
-            'label'    => $label,
-            'icon'     => $icon,
-            'route'    => $route,
-            'patterns' => $patterns,
+            'label'        => $label,
+            'icon'         => $icon,
+            'route'        => $route,
+            'patterns'     => $patterns,
+            'route_params' => $routeParams,
+            'visit_type'   => $visitType,
         ];
     }
 }

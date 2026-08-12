@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
+use App\Http\Requests\QuickRegisterVisitRequest;
 use App\Http\Requests\StoreVisitRequest;
 use App\Http\Requests\UpdateVisitRequest;
 use App\Http\Requests\UpdateVitalsRequest;
@@ -56,9 +57,35 @@ use Yajra\DataTables\Facades\DataTables;
 
 class VisitController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return view('admin.visits.index');
+        $visitType = $request->query('visit_type');
+
+        if ($visitType && ! in_array($visitType, ['opd', 'ipd', 'emergency'], true)) {
+            $visitType = null;
+        }
+
+        if (config('visits.require_typed_visit_routes', true) && ! $visitType) {
+            return redirect()->route('visits.index', ['visit_type' => 'opd']);
+        }
+
+        $listTitles = [
+            'opd' => 'OPD',
+            'ipd' => 'Admitted Patients',
+            'emergency' => 'Emergency',
+        ];
+
+        $newPatientLabels = [
+            'opd' => 'New OPD Patient',
+            'ipd' => 'New Admission',
+            'emergency' => 'New Emergency Patient',
+        ];
+
+        $pageTitle = $visitType ? ($listTitles[$visitType] ?? 'Patient Visits') : 'Patient Visits';
+        $newPatientLabel = $visitType ? ($newPatientLabels[$visitType] ?? 'New Patient') : 'New Patient';
+        $simplifiedList = (bool) $visitType;
+
+        return view('admin.visits.index', compact('visitType', 'pageTitle', 'newPatientLabel', 'simplifiedList'));
     }
 
     public function data(Request $request)
@@ -145,17 +172,54 @@ class VisitController extends Controller
             $query->where('visit_type', $request->visit_type);
         }
 
-        if ($request->status) {
+        if ($request->status_group) {
+            $statusGroups = [
+                'waiting' => ['registered', 'vitals_recorded', 'triaged'],
+                'with_doctor' => ['with_doctor', 'admitted'],
+                'finished' => ['completed', 'discharged'],
+            ];
+
+            if (isset($statusGroups[$request->status_group])) {
+                $query->whereIn('status', $statusGroups[$request->status_group]);
+            }
+        } elseif ($request->status) {
             $query->where('status', $request->status);
         }
 
         return $query->orderByDesc('id'); // Latest first (newest visits)
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $visitType = $request->query('visit_type');
+
+        if ($visitType && ! in_array($visitType, ['opd', 'ipd', 'emergency'], true)) {
+            $visitType = null;
+        }
+
+        if (! $visitType) {
+            return redirect()->route('visits.create', ['visit_type' => 'opd']);
+        }
+
         $patients = Patient::latest()->get();
-        return view('admin.visits.create', compact('patients'));
+
+        $view = "admin.visits.create.{$visitType}";
+        if (! view()->exists($view)) {
+            abort(404);
+        }
+
+        return view($view, compact('patients', 'visitType'));
+    }
+
+    public function quickRegister(QuickRegisterVisitRequest $request)
+    {
+        $visit = Visit::create([
+            'patient_id' => $request->validated('patient_id'),
+            'visit_type' => $request->validated('visit_type'),
+            'visit_datetime' => now(),
+        ]);
+
+        return redirect()->route('visits.workflow', $visit);
     }
 
     public function store(StoreVisitRequest $request)
@@ -163,7 +227,7 @@ class VisitController extends Controller
         $visit = Visit::create($request->validated());
 
         if ($request->has('save_and_add_another')) {
-            return redirect()->route('visits.create')
+            return redirect()->route('visits.create', ['visit_type' => $visit->visit_type])
                 ->with('success', 'Visit registered successfully.');
         }
 
@@ -191,7 +255,7 @@ class VisitController extends Controller
     {
         VisitAdminViewService::update($visit, $request->validated());
 
-        return redirect()->route('visits.index')
+        return redirect()->route('visits.index', ['visit_type' => $visit->visit_type])
             ->with('success', 'Visit updated successfully.');
     }
 
@@ -241,8 +305,12 @@ class VisitController extends Controller
             'can_consult' => $handler->canConsult($visit),
             'can_prescribe' => $handler->canPrescribe($visit),
             'can_order_labs' => $handler->canOrderLabs($visit),
+            'workflow_accordion' => true,
             'show_order_doctor_picker' => $handler->showOrderDoctorPicker($visit, $authDoctor),
             'resolved_initial_tab' => $handler->resolveInitialTab($visit),
+            'initial_section' => method_exists($handler, 'resolveInitialSection')
+                ? $handler->resolveInitialSection($visit)
+                : $handler->resolveInitialTab($visit),
             'allowed_status_transitions' => array_map(
                 fn (VisitStatus $status) => $status->value,
                 VisitWorkflowService::for($visit)->allowedTransitions($visit)

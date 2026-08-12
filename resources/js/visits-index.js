@@ -57,11 +57,26 @@ const statusFilterInactiveClasses = {
     completed: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
 };
 
+const statusGroupFilterClasses = {
+    '': 'bg-gray-800 text-white',
+    waiting: 'bg-blue-500 text-white',
+    with_doctor: 'bg-purple-500 text-white',
+    finished: 'bg-gray-500 text-white',
+};
+
+const statusGroupFilterInactiveClasses = {
+    '': 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+    waiting: 'bg-blue-100 text-blue-700 hover:bg-blue-200',
+    with_doctor: 'bg-purple-100 text-purple-700 hover:bg-purple-200',
+    finished: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+};
+
 const filters = {
     date_filter: '',
     start_date: '',
     end_date: '',
     status: '',
+    status_group: '',
     visit_type: '',
 };
 
@@ -162,10 +177,26 @@ function bindFilters() {
         });
     });
 
+    document.querySelectorAll('[data-status-group-filter]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const value = button.dataset.filterValue ?? '';
+            filters.status_group = value;
+            filters.status = '';
+
+            setActiveFilterButton('[data-status-group-filter]', value, statusGroupFilterClasses, statusGroupFilterInactiveClasses);
+            reloadVisitsTable();
+        });
+    });
+
+    document.getElementById('toggle-more-dates')?.addEventListener('click', () => {
+        document.getElementById('more-date-filters')?.classList.toggle('hidden');
+    });
+
     document.querySelectorAll('[data-status-filter]').forEach((button) => {
         button.addEventListener('click', () => {
             const value = button.dataset.filterValue ?? '';
             filters.status = value;
+            filters.status_group = '';
 
             setActiveFilterButton('[data-status-filter]', value, statusFilterClasses, statusFilterInactiveClasses);
             reloadVisitsTable();
@@ -229,6 +260,20 @@ $(document).ready(function () {
     initFlatpickr();
     bindFilters();
 
+    const indexRoot = document.getElementById('visits-index');
+    const presetVisitType = indexRoot?.dataset.visitType ?? '';
+    const defaultDateFilter = indexRoot?.dataset.defaultDateFilter ?? '';
+    const simplifiedList = indexRoot?.dataset.simplifiedList === '1';
+
+    if (presetVisitType) {
+        filters.visit_type = presetVisitType;
+    }
+
+    if (defaultDateFilter) {
+        filters.date_filter = defaultDateFilter;
+        setActiveFilterButton('[data-date-filter]', defaultDateFilter, dateFilterClasses, dateFilterInactiveClasses);
+    }
+
     visitsTable = initDataTable('.visits-table', {
         ajax: {
             url: '/visits/data',
@@ -236,8 +281,15 @@ $(document).ready(function () {
                 params.date_filter = filters.date_filter;
                 params.start_date = filters.start_date;
                 params.end_date = filters.end_date;
-                params.status = filters.status;
                 params.visit_type = filters.visit_type;
+
+                if (filters.status_group) {
+                    params.status_group = filters.status_group;
+                    params.status = '';
+                } else {
+                    params.status = filters.status;
+                    params.status_group = '';
+                }
             },
         },
         layout: {
@@ -305,9 +357,15 @@ $(document).ready(function () {
                 orderable: false,
                 searchable: false,
                 render: function (id) {
+                    const openLabel = simplifiedList ? 'Open' : 'Workflow';
+                    const openIcon = simplifiedList ? 'fa-door-open' : 'fa-tasks';
+                    const buttonClass = simplifiedList
+                        ? 'inline-flex items-center px-3 py-1.5 bg-medical-blue text-white text-sm rounded-lg hover:bg-blue-700'
+                        : 'text-medical-blue hover:text-blue-700';
+
                     return `
-                        <a href="/visits/${id}/workflow" class="text-medical-blue hover:text-blue-700">
-                            <i class="fas fa-tasks mr-1"></i>Workflow
+                        <a href="/visits/${id}/workflow" class="${buttonClass}">
+                            <i class="fas ${openIcon} mr-1"></i>${openLabel}
                         </a>
                     `;
                 },

@@ -22,6 +22,7 @@ export default defineConfig({
                 'resources/js/visit-workflow-select2.js',
                 'resources/js/visit-workflow-admission.js',
                 'resources/js/visits-index.js',
+                'resources/js/workflow-accordion.js',
                 'resources/js/patients-index.js',
                 'resources/js/prescription-form.js',
                 'resources/js/wards-form.js',

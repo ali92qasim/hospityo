@@ -43,12 +43,13 @@ class VisitAdminViewService
 
     public static function update(Visit $visit, array $validated): void
     {
+        $visitType = $visit->visit_type;
+
         $spine = [
             'patient_id' => $validated['patient_id'],
-            'visit_type' => $validated['visit_type'],
             'visit_datetime' => $validated['visit_datetime'],
             'status' => $validated['status'],
-            'doctor_id' => $validated['visit_type'] === 'ipd'
+            'doctor_id' => $visitType === 'ipd'
                 ? null
                 : ($validated['doctor_id'] ?? null),
         ];
@@ -59,14 +60,14 @@ class VisitAdminViewService
 
         $visit->update($spine);
 
-        if ($validated['visit_type'] === 'opd') {
+        if ($visitType === 'opd') {
             OpdVisit::updateOrCreate(
                 ['visit_id' => $visit->id],
                 ['queue_priority' => $validated['priority']]
             );
         }
 
-        if ($validated['visit_type'] === 'emergency' && $visit->triage) {
+        if ($visitType === 'emergency' && $visit->triage) {
             $visit->triage->update(['priority_level' => $validated['priority']]);
         }
 

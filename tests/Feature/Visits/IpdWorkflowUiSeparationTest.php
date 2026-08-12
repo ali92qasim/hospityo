@@ -1,8 +1,11 @@
 <?php
 
+use App\Models\Admission;
+use App\Models\Bed;
 use App\Models\Department;
 use App\Models\IpdVisit;
 use App\Models\Patient;
+use App\Models\Ward;
 use App\Models\User;
 use App\Models\Visit;
 use App\Workflows\Handlers\IpdVisitHandler;
@@ -44,8 +47,12 @@ it('workflow blade has no ipd visit_type conditionals', function () {
     expect($content)->not->toMatch("/visit_type\\s*===?\\s*['\"]ipd['\"]/");
 });
 
-it('renders ipd workflow with handler-driven ui flags', function () {
-    config(['visits.dual_write_enabled' => false, 'visits.read_from_child.ipd' => true]);
+it('renders ipd workflow with handler-driven ui flags before admission', function () {
+    config([
+        'visits.dual_write_enabled' => false,
+        'visits.read_from_child.ipd' => true,
+        'visits.workflow_accordion_ui' => true,
+    ]);
 
     Department::create(['name' => 'Medicine', 'code' => 'MED-UI', 'status' => 'active']);
 
@@ -61,10 +68,66 @@ it('renders ipd workflow with handler-driven ui flags', function () {
 
     $this->get(route('visits.workflow', $visit))
         ->assertOk()
+        ->assertSee('data-workflow-layout="ipd"', false)
+        ->assertSee('data-landmark="ipd-workflow-layout"', false)
+        ->assertSee('data-landmark="ipd-episode-sidebar"', false)
+        ->assertSee('data-landmark="ipd-clinical-feed"', false)
+        ->assertDontSee('data-landmark="opd-workflow-layout"', false)
         ->assertSee('Print IPD Report')
         ->assertSee('Select Bed for Admission')
-        ->assertSee('Record New Vital Signs')
-        ->assertSee('Vital Signs History');
+        ->assertDontSee('Record Vital Signs');
+});
+
+it('renders ipd workflow accordion after admission', function () {
+    config([
+        'visits.dual_write_enabled' => false,
+        'visits.read_from_child.ipd' => true,
+        'visits.workflow_accordion_ui' => true,
+    ]);
+
+    $department = Department::create(['name' => 'Medicine', 'code' => 'MED-ACC', 'status' => 'active']);
+
+    $ward = Ward::create([
+        'name' => 'Accordion Ward',
+        'department_id' => $department->id,
+        'capacity' => 5,
+        'ward_type' => 'general',
+        'status' => 'active',
+    ]);
+
+    $bed = Bed::create([
+        'ward_id' => $ward->id,
+        'bed_number' => 'ACC-01',
+        'bed_type' => 'general',
+        'daily_rate' => 2500,
+        'status' => 'available',
+    ]);
+
+    $visit = Visit::create([
+        'patient_id' => $this->patient->id,
+        'visit_type' => 'ipd',
+        'visit_datetime' => now(),
+        'status' => 'admitted',
+        'doctor_id' => null,
+    ]);
+
+    IpdVisit::create(['visit_id' => $visit->id]);
+
+    Admission::create([
+        'visit_id' => $visit->id,
+        'bed_id' => $bed->id,
+        'admission_date' => now(),
+        'status' => 'active',
+    ]);
+
+    $bed->update(['status' => 'occupied']);
+
+    $this->get(route('visits.workflow', $visit))
+        ->assertOk()
+        ->assertSee('data-workflow-accordion-root', false)
+        ->assertSee('Record Vital Signs')
+        ->assertSee('Vital Signs History')
+        ->assertSee('Clinical Timeline');
 });
 
 it('ipd handler exposes workflow permission flags', function () {

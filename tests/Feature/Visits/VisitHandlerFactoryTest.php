@@ -78,5 +78,6 @@ it('renders ipd workflow using handler data', function () {
 
     $this->get(route('visits.workflow', $visit))
         ->assertOk()
-        ->assertSee('Admitted');
+        ->assertSee('data-landmark="ipd-episode-sidebar"', false)
+        ->assertSee('Awaiting admission');
 });

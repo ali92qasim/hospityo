@@ -1,8 +1,18 @@
 @extends('admin.layout')
 
 @section('title', 'Register Visit - Hospital Management System')
-@section('page-title', 'Register Visit')
-@section('page-description', 'Register a new patient visit')
+@section('page-title', match($visitType ?? null) {
+    'opd' => 'Register OPD Visit',
+    'ipd' => 'Register IPD Visit',
+    'emergency' => 'Register Emergency Visit',
+    default => 'Register Visit',
+})
+@section('page-description', match($visitType ?? null) {
+    'opd' => 'Register a new outpatient visit',
+    'ipd' => 'Register a new inpatient admission',
+    'emergency' => 'Register a new emergency visit',
+    default => 'Register a new patient visit',
+})
 
 @push('styles')
 @vite(['resources/css/visits-form.css'])
@@ -14,8 +24,8 @@
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-800">Visit Registration</h3>
-                <a href="{{ route('visits.index') }}" class="text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to Visits
+                <a href="{{ route('visits.index', array_filter(['visit_type' => $visitType ?? null])) }}" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to {{ match($visitType ?? null) { 'opd' => 'OPD Queue', 'ipd' => 'IPD Admissions', 'emergency' => 'Emergency Board', default => 'Visits' } }}
                 </a>
             </div>
         </div>
@@ -40,9 +50,9 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Visit Type *</label>
                     <select name="visit_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                         <option value="">Select Visit Type</option>
-                        <option value="opd" {{ old('visit_type') == 'opd' ? 'selected' : '' }}>OPD (Out Patient Department)</option>
-                        <option value="ipd" {{ old('visit_type') == 'ipd' ? 'selected' : '' }}>IPD (In Patient Department)</option>
-                        <option value="emergency" {{ old('visit_type') == 'emergency' ? 'selected' : '' }}>Emergency</option>
+                        <option value="opd" {{ old('visit_type', $visitType ?? '') == 'opd' ? 'selected' : '' }}>OPD (Out Patient Department)</option>
+                        <option value="ipd" {{ old('visit_type', $visitType ?? '') == 'ipd' ? 'selected' : '' }}>IPD (In Patient Department)</option>
+                        <option value="emergency" {{ old('visit_type', $visitType ?? '') == 'emergency' ? 'selected' : '' }}>Emergency</option>
                     </select>
                 </div>
 

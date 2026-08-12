@@ -10,4 +10,6 @@ return [
         'emergency' => env('VISITS_READ_EMERGENCY_CHILD', false),
     ],
     'enforce_workflow_transitions' => env('VISITS_ENFORCE_WORKFLOW', false),
+    'require_typed_visit_routes' => env('VISITS_REQUIRE_TYPED_ROUTES', true),
+    'workflow_accordion_ui' => env('VISITS_WORKFLOW_ACCORDION_UI', true),
 ];
