@@ -1,7 +1,7 @@
 @extends('admin.layout')
 
-@section('title', 'Edit Investigation Order')
-@section('page-title', 'Edit Investigation Order')
+@section('title', 'Edit Lab Order')
+@section('page-title', 'Edit Lab Order')
 @section('page-description', 'Update laboratory test order')
 
 @section('content')
@@ -17,7 +17,7 @@
         </div>
     @endif
 
-    <form action="{{ route('investigation-orders.update', $investigationOrder) }}" method="POST" id="order-form">
+    <form action="{{ route('investigation-orders.update', $investigationOrder) }}" method="POST" id="order-form" data-item-fk="lab_test_id">
         @csrf
         @method('PUT')
 
@@ -54,9 +54,9 @@
 
         <div class="mb-4">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Investigations</h3>
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Lab tests</h3>
                 <button type="button" id="add-investigation-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-medical-blue bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors">
-                    <i class="fas fa-plus mr-1"></i>Add Investigation
+                    <i class="fas fa-plus mr-1"></i>Add Lab Test
                 </button>
             </div>
 
@@ -69,7 +69,7 @@
                 <table class="w-full text-sm" id="items-table">
                     <thead class="bg-gray-50">
                         <tr class="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            <th class="px-4 py-3 text-left">Investigation</th>
+                            <th class="px-4 py-3 text-left">Lab test</th>
                             <th class="px-4 py-3 text-center w-20">Qty</th>
                             <th class="px-4 py-3 text-center w-28">Priority</th>
                             <th class="px-4 py-3 text-center w-28">Location</th>
@@ -81,12 +81,12 @@
                         @foreach($existingItems as $i => $item)
                         <tr class="item-row border-t border-gray-100">
                             <td class="px-4 py-2">
-                                <select name="items[{{ $i }}][investigation_id]" class="investigation-select w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue text-sm" required>
-                                    <option value="">Select investigation...</option>
-                                    @foreach($investigations->groupBy('category') as $category => $group)
+                                <select name="items[{{ $i }}][lab_test_id]" class="investigation-select w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue text-sm" required>
+                                    <option value="">Select lab test...</option>
+                                    @foreach($labTests->groupBy('category') as $category => $group)
                                         <optgroup label="{{ ucfirst($category ?: 'General') }}">
                                             @foreach($group as $inv)
-                                                <option value="{{ $inv->id }}" {{ $item->investigation_id == $inv->id ? 'selected' : '' }}>
+                                                <option value="{{ $inv->id }}" {{ ($item->lab_test_id ?? null) == $inv->id ? 'selected' : '' }}>
                                                     {{ $inv->name }} — {{ currency_symbol() }}{{ number_format($inv->price, 0) }}
                                                 </option>
                                             @endforeach

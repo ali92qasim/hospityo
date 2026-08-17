@@ -47,8 +47,9 @@ class ModuleRegistry
             ],
         ],
         'laboratory' => [
-            'name'   => 'Laboratory & Radiology',
+            'name'   => 'Laboratory & Imaging',
             'routes' => [
+                'lab.', 'imaging.',
                 'investigations.', 'lab-tests.', 'investigation-orders.',
                 'lab-orders.', 'lab-results.', 'radiology-results.',
             ],

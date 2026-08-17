@@ -54,9 +54,10 @@ class BillController extends Controller
     {
         $patients = Patient::all();
         $services = Service::active()->get();
-        $investigations = \App\Models\Investigation::active()->orderBy('category')->orderBy('name')->get();
+        $labTests = \App\Models\LabTest::active()->orderBy('category')->orderBy('name')->get();
+        $imagingStudies = \App\Models\ImagingStudy::active()->orderBy('category')->orderBy('name')->get();
         $visits = Visit::with('patient')->latest()->take(50)->get();
-        return view('admin.bills.create', compact('patients', 'services', 'investigations', 'visits'));
+        return view('admin.bills.create', compact('patients', 'services', 'labTests', 'imagingStudies', 'visits'));
     }
 
     public function store(StoreBillRequest $request)
@@ -146,7 +147,8 @@ class BillController extends Controller
             'patient',
             'visit.admission.advances.receivedBy',
             'billItems.service',
-            'billItems.investigation',
+            'billItems.labTest',
+            'billItems.imagingStudy',
             'payments.receivedBy',
         ]);
 
@@ -157,10 +159,11 @@ class BillController extends Controller
     {
         $patients = Patient::all();
         $services = Service::active()->get();
-        $investigations = \App\Models\Investigation::active()->orderBy('category')->orderBy('name')->get();
+        $labTests = \App\Models\LabTest::active()->orderBy('category')->orderBy('name')->get();
+        $imagingStudies = \App\Models\ImagingStudy::active()->orderBy('category')->orderBy('name')->get();
         $visits = Visit::with('patient')->latest()->take(50)->get();
         $bill->load(['billItems', 'patient']);
-        return view('admin.bills.edit', compact('bill', 'patients', 'services', 'investigations', 'visits'));
+        return view('admin.bills.edit', compact('bill', 'patients', 'services', 'labTests', 'imagingStudies', 'visits'));
     }
 
     public function update(UpdateBillRequest $request, Bill $bill)
@@ -521,8 +524,9 @@ class BillController extends Controller
     private function buildBillItemAttributes(array $item, string $billType): array
     {
         return [
-            'service_id'       => $item['service_id'] ?? null,
-            'investigation_id' => $item['investigation_id'] ?? null,
+            'service_id'        => $item['service_id'] ?? null,
+            'lab_test_id'       => $item['lab_test_id'] ?? null,
+            'imaging_study_id'  => $item['imaging_study_id'] ?? null,
             'item_category'    => BillItemCategoryResolver::resolve($item, $billType),
             'description'      => $item['description'],
             'quantity'         => $item['quantity'],

@@ -46,8 +46,10 @@ use App\Http\Controllers\MedicineCategoryController;
 use App\Http\Controllers\MedicineBrandController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\InvestigationController;
+use App\Http\Controllers\ImagingStudyController;
 use App\Http\Controllers\LabOrderController;
 use App\Http\Controllers\InvestigationOrderController;
+use App\Http\Controllers\ImagingOrderController;
 use App\Http\Controllers\LabResultController;
 use App\Http\Controllers\PublicLabReportController;
 use App\Http\Controllers\RadiologyResultController;
@@ -438,6 +440,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('medicines', MedicineController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
     Route::post('visits/{visit}/prescription', [VisitController::class, 'createPrescription'])->name('visits.prescription')->middleware('permission:edit visits');
     Route::post('visits/{visit}/order-multiple-lab-tests', [VisitController::class, 'orderMultipleLabTests'])->name('visits.order-multiple-lab-tests')->middleware('permission:edit visits');
+    Route::post('visits/{visit}/order-multiple-imaging-studies', [VisitController::class, 'orderMultipleImagingStudies'])->name('visits.order-multiple-imaging-studies')->middleware('permission:edit visits');
     Route::post('prescriptions/{prescription}/dispense', [PrescriptionController::class, 'dispense'])->name('prescriptions.dispense')->middleware('permission:edit visits');
 
     // Prescription Instructions Routes
@@ -486,11 +489,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/investigations/data', [InvestigationController::class, 'data'])
         ->name('investigations.data')
         ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
-    Route::resource('investigations', InvestigationController::class)->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+    Route::resource('investigations', InvestigationController::class)
+        ->parameters(['investigations' => 'labTest'])
+        ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
     Route::post('investigations/import', [InvestigationController::class, 'import'])->name('investigations.import')->middleware('permission:create investigations');
     Route::get('investigations/import-status', [InvestigationController::class, 'importStatus'])->name('investigations.import-status')->middleware('permission:create investigations');
-    Route::resource('lab-tests', InvestigationController::class)->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
-    // Investigation Orders (new routes)
+    Route::resource('lab-tests', InvestigationController::class)
+        ->parameters(['lab-tests' => 'labTest'])
+        ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
     Route::resource('investigation-orders', InvestigationOrderController::class)->middleware('permission:view investigation orders|create investigation orders|edit investigation orders|delete investigation orders');
     Route::post('investigation-orders/{investigationOrder}/collect-sample', [InvestigationOrderController::class, 'collectSample'])->name('investigation-orders.collect-sample')->middleware('permission:edit investigation orders');
     Route::post('investigation-orders/{investigationOrder}/receive-sample', [InvestigationOrderController::class, 'receiveSample'])->name('investigation-orders.receive-sample')->middleware('permission:edit investigation orders');
@@ -517,9 +523,111 @@ Route::middleware('auth')->group(function () {
     Route::resource('lab-results', LabResultController::class)->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
 
     // Radiology Results Routes
-    Route::get('investigation-orders/{investigationOrder}/radiology-results/create', [RadiologyResultController::class, 'create'])->name('radiology-results.create')->middleware('permission:create radiology results');
-    Route::post('investigation-orders/{investigationOrder}/radiology-results', [RadiologyResultController::class, 'store'])->name('radiology-results.store')->middleware('permission:create radiology results');
+    Route::get('imaging-orders/{imagingOrder}/radiology-results/create', [RadiologyResultController::class, 'create'])->name('radiology-results.create')->middleware('permission:create radiology results');
+    Route::post('imaging-orders/{imagingOrder}/radiology-results', [RadiologyResultController::class, 'store'])->name('radiology-results.store')->middleware('permission:create radiology results');
     Route::resource('radiology-results', RadiologyResultController::class)->except(['create', 'store'])->middleware('permission:view radiology results|edit radiology results|delete radiology results');
+
+    Route::prefix('lab')->name('lab.')->group(function () {
+        Route::get('tests', [InvestigationController::class, 'indexLab'])
+            ->name('tests.index')
+            ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+        Route::get('tests/data', [InvestigationController::class, 'dataLab'])
+            ->name('tests.data')
+            ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+        Route::get('tests/create', [InvestigationController::class, 'create'])
+            ->name('tests.create')
+            ->middleware('permission:create investigations');
+        Route::post('tests', [InvestigationController::class, 'store'])
+            ->name('tests.store')
+            ->middleware('permission:create investigations');
+        Route::post('tests/import', [InvestigationController::class, 'import'])
+            ->name('tests.import')
+            ->middleware('permission:create investigations');
+        Route::get('tests/import-status', [InvestigationController::class, 'importStatus'])
+            ->name('tests.import-status')
+            ->middleware('permission:create investigations');
+        Route::get('tests/{labTest}', [InvestigationController::class, 'show'])
+            ->name('tests.show')
+            ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+        Route::get('tests/{labTest}/edit', [InvestigationController::class, 'edit'])
+            ->name('tests.edit')
+            ->middleware('permission:edit investigations');
+        Route::put('tests/{labTest}', [InvestigationController::class, 'update'])
+            ->name('tests.update')
+            ->middleware('permission:edit investigations');
+        Route::delete('tests/{labTest}', [InvestigationController::class, 'destroy'])
+            ->name('tests.destroy')
+            ->middleware('permission:delete investigations');
+        Route::get('orders', [InvestigationOrderController::class, 'indexLab'])
+            ->name('orders.index')
+            ->middleware('permission:view investigation orders|create investigation orders|edit investigation orders|delete investigation orders|view lab orders');
+        Route::get('orders/create', [InvestigationOrderController::class, 'create'])
+            ->name('orders.create')
+            ->middleware('permission:create investigation orders|create lab orders');
+        Route::post('orders', [InvestigationOrderController::class, 'store'])
+            ->name('orders.store')
+            ->middleware('permission:create investigation orders|create lab orders');
+        Route::get('results', [LabResultController::class, 'indexLab'])
+            ->name('results.index')
+            ->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
+    });
+
+    Route::prefix('imaging')->name('imaging.')->group(function () {
+        Route::get('studies', [ImagingStudyController::class, 'index'])
+            ->name('studies.index')
+            ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+        Route::get('studies/data', [ImagingStudyController::class, 'data'])
+            ->name('studies.data')
+            ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+        Route::get('studies/create', [ImagingStudyController::class, 'create'])
+            ->name('studies.create')
+            ->middleware('permission:create investigations');
+        Route::post('studies', [ImagingStudyController::class, 'store'])
+            ->name('studies.store')
+            ->middleware('permission:create investigations');
+        Route::post('studies/import', [ImagingStudyController::class, 'import'])
+            ->name('studies.import')
+            ->middleware('permission:create investigations');
+        Route::get('studies/import-status', [ImagingStudyController::class, 'importStatus'])
+            ->name('studies.import-status')
+            ->middleware('permission:create investigations');
+        Route::get('studies/{imagingStudy}', [ImagingStudyController::class, 'show'])
+            ->name('studies.show')
+            ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+        Route::get('studies/{imagingStudy}/edit', [ImagingStudyController::class, 'edit'])
+            ->name('studies.edit')
+            ->middleware('permission:edit investigations');
+        Route::put('studies/{imagingStudy}', [ImagingStudyController::class, 'update'])
+            ->name('studies.update')
+            ->middleware('permission:edit investigations');
+        Route::delete('studies/{imagingStudy}', [ImagingStudyController::class, 'destroy'])
+            ->name('studies.destroy')
+            ->middleware('permission:delete investigations');
+        Route::get('orders', [ImagingOrderController::class, 'index'])
+            ->name('orders.index')
+            ->middleware('permission:view investigation orders|create investigation orders|edit investigation orders|delete investigation orders|view lab orders');
+        Route::get('orders/create', [ImagingOrderController::class, 'create'])
+            ->name('orders.create')
+            ->middleware('permission:create investigation orders|create lab orders');
+        Route::post('orders', [ImagingOrderController::class, 'store'])
+            ->name('orders.store')
+            ->middleware('permission:create investigation orders|create lab orders');
+        Route::get('orders/{imagingOrder}', [ImagingOrderController::class, 'show'])
+            ->name('orders.show')
+            ->middleware('permission:view investigation orders|view lab orders');
+        Route::get('orders/{imagingOrder}/edit', [ImagingOrderController::class, 'edit'])
+            ->name('orders.edit')
+            ->middleware('permission:edit investigation orders|edit lab orders');
+        Route::put('orders/{imagingOrder}', [ImagingOrderController::class, 'update'])
+            ->name('orders.update')
+            ->middleware('permission:edit investigation orders|edit lab orders');
+        Route::delete('orders/{imagingOrder}', [ImagingOrderController::class, 'destroy'])
+            ->name('orders.destroy')
+            ->middleware('permission:delete investigation orders|delete lab orders');
+        Route::get('reports', [RadiologyResultController::class, 'indexImaging'])
+            ->name('reports.index')
+            ->middleware('permission:view radiology results|edit radiology results|delete radiology results');
+    });
 
 
     // Doctor Share Routes

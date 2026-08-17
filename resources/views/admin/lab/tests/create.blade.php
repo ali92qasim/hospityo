@@ -1,51 +1,37 @@
 @extends('admin.layout')
 
-@section('title', 'Create Investigation - Laboratory Information System')
-@section('page-title', 'Create Investigation')
-@section('page-description', 'Add new investigation definition')
+@section('title', 'Create Lab Test - Laboratory Information System')
+@section('page-title', 'Create Lab Test')
+@section('page-description', 'Add a new laboratory test')
 
 @section('content')
 <div class="bg-white rounded-lg shadow-sm p-6">
-    <form action="{{ route('investigations.store') }}" method="POST">
+    <form action="{{ route('lab.tests.store') }}" method="POST">
         @csrf
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Test Code</label>
-                <input type="text" name="code" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                <input type="text" name="code" value="{{ old('code') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
             </div>
-            
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Test Name</label>
-                <input type="text" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                <input type="text" name="name" value="{{ old('name') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
             </div>
-            
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select name="category" id="category-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="">Select Category</option>
-                    <optgroup label="Pathology (Lab)">
-                        <option value="hematology">Hematology</option>
-                        <option value="biochemistry">Biochemistry</option>
-                        <option value="microbiology">Microbiology</option>
-                        <option value="immunology">Immunology</option>
-                        <option value="histopathology">Histopathology</option>
-                        <option value="molecular">Molecular Biology</option>
-                    </optgroup>
-                    <optgroup label="Radiology (Imaging)">
-                        <option value="x-ray">X-Ray</option>
-                        <option value="ultrasound">Ultrasound</option>
-                        <option value="ct-scan">CT Scan</option>
-                        <option value="mri">MRI</option>
-                    </optgroup>
-                    <optgroup label="Cardiology">
-                        <option value="cardiac-diagnostics">Cardiac Diagnostics</option>
-                    </optgroup>
+                    @foreach(\App\Models\LabTest::categories() as $category)
+                        <option value="{{ $category }}" @selected(old('category') === $category)>{{ ucwords(str_replace('-', ' ', $category === 'molecular' ? 'molecular biology' : $category)) }}</option>
+                    @endforeach
                 </select>
             </div>
-            
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Sample Type</label>
-                <select name="sample_type" id="sample-type-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
+                <select name="sample_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                     <option value="">Select Sample Type</option>
                     <option value="blood">Blood</option>
                     <option value="urine">Urine</option>
@@ -57,47 +43,44 @@
                     <option value="other">Other</option>
                 </select>
             </div>
-            
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Price ({{ currency_symbol() }})</label>
-                <input type="number" name="price" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                <input type="number" name="price" min="0" step="0.01" value="{{ old('price') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
             </div>
-            
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Turnaround Time</label>
-                <input type="text" name="turnaround_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="e.g. 24 hours, 2-3 days">
+                <input type="text" name="turnaround_time" value="{{ old('turnaround_time') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="e.g. 24 hours, 2-3 days">
             </div>
-            
+
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Test description..."></textarea>
+                <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">{{ old('description') }}</textarea>
             </div>
-            
+
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
-                <textarea name="instructions" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Collection and handling instructions..."></textarea>
+                <textarea name="instructions" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">{{ old('instructions') }}</textarea>
             </div>
         </div>
-        
-        <!-- Test Parameters Section -->
-        <div class="border-t border-gray-200 pt-6 mt-6">
+
+        <div id="parameters-section" class="border-t border-gray-200 pt-6 mt-6">
             <div class="flex justify-between items-center mb-4">
                 <h4 class="text-lg font-medium text-gray-900">Test Parameters</h4>
                 <button type="button" onclick="addParameter()" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
                     <i class="fas fa-plus mr-1"></i>Add Parameter
                 </button>
             </div>
-            
             <div id="parameters-container"></div>
-            
             <p class="text-sm text-gray-500 mt-2">
                 <i class="fas fa-info-circle mr-1"></i>
                 Leave parameters empty if this test uses free-text results instead of measured values.
             </p>
         </div>
-        
+
         <div class="flex justify-end space-x-4 mt-6">
-            <a href="{{ route('investigations.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
+            <a href="{{ route('lab.tests.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
             <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                 <i class="fas fa-plus mr-2"></i>Create Test
             </button>
@@ -107,7 +90,6 @@
 
 <script>
 let parameterIndex = 0;
-
 function addParameter() {
     const container = document.getElementById('parameters-container');
     const parameterRow = document.createElement('div');
@@ -116,18 +98,15 @@ function addParameter() {
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Parameter Name *</label>
-                <input type="text" name="parameters[${parameterIndex}][name]" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+                <input type="text" name="parameters[${parameterIndex}][name]" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                <input type="text" name="parameters[${parameterIndex}][unit]" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <input type="text" name="parameters[${parameterIndex}][unit]" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Reference Range</label>
-                <input type="text" name="parameters[${parameterIndex}][reference_range]" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="e.g. 4.5-11.0">
+                <input type="text" name="parameters[${parameterIndex}][reference_range]" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="e.g. 4.5-11.0">
             </div>
             <div class="flex items-end">
                 <button type="button" onclick="removeParameter(this)" class="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700">
@@ -139,11 +118,8 @@ function addParameter() {
     container.appendChild(parameterRow);
     parameterIndex++;
 }
-
 function removeParameter(button) {
     button.closest('.parameter-row').remove();
 }
 </script>
-
-@vite(['resources/js/investigations-form.js'])
 @endsection

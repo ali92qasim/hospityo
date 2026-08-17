@@ -2,88 +2,80 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RadiologyResult;
-use App\Models\InvestigationOrder;
+use App\Models\ImagingOrder;
+use App\Models\ImagingReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class RadiologyResultController extends Controller
 {
-    public function store(Request $request, InvestigationOrder $investigationOrder)
+    public function store(Request $request, ImagingOrder $imagingOrder)
     {
-        // Validate that this is a radiology investigation
-        if (!$investigationOrder->isRadiology()) {
-            return back()->withErrors([
-                'error' => 'Cannot create radiology result for non-radiology investigation: ' . $investigationOrder->investigation->name
-            ]);
-        }
-
         $validated = $request->validate([
             'report_text' => 'nullable|string',
             'impression' => 'nullable|string',
-            'report_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
+            'report_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'status' => 'required|in:draft,final,amended',
         ]);
 
-        // Handle file upload
         $filePath = null;
         if ($request->hasFile('report_file')) {
             $filePath = $request->file('report_file')->store(tenant_storage_path('radiology-reports'), 'public');
         }
 
-        // Create radiology result
-        $result = RadiologyResult::create([
-            'investigation_order_id' => $investigationOrder->id,
+        $result = ImagingReport::create([
+            'imaging_order_id' => $imagingOrder->id,
             'report_text' => $validated['report_text'] ?? null,
             'impression' => $validated['impression'] ?? null,
             'file_path' => $filePath,
             'status' => $validated['status'],
             'radiologist_id' => auth()->id(),
-            'reported_at' => $validated['status'] === 'final' ? now() : null
+            'reported_at' => $validated['status'] === 'final' ? now() : null,
         ]);
 
-        // Update investigation order status
-        $investigationOrder->update([
+        $imagingOrder->update([
             'status' => 'reported',
-            'completed_at' => now()
+            'completed_at' => now(),
         ]);
+        $imagingOrder->items()->update(['status' => 'reported']);
 
         return redirect()->route('radiology-results.show', $result)
-            ->with('success', 'Radiology result created successfully.');
+            ->with('success', 'Imaging report created successfully.');
     }
 
-    public function show(RadiologyResult $radiologyResult)
+    public function show(ImagingReport $radiologyResult)
     {
         $radiologyResult->load([
-            'investigationOrder.patient',
-            'investigationOrder.investigation',
-            'investigationOrder.visit',
-            'investigationOrder.doctor',
-            'radiologist'
+            'imagingOrder.patient',
+            'imagingOrder.items.imagingStudy',
+            'imagingOrder.visit',
+            'imagingOrder.doctor',
+            'radiologist',
         ]);
+
+        if ($radiologyResult->relationLoaded('imagingOrder')) {
+            $radiologyResult->setRelation('investigationOrder', $radiologyResult->imagingOrder);
+        }
 
         return view('admin.radiology.results.show', compact('radiologyResult'));
     }
 
-    public function update(Request $request, RadiologyResult $radiologyResult)
+    public function update(Request $request, ImagingReport $radiologyResult)
     {
         $validated = $request->validate([
             'report_text' => 'nullable|string',
             'impression' => 'nullable|string',
-            'report_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
+            'report_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'status' => 'required|in:draft,final,amended',
         ]);
 
-        // Handle file upload
         if ($request->hasFile('report_file')) {
-            // Delete old file if exists
             if ($radiologyResult->file_path) {
                 Storage::disk('public')->delete($radiologyResult->file_path);
             }
             $validated['file_path'] = $request->file('report_file')->store(tenant_storage_path('radiology-reports'), 'public');
         }
 
-        // Update reported_at timestamp when status changes to final
         if ($validated['status'] === 'final' && $radiologyResult->status !== 'final') {
             $validated['reported_at'] = now();
         }
@@ -91,15 +83,22 @@ class RadiologyResultController extends Controller
         $radiologyResult->update($validated);
 
         return redirect()->route('radiology-results.show', $radiologyResult)
-            ->with('success', 'Radiology result updated successfully.');
+            ->with('success', 'Imaging report updated successfully.');
     }
 
     public function index(Request $request)
     {
-        $query = RadiologyResult::with([
-            'investigationOrder.patient',
-            'investigationOrder.investigation',
-            'radiologist'
+        return redirect()
+            ->route('imaging.reports.index')
+            ->with('info', 'Radiology results have moved to Imaging Reports.');
+    }
+
+    public function indexImaging(Request $request)
+    {
+        $query = ImagingReport::with([
+            'imagingOrder.patient',
+            'imagingOrder.items.imagingStudy',
+            'radiologist',
         ]);
 
         if ($request->status) {
@@ -108,43 +107,42 @@ class RadiologyResultController extends Controller
 
         $results = $query->latest()->paginate(15);
 
-        return view('admin.radiology.results.index', compact('results'));
+        return view('admin.imaging.reports.index', compact('results'));
     }
 
-    public function create(InvestigationOrder $investigationOrder)
+    public function create(ImagingOrder $imagingOrder)
     {
-        // Validate that this is a radiology investigation
-        if (!$investigationOrder->isRadiology()) {
-            return redirect()->back()->withErrors([
-                'error' => 'Cannot create radiology result for non-radiology investigation: ' . $investigationOrder->investigation->name
-            ]);
-        }
+        $imagingOrder->load(['patient', 'visit', 'items.imagingStudy']);
 
-        $investigationOrder->load(['patient', 'visit', 'investigation']);
+        $investigationOrder = $imagingOrder;
+
         return view('admin.radiology.results.create', compact('investigationOrder'));
     }
 
-    public function edit(RadiologyResult $radiologyResult)
+    public function edit(ImagingReport $radiologyResult)
     {
         $radiologyResult->load([
-            'investigationOrder.patient',
-            'investigationOrder.investigation',
-            'investigationOrder.visit'
+            'imagingOrder.patient',
+            'imagingOrder.items.imagingStudy',
+            'imagingOrder.visit',
         ]);
+
+        if ($radiologyResult->relationLoaded('imagingOrder')) {
+            $radiologyResult->setRelation('investigationOrder', $radiologyResult->imagingOrder);
+        }
 
         return view('admin.radiology.results.edit', compact('radiologyResult'));
     }
 
-    public function destroy(RadiologyResult $radiologyResult)
+    public function destroy(ImagingReport $radiologyResult)
     {
-        // Delete associated file if exists
         if ($radiologyResult->file_path) {
             Storage::disk('public')->delete($radiologyResult->file_path);
         }
 
         $radiologyResult->delete();
 
-        return redirect()->route('radiology-results.index')
-            ->with('success', 'Radiology result deleted successfully.');
+        return redirect()->route('imaging.reports.index')
+            ->with('success', 'Imaging report deleted successfully.');
     }
 }

@@ -18,6 +18,7 @@ use App\Http\Requests\StoreAdmissionAdvanceRequest;
 use App\Http\Requests\TriagePatientRequest;
 use App\Http\Requests\CreatePrescriptionRequest;
 use App\Http\Requests\OrderMultipleLabTestsRequest;
+use App\Http\Requests\OrderMultipleImagingStudiesRequest;
 use App\Http\Requests\StorePatientComplaintRequest;
 use App\Http\Requests\AddDoctorToCareTeamRequest;
 use App\Http\Requests\SetPrimaryDoctorRequest;
@@ -28,8 +29,8 @@ use App\Models\Visit;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Department;
-use App\Models\Investigation;
-use App\Models\LabOrder;
+use App\Models\ImagingStudy;
+use App\Models\LabTest;
 use App\Models\VitalSign;
 use App\Models\Consultation;
 use App\Models\TestOrder;
@@ -274,8 +275,10 @@ class VisitController extends Controller
             'allVitalSigns.user',
             'consultation.allergies',
             'testOrders',
-            'labOrders.items.investigation',
+            'labOrders.items.labTest',
             'labOrders.items.result',
+            'imagingOrders.items.imagingStudy',
+            'imagingOrders.report',
             'admission.bed.ward',
             'admission.advances.receivedBy',
             'draftBill',
@@ -321,10 +324,11 @@ class VisitController extends Controller
         $medicines = Medicine::where('status', 'active')
             ->orderBy('name')
             ->get();
-        $investigations = Investigation::where('is_active', true)->orderBy('category')->orderBy('name')->get();
+        $labTests = LabTest::where('is_active', true)->orderBy('category')->orderBy('name')->get();
+        $imagingStudies = ImagingStudy::where('is_active', true)->orderBy('category')->orderBy('name')->get();
         $allergies = \App\Models\Allergy::orderBy('category')->orderBy('name')->get();
 
-        $data = compact('visit', 'doctors', 'medicines', 'investigations', 'allergies', 'handler', 'workflowData', 'authDoctor');
+        $data = compact('visit', 'doctors', 'medicines', 'labTests', 'imagingStudies', 'allergies', 'handler', 'workflowData', 'authDoctor');
 
         if ($handler->type() === VisitType::Ipd) {
             $data['availableBeds'] = $workflowData['available_beds'] ?? Bed::with('ward')->where('status', 'available')->get();
@@ -711,7 +715,57 @@ class VisitController extends Controller
 
             foreach ($validated['tests'] as $testData) {
                 $order->items()->create([
-                    'investigation_id' => $testData['lab_test_id'],
+                    'lab_test_id'    => $testData['lab_test_id'],
+                    'quantity'       => $testData['quantity'],
+                    'priority'       => $testData['priority'],
+                    'clinical_notes' => $testData['clinical_notes'] ?? null,
+                    'test_location'  => 'indoor',
+                    'status'         => 'ordered',
+                ]);
+            }
+
+            InvestigationOrderBillingService::syncOrderToBill($order->fresh(['visit', 'items.labTest']));
+
+            $orderedCount = count($validated['tests']);
+            $message = $orderedCount === 1
+                ? 'Lab test ordered successfully.'
+                : "{$orderedCount} lab tests ordered successfully.";
+
+            return back()->with('success', $message);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Failed to order lab tests: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to order lab tests. Please try again.']);
+        }
+    }
+
+    public function orderMultipleImagingStudies(OrderMultipleImagingStudiesRequest $request, Visit $visit)
+    {
+        try {
+            $validated = $request->validated();
+
+            $priorities = array_column($validated['tests'], 'priority');
+            $overallPriority = in_array('stat', $priorities)
+                ? 'stat'
+                : (in_array('urgent', $priorities) ? 'urgent' : 'routine');
+
+            $doctorId = IpdClinicalService::resolveOrderDoctorId(
+                $visit,
+                $request->doctor_id ? (int) $request->doctor_id : null
+            );
+
+            $order = $visit->imagingOrders()->create([
+                'patient_id'  => $visit->patient_id,
+                'doctor_id'   => $doctorId,
+                'priority'    => $overallPriority,
+                'status'      => 'ordered',
+                'ordered_at'  => now(),
+            ]);
+
+            foreach ($validated['tests'] as $testData) {
+                $order->items()->create([
+                    'imaging_study_id' => $testData['imaging_study_id'],
                     'quantity'         => $testData['quantity'],
                     'priority'         => $testData['priority'],
                     'clinical_notes'   => $testData['clinical_notes'] ?? null,
@@ -720,19 +774,19 @@ class VisitController extends Controller
                 ]);
             }
 
-            InvestigationOrderBillingService::syncOrderToBill($order->fresh(['visit', 'items.investigation']));
+            InvestigationOrderBillingService::syncOrderToBill($order->fresh(['visit', 'items.imagingStudy']));
 
             $orderedCount = count($validated['tests']);
             $message = $orderedCount === 1
-                ? 'Investigation ordered successfully.'
-                : "{$orderedCount} investigations ordered successfully.";
+                ? 'Imaging study ordered successfully.'
+                : "{$orderedCount} imaging studies ordered successfully.";
 
             return back()->with('success', $message);
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            \Log::error('Failed to order investigations: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to order investigations. Please try again.']);
+            \Log::error('Failed to order imaging studies: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to order imaging studies. Please try again.']);
         }
     }
 
@@ -963,10 +1017,11 @@ class VisitController extends Controller
                 'doctorVisitNotes.createdBy',
                 'labOrders' => fn ($query) => $query->orderBy('ordered_at'),
                 'labOrders.doctor',
-                'labOrders.items.investigation',
+                'labOrders.items.labTest',
                 'labOrders.items.result.resultItems.parameter',
                 'labOrders.results.resultItems.parameter',
-                'labOrders.radiologyResult',
+                'imagingOrders.items.imagingStudy',
+                'imagingOrders.report',
             ]);
 
             return view('admin.visits.print-ipd', compact('visit', 'settings'));
@@ -979,8 +1034,10 @@ class VisitController extends Controller
             'vitalSigns',
             'allVitalSigns.user',
             'consultation',
-            'labOrders.items.investigation',
+            'labOrders.items.labTest',
             'labOrders.items.result.resultItems',
+            'imagingOrders.items.imagingStudy',
+            'imagingOrders.report',
             'admission.bed.ward',
             'triage',
             'prescriptions.items.medicine',

@@ -2,11 +2,11 @@
 
 use App\Models\Department;
 use App\Models\Doctor;
-use App\Models\Investigation;
-use App\Models\InvestigationOrder;
-use App\Models\InvestigationOrderItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\LabResult;
 use App\Models\LabResultItem;
+use App\Models\LabTest;
 use App\Models\LabTestParameter;
 use App\Models\Patient;
 use App\Models\User;
@@ -62,7 +62,7 @@ beforeEach(function () {
         'visit_datetime' => now(),
     ]);
 
-    $this->order = InvestigationOrder::create([
+    $this->order = LabOrder::create([
         'patient_id' => $this->patient->id,
         'visit_id' => $this->visit->id,
         'doctor_id' => $this->doctor->id,
@@ -73,7 +73,7 @@ beforeEach(function () {
         'completed_at' => now(),
     ]);
 
-    $investigation = Investigation::create([
+    $labTest = LabTest::create([
         'code' => 'URIC',
         'name' => 'Uric Acid',
         'category' => 'biochemistry',
@@ -83,7 +83,7 @@ beforeEach(function () {
     ]);
 
     $parameter = LabTestParameter::create([
-        'lab_test_id' => $investigation->id,
+        'lab_test_id' => $labTest->id,
         'parameter_name' => 'Uric Acid',
         'unit' => 'mg/dL',
         'data_type' => 'numeric',
@@ -92,9 +92,9 @@ beforeEach(function () {
         'is_active' => true,
     ]);
 
-    InvestigationOrderItem::create([
-        'investigation_order_id' => $this->order->id,
-        'investigation_id' => $investigation->id,
+    LabOrderItem::create([
+        'lab_order_id' => $this->order->id,
+        'lab_test_id' => $labTest->id,
         'quantity' => 1,
         'priority' => 'routine',
         'status' => 'reported',
@@ -102,7 +102,7 @@ beforeEach(function () {
     ]);
 
     $result = LabResult::create([
-        'investigation_order_id' => $this->order->id,
+        'lab_order_id' => $this->order->id,
         'results' => [],
         'status' => 'final',
         'technician_id' => $this->user->id,
@@ -165,7 +165,7 @@ it('accepts pakistan country-code style mobile numbers', function () {
     ])->assertRedirect(route('lab-report.view', $this->order->share_token));
 });
 
-it('assigns a share token when creating an investigation order', function () {
+it('assigns a share token when creating a lab order', function () {
     expect($this->order->share_token)->not->toBeEmpty()
         ->and(strlen($this->order->share_token))->toBeGreaterThanOrEqual(20);
 });

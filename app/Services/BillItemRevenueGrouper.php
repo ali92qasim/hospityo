@@ -3,98 +3,127 @@
 namespace App\Services;
 
 use App\Models\BillItem;
-use App\Models\Investigation;
+use App\Models\ImagingStudy;
+use App\Models\LabTest;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class BillItemRevenueGrouper
 {
-    /**
-     * Stable key for aggregating bill lines in revenue reports.
-     */
-    public static function groupKey(BillItem $item, ?Collection $investigationsByName = null): string
+    public static function groupKey(BillItem $item, ?Collection $catalogByName = null): string
     {
         if ($item->service_id) {
-            return 'service:' . $item->service_id;
+            return 'service:'.$item->service_id;
         }
 
-        if ($item->investigation_id) {
-            return 'investigation:' . $item->investigation_id;
+        if ($item->lab_test_id) {
+            return 'lab:'.$item->lab_test_id;
         }
 
-        $matched = static::matchInvestigationByDescription($item->description, $investigationsByName);
-        if ($matched) {
-            return 'investigation:' . $matched->id;
+        if ($item->imaging_study_id) {
+            return 'imaging:'.$item->imaging_study_id;
         }
 
-        if ($item->item_category === 'investigation') {
-            return 'investigation:desc:' . static::normalizeName($item->description ?? '');
+        $matched = static::matchCatalogByDescription($item->description, $catalogByName);
+        if ($matched instanceof LabTest) {
+            return 'lab:'.$matched->id;
+        }
+        if ($matched instanceof ImagingStudy) {
+            return 'imaging:'.$matched->id;
+        }
+
+        if (in_array($item->item_category, ['lab', 'imaging'], true)) {
+            return $item->item_category.':desc:'.static::normalizeName($item->description ?? '');
         }
 
         if ($item->description) {
-            return 'other:' . static::normalizeName($item->description);
+            return 'other:'.static::normalizeName($item->description);
         }
 
         return 'unknown';
     }
 
-    /**
-     * Human-readable label for a revenue group.
-     */
-    public static function groupLabel(BillItem $item, ?Collection $investigationsByName = null): string
+    public static function groupLabel(BillItem $item, ?Collection $catalogByName = null): string
     {
         if ($item->service) {
             return $item->service->name;
         }
 
-        if ($item->investigation) {
-            return $item->investigation->name;
+        if ($item->labTest) {
+            return $item->labTest->name;
         }
 
-        $matched = static::matchInvestigationByDescription($item->description, $investigationsByName);
+        if ($item->imagingStudy) {
+            return $item->imagingStudy->name;
+        }
+
+        $matched = static::matchCatalogByDescription($item->description, $catalogByName);
         if ($matched) {
             return $matched->name;
         }
 
-        if ($item->item_category === 'investigation' && $item->description) {
+        if (in_array($item->item_category, ['lab', 'imaging'], true) && $item->description) {
             return $item->description;
         }
 
         return $item->description ?: 'Unknown';
     }
 
-    /**
-     * Whether a line should be treated as investigation revenue.
-     */
-    public static function isInvestigation(BillItem $item, ?Collection $investigationsByName = null): bool
+    public static function isInvestigation(BillItem $item, ?Collection $catalogByName = null): bool
     {
-        if ($item->investigation_id || $item->item_category === 'investigation') {
+        if ($item->lab_test_id || $item->imaging_study_id || in_array($item->item_category, ['lab', 'imaging'], true)) {
             return true;
         }
 
-        return static::matchInvestigationByDescription($item->description, $investigationsByName) !== null;
+        return static::matchCatalogByDescription($item->description, $catalogByName) !== null;
+    }
+
+    public static function isLab(BillItem $item): bool
+    {
+        return (bool) $item->lab_test_id || $item->item_category === 'lab';
+    }
+
+    public static function isImaging(BillItem $item): bool
+    {
+        return (bool) $item->imaging_study_id || $item->item_category === 'imaging';
     }
 
     /**
-     * @return Collection<string, Investigation>
+     * @return Collection<string, LabTest|ImagingStudy>
      */
     public static function investigationsByName(): Collection
     {
-        return Investigation::query()
-            ->get()
-            ->keyBy(fn (Investigation $investigation) => static::normalizeName($investigation->name));
+        return static::catalogByName();
+    }
+
+    /**
+     * @return Collection<string, LabTest|ImagingStudy>
+     */
+    public static function catalogByName(): Collection
+    {
+        $lab = LabTest::query()->get()->keyBy(fn (LabTest $test) => static::normalizeName($test->name));
+        $imaging = ImagingStudy::query()->get()->keyBy(fn (ImagingStudy $study) => static::normalizeName($study->name));
+
+        return $lab->union($imaging);
     }
 
     public static function matchInvestigationByDescription(
         ?string $description,
-        ?Collection $investigationsByName = null
-    ): ?Investigation {
+        ?Collection $catalogByName = null
+    ): LabTest|ImagingStudy|null {
+        return static::matchCatalogByDescription($description, $catalogByName);
+    }
+
+    public static function matchCatalogByDescription(
+        ?string $description,
+        ?Collection $catalogByName = null
+    ): LabTest|ImagingStudy|null {
         $normalized = static::normalizeName($description ?? '');
         if ($normalized === '') {
             return null;
         }
 
-        $lookup = $investigationsByName ?? static::investigationsByName();
+        $lookup = $catalogByName ?? static::catalogByName();
 
         return $lookup->get($normalized);
     }

@@ -125,23 +125,53 @@ class SidebarService
             ]);
         }
 
-        // ── Diagnostics / Laboratory ──────────────────────────────────────────
-        if ($this->hasModule($tenant, 'laboratory') && ($user->can('view investigations') || $user->can('view investigation orders') || $user->can('view lab results'))) {
-            $items = [];
+        // ── Laboratory ────────────────────────────────────────────────────────
+        if ($this->hasModule($tenant, 'laboratory')) {
+            $labItems = [];
             if ($user->can('view investigations')) {
-                $items[] = $this->item('Investigations', 'fa-flask', 'investigations.index', ['investigations.*', 'lab-tests.*']);
+                $labItems[] = $this->item('Lab Tests', 'fa-flask', 'lab.tests.index', [
+                    'lab.tests.*', 'investigations.*', 'lab-tests.*',
+                ]);
             }
             if ($user->can('view investigation orders') || $user->can('view lab orders')) {
-                $items[] = $this->item('Investigation Orders', 'fa-clipboard-list', 'investigation-orders.index', ['investigation-orders.*', 'lab-orders.*']);
-            }
-            if ($user->can('view lab results') || $user->can('view radiology results')) {
-                $items[] = $this->item('Results', 'fa-file-medical-alt', 'lab-results.index', ['lab-results.*', 'radiology-results.*']);
-            }
-            if (!empty($items)) {
-                $menu[] = $this->group('diagnostics', 'Diagnostics', $items, [
-                    'investigations.*', 'investigation-orders.*', 'lab-results.*',
-                    'lab-tests.*', 'lab-orders.*', 'radiology-results.*',
+                $labItems[] = $this->item('Lab Orders', 'fa-vial', 'lab.orders.index', [
+                    'lab.orders.*', 'investigation-orders.*', 'lab-orders.*',
                 ]);
+            }
+            if ($user->can('view lab results')) {
+                $labItems[] = $this->item('Lab Results', 'fa-file-medical-alt', 'lab.results.index', [
+                    'lab.results.*', 'lab-results.*',
+                ]);
+            }
+            if ($labItems !== []) {
+                $menu[] = $this->group('laboratory', 'Laboratory', $labItems, [
+                    'lab.tests.*', 'lab.orders.*', 'lab.results.*',
+                    'investigations.*', 'lab-tests.*', 'investigation-orders.*',
+                    'lab-orders.*', 'lab-results.*',
+                ]);
+            }
+
+            if ($user->can('view radiology results')) {
+                $imagingItems = [];
+                if ($user->can('view investigations')) {
+                    $imagingItems[] = $this->item('Imaging Studies', 'fa-x-ray', 'imaging.studies.index', [
+                        'imaging.studies.*',
+                    ]);
+                }
+                if ($user->can('view investigation orders') || $user->can('view lab orders')) {
+                    $imagingItems[] = $this->item('Imaging Orders', 'fa-clipboard-list', 'imaging.orders.index', [
+                        'imaging.orders.*',
+                    ]);
+                }
+                $imagingItems[] = $this->item('Imaging Reports', 'fa-file-image', 'imaging.reports.index', [
+                    'imaging.reports.*', 'radiology-results.*',
+                ]);
+                if ($imagingItems !== []) {
+                    $menu[] = $this->group('imaging', 'Imaging', $imagingItems, [
+                        'imaging.studies.*', 'imaging.orders.*', 'imaging.reports.*',
+                        'radiology-results.*',
+                    ]);
+                }
             }
         }
 

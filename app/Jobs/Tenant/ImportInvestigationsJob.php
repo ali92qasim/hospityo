@@ -17,12 +17,13 @@ class ImportInvestigationsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries   = 1;
-    public int $timeout = 300; // 5 minutes max
+    public int $timeout = 300;
 
     public function __construct(
         private readonly string $storagePath,
         private readonly string $cacheKey,
         private readonly int    $userId,
+        private readonly ?string $kind = null,
     ) {}
 
     public function handle(InvestigationImportService $service): void
@@ -30,7 +31,7 @@ class ImportInvestigationsJob implements ShouldQueue
         $fullPath = Storage::path($this->storagePath);
 
         try {
-            $result = $service->importFromFile($fullPath);
+            $result = $service->importFromFile($fullPath, $this->kind);
 
             Cache::put($this->cacheKey, [
                 'status'  => 'done',

@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\Investigation;
 
 class StoreLabOrderRequest extends FormRequest
 {
@@ -23,7 +22,7 @@ class StoreLabOrderRequest extends FormRequest
             'special_instructions'          => ['nullable', 'string', 'max:2000'],
 
             'items'                         => ['required', 'array', 'min:1'],
-            'items.*.investigation_id'      => ['required', Rule::exists('tenant.investigations', 'id')],
+            'items.*.lab_test_id'           => ['required', Rule::exists('tenant.lab_tests', 'id')],
             'items.*.quantity'              => ['required', 'integer', 'min:1', 'max:99'],
             'items.*.priority'              => ['required', Rule::in(['routine', 'urgent', 'stat'])],
             'items.*.clinical_notes'        => ['nullable', 'string', 'max:1000'],
@@ -35,11 +34,11 @@ class StoreLabOrderRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $ids = collect($this->input('items', []))
-                ->pluck('investigation_id')
+                ->pluck('lab_test_id')
                 ->filter();
 
             if ($ids->count() !== $ids->unique()->count()) {
-                $validator->errors()->add('items', 'Each investigation can only be added once per order. Please remove duplicate rows.');
+                $validator->errors()->add('items', 'Each lab test can only be added once per order. Please remove duplicate rows.');
             }
         });
     }
@@ -47,10 +46,10 @@ class StoreLabOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'items.required'                    => 'At least one investigation must be added.',
-            'items.min'                         => 'At least one investigation must be added.',
-            'items.*.investigation_id.required' => 'Please select an investigation for each row.',
-            'items.*.investigation_id.exists'   => 'Selected investigation is invalid.',
+            'items.required'                => 'At least one lab test must be added.',
+            'items.min'                     => 'At least one lab test must be added.',
+            'items.*.lab_test_id.required'  => 'Please select a lab test for each row.',
+            'items.*.lab_test_id.exists'    => 'Selected lab test is invalid.',
         ];
     }
 }

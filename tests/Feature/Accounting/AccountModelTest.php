@@ -106,6 +106,8 @@ it('calculates balance correctly for revenue accounts (credit - debit)', functio
 });
 
 it('filters accounts by type scope', function () {
+    Account::query()->delete();
+
     Account::create(['code' => '1100', 'name' => 'Cash', 'type' => 'asset']);
     Account::create(['code' => '4100', 'name' => 'Revenue', 'type' => 'revenue']);
     Account::create(['code' => '5100', 'name' => 'Expense', 'type' => 'expense']);

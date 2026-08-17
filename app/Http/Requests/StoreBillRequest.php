@@ -16,15 +16,16 @@ class StoreBillRequest extends FormRequest
         return [
             'patient_id' => 'required|exists:tenant.patients,id',
             'bill_date' => 'required|date',
-            'bill_type' => 'required|in:opd,ipd,emergency,investigation,pharmacy',
+            'bill_type' => 'required|in:opd,ipd,emergency,pharmacy',
             'items' => 'required|array|min:1',
             'items.*.service_id' => 'nullable|exists:tenant.services,id',
-            'items.*.investigation_id' => 'nullable|exists:tenant.investigations,id',
+            'items.*.lab_test_id' => 'nullable|exists:tenant.lab_tests,id',
+            'items.*.imaging_study_id' => 'nullable|exists:tenant.imaging_studies,id',
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'discount_type' => 'nullable|in:fixed,percentage',
-            'discount_percentage' => 'nullable|numeric|min:0|max:100'
+            'discount_percentage' => 'nullable|numeric|min:0|max:100',
         ];
     }
 }

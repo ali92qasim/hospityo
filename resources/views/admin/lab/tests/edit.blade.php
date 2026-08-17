@@ -1,22 +1,22 @@
 @extends('admin.layout')
 
-@section('title', 'Edit Investigation - Hospital Management System')
-@section('page-title', 'Edit Investigation')
-@section('page-description', 'Update investigation information')
+@section('title', 'Edit Lab Test - Hospital Management System')
+@section('page-title', 'Edit Lab Test')
+@section('page-description', 'Update laboratory test information')
 
 @section('content')
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-lg shadow-sm">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-800">Edit Investigation</h3>
-                <a href="{{ route('investigations.index') }}" class="text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to Investigations
+                <h3 class="text-lg font-semibold text-gray-800">Edit Lab Test</h3>
+                <a href="{{ route('lab.tests.index') }}" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Lab Tests
                 </a>
             </div>
         </div>
 
-        <form action="{{ route('investigations.update', $labTest->id) }}" method="POST" class="p-6">
+        <form action="{{ route('lab.tests.update', $labTest) }}" method="POST" class="p-6">
             @csrf
             @method('PUT')
             
@@ -46,25 +46,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <select name="category" id="category-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                             <option value="">Select Category</option>
-                            <optgroup label="Pathology (Lab)">
-                                <option value="hematology" {{ old('category', $labTest->category) == 'hematology' ? 'selected' : '' }}>Hematology</option>
-                                <option value="biochemistry" {{ old('category', $labTest->category) == 'biochemistry' ? 'selected' : '' }}>Biochemistry</option>
-                                <option value="microbiology" {{ old('category', $labTest->category) == 'microbiology' ? 'selected' : '' }}>Microbiology</option>
-                                <option value="immunology" {{ old('category', $labTest->category) == 'immunology' ? 'selected' : '' }}>Immunology</option>
-                                <option value="histopathology" {{ old('category', $labTest->category) == 'histopathology' ? 'selected' : '' }}>Histopathology</option>
-                                <option value="molecular" {{ old('category', $labTest->category) == 'molecular' ? 'selected' : '' }}>Molecular Biology</option>
-                            </optgroup>
-                            <optgroup label="Radiology (Imaging)">
-                                <option value="x-ray" {{ old('category', $labTest->category) == 'x-ray' ? 'selected' : '' }}>X-Ray</option>
-                                <option value="ultrasound" {{ old('category', $labTest->category) == 'ultrasound' ? 'selected' : '' }}>Ultrasound</option>
-                                <option value="ct-scan" {{ old('category', $labTest->category) == 'ct-scan' ? 'selected' : '' }}>CT Scan</option>
-                                <option value="mri" {{ old('category', $labTest->category) == 'mri' ? 'selected' : '' }}>MRI</option>
-                            </optgroup>
-                            <optgroup label="Cardiology">
-                                <option value="cardiac-diagnostics" {{ old('category', $labTest->category) == 'cardiac-diagnostics' ? 'selected' : '' }}>Cardiac Diagnostics</option>
-                            </optgroup>
+                            @foreach(\App\Models\LabTest::categories() as $category)
+                                <option value="{{ $category }}" {{ old('category', $labTest->category) == $category ? 'selected' : '' }}>{{ ucwords(str_replace('-', ' ', $category === 'molecular' ? 'molecular biology' : $category)) }}</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -114,7 +100,7 @@
                 </div>
 
                 <!-- Test Parameters Section -->
-                <div class="border-t border-gray-200 pt-6">
+                <div id="parameters-section" class="border-t border-gray-200 pt-6">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="text-lg font-medium text-gray-900">Test Parameters</h4>
                         <button type="button" onclick="addParameter()" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
@@ -161,12 +147,12 @@
             </div>
 
             <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
-                <a href="{{ route('investigations.index') }}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                <a href="{{ route('lab.tests.index') }}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Cancel
                 </a>
                 <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 flex items-center">
                     <i class="fas fa-save mr-2"></i>
-                    Update Investigation
+                    Update Lab Test
                 </button>
             </div>
         </form>
@@ -184,18 +170,15 @@ function addParameter() {
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Parameter Name *</label>
-                <input type="text" name="parameters[${parameterIndex}][name]" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+                <input type="text" name="parameters[${parameterIndex}][name]" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                <input type="text" name="parameters[${parameterIndex}][unit]" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <input type="text" name="parameters[${parameterIndex}][unit]" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Reference Range</label>
-                <input type="text" name="parameters[${parameterIndex}][reference_range]" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="e.g. 4.5-11.0">
+                <input type="text" name="parameters[${parameterIndex}][reference_range]" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="e.g. 4.5-11.0">
             </div>
             <div class="flex items-end">
                 <button type="button" onclick="removeParameter(this)" class="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700">
@@ -212,6 +195,4 @@ function removeParameter(button) {
     button.closest('.parameter-row').remove();
 }
 </script>
-
-@vite(['resources/js/investigations-form.js'])
 @endsection

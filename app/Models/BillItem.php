@@ -14,18 +14,19 @@ class BillItem extends Model
     protected $fillable = [
         'bill_id',
         'service_id',
-        'investigation_id',
+        'lab_test_id',
+        'imaging_study_id',
         'item_category',
         'description',
         'quantity',
         'unit_price',
-        'total_price'
+        'total_price',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
-        'total_price' => 'decimal:2'
+        'total_price' => 'decimal:2',
     ];
 
     public function bill(): BelongsTo
@@ -38,9 +39,19 @@ class BillItem extends Model
         return $this->belongsTo(Service::class);
     }
 
-    public function investigation(): BelongsTo
+    public function labTest(): BelongsTo
     {
-        return $this->belongsTo(Investigation::class);
+        return $this->belongsTo(LabTest::class);
+    }
+
+    public function imagingStudy(): BelongsTo
+    {
+        return $this->belongsTo(ImagingStudy::class);
+    }
+
+    public function catalogName(): ?string
+    {
+        return $this->labTest?->name ?? $this->imagingStudy?->name;
     }
 
     protected static function boot(): void

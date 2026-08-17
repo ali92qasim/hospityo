@@ -9,8 +9,8 @@ use App\Models\Visit;
 use App\Models\Doctor;
 use App\Models\BillItem;
 use App\Models\Service;
-use App\Models\InvestigationOrder;
-use App\Models\Investigation;
+use App\Models\LabOrder;
+use App\Models\ImagingOrder;
 use App\Models\LabResult;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
@@ -395,53 +395,55 @@ class ReportController extends Controller
         $endDate   = $request->input('end_date', today()->format('Y-m-d'));
         $testType  = $request->input('test_type');
 
-        // Get investigation orders within date range with items
-        $query = InvestigationOrder::whereBetween('ordered_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->with(['items.investigation', 'patient', 'doctor']);
+        $labOrders = LabOrder::whereBetween('ordered_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->with(['items.labTest', 'patient', 'doctor', 'result'])
+            ->get();
+        $imagingOrders = ImagingOrder::whereBetween('ordered_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->with(['items.imagingStudy', 'patient', 'doctor'])
+            ->get();
 
-        $orders = $query->get();
-
-        // Filter by test type if specified
-        if ($testType) {
-            $orders = $orders->filter(function ($order) use ($testType) {
-                return $order->items->contains(function ($item) use ($testType) {
-                    $cat = $item->investigation?->category;
-                    if ($testType === 'lab') {
-                        return in_array($cat, ['hematology', 'biochemistry', 'microbiology', 'immunology', 'histopathology', 'molecular']);
-                    }
-                    return in_array($cat, ['x-ray', 'ultrasound', 'ct-scan', 'mri', 'cardiac-diagnostics']);
-                });
-            });
+        if ($testType === 'lab') {
+            $orders = $labOrders;
+            $imagingOrders = collect();
+        } elseif ($testType === 'imaging') {
+            $orders = $imagingOrders;
+            $labOrders = collect();
+        } else {
+            $orders = $labOrders->concat($imagingOrders);
         }
 
-        // Status mapping — use order-level status
         $stats = [
             'total_orders'     => $orders->count(),
             'completed'        => $orders->whereIn('status', ['reported', 'verified'])->count(),
             'pending'          => $orders->where('status', 'ordered')->count(),
-            'sample_collected' => $orders->where('status', 'collected')->count(),
+            'sample_collected' => $labOrders->where('status', 'collected')->count(),
             'in_progress'      => $orders->where('status', 'testing')->count(),
-            'lab_tests'        => $orders->filter(fn($o) => $o->items->contains(fn($i) =>
-                in_array($i->investigation?->category, ['hematology', 'biochemistry', 'microbiology', 'immunology', 'histopathology', 'molecular'])
-            ))->count(),
-            'radiology_tests'  => $orders->filter(fn($o) => $o->items->contains(fn($i) =>
-                in_array($i->investigation?->category, ['x-ray', 'ultrasound', 'ct-scan', 'mri', 'cardiac-diagnostics'])
-            ))->count(),
+            'lab_tests'        => $labOrders->count(),
+            'radiology_tests'  => $imagingOrders->count(),
         ];
 
-        // Investigation-wise breakdown (from items, not order-level investigation_id)
-        $allItems = $orders->flatMap->items;
-
-        $testBreakdown = $allItems->groupBy('investigation_id')
+        $labBreakdown = $labOrders->flatMap->items->groupBy('lab_test_id')
             ->map(function ($items) {
-                $investigation = $items->first()?->investigation;
+                $investigation = $items->first()?->labTest;
                 return [
                     'investigation' => $investigation,
                     'count'         => $items->count(),
                     'completed'     => $items->whereIn('status', ['verified', 'reported'])->count(),
                     'pending'       => $items->whereIn('status', ['ordered', 'collected', 'testing'])->count(),
                 ];
-            })
+            });
+        $imagingBreakdown = $imagingOrders->flatMap->items->groupBy('imaging_study_id')
+            ->map(function ($items) {
+                $investigation = $items->first()?->imagingStudy;
+                return [
+                    'investigation' => $investigation,
+                    'count'         => $items->count(),
+                    'completed'     => $items->whereIn('status', ['verified', 'reported'])->count(),
+                    'pending'       => $items->whereIn('status', ['ordered', 'collected', 'testing'])->count(),
+                ];
+            });
+
+        $testBreakdown = $labBreakdown->concat($imagingBreakdown)
             ->filter(fn($r) => $r['investigation'] !== null)
             ->sortByDesc('count')
             ->values();

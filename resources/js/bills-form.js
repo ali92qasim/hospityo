@@ -6,14 +6,16 @@ import '../css/bills-form.css';
 
 let itemIndex = window._billItemCount ?? 1;
 let rawServiceOptions = '';
-let rawInvestigationOptions = '';
+let rawLabTestOptions = '';
+let rawImagingStudyOptions = '';
 const currencySymbol = window._currencySymbol || '';
 const paidAmount = parseFloat(window._billPaidAmount) || 0;
 
 $(function () {
     const $firstRow = $('.bill-item').first();
     rawServiceOptions = $firstRow.find('.service-select').html();
-    rawInvestigationOptions = $firstRow.find('.investigation-select').html();
+    rawLabTestOptions = $firstRow.find('.lab-test-select').html();
+    rawImagingStudyOptions = $firstRow.find('.imaging-study-select').html();
 
     // Patient & bill type Select2
     $('#patient_id').select2({ placeholder: 'Select Patient', allowClear: true, width: '100%' });
@@ -40,7 +42,8 @@ $(function () {
                         <label class="block text-xs font-medium text-gray-500 mb-1">Item Type</label>
                         <select class="item-type-select w-full px-2 py-2 border border-gray-300 rounded-lg text-sm">
                             <option value="service">Service</option>
-                            <option value="investigation">Investigation</option>
+                            <option value="lab">Lab test</option>
+                            <option value="imaging">Imaging study</option>
                         </select>
                     </div>
                     <div class="col-span-3 item-service-col">
@@ -48,12 +51,19 @@ $(function () {
                         <select name="items[${itemIndex}][service_id]" class="service-select w-full px-2 py-2 border border-gray-300 rounded-lg text-sm">
                             ${rawServiceOptions}
                         </select>
-                        <input type="hidden" name="items[${itemIndex}][investigation_id]" class="investigation-id-input" value="">
+                        <input type="hidden" name="items[${itemIndex}][lab_test_id]" class="lab-test-id-input" value="">
+                        <input type="hidden" name="items[${itemIndex}][imaging_study_id]" class="imaging-study-id-input" value="">
                     </div>
-                    <div class="col-span-3 item-investigation-col hidden">
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Investigation</label>
-                        <select class="investigation-select w-full px-2 py-2 border border-gray-300 rounded-lg text-sm">
-                            ${rawInvestigationOptions}
+                    <div class="col-span-3 item-lab-col hidden">
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Lab test</label>
+                        <select class="lab-test-select w-full px-2 py-2 border border-gray-300 rounded-lg text-sm">
+                            ${rawLabTestOptions}
+                        </select>
+                    </div>
+                    <div class="col-span-3 item-imaging-col hidden">
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Imaging study</label>
+                        <select class="imaging-study-select w-full px-2 py-2 border border-gray-300 rounded-lg text-sm">
+                            ${rawImagingStudyOptions}
                         </select>
                     </div>
                     <div class="col-span-2">
@@ -82,7 +92,7 @@ $(function () {
         `);
 
         $('#billItems').append(row);
-        row.find('.service-select, .investigation-select').val('');
+        row.find('.service-select, .lab-test-select, .imaging-study-select').val('');
         initSelect2OnRow(row);
         itemIndex++;
     });
@@ -95,32 +105,29 @@ $(function () {
         }
     });
 
-    // Item type toggle — switch between service and investigation
+    // Item type toggle
     $(document).on('change', '.item-type-select', function () {
         const row = $(this).closest('.bill-item');
         const type = $(this).val();
 
-        if (type === 'investigation') {
-            row.find('.item-service-col').addClass('hidden');
-            row.find('.item-investigation-col').removeClass('hidden');
-            // Clear service fields
-            row.find('.service-select').val('').trigger('change');
-            row.find('select[name*="[service_id]"]').val('');
+        row.find('.item-service-col, .item-lab-col, .item-imaging-col').addClass('hidden');
+        if (type === 'lab') {
+            row.find('.item-lab-col').removeClass('hidden');
+        } else if (type === 'imaging') {
+            row.find('.item-imaging-col').removeClass('hidden');
         } else {
-            row.find('.item-investigation-col').addClass('hidden');
             row.find('.item-service-col').removeClass('hidden');
-            // Clear investigation fields
-            row.find('.investigation-select').val('').trigger('change');
-            row.find('.investigation-id-input').val('');
         }
-        // Clear price and description
+
+        row.find('.service-select, .lab-test-select, .imaging-study-select').val('').trigger('change');
+        row.find('select[name*="[service_id]"]').val('');
+        row.find('.lab-test-id-input, .imaging-study-id-input').val('');
         row.find('.unit-price').val('');
         row.find('.description-input').val('');
         row.find('.total-display').text('0.00');
         updateTotal();
     });
 
-    // Service select → auto-fill price & description
     $(document).on('change', '.service-select', function () {
         const row = $(this).closest('.bill-item');
         const opt = $(this).find(':selected');
@@ -128,20 +135,31 @@ $(function () {
             row.find('.unit-price').val(opt.data('price'));
             row.find('.description-input').val(opt.data('name') || opt.text().split(' - ')[0].trim());
         }
-        // Clear investigation_id when service is selected
-        row.find('.investigation-id-input').val('');
+        row.find('.lab-test-id-input, .imaging-study-id-input').val('');
         updateTotal();
     });
 
-    // Investigation select → auto-fill price, description, and hidden investigation_id
-    $(document).on('change', '.investigation-select', function () {
+    $(document).on('change', '.lab-test-select', function () {
         const row = $(this).closest('.bill-item');
         const opt = $(this).find(':selected');
         if (opt.val()) {
             row.find('.unit-price').val(opt.data('price'));
             row.find('.description-input').val(opt.data('name') || opt.text().split(' - ')[0].trim());
-            row.find('.investigation-id-input').val(opt.val());
-            // Clear service_id
+            row.find('.lab-test-id-input').val(opt.val());
+            row.find('.imaging-study-id-input').val('');
+            row.find('.service-select').val('');
+        }
+        updateTotal();
+    });
+
+    $(document).on('change', '.imaging-study-select', function () {
+        const row = $(this).closest('.bill-item');
+        const opt = $(this).find(':selected');
+        if (opt.val()) {
+            row.find('.unit-price').val(opt.data('price'));
+            row.find('.description-input').val(opt.data('name') || opt.text().split(' - ')[0].trim());
+            row.find('.imaging-study-id-input').val(opt.val());
+            row.find('.lab-test-id-input').val('');
             row.find('.service-select').val('');
         }
         updateTotal();
@@ -204,7 +222,8 @@ function initSelect2OnRow(row) {
     if (typeof $.fn.select2 !== 'function') return;
     try {
         row.find('.service-select').select2({ placeholder: 'Search service...', allowClear: true, width: '100%' });
-        row.find('.investigation-select').select2({ placeholder: 'Search investigation...', allowClear: true, width: '100%' });
+        row.find('.lab-test-select').select2({ placeholder: 'Search lab test...', allowClear: true, width: '100%' });
+        row.find('.imaging-study-select').select2({ placeholder: 'Search imaging study...', allowClear: true, width: '100%' });
     } catch (e) {
         console.error('Select2 init error:', e);
     }

@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Investigation Results - Hospital Management System')
-@section('page-title', 'Investigation Results')
-@section('page-description', 'Manage pathology, radiology, and cardiology test results')
+@section('title', 'Lab Results - Hospital Management System')
+@section('page-title', 'Lab Results')
+@section('page-description', 'Manage pending and completed laboratory test results')
 
 @section('content')
 <div id="lab-results-index">

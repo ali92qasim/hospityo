@@ -27,7 +27,7 @@ class DoctorShareController extends Controller
      */
     public function rulesIndex(Request $request): View
     {
-        $query = DoctorShareRule::with(['doctor', 'service', 'services', 'investigation'])
+        $query = DoctorShareRule::with(['doctor', 'service', 'services', 'labTest', 'imagingStudy'])
             ->latest();
 
         if ($request->filled('doctor_id')) {
@@ -86,7 +86,7 @@ class DoctorShareController extends Controller
      */
     public function rulesEdit(DoctorShareRule $rule): View
     {
-        $rule->load(['doctor', 'service', 'services', 'investigation']);
+        $rule->load(['doctor', 'service', 'services', 'labTest', 'imagingStudy']);
 
         $doctors        = Doctor::orderBy('name')->get();
         $services       = Service::orderBy('name')->get();
@@ -503,7 +503,7 @@ class DoctorShareController extends Controller
             'investigation_scope' => ['required', 'in:all,lab,imaging'],
             'share_type'       => ['required', 'in:percentage,fixed'],
             'share_value'      => ['required', 'numeric', 'min:0.01'],
-            'applies_to'       => ['required', 'in:opd,ipd,investigation,emergency,all'],
+            'applies_to'       => ['required', 'in:opd,ipd,lab,imaging,emergency,all'],
             'notes'            => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -525,7 +525,8 @@ class DoctorShareController extends Controller
         }
 
         $validated['doctor_id'] = $validated['doctor_id'] ?? null;
-        $validated['investigation_id'] = null;
+        $validated['lab_test_id'] = null;
+        $validated['imaging_study_id'] = null;
 
         return $validated;
     }
@@ -540,7 +541,8 @@ class DoctorShareController extends Controller
         if ($serviceIds === []) {
             $exists = DoctorShareRule::query()
                 ->where('doctor_id', $doctorId)
-                ->whereNull('investigation_id')
+                ->whereNull('lab_test_id')
+                ->whereNull('imaging_study_id')
                 ->where('investigation_scope', $investigationScope)
                 ->where('applies_to', $appliesTo)
                 ->whereDoesntHave('services')
@@ -557,7 +559,8 @@ class DoctorShareController extends Controller
         $overlap = DoctorShareRule::query()
             ->where('doctor_id', $doctorId)
             ->where('applies_to', $appliesTo)
-            ->whereNull('investigation_id')
+            ->whereNull('lab_test_id')
+            ->whereNull('imaging_study_id')
             ->when($excludeRuleId, fn ($query) => $query->where('id', '!=', $excludeRuleId))
             ->whereHas('services', fn ($query) => $query->whereIn('services.id', $serviceIds))
             ->exists();

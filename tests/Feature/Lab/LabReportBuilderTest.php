@@ -2,11 +2,11 @@
 
 use App\Models\Department;
 use App\Models\Doctor;
-use App\Models\Investigation;
-use App\Models\InvestigationOrder;
-use App\Models\InvestigationOrderItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\LabResult;
 use App\Models\LabResultItem;
+use App\Models\LabTest;
 use App\Models\LabTestParameter;
 use App\Models\Patient;
 use App\Models\User;
@@ -57,7 +57,7 @@ beforeEach(function () {
         'visit_datetime' => now(),
     ]);
 
-    $this->order = InvestigationOrder::create([
+    $this->order = LabOrder::create([
         'patient_id' => $this->patient->id,
         'visit_id' => $this->visit->id,
         'doctor_id' => $this->doctor->id,
@@ -69,9 +69,9 @@ beforeEach(function () {
     ]);
 });
 
-function createInvestigationWithParams(string $name, int $paramCount): Investigation
+function createLabTestWithParams(string $name, int $paramCount): LabTest
 {
-    $investigation = Investigation::create([
+    $labTest = LabTest::create([
         'code' => strtoupper(substr(str_replace(' ', '', $name), 0, 6)),
         'name' => $name,
         'category' => 'biochemistry',
@@ -82,7 +82,7 @@ function createInvestigationWithParams(string $name, int $paramCount): Investiga
 
     for ($i = 1; $i <= $paramCount; $i++) {
         LabTestParameter::create([
-            'lab_test_id' => $investigation->id,
+            'lab_test_id' => $labTest->id,
             'parameter_name' => "{$name} Param {$i}",
             'unit' => 'mg/dL',
             'data_type' => 'numeric',
@@ -92,14 +92,14 @@ function createInvestigationWithParams(string $name, int $paramCount): Investiga
         ]);
     }
 
-    return $investigation->load('parameters');
+    return $labTest->load('parameters');
 }
 
-function createResultForInvestigation(InvestigationOrder $order, Investigation $investigation, User $user): LabResult
+function createResultForLabTest(LabOrder $order, LabTest $labTest, User $user): LabResult
 {
-    $item = InvestigationOrderItem::create([
-        'investigation_order_id' => $order->id,
-        'investigation_id' => $investigation->id,
+    LabOrderItem::create([
+        'lab_order_id' => $order->id,
+        'lab_test_id' => $labTest->id,
         'quantity' => 1,
         'priority' => 'routine',
         'status' => 'reported',
@@ -107,7 +107,7 @@ function createResultForInvestigation(InvestigationOrder $order, Investigation $
     ]);
 
     $result = LabResult::create([
-        'investigation_order_id' => $order->id,
+        'lab_order_id' => $order->id,
         'results' => [],
         'status' => 'final',
         'technician_id' => $user->id,
@@ -115,7 +115,7 @@ function createResultForInvestigation(InvestigationOrder $order, Investigation $
         'reported_at' => now(),
     ]);
 
-    foreach ($investigation->parameters as $index => $parameter) {
+    foreach ($labTest->parameters as $index => $parameter) {
         LabResultItem::create([
             'lab_result_id' => $result->id,
             'lab_test_parameter_id' => $parameter->id,
@@ -131,13 +131,13 @@ function createResultForInvestigation(InvestigationOrder $order, Investigation $
 }
 
 it('groups multiple small tests onto the first page', function () {
-    $uricAcid = createInvestigationWithParams('Uric Acid', 1);
-    $bloodSugar = createInvestigationWithParams('Blood Sugar', 2);
+    $uricAcid = createLabTestWithParams('Uric Acid', 1);
+    $bloodSugar = createLabTestWithParams('Blood Sugar', 2);
 
-    createResultForInvestigation($this->order, $uricAcid, $this->user);
-    createResultForInvestigation($this->order, $bloodSugar, $this->user);
+    createResultForLabTest($this->order, $uricAcid, $this->user);
+    createResultForLabTest($this->order, $bloodSugar, $this->user);
 
-    $report = LabReportBuilder::build($this->order->fresh(['items.investigation']));
+    $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
 
     expect($report['pages'])->toHaveCount(1)
         ->and($report['pages'][0]['sections'])->toHaveCount(2)
@@ -146,13 +146,13 @@ it('groups multiple small tests onto the first page', function () {
 });
 
 it('keeps oversized tests on their own continuation page', function () {
-    $cbc = createInvestigationWithParams('CBC', 16);
-    $uricAcid = createInvestigationWithParams('Uric Acid', 1);
+    $cbc = createLabTestWithParams('CBC', 16);
+    $uricAcid = createLabTestWithParams('Uric Acid', 1);
 
-    createResultForInvestigation($this->order, $cbc, $this->user);
-    createResultForInvestigation($this->order, $uricAcid, $this->user);
+    createResultForLabTest($this->order, $cbc, $this->user);
+    createResultForLabTest($this->order, $uricAcid, $this->user);
 
-    $report = LabReportBuilder::build($this->order->fresh(['items.investigation']));
+    $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
 
     expect($report['pages'])->toHaveCount(2)
         ->and($report['pages'][0]['sections'])->toHaveCount(1)
@@ -162,15 +162,15 @@ it('keeps oversized tests on their own continuation page', function () {
 });
 
 it('builds one section per investigation across multiple stored results', function () {
-    $uricAcid = createInvestigationWithParams('Uric Acid', 1);
-    $bloodSugar = createInvestigationWithParams('Blood Sugar', 1);
+    $uricAcid = createLabTestWithParams('Uric Acid', 1);
+    $bloodSugar = createLabTestWithParams('Blood Sugar', 1);
 
-    createResultForInvestigation($this->order, $uricAcid, $this->user);
-    createResultForInvestigation($this->order, $bloodSugar, $this->user);
+    createResultForLabTest($this->order, $uricAcid, $this->user);
+    createResultForLabTest($this->order, $bloodSugar, $this->user);
 
     $sections = LabReportBuilder::buildSections(
-        $this->order->fresh(['items.investigation']),
-        LabResult::where('investigation_order_id', $this->order->id)->with(['resultItems.parameter.investigation'])->get()
+        $this->order->fresh(['items.labTest']),
+        LabResult::where('lab_order_id', $this->order->id)->with(['resultItems.parameter.labTest'])->get()
     );
 
     expect($sections)->toHaveCount(2)

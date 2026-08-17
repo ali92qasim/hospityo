@@ -3,7 +3,8 @@
 namespace App\Services;
 
 use App\Models\Bill;
-use App\Models\InvestigationOrder;
+use App\Models\ImagingOrder;
+use App\Models\LabOrder;
 use App\Models\Visit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,14 +17,18 @@ class InvestigationOrderBillingService
      * OPD/emergency: pending bill + share calculated immediately.
      * IPD: draft bill only — share runs at discharge.
      */
-    public static function syncOrderToBill(InvestigationOrder $order): void
+    public static function syncOrderToBill(LabOrder|ImagingOrder $order): void
     {
         if (! $order->visit_id) {
             return;
         }
 
         try {
-            $order->loadMissing(['visit.primaryDoctor', 'items.investigation']);
+            $isLab = $order instanceof LabOrder;
+            $order->loadMissing($isLab
+                ? ['visit.primaryDoctor', 'items.labTest']
+                : ['visit.primaryDoctor', 'items.imagingStudy']
+            );
 
             $visit = $order->visit;
             $orderingDoctorId = $order->doctor_id
@@ -35,21 +40,22 @@ class InvestigationOrderBillingService
                 return;
             }
 
-            DB::connection('tenant')->transaction(function () use ($order, $visit) {
+            DB::connection('tenant')->transaction(function () use ($order, $visit, $isLab) {
                 [$bill, $isNewBill] = static::resolveBillForVisit($visit);
 
                 foreach ($order->items as $item) {
-                    $investigation = $item->investigation;
-                    if (! $investigation) {
+                    $catalog = $isLab ? $item->labTest : $item->imagingStudy;
+                    if (! $catalog) {
                         continue;
                     }
 
                     $bill->billItems()->create([
-                        'investigation_id' => $investigation->id,
-                        'item_category'    => 'investigation',
-                        'description'      => $investigation->name,
-                        'quantity'         => $item->quantity ?? 1,
-                        'unit_price'       => $investigation->price,
+                        'lab_test_id' => $isLab ? $catalog->id : null,
+                        'imaging_study_id' => $isLab ? null : $catalog->id,
+                        'item_category' => $isLab ? 'lab' : 'imaging',
+                        'description' => $catalog->name,
+                        'quantity' => $item->quantity ?? 1,
+                        'unit_price' => $catalog->price,
                     ]);
                 }
 
@@ -65,7 +71,7 @@ class InvestigationOrderBillingService
                 } else {
                     AccountingService::reverseAndRepostBillEntry(
                         $bill,
-                        'Investigation order charges added'
+                        'Diagnostic order charges added'
                     );
                 }
 
@@ -119,7 +125,7 @@ class InvestigationOrderBillingService
             'paid_amount'         => 0,
             'due_amount'          => 0,
             'status'              => 'pending',
-            'notes'               => 'Auto-created from investigation order (visit '.$visit->visit_no.')',
+            'notes'               => 'Auto-created from diagnostic order (visit '.$visit->visit_no.')',
             'created_by'          => Auth::id() ?? 1,
         ]);
 

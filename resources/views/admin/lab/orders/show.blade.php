@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Investigation Order — {{ $investigationOrder->order_number }}')
-@section('page-title', 'Investigation Order')
-@section('page-description', 'View order details and investigations')
+@section('title', 'Lab Order — {{ $investigationOrder->order_number }}')
+@section('page-title', 'Lab Order')
+@section('page-description', 'View lab order details and tests')
 
 @section('content')
 <div class="max-w-5xl mx-auto space-y-6">
@@ -13,7 +13,7 @@
             <div>
                 <h3 class="text-lg font-semibold text-gray-800">{{ $investigationOrder->order_number }}</h3>
                 <p class="text-sm text-gray-500 mt-1">
-                    {{ $investigationOrder->items->count() }} investigation{{ $investigationOrder->items->count() !== 1 ? 's' : '' }}
+                    {{ $investigationOrder->items->count() }} lab test{{ $investigationOrder->items->count() !== 1 ? 's' : '' }}
                     &bull; Ordered {{ $investigationOrder->ordered_at?->format('M d, Y h:i A') }}
                 </p>
             </div>
@@ -142,12 +142,12 @@
         <div class="lg:col-span-2">
             <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100">
-                    <h4 class="font-semibold text-gray-800">Investigations</h4>
+                    <h4 class="font-semibold text-gray-800">Lab tests</h4>
                 </div>
                 <table class="w-full text-sm">
                     <thead class="bg-gray-50">
                         <tr class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            <th class="px-4 py-3 text-left">Investigation</th>
+                            <th class="px-4 py-3 text-left">Lab test</th>
                             <th class="px-4 py-3 text-center">Qty</th>
                             <th class="px-4 py-3 text-center">Priority</th>
                             <th class="px-4 py-3 text-center">Location</th>
@@ -159,11 +159,11 @@
                         @forelse($investigationOrder->items as $item)
                         <tr>
                             <td class="px-4 py-3">
-                                <p class="font-medium text-gray-800">{{ $item->investigation?->name }}</p>
+                                <p class="font-medium text-gray-800">{{ $item->labTest?->name }}</p>
                                 @if($item->clinical_notes)
                                     <p class="text-xs text-gray-500 mt-0.5">{{ $item->clinical_notes }}</p>
                                 @endif
-                                <p class="text-xs text-gray-400">{{ currency_symbol() }}{{ number_format($item->investigation?->price ?? 0, 0) }}</p>
+                                <p class="text-xs text-gray-400">{{ currency_symbol() }}{{ number_format($item->labTest?->price ?? 0, 0) }}</p>
                             </td>
                             <td class="px-4 py-3 text-center text-gray-600">{{ $item->quantity }}</td>
                             <td class="px-4 py-3 text-center">
@@ -185,7 +185,7 @@
                                     </a>
                                 @else
                                     @if(in_array($investigationOrder->status, ['testing', 'collected']))
-                                        <a href="{{ route('lab-orders.results.create', $investigationOrder) }}" class="text-medical-blue hover:text-blue-800 text-xs font-medium">
+                                        <a href="{{ route('lab-orders.results.create', $item) }}" class="text-medical-blue hover:text-blue-800 text-xs font-medium">
                                             <i class="fas fa-plus mr-1"></i>Add
                                         </a>
                                     @else
@@ -196,7 +196,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-6 text-center text-gray-400">No investigations on this order.</td>
+                            <td colspan="6" class="px-4 py-6 text-center text-gray-400">No lab tests on this order.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -206,7 +206,7 @@
                             <td class="px-4 py-2 text-xs font-semibold text-gray-600">Total</td>
                             <td colspan="3"></td>
                             <td colspan="2" class="px-4 py-2 text-right text-xs font-semibold text-gray-700">
-                                {{ currency_symbol() }}{{ number_format($investigationOrder->items->sum(fn($i) => ($i->investigation?->price ?? 0) * $i->quantity), 0) }}
+                                {{ currency_symbol() }}{{ number_format($investigationOrder->items->sum(fn($i) => ($i->labTest?->price ?? 0) * $i->quantity), 0) }}
                             </td>
                         </tr>
                     </tfoot>

@@ -11,7 +11,7 @@ class LabSample extends Model
     use Auditable, UsesTenantConnection;
 
     protected $fillable = [
-        'sample_id', 'investigation_order_id', 'lab_order_id', 'sample_type', 'status',
+        'sample_id', 'lab_order_id', 'sample_type', 'status',
         'collected_at', 'received_at', 'collected_by', 'received_by',
         'collection_notes', 'rejection_reason', 'storage_conditions'
     ];
@@ -44,7 +44,7 @@ class LabSample extends Model
 
     public function labOrder()
     {
-        return $this->belongsTo(LabOrder::class);
+        return $this->belongsTo(LabOrder::class, 'lab_order_id');
     }
 
     public function collectedBy()

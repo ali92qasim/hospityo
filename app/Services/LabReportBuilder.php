@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Investigation;
-use App\Models\InvestigationOrder;
+use App\Models\LabOrder;
 use App\Models\LabResult;
+use App\Models\LabTest;
 use Illuminate\Support\Collection;
 
 class LabReportBuilder
@@ -25,19 +25,19 @@ class LabReportBuilder
      * Build a multi-test report for an investigation order.
      *
      * @return array{
-     *     order: InvestigationOrder,
+     *     order: LabOrder,
      *     pages: array<int, array{sections: array<int, array<string, mixed>>, row_cost: int}>,
      *     primaryResult: ?LabResult,
      *     comments: array<int, string>
      * }
      */
-    public static function build(InvestigationOrder $order): array
+    public static function build(LabOrder $order): array
     {
-        $order->loadMissing(['patient', 'doctor', 'visit', 'items.investigation']);
+        $order->loadMissing(['patient', 'doctor', 'visit', 'items.labTest']);
 
         $labResults = LabResult::query()
-            ->where('investigation_order_id', $order->id)
-            ->with(['resultItems.parameter.investigation', 'technician', 'pathologist'])
+            ->where('lab_order_id', $order->id)
+            ->with(['resultItems.parameter.labTest', 'technician', 'pathologist'])
             ->orderBy('id')
             ->get();
 
@@ -61,7 +61,7 @@ class LabReportBuilder
      * @param  Collection<int, LabResult>  $labResults
      * @return array<int, array<string, mixed>>
      */
-    public static function buildSections(InvestigationOrder $order, Collection $labResults): array
+    public static function buildSections(LabOrder $order, Collection $labResults): array
     {
         $itemsByInvestigation = $labResults
             ->flatMap(fn (LabResult $result) => $result->resultItems)
@@ -72,13 +72,13 @@ class LabReportBuilder
             });
 
         $investigationOrder = $order->items
-            ->sortBy(fn ($item) => $item->investigation?->name ?? '')
+            ->sortBy(fn ($item) => $item->labTest?->name ?? '')
             ->values();
 
         $sections = [];
 
         foreach ($investigationOrder as $orderItem) {
-            $investigation = $orderItem->investigation;
+            $investigation = $orderItem->labTest;
             if (! $investigation) {
                 continue;
             }
@@ -95,11 +95,11 @@ class LabReportBuilder
         // Any remaining groups not matched to an order item (legacy data).
         foreach ($itemsByInvestigation as $group) {
             $firstItem = $group->first();
-            $investigation = $firstItem->parameter?->investigation;
-            $label = $investigation?->name ?? 'Investigation';
+            $investigation = $firstItem->parameter?->labTest;
+            $label = $investigation?->name ?? 'Lab test';
 
             $sections[] = static::makeSection(
-                $investigation ?? new Investigation(['name' => $label]),
+                $investigation ?? new LabTest(['name' => $label]),
                 $group->values()->all()
             );
         }
@@ -111,7 +111,7 @@ class LabReportBuilder
      * @param  array<int, mixed>  $resultItems
      * @return array<string, mixed>
      */
-    public static function makeSection(Investigation $investigation, array $resultItems): array
+    public static function makeSection(LabTest $investigation, array $resultItems): array
     {
         $rowCost = static::SECTION_HEADER_ROWS
             + count($resultItems)

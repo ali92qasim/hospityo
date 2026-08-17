@@ -1,26 +1,24 @@
 @extends('admin.layout')
 
-@section('title', 'Investigations - Laboratory Information System')
-@section('page-title', 'Investigations')
-@section('page-description', 'Manage investigation definitions')
+@section('title', 'Lab Tests - Laboratory Information System')
+@section('page-title', 'Lab Tests')
+@section('page-description', 'Manage laboratory test definitions')
 @section('content')
 <div class="flex justify-between items-center mb-6">
-    <div class="flex space-x-4">
-    </div>
     <div class="flex items-center space-x-2">
-        <a href="{{ asset('templates/investigations-template.csv') }}" download class="text-gray-500 hover:text-medical-blue px-3 py-2 border border-gray-300 rounded-lg text-sm" title="Download Template">
-            <i class="fas fa-download mr-1"></i>Template
+        <a href="{{ asset('templates/lab-tests-template.csv') }}" download class="text-gray-500 hover:text-medical-blue px-3 py-2 border border-gray-300 rounded-lg text-sm" title="Download lab tests template">
+            <i class="fas fa-download mr-1"></i>Lab template
         </a>
         <button type="button" onclick="document.getElementById('import-file').click()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
             <i class="fas fa-file-upload mr-2"></i>Import CSV
         </button>
-        <a href="{{ route('investigations.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            <i class="fas fa-plus mr-2"></i>Add Test
+        <a href="{{ route('lab.tests.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <i class="fas fa-plus mr-2"></i>Add Lab Test
         </a>
     </div>
-    <form id="import-form" action="{{ route('investigations.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
+    <form id="import-form" action="{{ route('lab.tests.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
         @csrf
-        <input type="file" id="import-file" name="file" accept=".csv" onchange="if(this.files.length){if(confirm('Import '+this.files[0].name+'? Existing tests with same code will be updated.')){this.closest('form').submit();}else{this.value='';}}">
+        <input type="file" id="import-file" name="file" accept=".csv" onchange="if(this.files.length){if(confirm('Import '+this.files[0].name+' as lab tests? Existing tests with same code will be updated.')){this.closest('form').submit();}else{this.value='';}}">
     </form>
 </div>
 
@@ -33,11 +31,9 @@
 @if(session('import_pending'))
 <script>
 (function () {
-    // Write import tracking keys — poller in import-poller.js picks these up
     localStorage.setItem('investigationImportKey',       @json(session('import_cache_key')));
-    localStorage.setItem('investigationImportStatusUrl', @json(route('investigations.import-status')));
+    localStorage.setItem('investigationImportStatusUrl', @json(route('lab.tests.import-status')));
     localStorage.setItem('investigationImportIndexUrl',  window.location.href);
-    // Expiry: 25 min — shorter than the 30-min server cache TTL
     localStorage.setItem('investigationImportExpiry',    String(Date.now() + 25 * 60 * 1000));
 })();
 </script>
@@ -54,7 +50,7 @@
 </div>
 @endif
 
-<table class="investigations-table w-full invisible">
+<table class="investigations-table w-full invisible" data-ajax-url="{{ route('lab.tests.data') }}" data-resource-base="/lab/tests">
     <thead>
     <tr>
         <th>Code</th>

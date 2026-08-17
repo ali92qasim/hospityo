@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InvestigationOrder;
+use App\Models\LabOrder;
 use App\Services\LabReportBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -88,19 +88,19 @@ class PublicLabReportController extends Controller
         ]);
     }
 
-    private function findOrderOrAbort(string $shareToken): InvestigationOrder
+    private function findOrderOrAbort(string $shareToken): LabOrder
     {
-        return InvestigationOrder::query()
+        return LabOrder::query()
             ->where('share_token', $shareToken)
             ->firstOrFail();
     }
 
-    private function sessionKey(InvestigationOrder $order): string
+    private function sessionKey(LabOrder $order): string
     {
         return 'lab_report_unlocked.' . $order->id;
     }
 
-    private function isUnlocked(InvestigationOrder $order): bool
+    private function isUnlocked(LabOrder $order): bool
     {
         $expiresAt = session($this->sessionKey($order));
 
@@ -111,7 +111,7 @@ class PublicLabReportController extends Controller
         return now()->lt($expiresAt);
     }
 
-    private function unlock(InvestigationOrder $order): void
+    private function unlock(LabOrder $order): void
     {
         session([$this->sessionKey($order) => now()->addMinutes(self::SESSION_TTL_MINUTES)->toIso8601String()]);
     }

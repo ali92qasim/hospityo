@@ -190,7 +190,7 @@ class Visit extends Model
 
     public function allVitalSigns(): HasMany
     {
-        return $this->hasMany(VitalSign::class)->latest();
+        return $this->hasMany(VitalSign::class)->orderByDesc('created_at')->orderByDesc('id');
     }
 
     public function consultations(): HasMany
@@ -230,12 +230,20 @@ class Visit extends Model
 
     public function labOrders(): HasMany
     {
-        return $this->hasMany(InvestigationOrder::class);
+        return $this->hasMany(LabOrder::class);
     }
 
+    public function imagingOrders(): HasMany
+    {
+        return $this->hasMany(ImagingOrder::class);
+    }
+
+    /**
+     * @deprecated Use labOrders().
+     */
     public function investigationOrders(): HasMany
     {
-        return $this->hasMany(InvestigationOrder::class);
+        return $this->labOrders();
     }
 
     public function bills(): HasMany

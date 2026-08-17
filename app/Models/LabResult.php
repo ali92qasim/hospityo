@@ -13,7 +13,7 @@ class LabResult extends Model
     use Auditable, UsesTenantConnection;
 
     protected $fillable = [
-        'investigation_order_id', 'lab_order_id', 'results', 'flags', 'interpretation', 'comments', 'status',
+        'lab_order_id', 'results', 'flags', 'interpretation', 'comments', 'status',
         'technician_id', 'pathologist_id', 'tested_at', 'verified_at', 'reported_at'
     ];
 
@@ -27,12 +27,12 @@ class LabResult extends Model
 
     public function labOrder(): BelongsTo
     {
-        return $this->belongsTo(InvestigationOrder::class, 'investigation_order_id');
+        return $this->belongsTo(LabOrder::class, 'lab_order_id');
     }
 
     public function investigationOrder(): BelongsTo
     {
-        return $this->belongsTo(InvestigationOrder::class, 'investigation_order_id');
+        return $this->labOrder();
     }
 
     public function technician(): BelongsTo

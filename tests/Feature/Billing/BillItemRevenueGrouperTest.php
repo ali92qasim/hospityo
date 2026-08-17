@@ -4,7 +4,7 @@ use App\Models\Bill;
 use App\Models\BillItem;
 use App\Models\Department;
 use App\Models\Doctor;
-use App\Models\Investigation;
+use App\Models\LabTest;
 use App\Models\Patient;
 use App\Models\Service;
 use App\Models\User;
@@ -70,7 +70,7 @@ beforeEach(function () {
         'is_active' => true,
     ]);
 
-    $this->investigation = Investigation::create([
+    $this->labTest = LabTest::create([
         'code' => 'CBC-001',
         'name' => 'COMPLETE BLOOD COUNT(CBC)',
         'category' => 'hematology',
@@ -94,13 +94,13 @@ it('groups linked services by service name', function () {
         ->and(BillItemRevenueGrouper::isInvestigation($item, $this->investigationsByName))->toBeFalse();
 });
 
-it('groups linked investigations by investigation name', function () {
+it('groups linked lab tests by lab test name', function () {
     $item = new BillItem([
-        'investigation_id' => $this->investigation->id,
+        'lab_test_id' => $this->labTest->id,
         'description' => 'COMPLETE BLOOD COUNT(CBC)',
-        'item_category' => 'investigation',
+        'item_category' => 'lab',
     ]);
-    $item->setRelation('investigation', $this->investigation);
+    $item->setRelation('labTest', $this->labTest);
 
     expect(BillItemRevenueGrouper::groupLabel($item, $this->investigationsByName))->toBe('COMPLETE BLOOD COUNT(CBC)')
         ->and(BillItemRevenueGrouper::isInvestigation($item, $this->investigationsByName))->toBeTrue();
@@ -114,7 +114,7 @@ it('treats legacy unlinked lab lines as investigations when description matches'
 
     expect(BillItemRevenueGrouper::groupLabel($item, $this->investigationsByName))->toBe('COMPLETE BLOOD COUNT(CBC)')
         ->and(BillItemRevenueGrouper::isInvestigation($item, $this->investigationsByName))->toBeTrue()
-        ->and(BillItemRevenueGrouper::groupKey($item, $this->investigationsByName))->toBe('investigation:' . $this->investigation->id);
+        ->and(BillItemRevenueGrouper::groupKey($item, $this->investigationsByName))->toBe('lab:' . $this->labTest->id);
 });
 
 it('keeps non-investigation unlinked lines on their description', function () {
@@ -146,8 +146,8 @@ it('does not produce an unknown group for investigation bill lines in revenue re
 
     BillItem::create([
         'bill_id' => $bill->id,
-        'investigation_id' => $this->investigation->id,
-        'item_category' => 'investigation',
+        'lab_test_id' => $this->labTest->id,
+        'item_category' => 'lab',
         'description' => 'COMPLETE BLOOD COUNT(CBC)',
         'quantity' => 2,
         'unit_price' => 1000,
@@ -163,7 +163,7 @@ it('does not produce an unknown group for investigation bill lines in revenue re
         'total_price' => 1000,
     ]);
 
-    $items = BillItem::with(['service', 'investigation'])->get();
+    $items = BillItem::with(['service', 'labTest'])->get();
     $lookup = BillItemRevenueGrouper::investigationsByName();
 
     $groups = $items->groupBy(fn (BillItem $item) => BillItemRevenueGrouper::groupKey($item, $lookup))

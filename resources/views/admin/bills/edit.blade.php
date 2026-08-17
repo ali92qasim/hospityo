@@ -75,7 +75,6 @@
                         <option value="opd" @selected($bill->bill_type == 'opd')>OPD</option>
                         <option value="ipd" @selected($bill->bill_type == 'ipd')>IPD</option>
                         <option value="emergency" @selected($bill->bill_type == 'emergency')>Emergency</option>
-                        <option value="investigation" @selected($bill->bill_type == 'investigation')>Investigation</option>
                         <option value="pharmacy" @selected($bill->bill_type == 'pharmacy')>Pharmacy</option>
                     </select>
                 @endif

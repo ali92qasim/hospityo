@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', 'Create Investigation Order')
-@section('page-title', 'Create Investigation Order')
-@section('page-description', 'Order investigations for a patient')
+@section('title', 'Create Lab Order')
+@section('page-title', 'Create Lab Order')
+@section('page-description', 'Order lab tests for a patient')
 
 @section('content')
 <div class="bg-white rounded-lg shadow-sm p-6">
@@ -17,7 +17,7 @@
         </div>
     @endif
 
-    <form action="{{ route('investigation-orders.store') }}" method="POST" id="order-form">
+    <form action="{{ route('lab.orders.store') }}" method="POST" id="order-form" data-item-fk="lab_test_id">
         @csrf
 
         {{-- Patient / Doctor --}}
@@ -55,9 +55,9 @@
         {{-- Investigations Table --}}
         <div class="mb-4">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Investigations</h3>
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Lab tests</h3>
                 <button type="button" id="add-investigation-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-medical-blue bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors">
-                    <i class="fas fa-plus mr-1"></i>Add Investigation
+                    <i class="fas fa-plus mr-1"></i>Add Lab Test
                 </button>
             </div>
 
@@ -65,7 +65,7 @@
                 <table class="w-full text-sm" id="items-table">
                     <thead class="bg-gray-50">
                         <tr class="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            <th class="px-4 py-3 text-left">Investigation</th>
+                            <th class="px-4 py-3 text-left">Lab test</th>
                             <th class="px-4 py-3 text-center w-20">Qty</th>
                             <th class="px-4 py-3 text-center w-28">Priority</th>
                             <th class="px-4 py-3 text-center w-28">Location</th>
@@ -78,12 +78,13 @@
                         @foreach($oldItems as $i => $item)
                         <tr class="item-row border-t border-gray-100">
                             <td class="px-4 py-2">
-                                <select name="items[{{ $i }}][investigation_id]" class="investigation-select w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue text-sm" required>
-                                    <option value="">Select investigation...</option>
-                                    @foreach($investigations->groupBy('category') as $category => $group)
+                                <select name="items[{{ $i }}][lab_test_id]" class="investigation-select w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue text-sm" required>
+                                    <option value="">Select lab test...</option>
+                                    @foreach($labTests->groupBy('category') as $category => $group)
                                         <optgroup label="{{ ucfirst($category ?: 'General') }}">
                                             @foreach($group as $inv)
-                                                <option value="{{ $inv->id }}" {{ ($item['investigation_id'] ?? '') == $inv->id ? 'selected' : '' }}>
+                                                <option value="{{ $inv->id }}"
+                                                    {{ ($item['lab_test_id'] ?? '') == $inv->id ? 'selected' : '' }}>
                                                     {{ $inv->name }} — {{ currency_symbol() }}{{ number_format($inv->price, 0) }}
                                                 </option>
                                             @endforeach
@@ -120,11 +121,11 @@
                     </tbody>
                 </table>
             </div>
-            <p class="text-xs text-gray-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Each investigation can have its own priority and location.</p>
+            <p class="text-xs text-gray-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Each lab test can have its own priority and location.</p>
         </div>
 
         <div class="flex justify-end space-x-3 mt-6">
-            <a href="{{ route('investigation-orders.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
+            <a href="{{ route('lab.orders.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
             <button type="submit" class="bg-medical-blue text-white px-6 py-2 rounded-lg hover:bg-blue-700">
                 <i class="fas fa-plus mr-2"></i>Create Order
             </button>

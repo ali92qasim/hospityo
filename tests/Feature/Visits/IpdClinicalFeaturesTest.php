@@ -6,8 +6,8 @@ use App\Models\Doctor;
 use App\Models\IpdCareTeam;
 use App\Models\IpdDoctorVisitNote;
 use App\Models\IpdGpeRecord;
-use App\Models\Investigation;
-use App\Models\InvestigationOrder;
+use App\Models\LabOrder;
+use App\Models\LabTest;
 use App\Models\Medicine;
 use App\Models\Patient;
 use App\Models\PatientComplaint;
@@ -285,7 +285,7 @@ it('requires prescription doctor_id to be an active care team member for ipd', f
 });
 
 it('requires investigation order doctor_id to be an active care team member for ipd', function () {
-    $investigation = Investigation::create([
+    $labTest = LabTest::create([
         'name' => 'CBC',
         'code' => 'CBC-001',
         'category' => 'hematology',
@@ -293,14 +293,13 @@ it('requires investigation order doctor_id to be an active care team member for 
         'price' => 500,
         'turnaround_time' => '24',
         'is_active' => true,
-        'type' => 'lab',
     ]);
 
     $payload = [
         'doctor_id' => $this->doctor->id,
         'tests' => [
             [
-                'lab_test_id' => $investigation->id,
+                'lab_test_id' => $labTest->id,
                 'quantity' => 1,
                 'priority' => 'routine',
             ],
@@ -316,7 +315,7 @@ it('requires investigation order doctor_id to be an active care team member for 
         ->assertRedirect()
         ->assertSessionHas('success');
 
-    expect(InvestigationOrder::first()->doctor_id)->toBe($this->doctor->id);
+    expect(LabOrder::first()->doctor_id)->toBe($this->doctor->id);
 });
 
 it('serializes concurrent add care team calls so only one becomes primary', function () {

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateLabResultRequest;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\LabResult;
-use App\Models\InvestigationOrder;
-use App\Models\InvestigationOrderItem;
 use App\Services\LabReportBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +15,13 @@ use Yajra\DataTables\Facades\DataTables;
 class LabResultController extends Controller
 {
     public function index(Request $request)
+    {
+        return redirect()
+            ->route('lab.results.index')
+            ->with('info', 'Lab results have moved to the Laboratory section.');
+    }
+
+    public function indexLab(Request $request)
     {
         $pendingOrders = $this->pendingOrdersGrouped($request);
 
@@ -26,23 +33,23 @@ class LabResultController extends Controller
         $query = LabResult::query()
             ->select('lab_results.*')
             ->with([
-                'investigationOrder:id,order_number,patient_id',
-                'investigationOrder.patient:id,name,phone',
-                'investigationOrder.items:id,investigation_order_id,investigation_id',
-                'investigationOrder.items.investigation:id,name',
+                'labOrder:id,order_number,patient_id',
+                'labOrder.patient:id,name,phone',
+                'labOrder.items:id,lab_order_id,lab_test_id',
+                'labOrder.items.labTest:id,name',
             ])
             ->orderByDesc('lab_results.id');
 
         return DataTables::eloquent($query)
             ->addColumn('order_number', function (LabResult $result) {
-                return $result->investigationOrder?->order_number ?? 'N/A';
+                return $result->labOrder?->order_number ?? 'N/A';
             })
             ->addColumn('patient_name', function (LabResult $result) {
-                return $result->investigationOrder?->patient?->name ?? 'Unknown Patient';
+                return $result->labOrder?->patient?->name ?? 'Unknown Patient';
             })
             ->addColumn('tests_list', function (LabResult $result) {
-                $tests = $result->investigationOrder?->items
-                    ->map(fn ($item) => $item->investigation?->name)
+                $tests = $result->labOrder?->items
+                    ->map(fn ($item) => $item->labTest?->name)
                     ->filter()
                     ->unique()
                     ->values();
@@ -60,18 +67,18 @@ class LabResultController extends Controller
 
                 $query->where(function ($builder) use ($keyword) {
                     $builder->where('lab_results.status', 'like', "%{$keyword}%")
-                        ->orWhereHas('investigationOrder', function ($orderQuery) use ($keyword) {
+                        ->orWhereHas('labOrder', function ($orderQuery) use ($keyword) {
                             $orderQuery->where('order_number', 'like', "%{$keyword}%");
                         })
-                        ->orWhereHas('investigationOrder', function ($orderQuery) use ($keyword) {
+                        ->orWhereHas('labOrder', function ($orderQuery) use ($keyword) {
                             $orderQuery->whereHas('patient', function ($patientQuery) use ($keyword) {
                                 $patientQuery->where('name', 'like', "%{$keyword}%")
                                     ->orWhere('phone', 'like', "%{$keyword}%");
                             });
                         })
-                        ->orWhereHas('investigationOrder', function ($orderQuery) use ($keyword) {
-                            $orderQuery->whereHas('items.investigation', function ($investigationQuery) use ($keyword) {
-                                $investigationQuery->where('name', 'like', "%{$keyword}%");
+                        ->orWhereHas('labOrder', function ($orderQuery) use ($keyword) {
+                            $orderQuery->whereHas('items.labTest', function ($labTestQuery) use ($keyword) {
+                                $labTestQuery->where('name', 'like', "%{$keyword}%");
                             });
                         });
                 });
@@ -91,18 +98,17 @@ class LabResultController extends Controller
 
     private function pendingOrdersGrouped(Request $request)
     {
-        $pendingOrdersQuery = InvestigationOrder::with([
+        return LabOrder::with([
                 'patient',
                 'visit',
-                'items.investigation.parameters',
+                'items.labTest.parameters',
             ])
             ->whereHas('items', function ($q) {
                 $q->whereNotIn('status', ['reported', 'verified', 'cancelled']);
-            });
-
-        return $pendingOrdersQuery->get()
+            })
+            ->get()
             ->groupBy(function ($order) {
-                return $order->patient_id . '_' . $order->visit_id;
+                return $order->patient_id.'_'.$order->visit_id;
             });
     }
 
@@ -111,14 +117,12 @@ class LabResultController extends Controller
         $patientId = $request->patient_id;
         $visitId   = $request->visit_id;
 
-        if (!$patientId) {
+        if (! $patientId) {
             return redirect()->route('lab-results.index')
                 ->with('error', 'Patient ID is required.');
         }
 
-        // Load the InvestigationOrders (headers) for this patient/visit,
-        // the create-batch view iterates order->items internally.
-        $query = InvestigationOrder::with(['patient', 'visit', 'items.investigation.parameters'])
+        $query = LabOrder::with(['patient', 'visit', 'items.labTest.parameters'])
             ->where('patient_id', $patientId)
             ->whereHas('items', function ($q) {
                 $q->whereNotIn('status', ['reported', 'verified', 'cancelled']);
@@ -133,40 +137,17 @@ class LabResultController extends Controller
         return view('admin.lab.results.create-batch', compact('labOrders'));
     }
 
-    /**
-     * Show the result entry form for a single investigation order item.
-     * Route: GET lab-orders/{orderItem}/results/create
-     */
-    public function create(InvestigationOrderItem $orderItem)
+    public function create(LabOrderItem $orderItem)
     {
-        $orderItem->load(['order.patient', 'order.visit', 'investigation.parameters']);
+        $orderItem->load(['order.patient', 'order.visit', 'labTest.parameters']);
 
-        if ($orderItem->isRadiology()) {
-            // Radiology results are entered via the radiology controller
-            return redirect()->route('radiology-results.create', $orderItem->order)
-                ->with('info', 'This investigation requires a radiology result form.');
-        }
-
-        if (!$orderItem->isPathology()) {
-            return redirect()->route('lab-results.index')
-                ->withErrors(['error' => 'Invalid investigation type for pathology result entry.']);
-        }
-
-        // Pass as $labOrder for view compatibility
         $labOrder = $orderItem;
+
         return view('admin.lab.results.create', compact('labOrder'));
     }
 
-    /**
-     * Store a result for a single investigation order item.
-     * Route: POST lab-orders/{orderItem}/results
-     */
-    public function store(Request $request, InvestigationOrderItem $orderItem)
+    public function store(Request $request, LabOrderItem $orderItem)
     {
-        if (!$orderItem->isPathology()) {
-            return back()->withErrors(['error' => 'Cannot create pathology result for non-pathology investigation: ' . $orderItem->investigation->name]);
-        }
-
         $validated = $request->validate([
             'test_location'             => 'required|in:indoor,outdoor',
             'result_text'               => 'nullable|string',
@@ -180,16 +161,16 @@ class LabResultController extends Controller
 
         DB::transaction(function () use ($validated, $orderItem) {
             $result = LabResult::create([
-                'investigation_order_id' => $orderItem->investigation_order_id,
-                'results'                => [],
-                'interpretation'         => $validated['interpretation'] ?? null,
-                'comments'               => $validated['comments'] ?? null,
-                'status'                 => 'preliminary',
-                'technician_id'          => auth()->id(),
-                'tested_at'              => now(),
+                'lab_order_id'  => $orderItem->lab_order_id,
+                'results'       => [],
+                'interpretation'=> $validated['interpretation'] ?? null,
+                'comments'      => $validated['comments'] ?? null,
+                'status'        => 'preliminary',
+                'technician_id' => auth()->id(),
+                'tested_at'     => now(),
             ]);
 
-            if (!empty($validated['parameters'])) {
+            if (! empty($validated['parameters'])) {
                 foreach ($validated['parameters'] as $paramData) {
                     if (empty($paramData['parameter_id'])) {
                         continue;
@@ -217,13 +198,11 @@ class LabResultController extends Controller
                 }
             }
 
-            // Update the item status
             $orderItem->update([
                 'status'        => 'reported',
                 'test_location' => $validated['test_location'],
             ]);
 
-            // Update the parent order status if all items are reported
             $order = $orderItem->order;
             $allReported = $order->items()->whereNotIn('status', ['reported', 'verified', 'cancelled'])->doesntExist();
             if ($allReported) {
@@ -235,15 +214,9 @@ class LabResultController extends Controller
         });
 
         return redirect()->route('lab-results.index')
-            ->with('success', 'Investigation result entered successfully.');
+            ->with('success', 'Lab result entered successfully.');
     }
 
-    /**
-     * Store results for multiple items at once (batch entry).
-     * Route: POST lab-results/store-batch
-     * The create-batch view submits orders[n][investigation_order_id] = InvestigationOrder id
-     * and iterates items inside each order.
-     */
     public function storeBatch(Request $request)
     {
         $validated = $request->validate([
@@ -261,29 +234,28 @@ class LabResultController extends Controller
 
         DB::transaction(function () use ($validated) {
             foreach ($validated['orders'] as $orderData) {
-                // Look up the specific item submitted by the form.
-                $item = InvestigationOrderItem::find($orderData['item_id']);
+                $item = LabOrderItem::find($orderData['item_id']);
 
-                if (!$item) {
+                if (! $item) {
                     continue;
                 }
 
-                $investigationOrder = $item->order;
+                $labOrder = $item->order;
 
-                if (!$investigationOrder) {
+                if (! $labOrder) {
                     continue;
                 }
 
                 $result = LabResult::create([
-                    'investigation_order_id' => $investigationOrder->id,
-                    'results'                => [],
-                    'comments'               => $orderData['notes'] ?? null,
-                    'status'                 => 'preliminary',
-                    'technician_id'          => auth()->id(),
-                    'tested_at'              => now(),
+                    'lab_order_id'  => $labOrder->id,
+                    'results'       => [],
+                    'comments'      => $orderData['notes'] ?? null,
+                    'status'        => 'preliminary',
+                    'technician_id' => auth()->id(),
+                    'tested_at'     => now(),
                 ]);
 
-                if (!empty($orderData['parameters'])) {
+                if (! empty($orderData['parameters'])) {
                     foreach ($orderData['parameters'] as $paramData) {
                         if (empty($paramData['parameter_id'])) {
                             continue;
@@ -295,8 +267,8 @@ class LabResultController extends Controller
                         if ($parameter) {
                             $flag = $parameter->calculateFlag(
                                 $paramData['value'],
-                                $investigationOrder->patient->age ?? null,
-                                $investigationOrder->patient->gender ?? null
+                                $labOrder->patient->age ?? null,
+                                $labOrder->patient->gender ?? null
                             );
                         }
 
@@ -311,16 +283,14 @@ class LabResultController extends Controller
                     }
                 }
 
-                // Mark the item as reported
                 $item->update([
                     'status'        => 'reported',
                     'test_location' => $orderData['test_location'],
                 ]);
 
-                // Mark the order as reported if all items are done
-                $allReported = $investigationOrder->items()->whereNotIn('status', ['reported', 'verified', 'cancelled'])->doesntExist();
+                $allReported = $labOrder->items()->whereNotIn('status', ['reported', 'verified', 'cancelled'])->doesntExist();
                 if ($allReported) {
-                    $investigationOrder->update([
+                    $labOrder->update([
                         'status'       => 'reported',
                         'completed_at' => now(),
                     ]);
@@ -329,25 +299,23 @@ class LabResultController extends Controller
         });
 
         return redirect()->route('lab-results.index')
-            ->with('success', 'Results entered successfully for ' . count($validated['orders']) . ' tests.');
+            ->with('success', 'Results entered successfully for '.count($validated['orders']).' tests.');
     }
 
     public function show(LabResult $labResult)
     {
         $labResult->load([
-            'investigationOrder.patient',
-            'investigationOrder.items.investigation',
-            'investigationOrder.visit',
-            'investigationOrder.doctor',
+            'labOrder.patient',
+            'labOrder.items.labTest',
+            'labOrder.visit',
+            'labOrder.doctor',
             'technician',
             'pathologist',
             'resultItems.parameter',
         ]);
 
-        // Alias so the view can use either $labResult->labOrder or ->investigationOrder
-        // and both have items loaded.
-        if ($labResult->relationLoaded('investigationOrder')) {
-            $labResult->setRelation('labOrder', $labResult->investigationOrder);
+        if ($labResult->relationLoaded('labOrder')) {
+            $labResult->setRelation('investigationOrder', $labResult->labOrder);
         }
 
         return view('admin.lab.results.show', compact('labResult'));
@@ -380,66 +348,55 @@ class LabResultController extends Controller
 
     public function report(LabResult $labResult)
     {
-        $labResult->load('investigationOrder');
+        $labResult->load('labOrder');
 
-        $report = LabReportBuilder::build($labResult->investigationOrder);
+        $report = LabReportBuilder::build($labResult->labOrder);
 
         return view('admin.lab.results.report', compact('report'));
     }
 
-    public function orderReport(InvestigationOrder $investigationOrder)
+    public function orderReport(LabOrder $investigationOrder)
     {
         $report = LabReportBuilder::build($investigationOrder);
 
         return view('admin.lab.results.report', compact('report'));
     }
 
-    /**
-     * Public report view — kept for backward-compatible signed links.
-     * Prefer the verify-gate flow via PublicLabReportController.
-     */
     public function publicReport(LabResult $labResult)
     {
-        $labResult->load('investigationOrder');
+        $labResult->load('labOrder');
 
-        if ($labResult->investigationOrder) {
-            return redirect()->route('lab-report.show', $labResult->investigationOrder->ensureShareToken());
+        if ($labResult->labOrder) {
+            return redirect()->route('lab-report.show', $labResult->labOrder->ensureShareToken());
         }
 
         abort(404);
     }
 
-    /**
-     * Build WhatsApp share payload with the public verify-gate link.
-     * Pass ?redirect=1 to open WhatsApp directly (avoids popup blockers).
-     */
     public function shareWhatsApp(Request $request, LabResult $labResult)
     {
-        $labResult->load('investigationOrder.patient');
+        $labResult->load('labOrder.patient');
 
-        $order = $labResult->investigationOrder;
+        $order = $labResult->labOrder;
         if (! $order) {
             if ($request->boolean('redirect')) {
-                return redirect()->back()->with('error', 'Investigation order not found for this result.');
+                return redirect()->back()->with('error', 'Lab order not found for this result.');
             }
 
-            return response()->json(['message' => 'Investigation order not found for this result.'], 404);
+            return response()->json(['message' => 'Lab order not found for this result.'], 404);
         }
 
         return $this->whatsAppShareResponse($request, $order);
     }
 
-    /**
-     * Build WhatsApp share payload for an investigation order.
-     */
-    public function shareOrderWhatsApp(Request $request, InvestigationOrder $investigationOrder)
+    public function shareOrderWhatsApp(Request $request, LabOrder $investigationOrder)
     {
         $investigationOrder->load('patient');
 
         return $this->whatsAppShareResponse($request, $investigationOrder);
     }
 
-    private function whatsAppShareResponse(Request $request, InvestigationOrder $order)
+    private function whatsAppShareResponse(Request $request, LabOrder $order)
     {
         $patient = $order->patient;
         $phone = $patient?->phone;
@@ -460,13 +417,13 @@ class LabResultController extends Controller
         if ($phone) {
             $cleaned = preg_replace('/[^0-9+]/', '', $phone) ?? '';
             if (str_starts_with($cleaned, '0')) {
-                $cleaned = '92' . substr($cleaned, 1);
+                $cleaned = '92'.substr($cleaned, 1);
             }
             $whatsappPhone = ltrim($cleaned, '+');
         }
 
         $whatsappUrl = $whatsappPhone !== ''
-            ? 'https://wa.me/' . $whatsappPhone . '?text=' . urlencode($message)
+            ? 'https://wa.me/'.$whatsappPhone.'?text='.urlencode($message)
             : null;
 
         if ($request->boolean('redirect')) {

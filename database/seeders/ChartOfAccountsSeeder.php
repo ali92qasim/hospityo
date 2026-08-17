@@ -34,7 +34,8 @@ class ChartOfAccountsSeeder extends Seeder
             ['code' => '4000', 'name' => 'Revenue', 'type' => 'revenue', 'is_system' => true],
             ['code' => '4100', 'name' => 'OPD Revenue', 'type' => 'revenue', 'is_system' => true],
             ['code' => '4200', 'name' => 'IPD Revenue', 'type' => 'revenue', 'is_system' => true],
-            ['code' => '4300', 'name' => 'Investigation Revenue', 'type' => 'revenue', 'is_system' => true],
+            ['code' => '4300', 'name' => 'Lab Revenue', 'type' => 'revenue', 'is_system' => true],
+            ['code' => '4310', 'name' => 'Imaging Revenue', 'type' => 'revenue', 'is_system' => true],
             ['code' => '4400', 'name' => 'Pharmacy Revenue', 'type' => 'revenue', 'is_system' => true],
             ['code' => '4500', 'name' => 'Emergency Revenue', 'type' => 'revenue', 'is_system' => true],
 

@@ -7,7 +7,8 @@ use App\Models\Department;
 use App\Models\Doctor;
 use App\Models\DoctorShareItem;
 use App\Models\DoctorShareRule;
-use App\Models\Investigation;
+use App\Models\ImagingStudy;
+use App\Models\LabTest;
 use App\Models\Patient;
 use App\Models\Service;
 use App\Models\User;
@@ -26,7 +27,14 @@ beforeEach(function () {
 
     Account::create(['code' => '1200', 'name' => 'Accounts Receivable', 'type' => 'asset', 'is_system' => true]);
     Account::create(['code' => '4100', 'name' => 'OPD Revenue', 'type' => 'revenue', 'is_system' => true]);
-    Account::create(['code' => '4300', 'name' => 'Investigation Revenue', 'type' => 'revenue', 'is_system' => true]);
+    Account::updateOrCreate(
+        ['code' => '4300'],
+        ['name' => 'Lab Revenue', 'type' => 'revenue', 'is_system' => true, 'is_active' => true]
+    );
+    Account::updateOrCreate(
+        ['code' => '4310'],
+        ['name' => 'Imaging Revenue', 'type' => 'revenue', 'is_system' => true, 'is_active' => true]
+    );
 
     $this->patient = Patient::create([
         'name' => 'Jane Patient',
@@ -79,7 +87,7 @@ beforeEach(function () {
         'is_active' => true,
     ]);
 
-    $this->investigation = Investigation::create([
+    $this->labTest = LabTest::create([
         'code' => 'CBC-001',
         'name' => 'CBC',
         'category' => 'hematology',
@@ -88,11 +96,22 @@ beforeEach(function () {
         'turnaround_time' => '24',
         'is_active' => true,
     ]);
+
+    $this->imagingStudy = ImagingStudy::create([
+        'code' => 'CXR-001',
+        'name' => 'Chest X-Ray',
+        'category' => 'x-ray',
+        'price' => 1500,
+        'is_active' => true,
+    ]);
 });
 
 it('resolves item categories from line content and bill context', function () {
-    expect(BillItemCategoryResolver::resolve(['investigation_id' => 1], 'opd'))
-        ->toBe('investigation');
+    expect(BillItemCategoryResolver::resolve(['lab_test_id' => 1], 'opd'))
+        ->toBe('lab');
+
+    expect(BillItemCategoryResolver::resolve(['imaging_study_id' => 1], 'opd'))
+        ->toBe('imaging');
 
     expect(BillItemCategoryResolver::resolve(['service_id' => $this->service->id], 'opd'))
         ->toBe('opd');
@@ -101,7 +120,7 @@ it('resolves item categories from line content and bill context', function () {
         ->toBe('ipd');
 });
 
-it('posts split revenue accounts for mixed OPD and investigation items', function () {
+it('posts split revenue accounts for mixed OPD and lab items', function () {
     $bill = Bill::create([
         'patient_id' => $this->patient->id,
         'visit_id' => $this->visit->id,
@@ -130,8 +149,8 @@ it('posts split revenue accounts for mixed OPD and investigation items', functio
 
     BillItem::create([
         'bill_id' => $bill->id,
-        'investigation_id' => $this->investigation->id,
-        'item_category' => 'investigation',
+        'lab_test_id' => $this->labTest->id,
+        'item_category' => 'lab',
         'description' => 'CBC',
         'quantity' => 1,
         'unit_price' => 500,
@@ -159,7 +178,53 @@ it('posts split revenue accounts for mixed OPD and investigation items', functio
     ]);
 });
 
-it('applies investigation share rules to investigation lines on OPD bills', function () {
+it('credits imaging revenue to account 4310', function () {
+    $bill = Bill::create([
+        'patient_id' => $this->patient->id,
+        'visit_id' => $this->visit->id,
+        'bill_number' => 'BILL-IMG-001',
+        'bill_date' => now(),
+        'bill_type' => 'opd',
+        'subtotal' => 1500,
+        'tax_amount' => 0,
+        'discount_amount' => 0,
+        'total_amount' => 1500,
+        'paid_amount' => 0,
+        'due_amount' => 1500,
+        'status' => 'pending',
+        'created_by' => $this->user->id,
+    ]);
+
+    BillItem::create([
+        'bill_id' => $bill->id,
+        'imaging_study_id' => $this->imagingStudy->id,
+        'item_category' => 'imaging',
+        'description' => 'Chest X-Ray',
+        'quantity' => 1,
+        'unit_price' => 1500,
+        'total_price' => 1500,
+    ]);
+
+    $entry = AccountingService::postBillEntry($bill);
+
+    expect($entry)->not->toBeNull();
+
+    $revenueLines = $entry->lines()
+        ->where('credit', '>', 0)
+        ->get()
+        ->map(fn ($line) => [
+            'code' => Account::find($line->account_id)->code,
+            'credit' => (float) $line->credit,
+        ])
+        ->values()
+        ->all();
+
+    expect($revenueLines)->toBe([
+        ['code' => '4310', 'credit' => 1500.0],
+    ]);
+});
+
+it('applies lab share rules to lab lines on OPD bills', function () {
     DoctorShareRule::create([
         'doctor_id' => $this->doctor->id,
         'share_type' => 'percentage',
@@ -173,7 +238,7 @@ it('applies investigation share rules to investigation lines on OPD bills', func
         'doctor_id' => $this->doctor->id,
         'share_type' => 'percentage',
         'share_value' => 30,
-        'applies_to' => 'investigation',
+        'applies_to' => 'lab',
         'is_active' => true,
         'created_by' => $this->user->id,
     ]);
@@ -204,10 +269,10 @@ it('applies investigation share rules to investigation lines on OPD bills', func
         'total_price' => 1000,
     ]);
 
-    $investigationItem = BillItem::create([
+    $labItem = BillItem::create([
         'bill_id' => $bill->id,
-        'investigation_id' => $this->investigation->id,
-        'item_category' => 'investigation',
+        'lab_test_id' => $this->labTest->id,
+        'item_category' => 'lab',
         'description' => 'CBC',
         'quantity' => 1,
         'unit_price' => 500,
@@ -217,12 +282,78 @@ it('applies investigation share rules to investigation lines on OPD bills', func
     DoctorShareService::calculate($bill);
 
     $serviceShare = DoctorShareItem::where('bill_item_id', $serviceItem->id)->first();
-    $investigationShare = DoctorShareItem::where('bill_item_id', $investigationItem->id)->first();
+    $labShare = DoctorShareItem::where('bill_item_id', $labItem->id)->first();
 
     expect($serviceShare)->not->toBeNull()
         ->and((float) $serviceShare->share_amount)->toBe(200.0)
-        ->and($investigationShare)->not->toBeNull()
-        ->and((float) $investigationShare->share_amount)->toBe(150.0);
+        ->and($labShare)->not->toBeNull()
+        ->and((float) $labShare->share_amount)->toBe(150.0);
+});
+
+it('applies duplicated lab and imaging share rules to matching bill lines', function () {
+    DoctorShareRule::create([
+        'doctor_id' => $this->doctor->id,
+        'share_type' => 'percentage',
+        'share_value' => 30,
+        'applies_to' => 'lab',
+        'is_active' => true,
+        'created_by' => $this->user->id,
+    ]);
+
+    DoctorShareRule::create([
+        'doctor_id' => $this->doctor->id,
+        'share_type' => 'percentage',
+        'share_value' => 40,
+        'applies_to' => 'imaging',
+        'is_active' => true,
+        'created_by' => $this->user->id,
+    ]);
+
+    $bill = Bill::create([
+        'patient_id' => $this->patient->id,
+        'visit_id' => $this->visit->id,
+        'bill_number' => 'BILL-SHARE-BOTH-001',
+        'bill_date' => now(),
+        'bill_type' => 'opd',
+        'subtotal' => 2000,
+        'tax_amount' => 0,
+        'discount_amount' => 0,
+        'total_amount' => 2000,
+        'paid_amount' => 0,
+        'due_amount' => 2000,
+        'status' => 'pending',
+        'created_by' => $this->user->id,
+    ]);
+
+    $labItem = BillItem::create([
+        'bill_id' => $bill->id,
+        'lab_test_id' => $this->labTest->id,
+        'item_category' => 'lab',
+        'description' => 'CBC',
+        'quantity' => 1,
+        'unit_price' => 500,
+        'total_price' => 500,
+    ]);
+
+    $imagingItem = BillItem::create([
+        'bill_id' => $bill->id,
+        'imaging_study_id' => $this->imagingStudy->id,
+        'item_category' => 'imaging',
+        'description' => 'Chest X-Ray',
+        'quantity' => 1,
+        'unit_price' => 1500,
+        'total_price' => 1500,
+    ]);
+
+    DoctorShareService::calculate($bill);
+
+    $labShare = DoctorShareItem::where('bill_item_id', $labItem->id)->first();
+    $imagingShare = DoctorShareItem::where('bill_item_id', $imagingItem->id)->first();
+
+    expect($labShare)->not->toBeNull()
+        ->and((float) $labShare->share_amount)->toBe(150.0)
+        ->and($imagingShare)->not->toBeNull()
+        ->and((float) $imagingShare->share_amount)->toBe(600.0);
 });
 
 it('applies lab-scoped investigation share rules using OPD applies_to on visit bills', function () {
@@ -252,10 +383,10 @@ it('applies lab-scoped investigation share rules using OPD applies_to on visit b
         'created_by' => $this->user->id,
     ]);
 
-    $investigationItem = BillItem::create([
+    $labItem = BillItem::create([
         'bill_id' => $bill->id,
-        'investigation_id' => $this->investigation->id,
-        'item_category' => 'investigation',
+        'lab_test_id' => $this->labTest->id,
+        'item_category' => 'lab',
         'description' => 'CBC',
         'quantity' => 1,
         'unit_price' => 500,
@@ -264,8 +395,8 @@ it('applies lab-scoped investigation share rules using OPD applies_to on visit b
 
     DoctorShareService::calculate($bill);
 
-    $investigationShare = DoctorShareItem::where('bill_item_id', $investigationItem->id)->first();
+    $labShare = DoctorShareItem::where('bill_item_id', $labItem->id)->first();
 
-    expect($investigationShare)->not->toBeNull()
-        ->and((float) $investigationShare->share_amount)->toBe(125.0);
+    expect($labShare)->not->toBeNull()
+        ->and((float) $labShare->share_amount)->toBe(125.0);
 });

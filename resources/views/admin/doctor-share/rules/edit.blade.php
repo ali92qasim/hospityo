@@ -51,7 +51,7 @@
             <div>
                 <label for="applies_to" class="block text-sm font-medium text-gray-700 mb-2">Applies To</label>
                 <select id="applies_to" name="applies_to" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                    @foreach(['all', 'opd', 'ipd', 'investigation', 'emergency'] as $value)
+                    @foreach(['all', 'opd', 'ipd', 'lab', 'imaging', 'emergency'] as $value)
                         <option value="{{ $value }}" {{ old('applies_to', $rule->applies_to) == $value ? 'selected' : '' }}>
                             {{ ucfirst($value) }}
                         </option>

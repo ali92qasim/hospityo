@@ -63,61 +63,72 @@ function addItem() {
     }
 }
 
-function addTestRow() {
-    const tbody = document.getElementById('test-rows');
+function addTestRow(kind = 'lab') {
+    const tbody = document.getElementById(`${kind}-test-rows`);
+    if (!tbody) {
+        return;
+    }
+
+    const form = document.getElementById(`${kind}-tests-form`);
+    const itemField = form?.dataset.itemField || 'lab_test_id';
     const firstRow = tbody.querySelector('.test-row');
-    const testSelect = firstRow.querySelector('select[name*="lab_test_id"]');
+    const testSelect = firstRow.querySelector(`select[name*="${itemField}"]`);
     const testOptions = testSelect.innerHTML;
+    const nextIndex = tbody.querySelectorAll('.test-row').length;
 
     const newRow = document.createElement('tr');
     newRow.className = 'test-row border-b border-gray-100 hover:bg-gray-25';
     newRow.innerHTML = `
         <td class="py-3 pr-4">
-            <select name="tests[${testRowIndex}][lab_test_id]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
+            <select name="tests[${nextIndex}][${itemField}]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
                 ${testOptions}
             </select>
         </td>
         <td class="py-3 px-3 text-center">
-            <input type="number" name="tests[${testRowIndex}][quantity]" value="1" min="1" max="10" class="w-full px-2 py-2 text-sm text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
+            <input type="number" name="tests[${nextIndex}][quantity]" value="1" min="1" max="10" class="w-full px-2 py-2 text-sm text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
         </td>
         <td class="py-3 px-3">
-            <select name="tests[${testRowIndex}][priority]" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors priority-select" required>
-                <option value="routine" data-badge="bg-blue-100 text-blue-800">Routine</option>
-                <option value="urgent" data-badge="bg-yellow-100 text-yellow-800">Urgent</option>
-                <option value="stat" data-badge="bg-red-100 text-red-800">STAT</option>
+            <select name="tests[${nextIndex}][priority]" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors priority-select" required>
+                <option value="routine">Routine</option>
+                <option value="urgent">Urgent</option>
+                <option value="stat">STAT</option>
             </select>
         </td>
         <td class="py-3 px-3">
-            <input type="text" name="tests[${testRowIndex}][clinical_notes]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" placeholder="Optional notes...">
+            <input type="text" name="tests[${nextIndex}][clinical_notes]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" placeholder="Optional notes...">
         </td>
         <td class="py-3 text-center">
-            <button type="button" onclick="removeTestRow(this)" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors" title="Remove test">
+            <button type="button" onclick="removeTestRow(this, '${kind}')" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors" title="Remove test">
                 <i class="fas fa-times"></i>
             </button>
         </td>
     `;
     tbody.appendChild(newRow);
-    testRowIndex++;
 
     if (typeof window.initVisitWorkflowSelect2 === 'function') {
         window.initVisitWorkflowSelect2(newRow);
     }
 
-    updateRemoveButtons();
-    updateTestCount();
+    updateRemoveButtons(kind);
+    updateTestCount(kind);
 }
 
-function removeTestRow(button) {
-    const rows = document.querySelectorAll('.test-row');
+function removeTestRow(button, kind = 'lab') {
+    const tbody = document.getElementById(`${kind}-test-rows`);
+    const rows = tbody.querySelectorAll('.test-row');
     if (rows.length > 1) {
         button.closest('.test-row').remove();
-        updateRemoveButtons();
-        updateTestCount();
+        updateRemoveButtons(kind);
+        updateTestCount(kind);
     }
 }
 
-function updateRemoveButtons() {
-    const rows = document.querySelectorAll('.test-row');
+function updateRemoveButtons(kind = 'lab') {
+    const tbody = document.getElementById(`${kind}-test-rows`);
+    if (!tbody) {
+        return;
+    }
+    const rows = tbody.querySelectorAll('.test-row');
     rows.forEach((row) => {
         const removeBtn = row.querySelector('button[onclick*="removeTestRow"]');
         if (removeBtn) {
@@ -126,37 +137,44 @@ function updateRemoveButtons() {
     });
 }
 
-function updateTestCount() {
-    const rows = document.querySelectorAll('.test-row');
-    const count = rows.length;
-    const countElement = document.getElementById('test-count');
-    if (countElement) {
-        countElement.textContent = `${count} test${count !== 1 ? 's' : ''} selected`;
+function updateTestCount(kind = 'lab') {
+    const tbody = document.getElementById(`${kind}-test-rows`);
+    const countElement = document.getElementById(`${kind}-test-count`);
+    if (!tbody || !countElement) {
+        return;
     }
+    const count = tbody.querySelectorAll('.test-row').length;
+    countElement.textContent = `${count} selected`;
 }
 
-function resetForm() {
-    const form = document.getElementById('lab-tests-form');
+function resetKindForm(kind = 'lab') {
+    const form = document.getElementById(`${kind}-tests-form`);
     if (!form) {
         return;
     }
 
     form.reset();
 
-    const tbody = document.getElementById('test-rows');
+    const tbody = document.getElementById(`${kind}-test-rows`);
     const rows = tbody.querySelectorAll('.test-row');
     for (let i = 1; i < rows.length; i++) {
         rows[i].remove();
     }
 
     const firstRow = tbody.querySelector('.test-row');
-    firstRow.querySelector('select[name*="lab_test_id"]').selectedIndex = 0;
+    const itemField = form.dataset.itemField || 'lab_test_id';
+    firstRow.querySelector(`select[name*="${itemField}"]`).selectedIndex = 0;
     firstRow.querySelector('input[name*="quantity"]').value = 1;
     firstRow.querySelector('select[name*="priority"]').selectedIndex = 0;
     firstRow.querySelector('input[name*="clinical_notes"]').value = '';
 
-    updateRemoveButtons();
-    updateTestCount();
+    updateRemoveButtons(kind);
+    updateTestCount(kind);
+}
+
+function resetForm() {
+    resetKindForm('lab');
+    resetKindForm('imaging');
 }
 
 function removeItem(button) {

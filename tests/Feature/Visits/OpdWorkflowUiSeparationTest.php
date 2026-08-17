@@ -85,7 +85,10 @@ it('renders opd workflow with handler-driven ui flags', function () {
         ->assertSee('High Queue Priority')
         ->assertSee('Record Vital Signs')
         ->assertSee('Doctor Assignment')
-        ->assertSee('Order Investigations');
+        ->assertSee('Lab tests')
+        ->assertSee('Imaging')
+        ->assertSee('Order lab tests')
+        ->assertSee('Order imaging');
 });
 
 it('opd handler exposes show_opd_ui and child queue priority', function () {

@@ -2,11 +2,15 @@ import { initDataTable } from './datatable';
 
 $(document).ready(function () {
 
-    initDataTable('.investigations-table', {
-        ajax: '/investigations/data',
-        initComplete: function () {
-            $('.investigations-table').removeClass('invisible').addClass('visible');
-        },
+    $('.investigations-table').each(function () {
+        const table = $(this);
+        const ajaxUrl = table.data('ajax-url') || '/investigations/data';
+
+        initDataTable(table, {
+            ajax: ajaxUrl,
+            initComplete: function () {
+                table.removeClass('invisible').addClass('visible');
+            },
 
         columns: [
             { data: 'code' },
@@ -64,18 +68,19 @@ $(document).ready(function () {
                 orderable: false,
                 searchable: false,
                 render: function (id) {
+        const resourceBase = table.data('resource-base') || '/lab/tests';
                     return `
                 <div class="flex items-center space-x-3">
 
-                    <a href="/investigations/${id}" class="text-blue-600">
+                    <a href="${resourceBase}/${id}" class="text-blue-600">
                         <i class="fas fa-eye"></i>
                     </a>
 
-                    <a href="/investigations/${id}/edit" class="text-yellow-600">
+                    <a href="${resourceBase}/${id}/edit" class="text-yellow-600">
                         <i class="fas fa-edit"></i>
                     </a>
 
-                    <form method="POST" action="/investigations/${id}" onsubmit="return confirm('Delete?')">
+                    <form method="POST" action="${resourceBase}/${id}" onsubmit="return confirm('Delete?')">
                         <input type="hidden" name="_token" value="${window.csrf}">
                         <input type="hidden" name="_method" value="DELETE">
                         <button class="text-red-600">
@@ -88,6 +93,7 @@ $(document).ready(function () {
                 }
             }
         ]
+        });
     });
 
 });

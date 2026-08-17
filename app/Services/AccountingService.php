@@ -651,7 +651,8 @@ class AccountingService
         return match ($category) {
             'opd' => '4100',
             'ipd' => '4200',
-            'investigation' => '4300',
+            'lab' => '4300',
+            'imaging' => '4310',
             'pharmacy' => '4400',
             'emergency' => '4500',
             default => '4100',

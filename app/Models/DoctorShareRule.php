@@ -17,7 +17,8 @@ class DoctorShareRule extends Model
     protected $fillable = [
         'doctor_id',
         'service_id',
-        'investigation_id',
+        'lab_test_id',
+        'imaging_study_id',
         'investigation_scope',
         'share_type',
         'share_value',
@@ -31,8 +32,6 @@ class DoctorShareRule extends Model
         'share_value' => 'decimal:2',
         'is_active'   => 'boolean',
     ];
-
-    // ── Relationships ─────────────────────────────────────────────────────────
 
     public function doctor(): BelongsTo
     {
@@ -49,9 +48,14 @@ class DoctorShareRule extends Model
         return $this->belongsToMany(Service::class, 'doctor_share_rule_service');
     }
 
-    public function investigation(): BelongsTo
+    public function labTest(): BelongsTo
     {
-        return $this->belongsTo(Investigation::class);
+        return $this->belongsTo(LabTest::class);
+    }
+
+    public function imagingStudy(): BelongsTo
+    {
+        return $this->belongsTo(ImagingStudy::class);
     }
 
     public function createdBy(): BelongsTo
@@ -64,8 +68,6 @@ class DoctorShareRule extends Model
         return $this->hasMany(DoctorShareItem::class, 'rule_id');
     }
 
-    // ── Scopes ────────────────────────────────────────────────────────────────
-
     public function scopeActive(Builder $q): Builder
     {
         return $q->where('is_active', true);
@@ -73,8 +75,7 @@ class DoctorShareRule extends Model
 
     /**
      * Rules that apply to a given bill line category and parent bill type.
-     * Investigation lines use item category "investigation" but may match
-     * rules scoped to the visit bill type (e.g. OPD) as well.
+     * Lab/imaging lines may also match visit-type rules scoped via investigation_scope.
      */
     public function scopeForBillContext(Builder $q, string $itemCategory, ?string $billType = null): Builder
     {
@@ -83,10 +84,10 @@ class DoctorShareRule extends Model
                 ->orWhere('applies_to', $itemCategory);
 
             if ($billType && $billType !== $itemCategory) {
-                if ($itemCategory === 'investigation') {
-                    $sub->orWhere(function (Builder $narrow) use ($billType) {
+                if (in_array($itemCategory, ['lab', 'imaging'], true)) {
+                    $sub->orWhere(function (Builder $narrow) use ($billType, $itemCategory) {
                         $narrow->where('applies_to', $billType)
-                            ->whereIn('investigation_scope', ['lab', 'imaging']);
+                            ->where('investigation_scope', $itemCategory);
                     });
                 } else {
                     $sub->orWhere('applies_to', $billType);
@@ -114,7 +115,8 @@ class DoctorShareRule extends Model
         }
 
         return $this->service_id !== null
-            || $this->investigation_id !== null
+            || $this->lab_test_id !== null
+            || $this->imaging_study_id !== null
             || in_array($this->investigation_scope, ['lab', 'imaging'], true);
     }
 
@@ -123,7 +125,7 @@ class DoctorShareRule extends Model
         return match ($this->investigation_scope) {
             'lab' => 'Lab Tests Only',
             'imaging' => 'Imaging Only',
-            default => 'All Investigations',
+            default => 'All Lab & Imaging',
         };
     }
 
@@ -137,8 +139,12 @@ class DoctorShareRule extends Model
             return $services->pluck('name')->join(', ');
         }
 
-        if ($this->investigation) {
-            return $this->investigation->name;
+        if ($this->labTest) {
+            return $this->labTest->name;
+        }
+
+        if ($this->imagingStudy) {
+            return $this->imagingStudy->name;
         }
 
         if (in_array($this->investigation_scope, ['lab', 'imaging'], true)) {
@@ -150,9 +156,9 @@ class DoctorShareRule extends Model
         }
 
         if ($this->doctor_id) {
-            return 'All Services & Investigations';
+            return 'All Services, Lab Tests & Imaging';
         }
 
-        return 'All Services & Investigations (global default)';
+        return 'All Services, Lab Tests & Imaging (global default)';
     }
 }

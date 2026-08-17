@@ -1,0 +1,4 @@
+code,name,category,price,turnaround_time,description,instructions
+XRAY001,Chest X-Ray PA View,x-ray,1200,Same day,Standard chest radiograph,Remove metallic objects
+MRI001,MRI Brain Without Contrast,mri,12000,24-48 hours,Brain MRI protocol,Screen for implants
+USG001,Abdominal Ultrasound,ultrasound,2500,Same day,Upper abdomen ultrasound,Fasting 6 hours recommended

@@ -5,6 +5,7 @@ import '../css/investigation-orders-form.css';
 
 let rowIndex = 1;
 let rawInvestigationOptions = '';
+const itemFk = document.getElementById('order-form')?.dataset.itemFk || 'lab_test_id';
 
 $(function () {
     const $itemsBody = $('#items-body');
@@ -32,7 +33,7 @@ $(function () {
     $('#order-form').on('submit', function (e) {
         if (hasDuplicates()) {
             e.preventDefault();
-            alert('Please remove duplicate investigations before submitting.');
+            alert('Please remove duplicate rows before submitting.');
         }
     });
 
@@ -70,7 +71,7 @@ function initSelect2OnRow(row) {
         }
 
         $select.select2({
-            placeholder: 'Search investigation...',
+            placeholder: 'Search...',
             allowClear: true,
             width: '100%',
         });
@@ -133,7 +134,7 @@ function addRow() {
     const row = $(`
         <tr class="item-row border-t border-gray-100">
             <td class="px-4 py-2">
-                <select name="items[${rowIndex}][investigation_id]" class="investigation-select w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue text-sm" required>
+                <select name="items[${rowIndex}][${itemFk}]" class="investigation-select w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue text-sm" required>
                     ${rawInvestigationOptions}
                 </select>
             </td>

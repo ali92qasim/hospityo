@@ -1,0 +1,3 @@
+code,name,category,sample_type,price,turnaround_time,description,instructions,param_1_name,param_1_unit,param_1_reference_range,param_2_name,param_2_unit,param_2_reference_range
+CBC001,Complete Blood Count (CBC),hematology,blood,800,2 hours,Complete blood count with differential,Fasting not required,Hemoglobin,g/dL,12.0-17.5,WBC Count,x10^3/uL,4.5-11.0
+LFT001,Liver Function Test (LFT),biochemistry,blood,1500,6 hours,Complete liver function panel,Fasting 8-12 hours recommended,Total Bilirubin,mg/dL,0.1-1.2,ALT (SGPT),U/L,7-56

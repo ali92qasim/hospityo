@@ -6,16 +6,19 @@ use App\Models\Service;
 
 class BillItemCategoryResolver
 {
-    public const CATEGORIES = ['opd', 'ipd', 'emergency', 'investigation', 'pharmacy'];
+    public const CATEGORIES = ['opd', 'ipd', 'emergency', 'lab', 'imaging', 'pharmacy'];
 
     /**
      * Derive the revenue/share category for a bill line.
-     * Investigation lines are always "investigation"; service lines inherit bill context.
      */
     public static function resolve(array $item, string $billType): string
     {
-        if (! empty($item['investigation_id'])) {
-            return 'investigation';
+        if (! empty($item['lab_test_id'])) {
+            return 'lab';
+        }
+
+        if (! empty($item['imaging_study_id'])) {
+            return 'imaging';
         }
 
         if (! empty($item['service_id'])) {

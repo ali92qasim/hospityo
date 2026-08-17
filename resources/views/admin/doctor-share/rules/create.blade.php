@@ -44,7 +44,8 @@
                     <option value="all" {{ old('applies_to', 'all') == 'all' ? 'selected' : '' }}>All</option>
                     <option value="opd" {{ old('applies_to') == 'opd' ? 'selected' : '' }}>Opd</option>
                     <option value="ipd" {{ old('applies_to') == 'ipd' ? 'selected' : '' }}>Ipd</option>
-                    <option value="investigation" {{ old('applies_to') == 'investigation' ? 'selected' : '' }}>Investigation</option>
+                    <option value="lab" {{ old('applies_to') == 'lab' ? 'selected' : '' }}>Lab</option>
+                    <option value="imaging" {{ old('applies_to') == 'imaging' ? 'selected' : '' }}>Imaging</option>
                     <option value="emergency" {{ old('applies_to') == 'emergency' ? 'selected' : '' }}>Emergency</option>
                 </select>
                 @error('applies_to')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
