@@ -323,6 +323,7 @@ class VisitController extends Controller
 
         $doctors = $handler->resolveDoctors($visit);
         $medicines = Medicine::where('status', 'active')
+            ->whereNotNull('selling_price')
             ->orderBy('name')
             ->get();
         $labTests = LabTest::where('is_active', true)->orderBy('category')->orderBy('name')->get();

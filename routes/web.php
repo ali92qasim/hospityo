@@ -438,6 +438,7 @@ Route::middleware('auth')->group(function () {
         ->name('medicines.import-status')
         ->middleware('permission:manage pharmacy');
     Route::resource('medicines', MedicineController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');
+    Route::resource('prescriptions', PrescriptionController::class)->middleware('permission:edit visits');
     Route::post('visits/{visit}/prescription', [VisitController::class, 'createPrescription'])->name('visits.prescription')->middleware('permission:edit visits');
     Route::post('visits/{visit}/order-multiple-lab-tests', [VisitController::class, 'orderMultipleLabTests'])->name('visits.order-multiple-lab-tests')->middleware('permission:edit visits');
     Route::post('visits/{visit}/order-multiple-imaging-studies', [VisitController::class, 'orderMultipleImagingStudies'])->name('visits.order-multiple-imaging-studies')->middleware('permission:edit visits');
