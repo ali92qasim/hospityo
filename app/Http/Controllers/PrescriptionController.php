@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\InventoryTransaction;
 use App\Models\Medicine;
+use App\Services\MedicinePricing;
 use App\Models\Prescription;
 use App\Models\Visit;
 use Illuminate\Http\Request;
@@ -61,7 +62,7 @@ class PrescriptionController extends Controller
 
         foreach ($validated['medicines'] as $medicineData) {
             $medicine   = Medicine::findOrFail($medicineData['medicine_id']);
-            $unitPrice  = $medicine->getSellingPrice(); // FIFO-aware price
+            $unitPrice  = MedicinePricing::snapshotLinePrice($medicine);
             $totalPrice = $unitPrice * $medicineData['quantity'];
 
             $prescription->items()->create([
