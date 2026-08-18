@@ -33,7 +33,7 @@ function populateUnitSelect($select, medicineId) {
 
 function updatePriceHeader($row) {
     const abbrev = $row.find('.unit-select option:selected').data('abbrev') || '';
-    const label = abbrev ? `Price per ${abbrev} (${currencySymbol})` : `Price (${currencySymbol})`;
+    const label = abbrev ? `Purchase price per ${abbrev} (${currencySymbol})` : `Purchase price (${currencySymbol})`;
     $('.price-header').text(label);
 }
 

@@ -128,7 +128,7 @@
                 <tr><td class="px-5 py-3 font-mono text-xs">sku</td><td class="px-5 py-3">Yes</td><td class="px-5 py-3">Medicine SKU (must exist, manage stock enabled)</td></tr>
                 <tr><td class="px-5 py-3 font-mono text-xs">quantity</td><td class="px-5 py-3">Yes</td><td class="px-5 py-3">Whole number in the unit below</td></tr>
                 <tr><td class="px-5 py-3 font-mono text-xs">unit_abbreviation</td><td class="px-5 py-3">Yes</td><td class="px-5 py-3">Must match a unit abbreviation (e.g. TAB, INJ)</td></tr>
-                <tr><td class="px-5 py-3 font-mono text-xs">unit_cost</td><td class="px-5 py-3">Yes</td><td class="px-5 py-3">Cost per entered unit (not base unit)</td></tr>
+                <tr><td class="px-5 py-3 font-mono text-xs">unit_cost</td><td class="px-5 py-3">Yes</td><td class="px-5 py-3">Purchase cost per entered unit</td></tr>
                 <tr><td class="px-5 py-3 font-mono text-xs">batch_no</td><td class="px-5 py-3">Yes</td><td class="px-5 py-3">Batch or lot number</td></tr>
                 <tr><td class="px-5 py-3 font-mono text-xs">expiry_date</td><td class="px-5 py-3">Yes</td><td class="px-5 py-3">YYYY-MM-DD</td></tr>
                 <tr><td class="px-5 py-3 font-mono text-xs">supplier</td><td class="px-5 py-3">No</td><td class="px-5 py-3">Defaults to Opening Balance</td></tr>

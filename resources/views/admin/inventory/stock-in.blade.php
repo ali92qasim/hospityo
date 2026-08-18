@@ -100,7 +100,7 @@
                     </div>
 
                     <div id="unit-cost-field">
-                        <label id="unit-cost-label" class="block text-sm font-medium text-gray-700 mb-2">Unit Cost ({{ currency_symbol() }}) *</label>
+                        <label id="unit-cost-label" class="block text-sm font-medium text-gray-700 mb-2">Purchase cost per unit ({{ currency_symbol() }}) *</label>
                         <input type="number" name="unit_cost" id="unit-cost-input" step="0.01" min="0" value="{{ old('unit_cost') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                         <p id="unit-cost-hint" class="text-xs text-gray-500 mt-1 hidden"></p>
                         @error('unit_cost')
@@ -413,13 +413,13 @@ function updateUnitLabels() {
 
     if (!abbrev) {
         document.getElementById('quantity-label').textContent = 'Quantity *';
-        document.getElementById('unit-cost-label').textContent = 'Unit Cost (' + currencySymbol + ') *';
+        document.getElementById('unit-cost-label').textContent = 'Purchase cost per unit (' + currencySymbol + ') *';
         document.getElementById('unit-cost-hint').classList.add('hidden');
         return;
     }
 
     document.getElementById('quantity-label').textContent = 'Quantity (' + abbrev + ') *';
-    document.getElementById('unit-cost-label').textContent = 'Cost per ' + abbrev + ' (' + currencySymbol + ') *';
+    document.getElementById('unit-cost-label').textContent = 'Purchase cost per ' + abbrev + ' (' + currencySymbol + ') *';
     const hint = document.getElementById('unit-cost-hint');
     hint.textContent = 'Enter the price for one ' + abbrev + ' — not per tablet unless ' + abbrev + ' is your base unit.';
     hint.classList.remove('hidden');
