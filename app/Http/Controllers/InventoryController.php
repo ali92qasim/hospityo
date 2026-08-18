@@ -44,6 +44,7 @@ class InventoryController extends Controller
     public function processStockIn(StockInRequest $request)
     {
         $validated = $request->validated();
+        $mode = $validated['stock_in_mode'] ?? 'new';
 
         $medicine = Medicine::findOrFail($validated['medicine_id']);
 
@@ -53,11 +54,28 @@ class InventoryController extends Controller
 
         $unit = Unit::findOrFail($validated['unit_id']);
 
-        $converted = MedicineStockConversion::toBaseUnits(
-            $unit,
-            (int) $validated['quantity'],
-            (float) $validated['unit_cost']
-        );
+        if ($mode === 'existing') {
+            $batch = InventoryTransaction::findOrFail($validated['existing_batch_id']);
+            $purchaseUnitCost = (float) $batch->unit_cost * (float) $unit->conversion_factor;
+
+            $converted = MedicineStockConversion::toBaseUnits(
+                $unit,
+                (int) $validated['quantity'],
+                $purchaseUnitCost
+            );
+
+            $batchNo = $batch->batch_no;
+            $expiryDate = $batch->expiry_date;
+        } else {
+            $converted = MedicineStockConversion::toBaseUnits(
+                $unit,
+                (int) $validated['quantity'],
+                (float) $validated['unit_cost']
+            );
+
+            $batchNo = $validated['batch_no'];
+            $expiryDate = $validated['expiry_date'];
+        }
 
         try {
             InventoryTransaction::create([
@@ -68,8 +86,8 @@ class InventoryController extends Controller
                 'unit_cost'          => $converted['base_unit_cost'],
                 'total_cost'         => $converted['total_cost'],
                 'supplier'           => $validated['supplier'],
-                'batch_no'           => $validated['batch_no'] ?? null,
-                'expiry_date'        => $validated['expiry_date'] ?? null,
+                'batch_no'           => $batchNo,
+                'expiry_date'        => $expiryDate,
                 'reference_no'       => $validated['reference_no'] ?? null,
                 'notes'              => $validated['notes'] ?? null,
                 'created_by'         => auth()->id(),
