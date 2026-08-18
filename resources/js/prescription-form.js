@@ -6,6 +6,28 @@ select2(window, $);
 let itemIndex = 1;
 let rawMedicineOptions = '';
 let rawInstructionOptions = '';
+const currencySymbol = document.getElementById('prescription-form')?.dataset?.currencySymbol ?? '';
+
+function updateMedicinePriceHint(select) {
+    const item = select.closest('.prescription-item');
+    if (!item) return;
+
+    const hint = item.querySelector('.medicine-price-hint');
+    if (!hint) return;
+
+    const option = select.options[select.selectedIndex];
+    const price = option?.dataset?.price;
+    const abbrev = option?.dataset?.unitAbbrev || '';
+
+    if (!select.value || !price || parseFloat(price) <= 0) {
+        hint.classList.add('hidden');
+        hint.textContent = '';
+        return;
+    }
+
+    hint.textContent = `Est. ${currencySymbol} ${parseFloat(price).toFixed(2)} / ${abbrev}`;
+    hint.classList.remove('hidden');
+}
 
 $(function () {
     // Capture raw options BEFORE Select2 transforms them
@@ -25,6 +47,7 @@ $(function () {
                         <select name="medicines[${itemIndex}][medicine_id]" class="medicine-select w-full" required>
                             ${rawMedicineOptions}
                         </select>
+                        <p class="medicine-price-hint text-xs text-gray-500 mt-1 hidden"></p>
                     </div>
                     <div class="flex-[2] min-w-0">
                         <label class="block text-xs font-medium text-gray-500 mb-1">Instruction</label>
@@ -61,6 +84,10 @@ $(function () {
         if ($('.prescription-item').length > 1) {
             $(this).closest('.prescription-item').remove();
         }
+    });
+
+    $(document).on('change', '.medicine-select', function () {
+        updateMedicinePriceHint(this);
     });
 });
 

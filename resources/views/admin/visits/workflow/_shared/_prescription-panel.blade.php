@@ -40,7 +40,7 @@
 
         <div class="bg-white border border-gray-200 rounded-lg p-6">
             <h4 class="text-lg font-medium text-gray-800 mb-4">Create New Prescription</h4>
-            <form action="{{ route('visits.prescription', $visit) }}" method="POST" id="prescription-form" data-save-tab="prescription">
+            <form action="{{ route('visits.prescription', $visit) }}" method="POST" id="prescription-form" data-save-tab="prescription" data-currency-symbol="{{ currency_symbol() }}">
                 @csrf
                 @if($workflowData['show_order_doctor_picker'] ?? false)
                     <div class="mb-4">
@@ -66,9 +66,14 @@
                                 <select name="medicines[0][medicine_id]" class="medicine-select w-full" required>
                                     <option value="">Select Medicine</option>
                                     @foreach($medicines ?? [] as $medicine)
-                                        <option value="{{ $medicine->id }}">{{ $medicine->name }}{{ $medicine->strength ? ' ('.$medicine->strength.')' : '' }}</option>
+                                        <option value="{{ $medicine->id }}"
+                                                data-price="{{ $medicine->getSellingPrice() }}"
+                                                data-unit-abbrev="{{ $medicine->baseUnit?->abbreviation ?? '' }}">
+                                            {{ $medicine->name }}{{ $medicine->strength ? ' ('.$medicine->strength.')' : '' }}
+                                        </option>
                                     @endforeach
                                 </select>
+                                <p class="medicine-price-hint text-xs text-gray-500 mt-1 hidden"></p>
                             </div>
                             <div class="flex-[2] min-w-0">
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Instruction</label>
