@@ -47,6 +47,7 @@ use App\Services\AccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\InvestigationOrderBillingService;
+use App\Services\MedicinePricing;
 use Yajra\DataTables\Facades\DataTables;
 
 class VisitController extends Controller
@@ -569,13 +570,7 @@ class VisitController extends Controller
                 $medicine = Medicine::find($medicineData['medicine_id']);
                 $quantity = (int) ($medicineData['quantity'] ?? 1);
 
-                // Get unit price from latest inventory transaction or default to 0
-                $latestTransaction = $medicine->inventoryTransactions()
-                    ->where('type', 'stock_in')
-                    ->latest()
-                    ->first();
-
-                $unitPrice = $latestTransaction ? $latestTransaction->unit_cost : 0;
+                $unitPrice = MedicinePricing::snapshotLinePrice($medicine);
                 $totalPrice = $unitPrice * $quantity;
 
                 $prescription->items()->create([
