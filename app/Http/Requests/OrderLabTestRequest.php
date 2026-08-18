@@ -15,7 +15,6 @@ class OrderLabTestRequest extends FormRequest
     {
         return [
             'lab_test_id' => 'required|exists:tenant.lab_tests,id',
-            'test_location' => 'required|in:indoor,outdoor',
             'priority' => 'required|in:routine,urgent,stat',
             'clinical_notes' => 'nullable|string',
         ];

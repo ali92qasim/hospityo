@@ -48,7 +48,6 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test Name</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Priority</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Location</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered</th>
                             </tr>
                         </thead>
@@ -83,13 +82,6 @@
                                         @endphp
                                         <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium {{ $config['bg'] }} {{ $config['text'] }}">
                                             {{ $config['label'] }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
-                                        <span class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium
-                                            {{ $item->test_location === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
-                                            <i class="fas {{ $item->test_location === 'indoor' ? 'fa-building' : 'fa-external-link-alt' }} mr-1"></i>
-                                            {{ $item->test_location === 'indoor' ? 'Indoor' : 'External' }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-600">{{ $order->ordered_at->format('M d, H:i') }}</td>

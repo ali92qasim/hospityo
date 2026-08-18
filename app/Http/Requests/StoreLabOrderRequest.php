@@ -26,7 +26,6 @@ class StoreLabOrderRequest extends FormRequest
             'items.*.quantity'              => ['required', 'integer', 'min:1', 'max:99'],
             'items.*.priority'              => ['required', Rule::in(['routine', 'urgent', 'stat'])],
             'items.*.clinical_notes'        => ['nullable', 'string', 'max:1000'],
-            'items.*.test_location'         => ['required', Rule::in(['indoor', 'outdoor'])],
         ];
     }
 

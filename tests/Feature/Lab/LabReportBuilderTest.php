@@ -103,7 +103,6 @@ function createResultForLabTest(LabOrder $order, LabTest $labTest, User $user): 
         'quantity' => 1,
         'priority' => 'routine',
         'status' => 'reported',
-        'test_location' => 'indoor',
     ]);
 
     $result = LabResult::create([

@@ -25,6 +25,13 @@ it('drops kind columns and keeps sample_type only on lab tests', function () {
         ->and(Schema::connection('tenant')->hasColumn('imaging_studies', 'sample_type'))->toBeFalse();
 });
 
+it('drops leftover location columns from lab orders and order items', function () {
+    expect(Schema::connection('tenant')->hasColumn('lab_orders', 'test_location'))->toBeFalse()
+        ->and(Schema::connection('tenant')->hasColumn('lab_orders', 'location'))->toBeFalse()
+        ->and(Schema::connection('tenant')->hasColumn('lab_order_items', 'test_location'))->toBeFalse()
+        ->and(Schema::connection('tenant')->hasColumn('imaging_order_items', 'test_location'))->toBeFalse();
+});
+
 it('adds billing catalog foreign keys and splits gl accounts', function () {
     Account::updateOrCreate(
         ['code' => '4300'],

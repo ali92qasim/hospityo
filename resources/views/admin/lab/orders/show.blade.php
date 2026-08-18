@@ -150,7 +150,6 @@
                             <th class="px-4 py-3 text-left">Lab test</th>
                             <th class="px-4 py-3 text-center">Qty</th>
                             <th class="px-4 py-3 text-center">Priority</th>
-                            <th class="px-4 py-3 text-center">Location</th>
                             <th class="px-4 py-3 text-center">Status</th>
                             <th class="px-4 py-3 text-center">Result</th>
                         </tr>
@@ -171,7 +170,6 @@
                                     {{ strtoupper($item->priority) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-center text-gray-600 capitalize">{{ $item->test_location }}</td>
                             <td class="px-4 py-3 text-center">
                                 @php $sc = ['ordered'=>'bg-blue-100 text-blue-800','collected'=>'bg-yellow-100 text-yellow-800','testing'=>'bg-purple-100 text-purple-800','verified'=>'bg-orange-100 text-orange-800','reported'=>'bg-green-100 text-green-800','cancelled'=>'bg-red-100 text-red-800']; @endphp
                                 <span class="px-2 py-0.5 text-xs rounded-full {{ $sc[$item->status] ?? 'bg-gray-100 text-gray-800' }}">

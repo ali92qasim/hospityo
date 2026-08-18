@@ -110,7 +110,6 @@ class LabImagingSchemaSplit
                 $table->string('priority', 20)->default('routine');
                 $table->string('status', 30)->default('ordered');
                 $table->text('clinical_notes')->nullable();
-                $table->string('test_location', 20)->default('outdoor');
                 $table->timestamps();
                 $table->unique(['imaging_order_id', 'imaging_study_id'], 'img_oi_unique');
             });
@@ -284,7 +283,6 @@ class LabImagingSchemaSplit
             'priority' => $row->priority ?? 'routine',
             'status' => $row->status ?? 'ordered',
             'clinical_notes' => $row->clinical_notes ?? null,
-            'test_location' => $row->test_location ?? 'outdoor',
             'created_at' => $row->created_at,
             'updated_at' => $row->updated_at,
         ];

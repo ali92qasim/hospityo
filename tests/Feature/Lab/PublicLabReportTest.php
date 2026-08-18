@@ -98,7 +98,6 @@ beforeEach(function () {
         'quantity' => 1,
         'priority' => 'routine',
         'status' => 'reported',
-        'test_location' => 'indoor',
     ]);
 
     $result = LabResult::create([

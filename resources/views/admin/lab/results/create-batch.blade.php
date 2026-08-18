@@ -103,23 +103,6 @@
                 <input type="hidden" name="orders[{{ $index }}][investigation_order_id]" value="{{ $order->id }}">
                 <input type="hidden" name="orders[{{ $index }}][item_id]" value="{{ $item->id }}">
 
-                <!-- Test Location -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Test Location *</label>
-                    <div class="flex space-x-4">
-                        <label class="flex items-center">
-                            <input type="radio" name="orders[{{ $index }}][test_location]" value="indoor"
-                                   class="mr-2 text-medical-blue" {{ $item->test_location === 'indoor' ? 'checked' : '' }} required>
-                            <span class="text-sm"><i class="fas fa-building mr-1 text-gray-400"></i>Indoor Lab</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="orders[{{ $index }}][test_location]" value="outdoor"
-                                   class="mr-2 text-medical-blue" {{ $item->test_location === 'outdoor' ? 'checked' : '' }} required>
-                            <span class="text-sm"><i class="fas fa-external-link-alt mr-1 text-gray-400"></i>External Lab</span>
-                        </label>
-                    </div>
-                </div>
-
                 @if($hasParameters)
                     <!-- Parameter-based Results -->
                     <div class="mb-4">

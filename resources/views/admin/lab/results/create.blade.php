@@ -50,12 +50,6 @@
                     <div class="space-y-1 text-sm">
                         <div><span class="text-purple-600">Category:</span> {{ $investigation ? ucfirst($investigation->category) : 'N/A' }}</div>
                         <div><span class="text-purple-600">Sample:</span> {{ $investigation ? ucfirst($investigation->sample_type ?? 'N/A') : 'N/A' }}</div>
-                        <div><span class="text-purple-600">Location:</span>
-                            <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full font-medium {{ $labOrder->test_location === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
-                                <i class="fas {{ $labOrder->test_location === 'indoor' ? 'fa-building' : 'fa-external-link-alt' }} mr-1"></i>
-                                {{ $labOrder->test_location === 'indoor' ? 'Indoor Lab' : 'External Lab' }}
-                            </span>
-                        </div>
                         <div><span class="text-purple-600">Ordered:</span> {{ $order->ordered_at ? $order->ordered_at->format('M d, Y') : 'N/A' }}</div>
                     </div>
                 </div>
@@ -65,18 +59,6 @@
                 @csrf
 
                 <div class="space-y-6">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <h4 class="font-medium text-gray-800 mb-4">Test Location</h4>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Processing Location</label>
-                            <select name="test_location" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                                <option value="indoor" {{ $labOrder->test_location === 'indoor' ? 'selected' : '' }}>Indoor Lab</option>
-                                <option value="outdoor" {{ $labOrder->test_location === 'outdoor' ? 'selected' : '' }}>External Lab</option>
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Select where this test was processed</p>
-                        </div>
-                    </div>
-
                     <div class="bg-gray-50 rounded-lg p-4">
                         <h4 class="font-medium text-gray-800 mb-4">Test Results</h4>
 

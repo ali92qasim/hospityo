@@ -117,7 +117,7 @@
                                 {{ Str::limit($item->clinical_notes, 60) }}
                             </div>
                         @endif
-                        @if($isLabSurface && $item->test_location === 'indoor')
+                        @if($isLabSurface)
                             <div class="mt-3 pt-3 border-t border-yellow-200">
                                 <a href="{{ route('lab-orders.results.create', $item) }}"
                                    class="inline-flex items-center px-3 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all w-full justify-center">

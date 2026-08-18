@@ -17,7 +17,6 @@ class StoreLabResultRequest extends FormRequest
             'results' => 'required|array',
             'interpretation' => 'nullable|string',
             'comments' => 'nullable|string',
-            'test_location' => 'nullable|in:indoor,outdoor'
         ];
     }
 }

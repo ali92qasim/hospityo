@@ -149,7 +149,6 @@ class LabResultController extends Controller
     public function store(Request $request, LabOrderItem $orderItem)
     {
         $validated = $request->validate([
-            'test_location'             => 'required|in:indoor,outdoor',
             'result_text'               => 'nullable|string',
             'parameters'                => 'nullable|array',
             'parameters.*.parameter_id' => 'nullable|integer',
@@ -199,8 +198,7 @@ class LabResultController extends Controller
             }
 
             $orderItem->update([
-                'status'        => 'reported',
-                'test_location' => $validated['test_location'],
+                'status' => 'reported',
             ]);
 
             $order = $orderItem->order;
@@ -223,7 +221,6 @@ class LabResultController extends Controller
             'orders'                             => 'required|array',
             'orders.*.investigation_order_id'    => 'required|integer',
             'orders.*.item_id'                   => 'required|integer',
-            'orders.*.test_location'             => 'required|in:indoor,outdoor',
             'orders.*.result_text'               => 'nullable|string',
             'orders.*.parameters'                => 'nullable|array',
             'orders.*.parameters.*.parameter_id' => 'nullable|integer',
@@ -284,8 +281,7 @@ class LabResultController extends Controller
                 }
 
                 $item->update([
-                    'status'        => 'reported',
-                    'test_location' => $orderData['test_location'],
+                    'status' => 'reported',
                 ]);
 
                 $allReported = $labOrder->items()->whereNotIn('status', ['reported', 'verified', 'cancelled'])->doesntExist();

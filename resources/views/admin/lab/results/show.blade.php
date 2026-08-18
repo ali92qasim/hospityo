@@ -11,7 +11,6 @@
     $order        = $labResult->investigationOrder;
     $firstItem    = $order?->items?->first();
     $testName     = $firstItem?->investigation?->name ?? 'Investigation';
-    $testLocation = $firstItem?->test_location ?? 'indoor';
 @endphp
 <div class="max-w-7xl mx-auto">
     <!-- Enhanced Header Actions -->
@@ -110,13 +109,6 @@
                                         {{ $labResult->labOrder->priority === 'stat' ? 'bg-red-100 text-red-800' : 
                                            ($labResult->labOrder->priority === 'urgent' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800') }}">
                                         {{ strtoupper($labResult->labOrder->priority) }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                                    <span class="text-gray-600 w-28 text-sm font-medium">Location:</span>
-                                    <span class="px-3 py-1 text-xs rounded-full font-bold
-                                        {{ $testLocation === 'indoor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' }}">
-                                        {{ $testLocation === 'indoor' ? 'In-House Lab' : 'External Lab' }}
                                     </span>
                                 </div>
                             </div>

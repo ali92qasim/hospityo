@@ -20,7 +20,6 @@ class LabOrderItem extends Model
         'priority',
         'status',
         'clinical_notes',
-        'test_location',
     ];
 
     public function order(): BelongsTo

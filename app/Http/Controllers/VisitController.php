@@ -719,7 +719,6 @@ class VisitController extends Controller
                     'quantity'       => $testData['quantity'],
                     'priority'       => $testData['priority'],
                     'clinical_notes' => $testData['clinical_notes'] ?? null,
-                    'test_location'  => 'indoor',
                     'status'         => 'ordered',
                 ]);
             }
@@ -769,7 +768,6 @@ class VisitController extends Controller
                     'quantity'         => $testData['quantity'],
                     'priority'         => $testData['priority'],
                     'clinical_notes'   => $testData['clinical_notes'] ?? null,
-                    'test_location'    => 'indoor',
                     'status'           => 'ordered',
                 ]);
             }

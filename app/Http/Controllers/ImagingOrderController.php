@@ -62,7 +62,6 @@ class ImagingOrderController extends Controller
                     'quantity'         => $item['quantity'] ?? 1,
                     'priority'         => $item['priority'],
                     'clinical_notes'   => $item['clinical_notes'] ?? null,
-                    'test_location'    => $item['test_location'],
                     'status'           => 'ordered',
                 ]);
             }
@@ -132,7 +131,6 @@ class ImagingOrderController extends Controller
                     'quantity'         => $item['quantity'] ?? 1,
                     'priority'         => $item['priority'],
                     'clinical_notes'   => $item['clinical_notes'] ?? null,
-                    'test_location'    => $item['test_location'],
                     'status'           => 'ordered',
                 ]);
             }

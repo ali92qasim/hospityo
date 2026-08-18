@@ -149,12 +149,6 @@ function addRow() {
                 </select>
             </td>
             <td class="px-4 py-2">
-                <select name="items[${rowIndex}][test_location]" class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue text-sm" required>
-                    <option value="outdoor" selected>Outdoor</option>
-                    <option value="indoor">Indoor</option>
-                </select>
-            </td>
-            <td class="px-4 py-2">
                 <input type="text" name="items[${rowIndex}][clinical_notes]" class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue text-sm" placeholder="Optional notes...">
             </td>
             <td class="px-4 py-2 text-center">

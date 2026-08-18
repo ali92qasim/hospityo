@@ -42,7 +42,7 @@
         </div>
     @endif
 
-    @if($isPending && $orderItem->test_location === 'indoor')
+    @if($isPending)
         <div class="mt-3 pt-3 border-t border-yellow-200">
             @if($isImaging)
                 <a href="{{ route('radiology-results.create', $orderItem->order) }}"
