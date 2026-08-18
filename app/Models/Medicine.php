@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\MedicinePricing;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -283,22 +284,11 @@ class Medicine extends Model
     }
 
     /**
-     * Get the effective selling price per base unit.
-     * Uses the clinic-set selling_price if available, otherwise falls back
-     * to the unit_cost of the most recent stock_in transaction.
+     * Get the catalog selling price per base unit (no purchase-cost fallback).
      */
     public function getSellingPrice(): float
     {
-        if (!is_null($this->selling_price)) {
-            return (float) $this->selling_price;
-        }
-
-        $latestCost = $this->inventoryTransactions()
-            ->where('type', 'stock_in')
-            ->orderBy('created_at', 'desc')
-            ->value('unit_cost');
-
-        return (float) ($latestCost ?? 0);
+        return MedicinePricing::sellingPricePerBaseUnit($this);
     }
 
     /**
