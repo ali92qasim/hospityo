@@ -41,6 +41,35 @@ class InventoryController extends Controller
         return view('admin.inventory.stock-in', compact('medicines', 'suppliers', 'units'));
     }
 
+    public function batchesForMedicine(Medicine $medicine)
+    {
+        if (! $medicine->manage_stock) {
+            return response()->json(['batches' => []]);
+        }
+
+        $medicine->loadMissing('baseUnit');
+
+        $batches = InventoryTransaction::query()
+            ->where('medicine_id', $medicine->id)
+            ->where('type', 'stock_in')
+            ->whereNotNull('batch_no')
+            ->orderBy('created_at')
+            ->get()
+            ->unique('batch_no')
+            ->values()
+            ->map(fn (InventoryTransaction $batch) => [
+                'id'          => $batch->id,
+                'batch_no'    => $batch->batch_no,
+                'expiry_date' => $batch->expiry_date?->toDateString(),
+                'unit_cost'   => (float) $batch->unit_cost,
+            ]);
+
+        return response()->json([
+            'batches'          => $batches,
+            'base_unit_abbrev' => $medicine->baseUnit?->abbreviation ?? 'unit',
+        ]);
+    }
+
     public function processStockIn(StockInRequest $request)
     {
         $validated = $request->validated();
