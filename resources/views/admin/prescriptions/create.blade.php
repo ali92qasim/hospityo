@@ -60,12 +60,15 @@
                             <select name="medicines[0][medicine_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                                 <option value="">Select Medicine</option>
                                 @foreach($medicines as $medicine)
-                                    <option value="{{ $medicine->id }}" data-price="{{ $medicine->getSellingPrice() }}">
+                                    <option value="{{ $medicine->id }}"
+                                            data-price="{{ $medicine->getSellingPrice() }}"
+                                            data-unit-abbrev="{{ $medicine->baseUnit?->abbreviation ?? '' }}">
                                         {{ $medicine->name }} - {{ $medicine->strength }}
                                         (Stock: {{ $medicine->getCurrentStock() }} {{ $medicine->dispensingUnit?->abbreviation ?? $medicine->baseUnit?->abbreviation ?? '' }})
                                     </option>
                                 @endforeach
                             </select>
+                            <p class="medicine-price-hint text-xs text-gray-500 mt-1 hidden"></p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
@@ -118,6 +121,30 @@
 
 <script>
 let medicineRowIndex = 1;
+const currencySymbol = @json(currency_symbol());
+
+function updateMedicinePriceHint(select) {
+    const row = select.closest('.medicine-row');
+    const hint = row.querySelector('.medicine-price-hint');
+    const option = select.options[select.selectedIndex];
+    const price = option?.dataset?.price;
+    const abbrev = option?.dataset?.unitAbbrev || '';
+
+    if (!select.value || !price || parseFloat(price) <= 0) {
+        hint.classList.add('hidden');
+        hint.textContent = '';
+        return;
+    }
+
+    hint.textContent = `Est. ${currencySymbol} ${parseFloat(price).toFixed(2)} / ${abbrev}`;
+    hint.classList.remove('hidden');
+}
+
+document.getElementById('medicine-rows').addEventListener('change', (event) => {
+    if (event.target.matches('select[name*="[medicine_id]"]')) {
+        updateMedicinePriceHint(event.target);
+    }
+});
 
 function addMedicineRow() {
     const medicineRows = document.getElementById('medicine-rows');
@@ -136,12 +163,15 @@ function addMedicineRow() {
                 <select name="medicines[${medicineRowIndex}][medicine_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
                     <option value="">Select Medicine</option>
                     @foreach($medicines as $medicine)
-                        <option value="{{ $medicine->id }}" data-price="{{ $medicine->getSellingPrice() }}">
+                        <option value="{{ $medicine->id }}"
+                                data-price="{{ $medicine->getSellingPrice() }}"
+                                data-unit-abbrev="{{ $medicine->baseUnit?->abbreviation ?? '' }}">
                             {{ $medicine->name }} - {{ $medicine->strength }}
                             (Stock: {{ $medicine->getCurrentStock() }} {{ $medicine->dispensingUnit?->abbreviation ?? $medicine->baseUnit?->abbreviation ?? '' }})
                         </option>
                     @endforeach
                 </select>
+                <p class="medicine-price-hint text-xs text-gray-500 mt-1 hidden"></p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
