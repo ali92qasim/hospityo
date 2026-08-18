@@ -339,4 +339,49 @@ class IpdClinicalService
         return in_array($sqlState, ['23000', '23505', 'HY000'], true)
             || in_array($driverCode, [1062, 19], true);
     }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, array{type: string, occurred_at: \Illuminate\Support\Carbon, model: \Illuminate\Database\Eloquent\Model}>
+     */
+    public static function clinicalTimelineEvents(Visit $visit): \Illuminate\Support\Collection
+    {
+        $visit->loadMissing([
+            'allVitalSigns.user',
+            'doctorVisitNotes.doctor',
+            'ipdGpeRecords.doctor',
+        ]);
+
+        $events = collect();
+
+        foreach ($visit->allVitalSigns as $vital) {
+            $events->push([
+                'type' => 'vitals',
+                'occurred_at' => $vital->created_at,
+                'model' => $vital,
+            ]);
+        }
+
+        foreach ($visit->doctorVisitNotes as $note) {
+            $events->push([
+                'type' => 'round_note',
+                'occurred_at' => $note->visited_at ?? $note->created_at,
+                'model' => $note,
+            ]);
+        }
+
+        foreach ($visit->ipdGpeRecords as $gpe) {
+            $events->push([
+                'type' => 'gpe',
+                'occurred_at' => $gpe->created_at,
+                'model' => $gpe,
+            ]);
+        }
+
+        return $events
+            ->sortByDesc(fn (array $event) => [
+                $event['occurred_at']?->getTimestamp() ?? 0,
+                $event['model']->getKey(),
+            ])
+            ->values();
+    }
 }

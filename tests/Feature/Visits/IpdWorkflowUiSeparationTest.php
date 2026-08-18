@@ -126,8 +126,9 @@ it('renders ipd workflow accordion after admission', function () {
         ->assertOk()
         ->assertSee('data-workflow-accordion-root', false)
         ->assertSee('Record Vital Signs')
-        ->assertSee('Vital Signs History')
-        ->assertSee('Clinical Timeline');
+        ->assertSee('data-landmark="ipd-clinical-timeline"', false)
+        ->assertSee('Clinical Timeline')
+        ->assertDontSee('Vital Signs History');
 });
 
 it('ipd handler exposes workflow permission flags', function () {
