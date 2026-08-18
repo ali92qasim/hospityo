@@ -28,6 +28,7 @@ class UpdateMedicineRequest extends FormRequest
             'brand_id' => 'nullable|exists:tenant.medicine_brands,id',
             'category_id' => 'nullable|exists:tenant.medicine_categories,id',
             'strength' => 'nullable|string|max:255',
+            'selling_price' => 'required|numeric|min:0.01',
             'base_unit_id' => 'nullable|exists:tenant.units,id',
             'purchase_unit_id' => 'nullable|exists:tenant.units,id',
             'dispensing_unit_id' => 'nullable|exists:tenant.units,id',

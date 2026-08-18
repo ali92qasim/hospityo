@@ -83,6 +83,15 @@
             </div>
 
             <div>
+                <label for="selling_price" class="block text-sm font-medium text-gray-700 mb-2">Selling Price <span class="text-red-500">*</span></label>
+                <input type="number" id="selling_price" name="selling_price" value="{{ old('selling_price') }}" min="0.01" step="0.01"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                @error('selling_price')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
                 <label for="reorder_level" class="block text-sm font-medium text-gray-700 mb-2">Reorder Level</label>
                 <input type="number" id="reorder_level" name="reorder_level" value="{{ old('reorder_level', 10) }}" min="0"
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">

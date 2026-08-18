@@ -90,8 +90,8 @@ it('builds HMIS ATC-style skus from medicine attributes', function () {
 
 it('auto-generates sku on import when sku column is empty', function () {
     $path = writeMedicineImportCsv([
-        ['name', 'category_code', 'strength', 'status', 'manage_stock'],
-        ['Auto SKU Medicine', 'INJ', '1GM', 'active', '1'],
+        ['name', 'category_code', 'strength', 'selling_price', 'status', 'manage_stock'],
+        ['Auto SKU Medicine', 'INJ', '1GM', '100', 'active', '1'],
     ]);
 
     $result = app(MedicineImportService::class)->importFromFile($path);
@@ -200,6 +200,20 @@ it('imports medicines without strength values', function () {
 
     expect($result['created'])->toBe(1)
         ->and(Medicine::where('sku', 'NO-STRENGTH')->value('strength'))->toBe('');
+});
+
+it('rejects import rows with blank selling_price', function () {
+    $path = writeMedicineImportCsv([
+        ['sku', 'name', 'status', 'manage_stock'],
+        ['BLANK-PRICE', 'Blank Price Medicine', 'active', '1'],
+    ]);
+
+    $result = app(MedicineImportService::class)->importFromFile($path);
+
+    expect($result['created'])->toBe(0)
+        ->and($result['errors'])->toHaveCount(1)
+        ->and($result['errors'][0])->toContain("'selling_price' is required")
+        ->and(Medicine::where('sku', 'BLANK-PRICE')->exists())->toBeFalse();
 });
 
 it('accepts csv uploads through the import route', function () {

@@ -11,10 +11,10 @@ use Illuminate\Support\Facades\Log;
 /**
  * Parses CSV or Excel files and upserts Medicine records.
  *
- * Required columns: name
+ * Required columns: name, selling_price
  * Optional columns: sku (auto-generated when empty), generic_name, brand_name, category_code, strength,
  *   base_unit_abbreviation, purchase_unit_abbreviation, dispensing_unit_abbreviation,
- *   selling_price, reorder_level, status, manage_stock
+ *   reorder_level, status, manage_stock
  *
  * Upsert key: sku (generated when omitted)
  */
@@ -415,7 +415,8 @@ class MedicineImportService
     {
         $value = trim($value);
         if ($value === '') {
-            return 0.0;
+            $errors[] = "Row {$rowNum} (sku: {$sku}): 'selling_price' is required — row skipped.";
+            return false;
         }
 
         if (! is_numeric($value)) {
