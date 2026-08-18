@@ -465,6 +465,7 @@ Route::middleware('auth')->group(function () {
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index')->middleware('permission:view services|view pharmacy|view inventory|manage inventory');
     Route::get('inventory/stock-in', [InventoryController::class, 'stockIn'])->name('inventory.stock-in')->middleware('permission:view services|manage pharmacy|manage inventory');
     Route::post('inventory/stock-in', [InventoryController::class, 'processStockIn'])->name('inventory.process-stock-in')->middleware('permission:view services|manage pharmacy|manage inventory');
+    Route::get('inventory/medicines/{medicine}/batches', [InventoryController::class, 'batchesForMedicine'])->name('inventory.medicines.batches')->middleware('permission:view services|manage pharmacy|manage inventory');
     Route::get('inventory/stock-out', [InventoryController::class, 'stockOut'])->name('inventory.stock-out')->middleware('permission:view services|manage pharmacy|manage inventory');
     Route::post('inventory/stock-out', [InventoryController::class, 'processStockOut'])->name('inventory.process-stock-out')->middleware('permission:view services|manage pharmacy|manage inventory');
     Route::get('inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock')->middleware('permission:view services|view pharmacy|view inventory|manage inventory');
