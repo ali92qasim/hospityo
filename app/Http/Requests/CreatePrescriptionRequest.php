@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreatePrescriptionRequest extends FormRequest
 {
@@ -16,7 +17,10 @@ class CreatePrescriptionRequest extends FormRequest
         return [
             'doctor_id' => ['nullable', 'exists:tenant.doctors,id'],
             'medicines' => 'required|array|min:1',
-            'medicines.*.medicine_id' => 'required|exists:tenant.medicines,id',
+            'medicines.*.medicine_id' => [
+                'required',
+                Rule::exists('tenant.medicines', 'id')->whereNotNull('selling_price'),
+            ],
             'medicines.*.instruction_id' => 'nullable|exists:tenant.prescription_instructions,id',
             'medicines.*.quantity' => 'nullable|integer|min:1|max:999',
             'notes' => 'nullable|string|max:1000'
@@ -28,7 +32,7 @@ class CreatePrescriptionRequest extends FormRequest
         return [
             'medicines.required' => 'At least one medicine must be selected.',
             'medicines.*.medicine_id.required' => 'Medicine selection is required.',
-            'medicines.*.medicine_id.exists' => 'Selected medicine does not exist.',
+            'medicines.*.medicine_id.exists' => 'Selected medicine is not available for prescription (missing selling price).',
             'medicines.*.instruction_id.exists' => 'Selected instruction does not exist.'
         ];
     }

@@ -214,6 +214,7 @@ class VisitController extends Controller
         ]);
         $doctors = Doctor::where('status', 'active')->get();
         $medicines = Medicine::where('status', 'active')
+            ->whereNotNull('selling_price')
             ->orderBy('name')
             ->get();
         $investigations = Investigation::where('is_active', true)->orderBy('category')->orderBy('name')->get();
