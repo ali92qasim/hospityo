@@ -23,7 +23,16 @@ class PharmacyPosCheckoutRequest extends FormRequest
             'items.*.quantity' => ['required_with:items', 'integer', 'min:1', 'max:9999'],
             'items.*.unit_price' => ['required_with:items', 'numeric', 'min:0'],
             'payment_amount' => ['required', 'numeric', 'min:0'],
-            'payment_method' => ['required', Rule::in(['cash', 'card', 'upi', 'bank_transfer', 'cheque', 'insurance'])],
+            'payment_method' => ['required', Rule::in(['cash', 'card', 'bank_transfer', 'cheque', 'credit'])],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($this->input('payment_method') === 'credit' && (float) $this->input('payment_amount') > 0) {
+                $validator->errors()->add('payment_amount', 'Credit sales must not include an upfront payment amount.');
+            }
+        });
     }
 }

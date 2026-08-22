@@ -195,7 +195,7 @@ it('checkout fulfills prescription creates bill and stock out', function () {
         'patient_id' => $this->patient->id,
         'payment_amount' => 100,
         'payment_method' => 'cash',
-    ])->assertRedirect();
+    ])->assertRedirect(route('bills.print', \App\Models\Bill::where('prescription_id', $prescription->id)->first()));
 
     expect($prescription->fresh()->status)->toBe('dispensed')
         ->and(\App\Models\Bill::where('prescription_id', $prescription->id)->exists())->toBeTrue()
@@ -204,7 +204,7 @@ it('checkout fulfills prescription creates bill and stock out', function () {
 });
 
 it('checkout creates walk in pharmacy bill without prescription', function () {
-    $this->post(route('pharmacy.pos.checkout'), [
+    $response = $this->post(route('pharmacy.pos.checkout'), [
         'mode' => 'walk_in',
         'patient_id' => $this->patient->id,
         'items' => [
@@ -212,9 +212,10 @@ it('checkout creates walk in pharmacy bill without prescription', function () {
         ],
         'payment_amount' => 100,
         'payment_method' => 'cash',
-    ])->assertRedirect();
+    ]);
 
     $bill = \App\Models\Bill::where('bill_type', 'pharmacy')->first();
+    $response->assertRedirect(route('bills.print', $bill));
 
     expect($bill)->not->toBeNull()
         ->and($bill->prescription_id)->toBeNull()
@@ -278,4 +279,41 @@ it('includes walk in pharmacy bill items in medicine sales report stats', functi
     $response->assertOk();
     expect($response->viewData('stats')['pos_line_items'])->toBe(1)
         ->and($response->viewData('stats')['total_quantity'])->toBe(2);
+});
+
+it('checkout records credit sale without payment and redirects to print', function () {
+    $response = $this->post(route('pharmacy.pos.checkout'), [
+        'mode' => 'walk_in',
+        'patient_id' => $this->patient->id,
+        'items' => [
+            ['medicine_id' => $this->medicine->id, 'quantity' => 2, 'unit_price' => 50],
+        ],
+        'payment_amount' => 0,
+        'payment_method' => 'credit',
+    ]);
+
+    $bill = \App\Models\Bill::where('bill_type', 'pharmacy')->first();
+
+    $response->assertRedirect(route('bills.print', $bill));
+
+    expect($bill)->not->toBeNull()
+        ->and($bill->status)->toBe('pending')
+        ->and((float) $bill->paid_amount)->toBe(0.0)
+        ->and((float) $bill->due_amount)->toBe(100.0)
+        ->and($bill->payments()->count())->toBe(0);
+});
+
+it('rejects unsupported payment methods such as upi', function () {
+    $this->from(route('pharmacy.pos.index'))
+        ->post(route('pharmacy.pos.checkout'), [
+            'mode' => 'walk_in',
+            'patient_id' => $this->patient->id,
+            'items' => [
+                ['medicine_id' => $this->medicine->id, 'quantity' => 1, 'unit_price' => 50],
+            ],
+            'payment_amount' => 50,
+            'payment_method' => 'upi',
+        ])
+        ->assertRedirect(route('pharmacy.pos.index'))
+        ->assertSessionHasErrors('payment_method');
 });

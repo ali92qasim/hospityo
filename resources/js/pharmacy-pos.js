@@ -133,14 +133,35 @@ $(function () {
     const modalAmountEl = document.getElementById('modal-payment-amount');
     const modalChangeEl = document.getElementById('modal-change-amount');
     const modalConfirmBtn = document.getElementById('modal-confirm-pay-btn');
+    const modalCashFields = document.getElementById('modal-cash-fields');
+    const modalCreditNote = document.getElementById('modal-credit-note');
+
+    const isCreditPayment = () => modalMethodEl?.value === 'credit';
+
+    const syncPaymentModalFields = () => {
+        if (!modalMethodEl) return;
+
+        const credit = isCreditPayment();
+        modalCashFields?.classList.toggle('hidden', credit);
+        modalCreditNote?.classList.toggle('hidden', !credit);
+
+        if (credit) {
+            modalAmountEl.value = '0';
+            modalChangeEl.textContent = formatMoney(0);
+        } else if (!modalAmountEl.value || parseFloat(modalAmountEl.value) === 0) {
+            modalAmountEl.value = currentTotal.toFixed(2);
+            updateModalChange();
+        }
+    };
 
     const openModal = () => {
         if (!paymentModal) return;
         paymentModal.classList.remove('hidden');
         modalTotalEl.textContent = formatMoney(currentTotal);
+        modalMethodEl.value = 'cash';
         modalAmountEl.value = currentTotal.toFixed(2);
         modalChangeEl.textContent = formatMoney(0);
-        modalMethodEl.value = 'cash';
+        syncPaymentModalFields();
         modalAmountEl.focus();
     };
 
@@ -157,12 +178,18 @@ $(function () {
     });
 
     const updateModalChange = () => {
+        if (isCreditPayment()) {
+            modalChangeEl.textContent = formatMoney(0);
+            return;
+        }
+
         const tendered = parseFloat(modalAmountEl.value || '0');
         const change = Math.max(0, tendered - currentTotal);
         modalChangeEl.textContent = formatMoney(change);
     };
 
     modalAmountEl?.addEventListener('input', updateModalChange);
+    modalMethodEl?.addEventListener('change', syncPaymentModalFields);
 
     const setSelectedPrescriptionRow = (row) => {
         document.querySelectorAll('[data-prescription-row]').forEach((item) => {
@@ -563,8 +590,9 @@ $(function () {
     payBtn?.addEventListener('click', () => {
         if (currentTotal <= 0) return;
         pendingSubmit = () => {
-            const amount = parseFloat(modalAmountEl.value || '0');
-            submitCheckout(modalMethodEl.value, amount);
+            const method = modalMethodEl.value;
+            const amount = method === 'credit' ? 0 : parseFloat(modalAmountEl.value || '0');
+            submitCheckout(method, amount);
         };
         openModal();
     });
