@@ -15,6 +15,8 @@ class LabImagingSchemaSplit
         $db = DB::connection('tenant');
 
         if ($schema->hasTable('lab_tests') && ! $schema->hasTable('investigations')) {
+            $this->renameLabTables($schema);
+            $this->repointDependents($schema, $db);
             $this->ensureBillingColumns($schema, $db);
             $this->ensureDoctorShareColumns($schema, $db);
             $this->ensureTaxMappings($db);
@@ -219,8 +221,8 @@ class LabImagingSchemaSplit
         }
 
         if ($schema->hasTable('lab_order_items')) {
-            $this->renameColumn($schema, 'lab_order_items', 'investigation_order_id', 'lab_order_id');
-            $this->renameColumn($schema, 'lab_order_items', 'investigation_id', 'lab_test_id');
+            $this->renameColumn($schema, 'lab_order_items', 'investigation_order_id', 'lab_order_id', 'lab_orders');
+            $this->renameColumn($schema, 'lab_order_items', 'investigation_id', 'lab_test_id', 'lab_tests', 'restrict');
         }
     }
 
@@ -291,11 +293,11 @@ class LabImagingSchemaSplit
     private function repointDependents($schema, $db): void
     {
         if ($schema->hasTable('lab_samples') && $schema->hasColumn('lab_samples', 'investigation_order_id')) {
-            $this->renameColumn($schema, 'lab_samples', 'investigation_order_id', 'lab_order_id');
+            $this->renameColumn($schema, 'lab_samples', 'investigation_order_id', 'lab_order_id', 'lab_orders');
         }
 
         if ($schema->hasTable('lab_results') && $schema->hasColumn('lab_results', 'investigation_order_id')) {
-            $this->renameColumn($schema, 'lab_results', 'investigation_order_id', 'lab_order_id');
+            $this->renameColumn($schema, 'lab_results', 'investigation_order_id', 'lab_order_id', 'lab_orders');
         }
     }
 
@@ -366,6 +368,8 @@ class LabImagingSchemaSplit
             return;
         }
 
+        $this->ensureDoctorShareAppliesToEnum($db);
+
         if (! $schema->hasColumn('doctor_share_rules', 'lab_test_id')) {
             $schema->table('doctor_share_rules', function (Blueprint $table) {
                 $table->unsignedBigInteger('lab_test_id')->nullable();
@@ -414,6 +418,22 @@ class LabImagingSchemaSplit
             $db->table('doctor_share_rules')->insert($imagingCopy);
             $db->table('doctor_share_rules')->where('id', $rule->id)->delete();
         }
+    }
+
+    private function ensureDoctorShareAppliesToEnum($db): void
+    {
+        if ($db->getDriverName() !== 'mysql') {
+            return;
+        }
+
+        $column = $db->selectOne('SHOW COLUMNS FROM doctor_share_rules WHERE Field = ?', ['applies_to']);
+        $type = strtolower((string) ($column->Type ?? ''));
+
+        if (str_contains($type, "'lab'") && str_contains($type, "'imaging'")) {
+            return;
+        }
+
+        $db->statement("ALTER TABLE doctor_share_rules MODIFY COLUMN applies_to ENUM('opd', 'ipd', 'investigation', 'lab', 'imaging', 'emergency', 'all') NOT NULL DEFAULT 'all'");
     }
 
     private function ensureTaxMappings($db): void
@@ -492,20 +512,7 @@ class LabImagingSchemaSplit
 
         $db = DB::connection('tenant');
 
-        foreach ([$column, $table.'_'.$column.'_foreign'] as $index) {
-            try {
-                $schema->table($table, function (Blueprint $blueprint) use ($index, $column) {
-                    if ($index === $column) {
-                        $blueprint->dropForeign([$column]);
-                    } else {
-                        $blueprint->dropForeign($index);
-                    }
-                });
-                break;
-            } catch (\Throwable) {
-                continue;
-            }
-        }
+        $this->dropForeignKeyIfExists($schema, $table, $column);
 
         $this->withoutForeignKeyChecks($db, function () use ($schema, $table, $column) {
             if ($schema->hasColumn($table, $column)) {
@@ -515,15 +522,48 @@ class LabImagingSchemaSplit
             }
         });
     }
-    private function renameColumn($schema, string $table, string $from, string $to): void
+
+    private function dropForeignKeyIfExists($schema, string $table, string $column): void
+    {
+        foreach ([$column, $table.'_'.$column.'_foreign'] as $index) {
+            try {
+                $schema->table($table, function (Blueprint $blueprint) use ($index, $column) {
+                    if ($index === $column) {
+                        $blueprint->dropForeign([$column]);
+                    } else {
+                        $blueprint->dropForeign($index);
+                    }
+                });
+
+                return;
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+    }
+
+    private function renameColumn($schema, string $table, string $from, string $to, ?string $on = null, string $onDelete = 'cascade'): void
     {
         if (! $schema->hasColumn($table, $from) || $schema->hasColumn($table, $to)) {
             return;
         }
 
+        $this->dropForeignKeyIfExists($schema, $table, $from);
+
         $schema->table($table, function (Blueprint $blueprint) use ($from, $to) {
             $blueprint->renameColumn($from, $to);
         });
+
+        if ($on === null || ! $schema->hasTable($on)) {
+            return;
+        }
+
+        try {
+            $schema->table($table, function (Blueprint $blueprint) use ($to, $on, $onDelete) {
+                $blueprint->foreign($to)->references('id')->on($on)->onDelete($onDelete);
+            });
+        } catch (\Throwable) {
+        }
     }
 
     private function withoutForeignKeyChecks($db, callable $callback): void
