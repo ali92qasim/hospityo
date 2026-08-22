@@ -45,7 +45,6 @@ use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\MedicineCategoryController;
 use App\Http\Controllers\MedicineBrandController;
 use App\Http\Controllers\PharmacyPosController;
-use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\InvestigationController;
 use App\Http\Controllers\ImagingStudyController;
 use App\Http\Controllers\LabOrderController;
