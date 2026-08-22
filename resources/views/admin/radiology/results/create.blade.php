@@ -10,8 +10,8 @@
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Add {{ ucfirst($investigationOrder->investigation->category) }} Result</h3>
-                    <p class="text-sm text-gray-600">{{ $investigationOrder->investigation?->name ?? 'Unknown Test' }} - {{ $investigationOrder->patient?->name ?? 'Unknown Patient' }}</p>
+                    <h3 class="text-lg font-semibold text-gray-800">Add {{ $investigationOrder->primaryCategoryLabel() }} Result</h3>
+                    <p class="text-sm text-gray-600">{{ $investigationOrder->studyNamesLabel() }} - {{ $investigationOrder->patient?->name ?? 'Unknown Patient' }}</p>
                 </div>
                 <a href="{{ route('lab-results.index') }}" class="text-gray-600 hover:text-gray-800">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Investigation Results
@@ -26,11 +26,11 @@
                     <h4 class="font-medium text-blue-800 mb-2">Order Information</h4>
                     <div class="space-y-1 text-sm">
                         <div><span class="text-blue-600">Order #:</span> {{ $investigationOrder->order_number }}</div>
-                        <div><span class="text-blue-600">Test:</span> {{ $investigationOrder->investigation?->name ?? 'Unknown Test' }}</div>
-                        <div><span class="text-blue-600">Type:</span> 
+                        <div><span class="text-blue-600">Test:</span> {{ $investigationOrder->studyNamesLabel() }}</div>
+                        <div><span class="text-blue-600">Type:</span>
                             <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full font-medium
                                 {{ $investigationOrder->isRadiology() ? 'bg-purple-100 text-purple-800' : 'bg-red-100 text-red-800' }}">
-                                {{ ucfirst($investigationOrder->investigation->category) }}
+                                {{ $investigationOrder->primaryCategoryLabel() }}
                             </span>
                         </div>
                         <div><span class="text-blue-600">Priority:</span> {{ strtoupper($investigationOrder->priority) }}</div>
@@ -51,7 +51,7 @@
                 <div class="bg-purple-50 rounded-lg p-4">
                     <h4 class="font-medium text-purple-800 mb-2">Test Information</h4>
                     <div class="space-y-1 text-sm">
-                        <div><span class="text-purple-600">Category:</span> {{ $investigationOrder->investigation ? ucfirst($investigationOrder->investigation->category) : 'N/A' }}</div>
+                        <div><span class="text-purple-600">Category:</span> {{ $investigationOrder->primaryCategoryLabel() }}</div>
                         <div><span class="text-purple-600">Ordered:</span> {{ $investigationOrder->ordered_at ? $investigationOrder->ordered_at->format('M d, Y H:i') : 'N/A' }}</div>
                     </div>
                 </div>
@@ -59,22 +59,22 @@
 
             <form action="{{ route('radiology-results.store', $investigationOrder) }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                
+
                 <div class="space-y-6">
                     <!-- Report Text -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Report / Findings *</label>
-                        <textarea name="report_text" rows="8" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                        <textarea name="report_text" rows="8"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                                   placeholder="Enter detailed findings and observations..." required></textarea>
-                        <p class="text-xs text-gray-500 mt-1">Describe the findings from the {{ $investigationOrder->investigation->category }} examination</p>
+                        <p class="text-xs text-gray-500 mt-1">Describe the findings from the {{ strtolower($investigationOrder->primaryCategoryLabel()) }} examination</p>
                     </div>
 
                     <!-- Impression -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Impression / Conclusion *</label>
-                        <textarea name="impression" rows="4" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                        <textarea name="impression" rows="4"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                                   placeholder="Enter clinical impression and conclusion..." required></textarea>
                         <p class="text-xs text-gray-500 mt-1">Summarize the key findings and clinical significance</p>
                     </div>
@@ -82,7 +82,7 @@
                     <!-- File Upload -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Upload Report/Images (Optional)</label>
-                        <input type="file" name="report_file" accept=".pdf,.jpg,.jpeg,.png" 
+                        <input type="file" name="report_file" accept=".pdf,.jpg,.jpeg,.png"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                         <p class="text-xs text-gray-500 mt-1">Accepted formats: PDF, JPG, PNG (Max 10MB)</p>
                     </div>

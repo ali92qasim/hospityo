@@ -87,4 +87,49 @@ class ImagingOrder extends Model
     {
         return false;
     }
+
+    /**
+     * Legacy accessor for radiology result views that expect a single investigation.
+     */
+    public function getInvestigationAttribute(): ?ImagingStudy
+    {
+        if (! $this->relationLoaded('items')) {
+            $this->load('items.imagingStudy');
+        }
+
+        return $this->items->first()?->imagingStudy;
+    }
+
+    public function studyNamesLabel(): string
+    {
+        if (! $this->relationLoaded('items')) {
+            $this->load('items.imagingStudy');
+        }
+
+        $names = $this->items
+            ->map(fn (ImagingOrderItem $item) => $item->imagingStudy?->name)
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $names->isNotEmpty() ? $names->implode(', ') : 'Unknown Test';
+    }
+
+    public function primaryCategoryLabel(): string
+    {
+        $category = strtolower((string) ($this->investigation?->category ?? ''));
+
+        return $category !== '' ? ucfirst(str_replace('-', ' ', $category)) : 'Imaging';
+    }
+
+    public function isRadiology(): bool
+    {
+        $category = strtolower((string) ($this->investigation?->category ?? ''));
+
+        if ($category === '') {
+            return true;
+        }
+
+        return in_array($category, ['radiology', 'x-ray', 'xray', 'ct-scan', 'mri', 'ultrasound'], true);
+    }
 }
