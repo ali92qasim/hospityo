@@ -14,7 +14,7 @@ class InventoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = InventoryTransaction::with(['medicine', 'user']);
+        $query = InventoryTransaction::with(['medicine.baseUnit', 'user']);
 
         if ($request->type) {
             $query->where('type', '=', $request->type);
