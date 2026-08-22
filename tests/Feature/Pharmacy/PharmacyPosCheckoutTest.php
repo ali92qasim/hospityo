@@ -119,7 +119,18 @@ beforeEach(function () {
 });
 
 it('allows pharmacist to access pos screen', function () {
-    $this->get(route('pharmacy.pos.index'))->assertOk()->assertSee('Pharmacy POS');
+    $this->get(route('pharmacy.pos.index'))->assertOk()->assertSee('POS Counter');
+});
+
+it('includes zero stock medicines in pos medicine search', function () {
+    $this->batch->update(['remaining_quantity' => 0]);
+
+    $response = $this->getJson(route('pharmacy.pos.medicines.search', ['q' => 'POS Medicine']));
+
+    $response->assertOk();
+    expect($response->json('results'))->toHaveCount(1)
+        ->and($response->json('results.0.available_stock'))->toBe(0)
+        ->and($response->json('results.0.manage_stock'))->toBeTrue();
 });
 
 it('lists only in house pending prescriptions on pos screen', function () {

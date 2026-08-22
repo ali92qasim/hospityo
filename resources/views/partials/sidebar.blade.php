@@ -47,9 +47,13 @@
                             @endphp
                             <li>
                                 <a href="{{ route($child['route'], $child['route_params'] ?? []) }}"
+                                   @if($child['open_in_new_tab'] ?? false) target="_blank" rel="noopener noreferrer" @endif
                                    class="flex items-center px-4 py-2 pl-8 text-sm text-gray-700 rounded-lg hover:bg-medical-light hover:text-medical-blue transition-colors {{ $childActive ? 'bg-medical-light text-medical-blue' : '' }}">
                                     <i class="fas {{ $child['icon'] }} mr-3 text-xs w-5"></i>
-                                    <span>{{ $child['label'] }}</span>
+                                    <span class="flex-1">{{ $child['label'] }}</span>
+                                    @if($child['open_in_new_tab'] ?? false)
+                                        <i class="fas fa-external-link-alt text-[10px] text-gray-400 ml-1" aria-hidden="true"></i>
+                                    @endif
                                 </a>
                             </li>
                         @endforeach

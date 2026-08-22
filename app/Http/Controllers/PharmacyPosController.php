@@ -78,19 +78,14 @@ class PharmacyPosController extends Controller
             ->orderBy('name')
             ->limit(20)
             ->get()
-            ->filter(function (Medicine $medicine) {
-                if (! $medicine->manage_stock) {
-                    return $medicine->getSellingPrice() > 0;
-                }
-
-                return $medicine->getTotalAvailableStock() > 0 && $medicine->getSellingPrice() > 0;
-            })
+            ->filter(fn (Medicine $medicine) => $medicine->getSellingPrice() > 0)
             ->values()
             ->map(fn (Medicine $medicine) => [
                 'id' => $medicine->id,
                 'text' => trim($medicine->name . ($medicine->strength ? " ({$medicine->strength})" : '')),
                 'selling_price' => $medicine->getSellingPrice(),
                 'available_stock' => $medicine->getTotalAvailableStock(),
+                'manage_stock' => $medicine->manage_stock,
                 'unit' => $medicine->dispensingUnit?->abbreviation
                     ?? $medicine->baseUnit?->abbreviation
                     ?? 'unit',
