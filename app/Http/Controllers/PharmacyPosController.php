@@ -230,7 +230,7 @@ class PharmacyPosController extends Controller
         }
 
         return redirect()
-            ->route('bills.show', $bill)
+            ->route('bills.print', $bill)
             ->with('success', 'Pharmacy sale completed successfully.');
     }
 
