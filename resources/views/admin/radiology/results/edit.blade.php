@@ -10,8 +10,8 @@
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Edit {{ ucfirst($radiologyResult->investigationOrder->investigation->category) }} Result</h3>
-                    <p class="text-sm text-gray-600">{{ $radiologyResult->investigationOrder->investigation?->name ?? 'Unknown Test' }} - {{ $radiologyResult->investigationOrder->patient?->name ?? 'Unknown Patient' }}</p>
+                    <h3 class="text-lg font-semibold text-gray-800">Edit {{ $radiologyResult->investigationOrder->primaryCategoryLabel() }} Result</h3>
+                    <p class="text-sm text-gray-600">{{ $radiologyResult->investigationOrder->studyNamesLabel() }} - {{ $radiologyResult->investigationOrder->patient?->name ?? 'Unknown Patient' }}</p>
                 </div>
                 <a href="{{ route('radiology-results.show', $radiologyResult) }}" class="text-gray-600 hover:text-gray-800">
                     <i class="fas fa-arrow-left mr-2"></i>Back
@@ -28,16 +28,16 @@
                     <!-- Report Text -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Report / Findings *</label>
-                        <textarea name="report_text" rows="8" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                        <textarea name="report_text" rows="8"
+                                  class="rich-text-editor w-full"
                                   placeholder="Enter detailed findings and observations..." required>{{ old('report_text', $radiologyResult->report_text) }}</textarea>
                     </div>
 
                     <!-- Impression -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Impression / Conclusion *</label>
-                        <textarea name="impression" rows="4" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                        <textarea name="impression" rows="4"
+                                  class="rich-text-editor w-full"
                                   placeholder="Enter clinical impression and conclusion..." required>{{ old('impression', $radiologyResult->impression) }}</textarea>
                     </div>
 
@@ -58,8 +58,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             {{ $radiologyResult->file_path ? 'Replace Report/Images (Optional)' : 'Upload Report/Images (Optional)' }}
                         </label>
-                        <input type="file" name="report_file" accept=".pdf,.jpg,.jpeg,.png" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <input type="file" name="report_file" accept=".pdf,.jpg,.jpeg,.png" data-max-file-size="10MB">
                         <p class="text-xs text-gray-500 mt-1">Accepted formats: PDF, JPG, PNG (Max 10MB)</p>
                     </div>
 
@@ -87,4 +86,12 @@
         </div>
     </div>
 </div>
+
+@push('styles')
+@vite(['resources/css/radiology-results-form.css'])
+@endpush
+
+@push('scripts')
+@vite(['resources/js/radiology-results-form.js'])
+@endpush
 @endsection

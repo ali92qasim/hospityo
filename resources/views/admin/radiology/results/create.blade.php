@@ -65,7 +65,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Report / Findings *</label>
                         <textarea name="report_text" rows="8"
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                                  class="rich-text-editor w-full"
                                   placeholder="Enter detailed findings and observations..." required></textarea>
                         <p class="text-xs text-gray-500 mt-1">Describe the findings from the {{ strtolower($investigationOrder->primaryCategoryLabel()) }} examination</p>
                     </div>
@@ -74,7 +74,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Impression / Conclusion *</label>
                         <textarea name="impression" rows="4"
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                                  class="rich-text-editor w-full"
                                   placeholder="Enter clinical impression and conclusion..." required></textarea>
                         <p class="text-xs text-gray-500 mt-1">Summarize the key findings and clinical significance</p>
                     </div>
@@ -82,8 +82,7 @@
                     <!-- File Upload -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Upload Report/Images (Optional)</label>
-                        <input type="file" name="report_file" accept=".pdf,.jpg,.jpeg,.png"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                        <input type="file" name="report_file" accept=".pdf,.jpg,.jpeg,.png" data-max-file-size="10MB">
                         <p class="text-xs text-gray-500 mt-1">Accepted formats: PDF, JPG, PNG (Max 10MB)</p>
                     </div>
 
@@ -118,4 +117,12 @@
         </div>
     </div>
 </div>
+
+@push('styles')
+@vite(['resources/css/radiology-results-form.css'])
+@endpush
+
+@push('scripts')
+@vite(['resources/js/radiology-results-form.js'])
+@endpush
 @endsection

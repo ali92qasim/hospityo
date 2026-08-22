@@ -54,6 +54,8 @@ export default defineConfig({
                 'resources/js/lab-result-share.js',
                 'resources/js/lab-results-index.js',
                 'resources/js/lab-report-print.js',
+                'resources/css/radiology-results-form.css',
+                'resources/js/radiology-results-form.js',
             ],
             refresh: true,
         }),
