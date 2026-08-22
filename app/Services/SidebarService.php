@@ -109,7 +109,7 @@ class SidebarService
         if ($this->hasModule($tenant, 'pharmacy') && ($user->can('view services') || $user->can('view pharmacy') || $user->can('manage pharmacy') || $user->can('dispense pharmacy'))) {
             $items = [];
             if ($user->can('dispense pharmacy') || $user->can('manage pharmacy')) {
-                $items[] = $this->item('Pharmacy POS', 'fa-cash-register', 'pharmacy.pos.index', ['pharmacy.pos.*']);
+                $items[] = $this->item('POS', 'fa-cash-register', 'pharmacy.pos.index', ['pharmacy.pos.*'], [], null, true);
             }
             $items = array_merge($items, [
                 $this->item('Categories', 'fa-tags', 'medicine-categories.index', ['medicine-categories.*']),
@@ -371,14 +371,16 @@ class SidebarService
         array $patterns,
         array $routeParams = [],
         ?string $visitType = null,
+        bool $openInNewTab = false,
     ): array {
         return [
-            'label'        => $label,
-            'icon'         => $icon,
-            'route'        => $route,
-            'patterns'     => $patterns,
-            'route_params' => $routeParams,
-            'visit_type'   => $visitType,
+            'label'            => $label,
+            'icon'             => $icon,
+            'route'            => $route,
+            'patterns'         => $patterns,
+            'route_params'     => $routeParams,
+            'visit_type'       => $visitType,
+            'open_in_new_tab'  => $openInNewTab,
         ];
     }
 }
