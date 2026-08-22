@@ -102,7 +102,9 @@ it('loads radiology result create page for imaging orders', function () {
         ->assertOk()
         ->assertSee('Add X ray Result')
         ->assertSee('Chest X-Ray')
-        ->assertSee($this->patient->name);
+        ->assertSee($this->patient->name)
+        ->assertSee('rich-text-editor', false)
+        ->assertSee('radiology-results-form', false);
 });
 
 it('loads radiology result create page when imaging order has no study linked', function () {

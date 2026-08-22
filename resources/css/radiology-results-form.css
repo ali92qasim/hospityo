@@ -1,0 +1,9 @@
+/* Radiology result form — CKEditor + shared admin form styles */
+
+.ck-editor__editable {
+    min-height: 180px;
+}
+
+textarea.rich-text-editor + .ck-editor {
+    width: 100%;
+}
