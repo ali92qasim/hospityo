@@ -649,20 +649,26 @@ class VisitController extends Controller
                 $request->doctor_id ? (int) $request->doctor_id : null
             );
 
+            $fulfillmentType = $request->fulfillment_type;
+            $status = $fulfillmentType === 'external' ? 'external' : 'pending';
+
             $prescription = $visit->prescriptions()->create([
                 'patient_id' => $visit->patient_id,
                 'doctor_id' => $doctorId,
+                'fulfillment_type' => $fulfillmentType,
                 'prescribed_date' => now(),
                 'notes' => $request->notes,
-                'status' => 'pending'
+                'status' => $status,
             ]);
+
+            $totalAmount = 0;
 
             foreach ($request->medicines as $medicineData) {
                 $medicine = Medicine::find($medicineData['medicine_id']);
                 $quantity = (int) ($medicineData['quantity'] ?? 1);
-
                 $unitPrice = MedicinePricing::snapshotLinePrice($medicine);
                 $totalPrice = $unitPrice * $quantity;
+                $totalAmount += $totalPrice;
 
                 $prescription->items()->create([
                     'medicine_id' => $medicineData['medicine_id'],
@@ -676,6 +682,8 @@ class VisitController extends Controller
                     'total_price' => $totalPrice,
                 ]);
             }
+
+            $prescription->update(['total_amount' => $totalAmount]);
 
             return back()->with('success', 'Prescription created successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {

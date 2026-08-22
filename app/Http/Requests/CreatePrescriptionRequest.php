@@ -16,6 +16,7 @@ class CreatePrescriptionRequest extends FormRequest
     {
         return [
             'doctor_id' => ['nullable', 'exists:tenant.doctors,id'],
+            'fulfillment_type' => ['required', Rule::in(['in_house', 'external'])],
             'medicines' => 'required|array|min:1',
             'medicines.*.medicine_id' => [
                 'required',

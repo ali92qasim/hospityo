@@ -78,6 +78,7 @@ class RolePermissionSeeder extends Seeder
         // ── Pharmacy / Inventory ──────────────────────────────────────────────
         'view pharmacy',
         'manage pharmacy',
+        'dispense pharmacy',
         'view inventory',
         'manage inventory',
 
@@ -163,7 +164,7 @@ class RolePermissionSeeder extends Seeder
             'view services', 'create services', 'edit services',
             'view wards', 'create wards', 'edit wards',
             'view beds', 'create beds', 'edit beds',
-            'view pharmacy', 'manage pharmacy',
+            'view pharmacy', 'manage pharmacy', 'dispense pharmacy',
             'view inventory', 'manage inventory',
             'view investigations', 'create investigations', 'edit investigations',
             'view investigation orders', 'create investigation orders', 'edit investigation orders',
@@ -224,7 +225,7 @@ class RolePermissionSeeder extends Seeder
             'view visits',
             'view bills', 'create bills', 'create payments',
             'view services',
-            'view pharmacy', 'manage pharmacy',
+            'view pharmacy', 'manage pharmacy', 'dispense pharmacy',
             'view inventory', 'manage inventory',
         ],
     ];

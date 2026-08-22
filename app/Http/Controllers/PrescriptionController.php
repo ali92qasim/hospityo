@@ -3,17 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePrescriptionRequest;
-use App\Models\InventoryTransaction;
 use App\Models\Medicine;
 use App\Services\MedicinePricing;
 use App\Models\Prescription;
 use App\Models\Visit;
+use App\Services\PharmacyStockDispenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PrescriptionController extends Controller
 {
+    public function __construct(
+        private readonly PharmacyStockDispenseService $stockDispenseService,
+    ) {
+    }
     public function index(Request $request)
     {
         $query = Prescription::with(['patient', 'doctor', 'visit']);
@@ -106,67 +110,27 @@ class PrescriptionController extends Controller
 
         $prescription->load('items.medicine');
 
-        // Pre-flight: verify all items have sufficient stock before opening a transaction
-        foreach ($prescription->items as $item) {
-            if (!$item->medicine->manage_stock) {
-                continue; // unmanaged medicines are always "available"
-            }
+        $lines = $prescription->items
+            ->map(fn ($item) => [
+                'medicine' => $item->medicine,
+                'quantity' => (int) $item->quantity,
+                'reference' => $prescription->prescription_no,
+                'notes' => 'Dispensed via prescription ' . $prescription->prescription_no,
+            ])
+            ->all();
 
-            $available = $item->medicine->getTotalAvailableStock();
-
-            if ($available < $item->quantity) {
-                return back()->with(
-                    'error',
-                    "Insufficient stock for {$item->medicine->name}. " .
-                    "Available: {$available}, required: {$item->quantity}."
-                );
-            }
+        try {
+            $this->stockDispenseService->assertStockAvailable($lines);
+        } catch (\App\Exceptions\InsufficientPharmacyStockException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
         try {
-            DB::transaction(function () use ($prescription) {
-                foreach ($prescription->items as $item) {
-                    if (!$item->medicine->manage_stock) {
-                        continue;
-                    }
-
-                    $remaining = $item->quantity;
-                    $batches   = $item->medicine->getAvailableBatches();
-
-                    foreach ($batches as $batch) {
-                        if ($remaining <= 0) break;
-
-                        $consume = min($batch->remaining_quantity, $remaining);
-
-                        // Deduct from this batch's remaining stock
-                        $batch->decrement('remaining_quantity', $consume);
-
-                        // Record a stock_out transaction for full traceability
-                        InventoryTransaction::create([
-                            'medicine_id'  => $item->medicine_id,
-                            'type'         => 'stock_out',
-                            'quantity'     => $consume,
-                            'unit_cost'    => $batch->unit_cost,
-                            'total_cost'   => $consume * $batch->unit_cost,
-                            'batch_no'     => $batch->batch_no,
-                            'reference_no' => $prescription->prescription_no,
-                            'notes'        => 'Dispensed via prescription ' . $prescription->prescription_no,
-                            'created_by'   => auth()->id(),
-                        ]);
-
-                        $remaining -= $consume;
-                    }
-
-                    // Should never happen due to pre-flight check, but guard anyway
-                    if ($remaining > 0) {
-                        throw new \RuntimeException(
-                            "Stock exhausted mid-dispense for {$item->medicine->name}. Transaction rolled back."
-                        );
-                    }
-                }
+            DB::transaction(function () use ($prescription, $lines) {
+                $this->stockDispenseService->dispenseLines($lines, (int) auth()->id());
 
                 $prescription->update([
-                    'status'         => 'dispensed',
+                    'status' => 'dispensed',
                     'dispensed_date' => now(),
                 ]);
             });

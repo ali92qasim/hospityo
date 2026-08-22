@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -18,6 +19,7 @@ class Prescription extends Model
         'visit_id',
         'patient_id',
         'doctor_id',
+        'fulfillment_type',
         'status',
         'prescribed_date',
         'dispensed_date',
@@ -69,5 +71,12 @@ class Prescription extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PrescriptionItem::class);
+    }
+
+    public function scopeInHousePending(Builder $query): Builder
+    {
+        return $query
+            ->where('fulfillment_type', 'in_house')
+            ->where('status', 'pending');
     }
 }

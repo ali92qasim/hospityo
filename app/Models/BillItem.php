@@ -16,6 +16,7 @@ class BillItem extends Model
         'service_id',
         'lab_test_id',
         'imaging_study_id',
+        'medicine_id',
         'item_category',
         'description',
         'quantity',
@@ -49,9 +50,16 @@ class BillItem extends Model
         return $this->belongsTo(ImagingStudy::class);
     }
 
+    public function medicine(): BelongsTo
+    {
+        return $this->belongsTo(Medicine::class);
+    }
+
     public function catalogName(): ?string
     {
-        return $this->labTest?->name ?? $this->imagingStudy?->name;
+        return $this->medicine?->name
+            ?? $this->labTest?->name
+            ?? $this->imagingStudy?->name;
     }
 
     protected static function boot(): void
