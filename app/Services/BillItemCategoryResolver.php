@@ -21,6 +21,10 @@ class BillItemCategoryResolver
             return 'imaging';
         }
 
+        if (! empty($item['medicine_id'])) {
+            return 'pharmacy';
+        }
+
         if (! empty($item['service_id'])) {
             $service = Service::find($item['service_id']);
 

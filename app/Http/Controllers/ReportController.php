@@ -491,41 +491,76 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', today()->format('Y-m-d'));
         $medicineId = $request->input('medicine_id');
 
-        // Get prescriptions within date range
-        $query = Prescription::whereBetween('created_at', [$startDate, $endDate])
+        // Dispensed in-house prescriptions within date range
+        $query = Prescription::whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
+            ->where('status', 'dispensed')
+            ->where('fulfillment_type', 'in_house')
             ->with(['items.medicine.brand', 'items.medicine.category', 'visit.patient', 'visit.doctor']);
 
         $prescriptions = $query->get();
 
         // Get all prescription items
-        $items = $prescriptions->flatMap(function($prescription) {
+        $items = $prescriptions->flatMap(function ($prescription) {
             return $prescription->items;
         });
 
+        // Walk-in and other POS pharmacy bill lines
+        $posBillItems = \App\Models\BillItem::query()
+            ->whereNotNull('medicine_id')
+            ->whereHas('bill', function ($billQuery) use ($startDate, $endDate) {
+                $billQuery->where('bill_type', 'pharmacy')
+                    ->whereDate('bill_date', '>=', $startDate)
+                    ->whereDate('bill_date', '<=', $endDate);
+            })
+            ->with(['medicine.brand', 'medicine.category'])
+            ->get();
+
         if ($medicineId) {
-            $items = $items->where('medicine_id', $medicineId);
+            $items = $items->where('medicine_id', (int) $medicineId);
+            $posBillItems = $posBillItems->where('medicine_id', (int) $medicineId);
         }
 
         // Calculate statistics
         $stats = [
             'total_prescriptions' => $prescriptions->count(),
-            'total_items' => $items->count(),
-            'total_quantity' => $items->sum('quantity'),
-            'unique_medicines' => $items->pluck('medicine_id')->unique()->count(),
+            'total_items' => $items->count() + $posBillItems->count(),
+            'total_quantity' => $items->sum('quantity') + $posBillItems->sum('quantity'),
+            'unique_medicines' => $items->pluck('medicine_id')
+                ->merge($posBillItems->pluck('medicine_id'))
+                ->unique()
+                ->count(),
+            'pos_line_items' => $posBillItems->count(),
         ];
 
         // Medicine-wise breakdown
         $medicineBreakdown = $items->groupBy('medicine_id')
-            ->map(function($medicineItems) {
+            ->map(function ($medicineItems) {
                 $medicine = $medicineItems->first()->medicine;
+
                 return [
                     'medicine' => $medicine,
                     'quantity' => $medicineItems->sum('quantity'),
                     'prescriptions' => $medicineItems->count(),
                 ];
-            })
-            ->sortByDesc('quantity')
-            ->values();
+            });
+
+        foreach ($posBillItems->groupBy('medicine_id') as $groupedMedicineId => $billMedicineItems) {
+            $medicine = $billMedicineItems->first()->medicine;
+            $existing = $medicineBreakdown->get($groupedMedicineId);
+
+            if ($existing) {
+                $existing['quantity'] += $billMedicineItems->sum('quantity');
+                $medicineBreakdown->put($groupedMedicineId, $existing);
+            } else {
+                $medicineBreakdown->put($groupedMedicineId, [
+                    'medicine' => $medicine,
+                    'quantity' => $billMedicineItems->sum('quantity'),
+                    'prescriptions' => 0,
+                ]);
+            }
+        }
+
+        $medicineBreakdown = $medicineBreakdown->sortByDesc('quantity')->values();
 
         // Category-wise breakdown
         $categoryBreakdown = $items->filter(function($item) {

@@ -44,6 +44,7 @@ use App\Http\Controllers\BedController;
 use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\MedicineCategoryController;
 use App\Http\Controllers\MedicineBrandController;
+use App\Http\Controllers\PharmacyPosController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\InvestigationController;
 use App\Http\Controllers\ImagingStudyController;
@@ -441,7 +442,16 @@ Route::middleware('auth')->group(function () {
     Route::post('visits/{visit}/prescription', [VisitController::class, 'createPrescription'])->name('visits.prescription')->middleware('permission:edit visits');
     Route::post('visits/{visit}/order-multiple-lab-tests', [VisitController::class, 'orderMultipleLabTests'])->name('visits.order-multiple-lab-tests')->middleware('permission:edit visits');
     Route::post('visits/{visit}/order-multiple-imaging-studies', [VisitController::class, 'orderMultipleImagingStudies'])->name('visits.order-multiple-imaging-studies')->middleware('permission:edit visits');
-    Route::post('prescriptions/{prescription}/dispense', [PrescriptionController::class, 'dispense'])->name('prescriptions.dispense')->middleware('permission:edit visits');
+    Route::post('visits/{visit}/order-multiple-imaging-studies', [VisitController::class, 'orderMultipleImagingStudies'])->name('visits.order-multiple-imaging-studies')->middleware('permission:edit visits');
+
+    Route::prefix('pharmacy/pos')->name('pharmacy.pos.')
+        ->middleware('permission:dispense pharmacy|manage pharmacy')
+        ->group(function () {
+            Route::get('/', [PharmacyPosController::class, 'index'])->name('index');
+            Route::get('/prescriptions/{prescription}', [PharmacyPosController::class, 'loadPrescription'])->name('prescription');
+            Route::post('/checkout', [PharmacyPosController::class, 'checkout'])->name('checkout');
+            Route::get('/medicines/search', [PharmacyPosController::class, 'searchMedicines'])->name('medicines.search');
+        });
 
     // Prescription Instructions Routes
     Route::resource('prescription-instructions', PrescriptionInstructionController::class)->middleware('permission:view services|view pharmacy|manage pharmacy');

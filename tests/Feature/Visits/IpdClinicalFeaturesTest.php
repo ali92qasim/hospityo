@@ -260,6 +260,7 @@ it('requires prescription doctor_id to be an active care team member for ipd', f
 
     $this->post(route('visits.prescription', $this->visit), [
         'doctor_id' => $this->doctor->id,
+        'fulfillment_type' => 'in_house',
         'medicines' => [
             ['medicine_id' => $medicine->id, 'quantity' => 1],
         ],
@@ -269,6 +270,7 @@ it('requires prescription doctor_id to be an active care team member for ipd', f
 
     $this->post(route('visits.prescription', $this->visit), [
         'doctor_id' => $this->consultant->id,
+        'fulfillment_type' => 'in_house',
         'medicines' => [
             ['medicine_id' => $medicine->id, 'quantity' => 1],
         ],
@@ -276,6 +278,7 @@ it('requires prescription doctor_id to be an active care team member for ipd', f
 
     $this->post(route('visits.prescription', $this->visit), [
         'doctor_id' => $this->doctor->id,
+        'fulfillment_type' => 'in_house',
         'medicines' => [
             ['medicine_id' => $medicine->id, 'quantity' => 1],
         ],

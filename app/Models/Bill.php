@@ -15,6 +15,7 @@ class Bill extends Model
     protected $fillable = [
         'patient_id',
         'visit_id',
+        'prescription_id',
         'bill_number',
         'bill_date',
         'bill_type',
@@ -53,6 +54,11 @@ class Bill extends Model
     public function visit(): BelongsTo
     {
         return $this->belongsTo(Visit::class);
+    }
+
+    public function prescription(): BelongsTo
+    {
+        return $this->belongsTo(Prescription::class);
     }
 
     public function billItems(): HasMany
