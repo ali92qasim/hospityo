@@ -105,7 +105,29 @@ class RolePermissionSeeder extends Seeder
         'delete radiology results',
 
         // ── Accounting ────────────────────────────────────────────────────────
-        'view accounting',
+        'view accounting', // DEPRECATED: use granular accounting permissions below
+        'view chart of accounts',
+        'create chart of accounts',
+        'edit chart of accounts',
+        'delete chart of accounts',
+        'view journal entries',
+        'create journal entries',
+        'edit journal entries',
+        'delete journal entries',
+        'view deposits',
+        'create deposits',
+        'view transfers',
+        'create transfers',
+        'view general ledger',
+        'view patient ledgers',
+        'view vendor ledgers',
+        'view employee ledgers',
+        'view profit and loss',
+        'view balance sheet',
+        'view fiscal years',
+        'create fiscal years',
+        'edit fiscal years',
+        'close fiscal years',
 
         // ── Reports ───────────────────────────────────────────────────────────
         'view reports',
@@ -224,7 +246,15 @@ class RolePermissionSeeder extends Seeder
             'view lab results', 'create lab results', 'edit lab results',
             'view lab orders', 'create lab orders', 'edit lab orders',
             'view radiology results', 'create radiology results', 'edit radiology results',
-            'view accounting',
+            'view accounting', // DEPRECATED: backward compatibility
+            'view chart of accounts', 'create chart of accounts', 'edit chart of accounts',
+            'view journal entries', 'create journal entries', 'edit journal entries',
+            'view deposits', 'create deposits',
+            'view transfers', 'create transfers',
+            'view general ledger',
+            'view patient ledgers', 'view vendor ledgers', 'view employee ledgers',
+            'view profit and loss', 'view balance sheet',
+            'view fiscal years', 'create fiscal years', 'edit fiscal years',
             'view reports',
             'view hr', // DEPRECATED: backward compatibility
             'view employees', 'create employees', 'edit employees',

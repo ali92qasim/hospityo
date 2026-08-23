@@ -208,17 +208,32 @@ class SidebarService
         }
 
         // ── Accounting ────────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'billing') && $user->can('view accounting')) {
-            $items = [
-                $this->item('Chart of Accounts', 'fa-sitemap', 'accounting.chart-of-accounts', ['accounting.chart-of-accounts*', 'accounting.create-account*']),
-                $this->item('Journal Entries', 'fa-book', 'accounting.journal-entries', ['accounting.journal-entries']),
-                $this->item('General Ledger', 'fa-file-alt', 'accounting.general-ledger', ['accounting.general-ledger']),
-                $this->item('Patient Ledger', 'fa-user', 'accounting.patient-ledger', ['accounting.patient-ledger']),
-                $this->item('Vendor Ledger', 'fa-truck', 'accounting.vendor-ledger', ['accounting.vendor-ledger']),
-                $this->item('Profit & Loss', 'fa-chart-line', 'accounting.profit-loss', ['accounting.profit-loss']),
-                $this->item('Balance Sheet', 'fa-balance-scale', 'accounting.balance-sheet', ['accounting.balance-sheet']),
-            ];
-            $menu[] = $this->group('accounting', 'Accounting', $items, ['accounting.*']);
+        if ($this->hasModule($tenant, 'accounting')) {
+            $items = [];
+            if ($user->can('view chart of accounts') || $user->can('view accounting')) {
+                $items[] = $this->item('Chart of Accounts', 'fa-sitemap', 'accounting.chart-of-accounts', ['accounting.chart-of-accounts*', 'accounting.create-account*']);
+            }
+            if ($user->can('view journal entries') || $user->can('view accounting')) {
+                $items[] = $this->item('Journal Entries', 'fa-book', 'accounting.journal-entries', ['accounting.journal-entries']);
+            }
+            if ($user->can('view general ledger') || $user->can('view accounting')) {
+                $items[] = $this->item('General Ledger', 'fa-file-alt', 'accounting.general-ledger', ['accounting.general-ledger']);
+            }
+            if ($user->can('view patient ledgers') || $user->can('view accounting')) {
+                $items[] = $this->item('Patient Ledger', 'fa-user', 'accounting.patient-ledger', ['accounting.patient-ledger']);
+            }
+            if ($user->can('view vendor ledgers') || $user->can('view accounting')) {
+                $items[] = $this->item('Vendor Ledger', 'fa-truck', 'accounting.vendor-ledger', ['accounting.vendor-ledger']);
+            }
+            if ($user->can('view profit and loss') || $user->can('view accounting')) {
+                $items[] = $this->item('Profit & Loss', 'fa-chart-line', 'accounting.profit-loss', ['accounting.profit-loss']);
+            }
+            if ($user->can('view balance sheet') || $user->can('view accounting')) {
+                $items[] = $this->item('Balance Sheet', 'fa-balance-scale', 'accounting.balance-sheet', ['accounting.balance-sheet']);
+            }
+            if (! empty($items)) {
+                $menu[] = $this->group('accounting', 'Accounting', $items, ['accounting.*']);
+            }
         }
 
         // ── Reports ───────────────────────────────────────────────────────────
