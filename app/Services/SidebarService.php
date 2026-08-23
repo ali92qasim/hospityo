@@ -197,14 +197,23 @@ class SidebarService
         }
 
         // ── Doctor Share ──────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'doctor-share') && $user->can('manage doctor shares')) {
-            $items = [
-                $this->item('Share Rules', 'fa-list-alt', 'doctor-share.rules.index', ['doctor-share.rules.*']),
-                $this->item('Share Items', 'fa-hand-holding-usd', 'doctor-share.items.index', ['doctor-share.items.*']),
-                $this->item('Settlements', 'fa-check-circle', 'doctor-share.settlements.index', ['doctor-share.settlements.*']),
-                $this->item('Share Reports', 'fa-chart-bar', 'doctor-share.reports.index', ['doctor-share.reports.*']),
-            ];
-            $menu[] = $this->group('doctor-share', 'Doctor Share', $items, ['doctor-share.*']);
+        if ($this->hasModule($tenant, 'doctor-share')) {
+            $items = [];
+            if ($user->can('view share rules') || $user->can('manage doctor shares')) {
+                $items[] = $this->item('Share Rules', 'fa-list-alt', 'doctor-share.rules.index', ['doctor-share.rules.*']);
+            }
+            if ($user->can('view share items') || $user->can('manage doctor shares')) {
+                $items[] = $this->item('Share Items', 'fa-hand-holding-usd', 'doctor-share.items.index', ['doctor-share.items.*']);
+            }
+            if ($user->can('view settlements') || $user->can('manage doctor shares')) {
+                $items[] = $this->item('Settlements', 'fa-check-circle', 'doctor-share.settlements.index', ['doctor-share.settlements.*']);
+            }
+            if ($user->can('view share reports') || $user->can('manage doctor shares')) {
+                $items[] = $this->item('Share Reports', 'fa-chart-bar', 'doctor-share.reports.index', ['doctor-share.reports.*']);
+            }
+            if (! empty($items)) {
+                $menu[] = $this->group('doctor-share', 'Doctor Share', $items, ['doctor-share.*']);
+            }
         }
 
         // ── Accounting ────────────────────────────────────────────────────────

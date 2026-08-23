@@ -189,7 +189,20 @@ class RolePermissionSeeder extends Seeder
         'verify hr documents',
 
         // ── Doctor Share ──────────────────────────────────────────────────────
-        'manage doctor shares',
+        'manage doctor shares', // DEPRECATED: use granular doctor share permissions below
+        'view share rules',
+        'create share rules',
+        'edit share rules',
+        'delete share rules',
+        'view share items',
+        'create share items',
+        'edit share items',
+        'delete share items',
+        'view settlements',
+        'create settlements',
+        'edit settlements',
+        'approve settlements',
+        'view share reports',
 
         // ── Operation Theatre ─────────────────────────────────────────────────
         'view surgeries',
@@ -274,7 +287,11 @@ class RolePermissionSeeder extends Seeder
             'view department staff', 'edit department staff',
             'view hr documents', 'create hr documents', 'edit hr documents',
             'view surgeries', 'create surgeries', 'edit surgeries', 'delete surgeries',
-            'manage doctor shares',
+            'manage doctor shares', // DEPRECATED: backward compatibility
+            'view share rules', 'create share rules', 'edit share rules', 'delete share rules',
+            'view share items', 'create share items', 'edit share items', 'delete share items',
+            'view settlements', 'create settlements', 'edit settlements', 'approve settlements',
+            'view share reports',
             'manage user roles',
             'manage settings',
             'manage backup',
