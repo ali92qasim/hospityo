@@ -76,11 +76,43 @@ class RolePermissionSeeder extends Seeder
         'delete beds',
 
         // ── Pharmacy / Inventory ──────────────────────────────────────────────
-        'view pharmacy',
-        'manage pharmacy',
+        'view pharmacy', // DEPRECATED: use granular pharmacy permissions below
+        'manage pharmacy', // kept for bulk import operations
         'dispense pharmacy',
-        'view inventory',
-        'manage inventory',
+        'view inventory', // DEPRECATED: use granular inventory permissions below
+        'manage inventory', // DEPRECATED: backward compatibility
+        'view medicines',
+        'create medicines',
+        'edit medicines',
+        'delete medicines',
+        'view medicine categories',
+        'create medicine categories',
+        'edit medicine categories',
+        'delete medicine categories',
+        'view brands',
+        'create brands',
+        'edit brands',
+        'delete brands',
+        'view units',
+        'create units',
+        'edit units',
+        'delete units',
+        'create inventory',
+        'edit inventory',
+        'delete inventory',
+        'view purchases',
+        'create purchases',
+        'edit purchases',
+        'delete purchases',
+        'view suppliers',
+        'create suppliers',
+        'edit suppliers',
+        'delete suppliers',
+        'view prescriptions',
+        'create prescriptions',
+        'edit prescriptions',
+        'delete prescriptions',
+        'view pos',
 
         // ── Laboratory / Diagnostics ──────────────────────────────────────────
         'view investigations',
@@ -252,8 +284,17 @@ class RolePermissionSeeder extends Seeder
             'view services', 'create services', 'edit services',
             'view wards', 'create wards', 'edit wards',
             'view beds', 'create beds', 'edit beds',
-            'view pharmacy', 'manage pharmacy', 'dispense pharmacy',
-            'view inventory', 'manage inventory',
+            'view pharmacy', 'manage pharmacy', 'dispense pharmacy', // DEPRECATED: backward compatibility
+            'view inventory', 'manage inventory', // DEPRECATED: backward compatibility
+            'view medicines', 'create medicines', 'edit medicines', 'delete medicines',
+            'view medicine categories', 'create medicine categories', 'edit medicine categories', 'delete medicine categories',
+            'view brands', 'create brands', 'edit brands', 'delete brands',
+            'view units', 'create units', 'edit units', 'delete units',
+            'create inventory', 'edit inventory', 'delete inventory',
+            'view purchases', 'create purchases', 'edit purchases', 'delete purchases',
+            'view suppliers', 'create suppliers', 'edit suppliers', 'delete suppliers',
+            'view prescriptions', 'create prescriptions', 'edit prescriptions', 'delete prescriptions',
+            'view pos',
             'view investigations', 'create investigations', 'edit investigations',
             'view investigation orders', 'create investigation orders', 'edit investigation orders',
             'view lab results', 'create lab results', 'edit lab results',
@@ -341,8 +382,17 @@ class RolePermissionSeeder extends Seeder
             'view visits',
             'view bills', 'create bills', 'create payments',
             'view services',
-            'view pharmacy', 'manage pharmacy', 'dispense pharmacy',
-            'view inventory', 'manage inventory',
+            'view pharmacy', 'manage pharmacy', // DEPRECATED: backward compatibility
+            'manage inventory', // DEPRECATED: backward compatibility
+            'view medicines', 'create medicines', 'edit medicines', 'delete medicines',
+            'view medicine categories', 'create medicine categories', 'edit medicine categories', 'delete medicine categories',
+            'view brands', 'create brands', 'edit brands', 'delete brands',
+            'view units', 'create units', 'edit units', 'delete units',
+            'view inventory', 'create inventory', 'edit inventory', 'delete inventory',
+            'view purchases', 'create purchases', 'edit purchases', 'delete purchases',
+            'view suppliers', 'create suppliers', 'edit suppliers', 'delete suppliers',
+            'view prescriptions', 'create prescriptions', 'edit prescriptions', 'delete prescriptions',
+            'view pos', 'dispense pharmacy',
         ],
     ];
 

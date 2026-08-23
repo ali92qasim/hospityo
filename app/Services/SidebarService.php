@@ -106,27 +106,43 @@ class SidebarService
         }
 
         // ── Pharmacy ──────────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'pharmacy') && ($user->can('view services') || $user->can('view pharmacy') || $user->can('manage pharmacy') || $user->can('dispense pharmacy'))) {
+        if ($this->hasModule($tenant, 'pharmacy')) {
             $items = [];
-            if ($user->can('dispense pharmacy') || $user->can('manage pharmacy')) {
+            if ($user->can('view pos') || $user->can('dispense pharmacy') || $user->can('manage pharmacy')) {
                 $items[] = $this->item('POS', 'fa-cash-register', 'pharmacy.pos.index', ['pharmacy.pos.*'], [], null, true);
             }
-            $items = array_merge($items, [
-                $this->item('Categories', 'fa-tags', 'medicine-categories.index', ['medicine-categories.*']),
-                $this->item('Brands', 'fa-copyright', 'medicine-brands.index', ['medicine-brands.*']),
-                $this->item('Medicines', 'fa-pills', 'medicines.index', ['medicines.*']),
-                $this->item('Instructions', 'fa-file-prescription', 'prescription-instructions.index', ['prescription-instructions.*']),
-                $this->item('Units', 'fa-balance-scale', 'units.index', ['units.*']),
-                $this->item('Inventory', 'fa-boxes', 'inventory.index', ['inventory.*']),
-                $this->item('Opening Stock', 'fa-warehouse', 'inventory.opening-stock', ['inventory.opening-stock*']),
-                $this->item('Suppliers', 'fa-truck', 'suppliers.index', ['suppliers.*']),
-                $this->item('Purchase Orders', 'fa-shopping-cart', 'purchases.index', ['purchases.*']),
-            ]);
-            $menu[] = $this->group('pharmacy', 'Pharmacy', $items, [
-                'pharmacy.pos.*', 'medicine-categories.*', 'medicine-brands.*', 'medicines.*',
-                'prescription-instructions.*', 'units.*', 'inventory.*', 'inventory.opening-stock*',
-                'suppliers.*', 'purchases.*',
-            ]);
+            if ($user->can('view medicine categories') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+                $items[] = $this->item('Categories', 'fa-tags', 'medicine-categories.index', ['medicine-categories.*']);
+            }
+            if ($user->can('view brands') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+                $items[] = $this->item('Brands', 'fa-copyright', 'medicine-brands.index', ['medicine-brands.*']);
+            }
+            if ($user->can('view medicines') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+                $items[] = $this->item('Medicines', 'fa-pills', 'medicines.index', ['medicines.*']);
+            }
+            if ($user->can('view prescriptions') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+                $items[] = $this->item('Instructions', 'fa-file-prescription', 'prescription-instructions.index', ['prescription-instructions.*']);
+            }
+            if ($user->can('view units') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+                $items[] = $this->item('Units', 'fa-balance-scale', 'units.index', ['units.*']);
+            }
+            if ($user->can('view inventory') || $user->can('manage inventory') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+                $items[] = $this->item('Inventory', 'fa-boxes', 'inventory.index', ['inventory.*']);
+                $items[] = $this->item('Opening Stock', 'fa-warehouse', 'inventory.opening-stock', ['inventory.opening-stock*']);
+            }
+            if ($user->can('view suppliers') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+                $items[] = $this->item('Suppliers', 'fa-truck', 'suppliers.index', ['suppliers.*']);
+            }
+            if ($user->can('view purchases') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+                $items[] = $this->item('Purchase Orders', 'fa-shopping-cart', 'purchases.index', ['purchases.*']);
+            }
+            if ($items !== []) {
+                $menu[] = $this->group('pharmacy', 'Pharmacy', $items, [
+                    'pharmacy.pos.*', 'medicine-categories.*', 'medicine-brands.*', 'medicines.*',
+                    'prescription-instructions.*', 'units.*', 'inventory.*', 'inventory.opening-stock*',
+                    'suppliers.*', 'purchases.*',
+                ]);
+            }
         }
 
         // ── Laboratory ────────────────────────────────────────────────────────

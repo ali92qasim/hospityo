@@ -114,14 +114,62 @@ class PermissionRegistry
         'pharmacy' => [
             'label' => 'Pharmacy & Inventory',
             'groups' => [
-                'pharmacy' => [
-                    'view pharmacy',
-                    'manage pharmacy',
-                    'dispense pharmacy',
+                'general' => [
+                    'view pharmacy', // DEPRECATED: use granular pharmacy permissions
+                    'manage pharmacy', // bulk import operations
+                ],
+                'medicines' => [
+                    'view medicines',
+                    'create medicines',
+                    'edit medicines',
+                    'delete medicines',
+                ],
+                'medicine categories' => [
+                    'view medicine categories',
+                    'create medicine categories',
+                    'edit medicine categories',
+                    'delete medicine categories',
+                ],
+                'brands' => [
+                    'view brands',
+                    'create brands',
+                    'edit brands',
+                    'delete brands',
+                ],
+                'units' => [
+                    'view units',
+                    'create units',
+                    'edit units',
+                    'delete units',
                 ],
                 'inventory' => [
-                    'view inventory',
-                    'manage inventory',
+                    'view inventory', // DEPRECATED: backward compatibility
+                    'manage inventory', // DEPRECATED: backward compatibility
+                    'create inventory',
+                    'edit inventory',
+                    'delete inventory',
+                ],
+                'purchases' => [
+                    'view purchases',
+                    'create purchases',
+                    'edit purchases',
+                    'delete purchases',
+                ],
+                'suppliers' => [
+                    'view suppliers',
+                    'create suppliers',
+                    'edit suppliers',
+                    'delete suppliers',
+                ],
+                'prescriptions' => [
+                    'view prescriptions',
+                    'create prescriptions',
+                    'edit prescriptions',
+                    'delete prescriptions',
+                ],
+                'POS' => [
+                    'view pos',
+                    'dispense pharmacy',
                 ],
             ],
         ],
