@@ -315,92 +315,149 @@ Route::middleware('auth')->group(function () {
     });
 
     // HR Module
-    Route::prefix('hr')->name('hr.')->middleware('permission:view hr')->group(function () {
-        Route::resource('employees', EmployeeController::class);
-        Route::post('employees/{employee}/documents', [EmployeeController::class, 'uploadDocument'])->name('employees.upload-document');
-        Route::delete('employees/documents/{document}', [EmployeeController::class, 'deleteDocument'])->name('employees.delete-document');
-        Route::resource('designations', DesignationController::class);
+    Route::prefix('hr')->name('hr.')->group(function () {
+        Route::resource('employees', EmployeeController::class)
+            ->middleware('permission:view employees|create employees|edit employees|delete employees|view hr');
+        Route::post('employees/{employee}/documents', [EmployeeController::class, 'uploadDocument'])
+            ->name('employees.upload-document')
+            ->middleware('permission:create employee documents|view hr');
+        Route::delete('employees/documents/{document}', [EmployeeController::class, 'deleteDocument'])
+            ->name('employees.delete-document')
+            ->middleware('permission:delete employee documents|view hr');
+
+        Route::resource('designations', DesignationController::class)
+            ->middleware('permission:view designations|create designations|edit designations|delete designations|view hr');
 
         // Attendance
-        Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-        Route::get('attendance/mark', [AttendanceController::class, 'markDaily'])->name('attendance.mark');
-        Route::post('attendance/mark', [AttendanceController::class, 'storeDaily'])->name('attendance.store-daily');
-        Route::get('attendance/monthly', [AttendanceController::class, 'monthly'])->name('attendance.monthly');
+        Route::middleware('permission:view attendance|create attendance|edit attendance|view hr')->group(function () {
+            Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+            Route::get('attendance/mark', [AttendanceController::class, 'markDaily'])->name('attendance.mark');
+            Route::post('attendance/mark', [AttendanceController::class, 'storeDaily'])->name('attendance.store-daily');
+            Route::get('attendance/monthly', [AttendanceController::class, 'monthly'])->name('attendance.monthly');
+        });
 
         // Leave Requests
-        Route::get('leave', [LeaveController::class, 'index'])->name('leave.index');
-        Route::get('leave/create', [LeaveController::class, 'create'])->name('leave.create');
-        Route::post('leave', [LeaveController::class, 'store'])->name('leave.store');
-        Route::post('leave/{leaveRequest}/approve', [LeaveController::class, 'approve'])->name('leave.approve');
-        Route::post('leave/{leaveRequest}/reject', [LeaveController::class, 'reject'])->name('leave.reject');
-        Route::post('leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->name('leave.cancel');
-        Route::get('leave/balances', [LeaveController::class, 'balances'])->name('leave.balances');
+        Route::middleware('permission:view leave requests|create leave requests|edit leave requests|delete leave requests|view hr')->group(function () {
+            Route::get('leave', [LeaveController::class, 'index'])->name('leave.index');
+            Route::get('leave/create', [LeaveController::class, 'create'])->name('leave.create');
+            Route::post('leave', [LeaveController::class, 'store'])->name('leave.store');
+        });
+        Route::post('leave/{leaveRequest}/approve', [LeaveController::class, 'approve'])
+            ->name('leave.approve')
+            ->middleware('permission:approve leave requests|view hr');
+        Route::post('leave/{leaveRequest}/reject', [LeaveController::class, 'reject'])
+            ->name('leave.reject')
+            ->middleware('permission:approve leave requests|view hr');
+        Route::post('leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])
+            ->name('leave.cancel')
+            ->middleware('permission:edit leave requests|delete leave requests|view hr');
+        Route::get('leave/balances', [LeaveController::class, 'balances'])
+            ->name('leave.balances')
+            ->middleware('permission:view leave balances|view hr');
 
         // Leave Types
-        Route::get('leave-types', [LeaveController::class, 'types'])->name('leave-types.index');
-        Route::get('leave-types/create', [LeaveController::class, 'createType'])->name('leave-types.create');
-        Route::post('leave-types', [LeaveController::class, 'storeType'])->name('leave-types.store');
-        Route::get('leave-types/{leaveType}/edit', [LeaveController::class, 'editType'])->name('leave-types.edit');
-        Route::put('leave-types/{leaveType}', [LeaveController::class, 'updateType'])->name('leave-types.update');
-        Route::delete('leave-types/{leaveType}', [LeaveController::class, 'destroyType'])->name('leave-types.destroy');
+        Route::middleware('permission:view leave types|create leave types|edit leave types|delete leave types|view hr')->group(function () {
+            Route::get('leave-types', [LeaveController::class, 'types'])->name('leave-types.index');
+            Route::get('leave-types/create', [LeaveController::class, 'createType'])->name('leave-types.create');
+            Route::post('leave-types', [LeaveController::class, 'storeType'])->name('leave-types.store');
+            Route::get('leave-types/{leaveType}/edit', [LeaveController::class, 'editType'])->name('leave-types.edit');
+            Route::put('leave-types/{leaveType}', [LeaveController::class, 'updateType'])->name('leave-types.update');
+            Route::delete('leave-types/{leaveType}', [LeaveController::class, 'destroyType'])->name('leave-types.destroy');
+        });
 
-        // Payroll
-        Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
-        Route::post('payroll/generate', [PayrollController::class, 'generate'])->name('payroll.generate');
-        Route::get('payroll/{payrollRun}', [PayrollController::class, 'show'])->name('payroll.show');
-        Route::post('payroll/{payrollRun}/approve', [PayrollController::class, 'approve'])->name('payroll.approve');
-        Route::post('payroll/{payrollRun}/cancel', [PayrollController::class, 'cancel'])->name('payroll.cancel');
+        // Payroll Runs
+        Route::middleware('permission:view payroll runs|create payroll runs|edit payroll runs|delete payroll runs|view hr')->group(function () {
+            Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
+            Route::post('payroll/generate', [PayrollController::class, 'generate'])->name('payroll.generate');
+            Route::get('payroll/{payrollRun}', [PayrollController::class, 'show'])->name('payroll.show');
+            Route::post('payroll/{payrollRun}/cancel', [PayrollController::class, 'cancel'])->name('payroll.cancel');
+        });
+        Route::post('payroll/{payrollRun}/approve', [PayrollController::class, 'approve'])
+            ->name('payroll.approve')
+            ->middleware('permission:approve payroll runs|view hr');
 
         // Payslips
-        Route::get('payslip/{payslip}', [PayrollController::class, 'payslip'])->name('payroll.payslip');
-        Route::get('payslip/{payslip}/print', [PayrollController::class, 'printPayslip'])->name('payroll.print-payslip');
-        Route::post('payslip/{payslip}/mark-paid', [PayrollController::class, 'markPaid'])->name('payroll.mark-paid');
+        Route::middleware('permission:view payslips|edit payslips|view hr')->group(function () {
+            Route::get('payslip/{payslip}', [PayrollController::class, 'payslip'])->name('payroll.payslip');
+            Route::get('payslip/{payslip}/print', [PayrollController::class, 'printPayslip'])->name('payroll.print-payslip');
+            Route::post('payslip/{payslip}/mark-paid', [PayrollController::class, 'markPaid'])
+                ->name('payroll.mark-paid')
+                ->middleware('permission:edit payslips|view hr');
+        });
 
         // Salary Components
-        Route::get('payroll-components', [PayrollController::class, 'components'])->name('payroll.components');
-        Route::get('payroll-components/create', [PayrollController::class, 'createComponent'])->name('payroll.create-component');
-        Route::post('payroll-components', [PayrollController::class, 'storeComponent'])->name('payroll.store-component');
-        Route::get('payroll-components/{salaryComponent}/edit', [PayrollController::class, 'editComponent'])->name('payroll.edit-component');
-        Route::put('payroll-components/{salaryComponent}', [PayrollController::class, 'updateComponent'])->name('payroll.update-component');
-        Route::delete('payroll-components/{salaryComponent}', [PayrollController::class, 'destroyComponent'])->name('payroll.destroy-component');
+        Route::middleware('permission:view salary components|create salary components|edit salary components|delete salary components|view hr')->group(function () {
+            Route::get('payroll-components', [PayrollController::class, 'components'])->name('payroll.components');
+            Route::get('payroll-components/create', [PayrollController::class, 'createComponent'])->name('payroll.create-component');
+            Route::post('payroll-components', [PayrollController::class, 'storeComponent'])->name('payroll.store-component');
+            Route::get('payroll-components/{salaryComponent}/edit', [PayrollController::class, 'editComponent'])->name('payroll.edit-component');
+            Route::put('payroll-components/{salaryComponent}', [PayrollController::class, 'updateComponent'])->name('payroll.update-component');
+            Route::delete('payroll-components/{salaryComponent}', [PayrollController::class, 'destroyComponent'])->name('payroll.destroy-component');
+        });
 
         // Employee Salary Structure
-        Route::get('employees/{employee}/salary', [PayrollController::class, 'employeeSalary'])->name('payroll.employee-salary');
-        Route::post('employees/{employee}/salary', [PayrollController::class, 'updateEmployeeSalary'])->name('payroll.update-employee-salary');
+        Route::get('employees/{employee}/salary', [PayrollController::class, 'employeeSalary'])
+            ->name('payroll.employee-salary')
+            ->middleware('permission:view employee salary|edit employee salary|view hr');
+        Route::post('employees/{employee}/salary', [PayrollController::class, 'updateEmployeeSalary'])
+            ->name('payroll.update-employee-salary')
+            ->middleware('permission:edit employee salary|view hr');
 
         // Shifts
-        Route::get('shifts', [ShiftController::class, 'shifts'])->name('shifts.index');
-        Route::get('shifts/create', [ShiftController::class, 'createShift'])->name('shifts.create');
-        Route::post('shifts', [ShiftController::class, 'storeShift'])->name('shifts.store');
-        Route::get('shifts/{shift}/edit', [ShiftController::class, 'editShift'])->name('shifts.edit');
-        Route::put('shifts/{shift}', [ShiftController::class, 'updateShift'])->name('shifts.update');
-        Route::delete('shifts/{shift}', [ShiftController::class, 'destroyShift'])->name('shifts.destroy');
+        Route::middleware('permission:view shifts|create shifts|edit shifts|delete shifts|view hr')->group(function () {
+            Route::get('shifts', [ShiftController::class, 'shifts'])->name('shifts.index');
+            Route::get('shifts/create', [ShiftController::class, 'createShift'])->name('shifts.create');
+            Route::post('shifts', [ShiftController::class, 'storeShift'])->name('shifts.store');
+            Route::get('shifts/{shift}/edit', [ShiftController::class, 'editShift'])->name('shifts.edit');
+            Route::put('shifts/{shift}', [ShiftController::class, 'updateShift'])->name('shifts.update');
+            Route::delete('shifts/{shift}', [ShiftController::class, 'destroyShift'])->name('shifts.destroy');
+        });
 
         // Duty Roster
-        Route::get('duty-roster', [ShiftController::class, 'roster'])->name('shifts.roster');
-        Route::post('duty-roster', [ShiftController::class, 'storeRoster'])->name('shifts.store-roster');
-        Route::post('duty-roster/auto-generate', [ShiftController::class, 'autoGenerate'])->name('shifts.auto-generate');
+        Route::middleware('permission:view duty roster|create duty roster|edit duty roster|view hr')->group(function () {
+            Route::get('duty-roster', [ShiftController::class, 'roster'])->name('shifts.roster');
+            Route::post('duty-roster', [ShiftController::class, 'storeRoster'])->name('shifts.store-roster');
+            Route::post('duty-roster/auto-generate', [ShiftController::class, 'autoGenerate'])->name('shifts.auto-generate');
+        });
 
         // Shift Swap Requests
-        Route::get('shift-swaps', [ShiftController::class, 'swapRequests'])->name('shifts.swap-requests');
-        Route::post('shift-swaps/{shiftSwapRequest}/approve', [ShiftController::class, 'approveSwap'])->name('shifts.approve-swap');
-        Route::post('shift-swaps/{shiftSwapRequest}/reject', [ShiftController::class, 'rejectSwap'])->name('shifts.reject-swap');
+        Route::get('shift-swaps', [ShiftController::class, 'swapRequests'])
+            ->name('shifts.swap-requests')
+            ->middleware('permission:view shift swaps|view hr');
+        Route::post('shift-swaps/{shiftSwapRequest}/approve', [ShiftController::class, 'approveSwap'])
+            ->name('shifts.approve-swap')
+            ->middleware('permission:approve shift swaps|view hr');
+        Route::post('shift-swaps/{shiftSwapRequest}/reject', [ShiftController::class, 'rejectSwap'])
+            ->name('shifts.reject-swap')
+            ->middleware('permission:approve shift swaps|view hr');
 
         // Department Staff Management
-        Route::get('department-staff', [DepartmentStaffController::class, 'index'])->name('department-staff.index');
-        Route::get('department-staff/{department}', [DepartmentStaffController::class, 'show'])->name('department-staff.show');
-        Route::put('department-staff/{department}/head', [DepartmentStaffController::class, 'updateHead'])->name('department-staff.update-head');
-        Route::post('department-staff/transfer', [DepartmentStaffController::class, 'transferEmployee'])->name('department-staff.transfer');
+        Route::middleware('permission:view department staff|edit department staff|view hr')->group(function () {
+            Route::get('department-staff', [DepartmentStaffController::class, 'index'])->name('department-staff.index');
+            Route::get('department-staff/{department}', [DepartmentStaffController::class, 'show'])->name('department-staff.show');
+            Route::put('department-staff/{department}/head', [DepartmentStaffController::class, 'updateHead'])
+                ->name('department-staff.update-head')
+                ->middleware('permission:edit department staff|view hr');
+            Route::post('department-staff/transfer', [DepartmentStaffController::class, 'transferEmployee'])
+                ->name('department-staff.transfer')
+                ->middleware('permission:edit department staff|view hr');
+        });
 
         // Document Management
-        Route::get('documents', [DocumentManagementController::class, 'index'])->name('documents.index');
-        Route::get('documents/compliance', [DocumentManagementController::class, 'compliance'])->name('documents.compliance');
-        Route::post('documents/{document}/verify', [DocumentManagementController::class, 'verify'])->name('documents.verify');
-        Route::post('documents/{document}/unverify', [DocumentManagementController::class, 'unverify'])->name('documents.unverify');
-        Route::get('documents/requirements', [DocumentManagementController::class, 'requirements'])->name('documents.requirements');
-        Route::get('documents/requirements/create', [DocumentManagementController::class, 'createRequirement'])->name('documents.create-requirement');
-        Route::post('documents/requirements', [DocumentManagementController::class, 'storeRequirement'])->name('documents.store-requirement');
-        Route::delete('documents/requirements/{documentRequirement}', [DocumentManagementController::class, 'destroyRequirement'])->name('documents.destroy-requirement');
+        Route::middleware('permission:view hr documents|create hr documents|edit hr documents|delete hr documents|view hr')->group(function () {
+            Route::get('documents', [DocumentManagementController::class, 'index'])->name('documents.index');
+            Route::get('documents/compliance', [DocumentManagementController::class, 'compliance'])->name('documents.compliance');
+            Route::get('documents/requirements', [DocumentManagementController::class, 'requirements'])->name('documents.requirements');
+            Route::get('documents/requirements/create', [DocumentManagementController::class, 'createRequirement'])->name('documents.create-requirement');
+            Route::post('documents/requirements', [DocumentManagementController::class, 'storeRequirement'])->name('documents.store-requirement');
+            Route::delete('documents/requirements/{documentRequirement}', [DocumentManagementController::class, 'destroyRequirement'])->name('documents.destroy-requirement');
+        });
+        Route::post('documents/{document}/verify', [DocumentManagementController::class, 'verify'])
+            ->name('documents.verify')
+            ->middleware('permission:verify hr documents|view hr');
+        Route::post('documents/{document}/unverify', [DocumentManagementController::class, 'unverify'])
+            ->name('documents.unverify')
+            ->middleware('permission:verify hr documents|view hr');
     });
     // Service import routes — must be BEFORE the resource route to avoid
     // the resource route capturing 'import' as a {service} parameter
