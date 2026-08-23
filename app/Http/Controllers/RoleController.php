@@ -19,9 +19,7 @@ class RoleController extends Controller
 
     public function create()
     {
-        // Load all permissions ordered by name so the form is easy to scan
-        $permissions = Permission::orderBy('name')->get();
-        return view('admin.roles.create', compact('permissions'));
+        return view('admin.roles.create');
     }
 
     public function store(StoreRoleRequest $request)
@@ -39,8 +37,9 @@ class RoleController extends Controller
 
     public function edit(Role $role)
     {
-        $permissions = Permission::orderBy('name')->get();
-        return view('admin.roles.edit', compact('role', 'permissions'));
+        $role->load('permissions');
+
+        return view('admin.roles.edit', compact('role'));
     }
 
     public function update(UpdateRoleRequest $request, Role $role)

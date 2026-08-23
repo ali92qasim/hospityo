@@ -56,6 +56,7 @@ export default defineConfig({
                 'resources/js/lab-report-print.js',
                 'resources/css/radiology-results-form.css',
                 'resources/js/radiology-results-form.js',
+                'resources/js/role-permissions-form.js',
             ],
             refresh: true,
         }),
