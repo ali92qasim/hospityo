@@ -96,16 +96,30 @@
 {{-- Modules --}}
 <h3 class="text-sm font-semibold text-gray-700 mb-3">Included Modules *</h3>
 @error('modules')<p class="mb-2 text-sm text-red-600">{{ $message }}</p>@enderror
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-    @php $selectedModules = old('modules', $plan->modules ?? []); @endphp
-    @foreach($modules as $slug => $def)
-    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-medical-blue/30 transition-colors {{ in_array($slug, $selectedModules) ? 'border-medical-blue bg-blue-50' : 'border-gray-200' }}">
-        <input type="checkbox" name="modules[]" value="{{ $slug }}"
-               class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue mr-3"
-               {{ in_array($slug, $selectedModules) ? 'checked' : '' }}>
-        <div>
-            <span class="text-sm font-medium text-gray-800">{{ $def['name'] }}</span>
+@php
+    $selectedModules = old('modules', $plan->modules ?? []);
+    $groupOrder = ['Clinical', 'Diagnostics', 'Finance', 'Operations', 'Admin'];
+    $groupedModules = collect($modules)->groupBy(fn ($def) => $def['group'] ?? 'Other');
+@endphp
+@foreach($groupOrder as $group)
+    @if($groupedModules->has($group))
+    <div class="mb-6 last:mb-0">
+        <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">{{ $group }}</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            @foreach($groupedModules[$group] as $slug => $def)
+            <label class="flex items-start p-3 border rounded-lg cursor-pointer hover:border-medical-blue/30 transition-colors {{ in_array($slug, $selectedModules) ? 'border-medical-blue bg-blue-50' : 'border-gray-200' }}">
+                <input type="checkbox" name="modules[]" value="{{ $slug }}"
+                       class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue mr-3 mt-0.5"
+                       {{ in_array($slug, $selectedModules) ? 'checked' : '' }}>
+                <div>
+                    <span class="text-sm font-medium text-gray-800">{{ $def['name'] }}</span>
+                    @if(!empty($def['description']))
+                    <p class="text-xs text-gray-400 mt-0.5">{{ $def['description'] }}</p>
+                    @endif
+                </div>
+            </label>
+            @endforeach
         </div>
-    </label>
-    @endforeach
-</div>
+    </div>
+    @endif
+@endforeach
