@@ -6,8 +6,8 @@ namespace App\Support;
  * Central registry of tenant permissions grouped by module for role UI.
  *
  * Mirrors ModuleRegistry structure. Existing permissions from RolePermissionSeeder
- * are grouped here; HR, Accounting, and Doctor Share also include upcoming
- * granular permissions from the design spec (not yet in the seeder).
+ * are grouped here; Accounting and Doctor Share also include upcoming granular
+ * permissions from the design spec (not yet in the seeder).
  */
 class PermissionRegistry
 {
@@ -229,7 +229,7 @@ class PermissionRegistry
             'label' => 'HR & Payroll',
             'groups' => [
                 'general' => [
-                    'view hr',
+                    'view hr', // DEPRECATED: use granular HR submodule permissions
                 ],
                 'employees' => [
                     'view employees',
