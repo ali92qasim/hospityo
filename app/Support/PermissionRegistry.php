@@ -415,11 +415,21 @@ class PermissionRegistry
                 ],
             ],
         ],
+        'audit' => [
+            'label' => 'Audit Logs',
+            'groups' => [
+                'audit logs' => [
+                    'view audit logs',
+                ],
+            ],
+        ],
         'settings' => [
             'label' => 'Settings',
             'groups' => [
                 'settings' => [
                     'manage settings',
+                    'view settings',
+                    'edit settings',
                 ],
             ],
         ],
@@ -428,12 +438,22 @@ class PermissionRegistry
             'groups' => [
                 'backup' => [
                     'manage backup',
+                    'view backup',
+                    'create backup',
+                    'restore backup',
+                    'delete backup',
                 ],
             ],
         ],
         'rbac' => [
             'label' => 'User & Role Management',
             'groups' => [
+                'users' => [
+                    'view users',
+                    'create users',
+                    'edit users',
+                    'delete users',
+                ],
                 'roles' => [
                     'view roles',
                     'create roles',

@@ -213,8 +213,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index')->middleware('permission:manage settings');
-    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update')->middleware('permission:manage settings');
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index')->middleware('permission:view settings|manage settings');
+    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update')->middleware('permission:edit settings|manage settings');
 
     // Billing & Subscription Routes
     Route::prefix('billing')->name('billing.')->group(function () {
@@ -806,8 +806,10 @@ Route::middleware('auth')->group(function () {
     });
 
     // RBAC Routes
-    Route::get('/users/data', [UserController::class, 'data']);
-    Route::resource('users', UserController::class)->middleware('role:Super Admin|Hospital Administrator');
+    Route::get('/users/data', [UserController::class, 'data'])
+        ->middleware('role_or_permission:Super Admin|Hospital Administrator|view users|create users|edit users|delete users');
+    Route::resource('users', UserController::class)
+        ->middleware('role_or_permission:Super Admin|Hospital Administrator|view users|create users|edit users|delete users');
     Route::resource('roles', RoleController::class)->middleware('permission:view roles|create roles|edit roles|delete roles');
     Route::resource('permissions', PermissionController::class)->middleware('permission:view permissions|create permissions|edit permissions|delete permissions');
 
@@ -830,7 +832,8 @@ Route::middleware('auth')->group(function () {
     });
 
     // Audit Logs
-    Route::resource('audit-logs', AuditLogController::class)->only(['index', 'show'])->middleware('role:Super Admin|Hospital Administrator');
+    Route::resource('audit-logs', AuditLogController::class)->only(['index', 'show'])
+        ->middleware('role_or_permission:Super Admin|Hospital Administrator|view audit logs');
 
     // Operation Theatre Management
     Route::prefix('ot')->name('ot.')->middleware('permission:view surgeries|create surgeries|edit surgeries|delete surgeries')->group(function () {
@@ -907,12 +910,17 @@ Route::middleware('auth')->group(function () {
     });
 
     // Backup & Restore Routes
-    Route::prefix('backup')->name('backup.')->middleware('permission:manage backup')->group(function () {
-        Route::get('/', [BackupController::class, 'index'])->name('index');
-        Route::post('/create', [BackupController::class, 'create'])->name('create');
-        Route::get('/download/{filename}', [BackupController::class, 'download'])->name('download');
-        Route::delete('/delete/{filename}', [BackupController::class, 'destroy'])->name('destroy');
-        Route::post('/restore/{filename}', [BackupController::class, 'restore'])->name('restore');
+    Route::prefix('backup')->name('backup.')->group(function () {
+        Route::get('/', [BackupController::class, 'index'])->name('index')
+            ->middleware('permission:view backup|manage backup');
+        Route::post('/create', [BackupController::class, 'create'])->name('create')
+            ->middleware('permission:create backup|manage backup');
+        Route::get('/download/{filename}', [BackupController::class, 'download'])->name('download')
+            ->middleware('permission:view backup|manage backup');
+        Route::delete('/delete/{filename}', [BackupController::class, 'destroy'])->name('destroy')
+            ->middleware('permission:delete backup|manage backup');
+        Route::post('/restore/{filename}', [BackupController::class, 'restore'])->name('restore')
+            ->middleware('permission:restore backup|manage backup');
     });
 
     // Patient Search API
