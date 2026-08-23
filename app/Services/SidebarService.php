@@ -317,9 +317,15 @@ class SidebarService
         }
 
         // ── Access Control (RBAC) ─────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'rbac') && $user->canAny(['view roles', 'view permissions', 'manage user roles'])) {
+        $userAccess = $user->canAny(['view users', 'create users', 'edit users', 'delete users'])
+            || $user->hasAnyRole(['Super Admin', 'Hospital Administrator']);
+        $auditAccess = $this->hasModule($tenant, 'audit')
+            && ($user->can('view audit logs') || $user->hasAnyRole(['Super Admin', 'Hospital Administrator']));
+        $rbacAccess = $user->canAny(['view roles', 'view permissions', 'manage user roles']);
+
+        if ($this->hasModule($tenant, 'rbac') && ($rbacAccess || $userAccess || $auditAccess)) {
             $items = [];
-            if ($user->hasAnyRole(['Super Admin', 'Hospital Administrator'])) {
+            if ($userAccess) {
                 $items[] = $this->item('Users', 'fa-users', 'users.index', ['users.*']);
             }
             if ($user->can('view roles')) {
@@ -328,7 +334,7 @@ class SidebarService
             if ($user->can('view permissions')) {
                 $items[] = $this->item('Permissions', 'fa-key', 'permissions.index', ['permissions.*']);
             }
-            if ($user->hasAnyRole(['Super Admin', 'Hospital Administrator'])) {
+            if ($auditAccess) {
                 $items[] = $this->item('Audit Logs', 'fa-history', 'audit-logs.index', ['audit-logs.*']);
             }
             if (!empty($items)) {
@@ -337,7 +343,7 @@ class SidebarService
         }
 
         // ── Backup & Restore ──────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'backup') && $user->can('manage backup')) {
+        if ($this->hasModule($tenant, 'backup') && $user->canAny(['view backup', 'create backup', 'restore backup', 'delete backup', 'manage backup'])) {
             $menu[] = $this->link('backup', 'Backup & Restore', 'fa-database', 'backup.index', ['backup.*']);
         }
 

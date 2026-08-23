@@ -242,11 +242,26 @@ class RolePermissionSeeder extends Seeder
         'edit surgeries',
         'delete surgeries',
 
+        // ── Audit ─────────────────────────────────────────────────────────────
+        'view audit logs',
+
         // ── Settings ──────────────────────────────────────────────────────────
-        'manage settings',
+        'manage settings', // DEPRECATED: use granular settings permissions below
+        'view settings',
+        'edit settings',
 
         // ── Backup ────────────────────────────────────────────────────────────
-        'manage backup',
+        'manage backup', // DEPRECATED: use granular backup permissions below
+        'view backup',
+        'create backup',
+        'restore backup',
+        'delete backup',
+
+        // ── Users ─────────────────────────────────────────────────────────────
+        'view users',
+        'create users',
+        'edit users',
+        'delete users',
 
         // ── Surgical Checklists ───────────────────────────────────────────────
         'manage surgical checklists',
@@ -334,8 +349,12 @@ class RolePermissionSeeder extends Seeder
             'view settlements', 'create settlements', 'edit settlements', 'approve settlements',
             'view share reports',
             'manage user roles',
-            'manage settings',
-            'manage backup',
+            'view users', 'create users', 'edit users', 'delete users',
+            'view audit logs',
+            'manage settings', // DEPRECATED: backward compatibility
+            'view settings', 'edit settings',
+            'manage backup', // DEPRECATED: backward compatibility
+            'view backup', 'create backup', 'restore backup', 'delete backup',
             'manage surgical checklists',
             'manage ot consumables',
             'manage sterilization',
