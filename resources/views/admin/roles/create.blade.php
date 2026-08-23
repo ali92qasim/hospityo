@@ -21,18 +21,7 @@
             @enderror
         </div>
 
-        <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                @foreach($permissions as $permission)
-                    <label class="flex items-center">
-                        <input type="checkbox" name="permissions[]" value="{{ $permission->name }}" 
-                               class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue">
-                        <span class="ml-2 text-sm text-gray-700">{{ $permission->name }}</span>
-                    </label>
-                @endforeach
-            </div>
-        </div>
+        @include('admin.roles._permissions')
 
         <div class="flex justify-end space-x-3">
             <a href="{{ route('roles.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancel</a>
