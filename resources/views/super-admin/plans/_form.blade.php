@@ -99,14 +99,15 @@
 @php
     $selectedModules = old('modules', $plan->modules ?? []);
     $groupOrder = ['Clinical', 'Diagnostics', 'Finance', 'Operations', 'Admin'];
-    $groupedModules = collect($modules)->groupBy(fn ($def) => $def['group'] ?? 'Other');
+    $moduleEntries = collect($modules);
 @endphp
 @foreach($groupOrder as $group)
-    @if($groupedModules->has($group))
+    @php $groupModules = $moduleEntries->filter(fn ($def, $slug) => ($def['group'] ?? 'Other') === $group); @endphp
+    @if($groupModules->isNotEmpty())
     <div class="mb-6 last:mb-0">
         <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">{{ $group }}</h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            @foreach($groupedModules[$group] as $slug => $def)
+            @foreach($groupModules as $slug => $def)
             <label class="flex items-start p-3 border rounded-lg cursor-pointer hover:border-medical-blue/30 transition-colors {{ in_array($slug, $selectedModules) ? 'border-medical-blue bg-blue-50' : 'border-gray-200' }}">
                 <input type="checkbox" name="modules[]" value="{{ $slug }}"
                        class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue mr-3 mt-0.5"

@@ -8,6 +8,7 @@ use App\Models\Plan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class PlanController extends Controller
 {
@@ -32,12 +33,12 @@ class PlanController extends Controller
     {
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
-            'slug'          => 'nullable|string|max:255|unique:plans,slug',
+            'slug'          => ['nullable', 'string', 'max:255', Rule::unique(Plan::class, 'slug')],
             'description'   => 'nullable|string|max:500',
             'price'         => 'required|numeric|min:0',
             'billing_cycle' => 'required|in:monthly,yearly,lifetime',
             'modules'       => 'required|array|min:1',
-            'modules.*'     => 'string',
+            'modules.*'     => ['string', Rule::in(ModuleRegistry::all())],
             'max_users'     => 'nullable|integer|min:1',
             'max_patients'  => 'nullable|integer|min:1',
             'max_doctors'   => 'nullable|integer|min:1',
@@ -85,12 +86,12 @@ class PlanController extends Controller
     {
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
-            'slug'          => 'nullable|string|max:255|unique:plans,slug,' . $plan->id,
+            'slug'          => ['nullable', 'string', 'max:255', Rule::unique(Plan::class, 'slug')->ignore($plan)],
             'description'   => 'nullable|string|max:500',
             'price'         => 'required|numeric|min:0',
             'billing_cycle' => 'required|in:monthly,yearly,lifetime',
             'modules'       => 'required|array|min:1',
-            'modules.*'     => 'string',
+            'modules.*'     => ['string', Rule::in(ModuleRegistry::all())],
             'max_users'     => 'nullable|integer|min:1',
             'max_patients'  => 'nullable|integer|min:1',
             'max_doctors'   => 'nullable|integer|min:1',
