@@ -10,7 +10,7 @@
 @section('content')
 <div id="visits-index"
      class="mb-6"
-     @if(!empty($visitType)) data-visit-type="{{ $visitType }}" @endif
+     data-visit-type="{{ $visitType ?? '' }}"
      @if(!empty($simplifiedList)) data-default-date-filter="today" data-simplified-list="1" @endif>
     <div class="flex justify-between items-center mb-4">
         <div>

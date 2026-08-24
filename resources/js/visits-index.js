@@ -261,13 +261,18 @@ $(document).ready(function () {
     bindFilters();
 
     const indexRoot = document.getElementById('visits-index');
-    const presetVisitType = indexRoot?.dataset.visitType ?? '';
+    const urlVisitType = new URLSearchParams(window.location.search).get('visit_type') ?? '';
+    const presetVisitType = indexRoot?.dataset.visitType ?? urlVisitType;
     const defaultDateFilter = indexRoot?.dataset.defaultDateFilter ?? '';
     const simplifiedList = indexRoot?.dataset.simplifiedList === '1';
 
     if (presetVisitType) {
         filters.visit_type = presetVisitType;
     }
+
+    const visitsDataUrl = presetVisitType
+        ? `/visits/data?visit_type=${encodeURIComponent(presetVisitType)}`
+        : '/visits/data';
 
     if (defaultDateFilter) {
         filters.date_filter = defaultDateFilter;
@@ -276,20 +281,17 @@ $(document).ready(function () {
 
     visitsTable = initDataTable('.visits-table', {
         ajax: {
-            url: '/visits/data',
+            url: visitsDataUrl,
             data: function (params) {
-                params.date_filter = filters.date_filter;
-                params.start_date = filters.start_date;
-                params.end_date = filters.end_date;
-                params.visit_type = filters.visit_type;
-
-                if (filters.status_group) {
-                    params.status_group = filters.status_group;
-                    params.status = '';
-                } else {
-                    params.status = filters.status;
-                    params.status_group = '';
-                }
+                return {
+                    ...params,
+                    date_filter: filters.date_filter,
+                    start_date: filters.start_date,
+                    end_date: filters.end_date,
+                    visit_type: filters.visit_type || presetVisitType,
+                    status_group: filters.status_group ? filters.status_group : '',
+                    status: filters.status_group ? '' : filters.status,
+                };
             },
         },
         layout: {

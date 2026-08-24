@@ -92,6 +92,21 @@ class VisitController extends Controller
 
     public function data(Request $request)
     {
+        $visitType = $this->resolveVisitTypeFilter($request);
+
+        if (config('visits.require_typed_visit_routes', true) && ! $visitType) {
+            return response()->json([
+                'draw' => (int) $request->input('draw', 0),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+            ]);
+        }
+
+        if ($visitType) {
+            $request->merge(['visit_type' => $visitType]);
+        }
+
         $query = $this->visitsIndexQuery($request);
 
         return DataTables::eloquent($query)
@@ -189,6 +204,17 @@ class VisitController extends Controller
         }
 
         return $query->orderByDesc('id'); // Latest first (newest visits)
+    }
+
+    private function resolveVisitTypeFilter(Request $request): ?string
+    {
+        $visitType = $request->input('visit_type');
+
+        if (is_string($visitType) && in_array($visitType, ['opd', 'ipd', 'emergency'], true)) {
+            return $visitType;
+        }
+
+        return null;
     }
 
     public function create(Request $request)
@@ -498,7 +524,7 @@ class VisitController extends Controller
     public function completeVisit(Visit $visit)
     {
         VisitWorkflowService::for($visit)->transition($visit, VisitStatus::Completed);
-        return redirect()->route('visits.index')->with('success', 'Visit completed successfully.');
+        return redirect()->route('visits.index', ['visit_type' => $visit->visit_type])->with('success', 'Visit completed successfully.');
     }
 
     // IPD Methods
