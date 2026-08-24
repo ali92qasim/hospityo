@@ -32,8 +32,10 @@ class BillItemRevenueGrouper
             return 'imaging:'.$matched->id;
         }
 
-        if (in_array($item->item_category, ['lab', 'imaging'], true)) {
-            return $item->item_category.':desc:'.static::normalizeName($item->description ?? '');
+        if (in_array($item->item_category, ['lab', 'imaging', 'investigation'], true)) {
+            return $item->item_category === 'investigation'
+                ? 'investigation:desc:'.static::normalizeName($item->description ?? '')
+                : $item->item_category.':desc:'.static::normalizeName($item->description ?? '');
         }
 
         if ($item->description) {
@@ -62,7 +64,7 @@ class BillItemRevenueGrouper
             return $matched->name;
         }
 
-        if (in_array($item->item_category, ['lab', 'imaging'], true) && $item->description) {
+        if (in_array($item->item_category, ['lab', 'imaging', 'investigation'], true) && $item->description) {
             return $item->description;
         }
 
@@ -71,7 +73,7 @@ class BillItemRevenueGrouper
 
     public static function isInvestigation(BillItem $item, ?Collection $catalogByName = null): bool
     {
-        if ($item->lab_test_id || $item->imaging_study_id || in_array($item->item_category, ['lab', 'imaging'], true)) {
+        if ($item->lab_test_id || $item->imaging_study_id || in_array($item->item_category, ['lab', 'imaging', 'investigation'], true)) {
             return true;
         }
 

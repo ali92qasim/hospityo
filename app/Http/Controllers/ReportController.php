@@ -197,7 +197,7 @@ class ReportController extends Controller
         $billItems = BillItem::whereHas('bill', function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('bill_date', [$startDate, $endDate]);
             })
-            ->with(['service', 'investigation'])
+            ->with(['service', 'labTest', 'imagingStudy'])
             ->get();
 
         $serviceRevenue = $billItems
