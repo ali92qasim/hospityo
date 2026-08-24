@@ -12,4 +12,14 @@ return [
     'enforce_workflow_transitions' => env('VISITS_ENFORCE_WORKFLOW', false),
     'require_typed_visit_routes' => env('VISITS_REQUIRE_TYPED_ROUTES', true),
     'workflow_accordion_ui' => env('VISITS_WORKFLOW_ACCORDION_UI', true),
+
+    /*
+    | Default date filter for typed visit list pages (opd / ipd / emergency).
+    | Empty string = all time. Set to "today" via env for day-to-day OPD workflows.
+    */
+    'list_default_date_filter' => [
+        'opd' => env('VISITS_OPD_LIST_DATE_FILTER', ''),
+        'ipd' => env('VISITS_IPD_LIST_DATE_FILTER', ''),
+        'emergency' => env('VISITS_EMERGENCY_LIST_DATE_FILTER', ''),
+    ],
 ];

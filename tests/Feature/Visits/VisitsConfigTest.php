@@ -9,5 +9,8 @@ it('uses expected visit config defaults', function () {
         ->and(config('visits.workflow_accordion_ui'))->toBeTrue()
         ->and(config('visits.read_from_child.opd'))->toBeFalse()
         ->and(config('visits.read_from_child.ipd'))->toBeFalse()
-        ->and(config('visits.read_from_child.emergency'))->toBeFalse();
+        ->and(config('visits.read_from_child.emergency'))->toBeFalse()
+        ->and(config('visits.list_default_date_filter.opd'))->toBe('')
+        ->and(config('visits.list_default_date_filter.ipd'))->toBe('')
+        ->and(config('visits.list_default_date_filter.emergency'))->toBe('');
 });

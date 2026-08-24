@@ -86,8 +86,17 @@ class VisitController extends Controller
         $pageTitle = $visitType ? ($listTitles[$visitType] ?? 'Patient Visits') : 'Patient Visits';
         $newPatientLabel = $visitType ? ($newPatientLabels[$visitType] ?? 'New Patient') : 'New Patient';
         $simplifiedList = (bool) $visitType;
+        $defaultDateFilter = $visitType
+            ? (string) (config("visits.list_default_date_filter.{$visitType}") ?? '')
+            : '';
 
-        return view('admin.visits.index', compact('visitType', 'pageTitle', 'newPatientLabel', 'simplifiedList'));
+        return view('admin.visits.index', compact(
+            'visitType',
+            'pageTitle',
+            'newPatientLabel',
+            'simplifiedList',
+            'defaultDateFilter',
+        ));
     }
 
     public function data(Request $request)

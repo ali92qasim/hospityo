@@ -11,7 +11,8 @@
 <div id="visits-index"
      class="mb-6"
      data-visit-type="{{ $visitType ?? '' }}"
-     @if(!empty($simplifiedList)) data-default-date-filter="today" data-simplified-list="1" @endif>
+     @if(!empty($simplifiedList)) data-simplified-list="1" @endif
+     @if(!empty($defaultDateFilter)) data-default-date-filter="{{ $defaultDateFilter }}" @endif>
     <div class="flex justify-between items-center mb-4">
         <div>
             <h3 class="text-lg font-semibold text-gray-800">{{ $pageTitle ?? 'Patient Visits' }}</h3>

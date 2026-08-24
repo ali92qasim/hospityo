@@ -238,9 +238,7 @@ it('renders opd list page with type filter preset', function () {
 
         ->assertSee('OPD')
 
-        ->assertSee('data-visit-type="opd"', false)
-
-        ->assertSee('data-default-date-filter="today"', false);
+        ->assertSee('data-visit-type="opd"', false);
 
 });
 

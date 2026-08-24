@@ -104,3 +104,36 @@ it('includes data-visit-type on typed visit index pages', function () {
         ->assertOk()
         ->assertSee('data-visit-type="ipd"', false);
 });
+
+it('returns historical visits when no date filter is applied', function () {
+    $historical = Visit::create([
+        'patient_id' => $this->patient->id,
+        'visit_type' => 'opd',
+        'status' => 'registered',
+        'visit_datetime' => now()->subMonths(3),
+    ]);
+    OpdVisit::create(['visit_id' => $historical->id, 'queue_priority' => 'medium']);
+
+    Visit::create([
+        'patient_id' => $this->patient->id,
+        'visit_type' => 'opd',
+        'status' => 'registered',
+        'visit_datetime' => now(),
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->getJson(route('visits.data', datatablesParams(['visit_type' => 'opd'])));
+
+    $response->assertOk();
+
+    expect($response->json('recordsFiltered'))->toBe(2);
+});
+
+it('respects configured default date filter on index page', function () {
+    config(['visits.list_default_date_filter.opd' => 'today']);
+
+    $this->actingAs($this->user)
+        ->get(route('visits.index', ['visit_type' => 'opd']))
+        ->assertOk()
+        ->assertSee('data-default-date-filter="today"', false);
+});
