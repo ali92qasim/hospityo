@@ -84,7 +84,7 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
         $settings = $this->tenant->settings ?? [];
 
         foreach ($settings as $key => $value) {
-            \App\Models\TenantSetting::set($key, $value);
+            \App\Models\Setting::set($key, $value);
         }
     }
 

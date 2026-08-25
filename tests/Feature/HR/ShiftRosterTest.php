@@ -20,8 +20,7 @@ beforeEach(function () {
     ]);
 
     $this->employee = Employee::create([
-        'first_name' => 'Ahmed',
-        'last_name' => 'Khan',
+        'name' => 'Ahmed Khan',
         'department_id' => $this->department->id,
         'joining_date' => '2026-01-01',
         'basic_salary' => 60000,
@@ -132,8 +131,7 @@ it('filters roster by week', function () {
 
 it('can create shift swap request', function () {
     $employee2 = Employee::create([
-        'first_name' => 'Sara',
-        'last_name' => 'Ali',
+        'name' => 'Sara Ali',
         'department_id' => $this->department->id,
         'joining_date' => '2026-01-01',
         'basic_salary' => 55000,

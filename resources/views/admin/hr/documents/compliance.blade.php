@@ -132,7 +132,7 @@
                                 <img src="{{ asset('storage/' . $row['employee']->photo) }}" alt="{{ $row['employee']->full_name }}" class="w-10 h-10 rounded-full object-cover mr-3">
                             @else
                                 <div class="w-10 h-10 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
-                                    {{ strtoupper(substr($row['employee']->first_name, 0, 1) . substr($row['employee']->last_name, 0, 1)) }}
+                                    {{ $row['employee']->initials }}
                                 </div>
                             @endif
                             <div class="text-sm font-medium text-gray-900">{{ $row['employee']->full_name }}</div>

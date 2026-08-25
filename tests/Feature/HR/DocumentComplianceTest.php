@@ -26,8 +26,7 @@ beforeEach(function () {
     ]);
 
     $this->employee = Employee::create([
-        'first_name' => 'Dr. Ahmed',
-        'last_name' => 'Khan',
+        'name' => 'Dr. Ahmed Khan',
         'department_id' => $this->department->id,
         'designation_id' => $this->designation->id,
         'joining_date' => '2026-01-01',

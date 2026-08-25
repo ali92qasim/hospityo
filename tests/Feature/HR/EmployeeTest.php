@@ -29,8 +29,7 @@ beforeEach(function () {
 
 it('auto-generates employee number on creation', function () {
     $employee = Employee::create([
-        'first_name' => 'Ahmed',
-        'last_name' => 'Khan',
+        'name' => 'Ahmed Khan',
         'department_id' => $this->department->id,
         'designation_id' => $this->designation->id,
         'joining_date' => '2026-01-15',
@@ -41,22 +40,21 @@ it('auto-generates employee number on creation', function () {
         ->and(strlen($employee->employee_no))->toBe(8); // EMP + 5 digits
 });
 
-it('computes full name accessor', function () {
+it('computes full name accessor from name column', function () {
     $employee = Employee::create([
-        'first_name' => 'Ahmed',
-        'last_name' => 'Khan',
+        'name' => 'Ahmed Khan',
         'department_id' => $this->department->id,
         'joining_date' => '2026-01-15',
         'basic_salary' => 50000,
     ]);
 
-    expect($employee->full_name)->toBe('Ahmed Khan');
+    expect($employee->full_name)->toBe('Ahmed Khan')
+        ->and($employee->initials)->toBe('AK');
 });
 
 it('filters active employees', function () {
     Employee::create([
-        'first_name' => 'Active',
-        'last_name' => 'Employee',
+        'name' => 'Active Employee',
         'department_id' => $this->department->id,
         'joining_date' => '2026-01-01',
         'status' => 'active',
@@ -64,8 +62,7 @@ it('filters active employees', function () {
     ]);
 
     Employee::create([
-        'first_name' => 'Terminated',
-        'last_name' => 'Employee',
+        'name' => 'Terminated Employee',
         'department_id' => $this->department->id,
         'joining_date' => '2025-01-01',
         'status' => 'terminated',
@@ -79,16 +76,14 @@ it('filters by department', function () {
     $dept2 = Department::create(['name' => 'Cardiology', 'status' => 'active']);
 
     Employee::create([
-        'first_name' => 'Emp1',
-        'last_name' => 'A',
+        'name' => 'Emp1 A',
         'department_id' => $this->department->id,
         'joining_date' => '2026-01-01',
         'basic_salary' => 50000,
     ]);
 
     Employee::create([
-        'first_name' => 'Emp2',
-        'last_name' => 'B',
+        'name' => 'Emp2 B',
         'department_id' => $dept2->id,
         'joining_date' => '2026-01-01',
         'basic_salary' => 50000,
@@ -100,8 +95,7 @@ it('filters by department', function () {
 
 it('filters by employment type', function () {
     Employee::create([
-        'first_name' => 'Full',
-        'last_name' => 'Time',
+        'name' => 'Full Time',
         'department_id' => $this->department->id,
         'joining_date' => '2026-01-01',
         'employment_type' => 'full_time',
@@ -109,8 +103,7 @@ it('filters by employment type', function () {
     ]);
 
     Employee::create([
-        'first_name' => 'Part',
-        'last_name' => 'Time',
+        'name' => 'Part Time',
         'department_id' => $this->department->id,
         'joining_date' => '2026-01-01',
         'employment_type' => 'part_time',
@@ -123,8 +116,7 @@ it('filters by employment type', function () {
 
 it('belongs to department and designation', function () {
     $employee = Employee::create([
-        'first_name' => 'Test',
-        'last_name' => 'Employee',
+        'name' => 'Test Employee',
         'department_id' => $this->department->id,
         'designation_id' => $this->designation->id,
         'joining_date' => '2026-01-01',
@@ -139,8 +131,7 @@ it('creates a linked salary expense account on creation', function () {
     Account::create(['code' => '5300', 'name' => 'Salaries & Wages', 'type' => 'expense', 'is_system' => false]);
 
     $employee = Employee::create([
-        'first_name' => 'Sara',
-        'last_name' => 'Ali',
+        'name' => 'Sara Ali',
         'department_id' => $this->department->id,
         'joining_date' => '2026-01-01',
         'basic_salary' => 70000,

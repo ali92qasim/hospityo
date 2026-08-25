@@ -21,8 +21,6 @@ class EmployeeController extends Controller
         if ($request->search) {
             $s = '%' . $request->search . '%';
             $query->where(fn($q) => $q->where('name', 'like', $s)
-                ->orWhere('first_name', 'like', $s)
-                ->orWhere('last_name', 'like', $s)
                 ->orWhere('employee_no', 'like', $s)
                 ->orWhere('phone', 'like', $s)
                 ->orWhere('cnic', 'like', $s));
@@ -58,8 +56,6 @@ class EmployeeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'first_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'cnic' => 'nullable|string|max:15',
@@ -129,8 +125,6 @@ class EmployeeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'first_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'cnic' => 'nullable|string|max:15',

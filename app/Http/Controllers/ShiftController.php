@@ -119,7 +119,7 @@ class ShiftController extends Controller
 
         $query = Employee::active()->with(['department', 'designation', 'doctor']);
         if ($departmentId) $query->where('department_id', $departmentId);
-        $employees = $query->orderBy('first_name')->get();
+        $employees = $query->orderBy('name')->get();
 
         $shifts = Shift::active()->get();
         $departments = Department::orderBy('name')->get();

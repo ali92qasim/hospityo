@@ -3,7 +3,7 @@
 if (!function_exists('setting')) {
     /**
      * Get a tenant setting value.
-     * Reads from DB (via TenantSetting model) with cache layer.
+     * Reads from DB (via Setting model) with cache layer.
      * Settings persist across cache clears.
      *
      * @param string $key

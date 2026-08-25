@@ -426,7 +426,7 @@ class AccountingController extends Controller
     public function employeeLedger(Request $request)
     {
         $employeeId = $request->input('employee_id');
-        $employees = Employee::orderBy('name')->orderBy('first_name')->get();
+        $employees = Employee::orderBy('name')->get();
         $lines = collect();
         $employee = null;
         $balance = 0;

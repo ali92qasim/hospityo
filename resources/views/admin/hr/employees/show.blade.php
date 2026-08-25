@@ -15,7 +15,7 @@
                         <img src="{{ asset('storage/' . $employee->photo) }}" alt="{{ $employee->full_name }}" class="w-20 h-20 rounded-full object-cover mr-4">
                     @else
                         <div class="w-20 h-20 bg-medical-blue rounded-full flex items-center justify-center text-white text-2xl font-bold mr-4">
-                            {{ strtoupper(substr($employee->first_name, 0, 1) . substr($employee->last_name, 0, 1)) }}
+                            {{ $employee->initials }}
                         </div>
                     @endif
                     <div>
@@ -69,12 +69,8 @@
         <div class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="flex justify-between py-2 border-b border-gray-100">
-                    <span class="text-gray-600">First Name</span>
-                    <span class="font-medium">{{ $employee->first_name }}</span>
-                </div>
-                <div class="flex justify-between py-2 border-b border-gray-100">
-                    <span class="text-gray-600">Last Name</span>
-                    <span class="font-medium">{{ $employee->last_name }}</span>
+                    <span class="text-gray-600">Name</span>
+                    <span class="font-medium">{{ $employee->name }}</span>
                 </div>
                 <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-600">Email</span>

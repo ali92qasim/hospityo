@@ -28,7 +28,7 @@ return new class extends Migration
         foreach ($settingKeys as $key) {
             $value = cache("settings.{$key}");
             if ($value !== null) {
-                \Illuminate\Support\Facades\DB::table('tenant_settings')->insert([
+                \Illuminate\Support\Facades\DB::table('settings')->insert([
                     'key'        => $key,
                     'value'      => $value,
                     'created_at' => $now,

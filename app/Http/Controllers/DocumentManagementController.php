@@ -51,7 +51,7 @@ class DocumentManagementController extends Controller
 
         $query = Employee::active()->with(['department', 'designation', 'documents']);
         if ($departmentId) $query->where('department_id', $departmentId);
-        $employees = $query->orderBy('first_name')->get();
+        $employees = $query->orderBy('name')->get();
 
         $requirements = DocumentRequirement::active()->get();
         $departments = \App\Models\Department::orderBy('name')->get();

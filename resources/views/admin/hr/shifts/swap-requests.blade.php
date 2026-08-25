@@ -40,7 +40,7 @@
                                 <img src="{{ asset('storage/' . $request->requester->photo) }}" alt="{{ $request->requester->full_name }}" class="w-8 h-8 rounded-full object-cover mr-2">
                             @else
                                 <div class="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white text-xs font-medium mr-2">
-                                    {{ strtoupper(substr($request->requester->first_name, 0, 1) . substr($request->requester->last_name, 0, 1)) }}
+                                    {{ $request->requester->initials }}
                                 </div>
                             @endif
                             <div class="text-sm font-medium text-gray-900">{{ $request->requester->full_name }}</div>
@@ -52,7 +52,7 @@
                                 <img src="{{ asset('storage/' . $request->target->photo) }}" alt="{{ $request->target->full_name }}" class="w-8 h-8 rounded-full object-cover mr-2">
                             @else
                                 <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-medium mr-2">
-                                    {{ strtoupper(substr($request->target->first_name, 0, 1) . substr($request->target->last_name, 0, 1)) }}
+                                    {{ $request->target->initials }}
                                 </div>
                             @endif
                             <div class="text-sm font-medium text-gray-900">{{ $request->target->full_name }}</div>

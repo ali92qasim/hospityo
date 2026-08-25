@@ -31,8 +31,6 @@
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                         @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <input type="hidden" name="first_name" value="{{ old('first_name', $employee->first_name) }}">
-                    <input type="hidden" name="last_name" value="{{ old('last_name', $employee->last_name) }}">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
                         <input type="tel" name="phone" value="{{ old('phone', $employee->phone) }}"

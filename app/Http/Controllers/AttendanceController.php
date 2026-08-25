@@ -47,7 +47,7 @@ class AttendanceController extends Controller
         $query = Employee::active()->with(['department', 'designation']);
         if ($departmentId) $query->where('department_id', $departmentId);
 
-        $employees = $query->orderBy('first_name')->get();
+        $employees = $query->orderBy('name')->get();
         $departments = Department::orderBy('name')->get();
 
         // Get existing attendance for this date
@@ -103,7 +103,7 @@ class AttendanceController extends Controller
 
         $query = Employee::active()->with(['department']);
         if ($departmentId) $query->where('department_id', $departmentId);
-        $employees = $query->orderBy('first_name')->get();
+        $employees = $query->orderBy('name')->get();
 
         $attendances = Attendance::forMonth($year, $month)
             ->whereIn('employee_id', $employees->pluck('id'))

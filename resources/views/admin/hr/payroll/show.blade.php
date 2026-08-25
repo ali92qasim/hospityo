@@ -133,7 +133,7 @@
                                     <img src="{{ asset('storage/' . $payslip->employee->photo) }}" alt="{{ $payslip->employee->full_name }}" class="w-10 h-10 rounded-full object-cover mr-3">
                                 @else
                                     <div class="w-10 h-10 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
-                                        {{ strtoupper(substr($payslip->employee->first_name, 0, 1) . substr($payslip->employee->last_name, 0, 1)) }}
+                                        {{ $payslip->employee->initials }}
                                     </div>
                                 @endif
                                 <div>

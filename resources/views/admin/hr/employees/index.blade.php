@@ -136,7 +136,7 @@
                             <img src="{{ asset('storage/' . $employee->photo) }}" alt="{{ $employee->full_name }}" class="w-10 h-10 rounded-full object-cover">
                         @else
                             <div class="w-10 h-10 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                {{ strtoupper(substr($employee->first_name, 0, 1) . substr($employee->last_name, 0, 1)) }}
+                                {{ $employee->initials }}
                             </div>
                         @endif
                     </td>

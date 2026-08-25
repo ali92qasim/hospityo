@@ -15,7 +15,7 @@ class Employee extends Model
 
     protected $fillable = [
         'employee_no', 'name', 'user_id', 'doctor_id', 'department_id', 'designation_id',
-        'first_name', 'last_name', 'email', 'phone', 'cnic', 'gender',
+        'email', 'phone', 'cnic', 'gender',
         'date_of_birth', 'blood_group', 'address', 'city',
         'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
         'employment_type', 'joining_date', 'probation_end_date', 'contract_end_date',
@@ -51,7 +51,7 @@ class Employee extends Model
         });
 
         static::updated(function (Employee $employee) {
-            if ($employee->wasChanged(['name', 'first_name', 'last_name', 'employee_no', 'status'])) {
+            if ($employee->wasChanged(['name', 'employee_no', 'status'])) {
                 \App\Services\EmployeeAccountService::ensureExpenseAccount($employee);
                 \App\Services\EmployeeAccountService::syncAccountStatus($employee);
             }
@@ -67,7 +67,18 @@ class Employee extends Model
     // ── Accessors ──
     public function getFullNameAttribute(): string
     {
-        return $this->name ?? trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+        return $this->name ?? '';
+    }
+
+    public function getInitialsAttribute(): string
+    {
+        $parts = preg_split('/\s+/', trim($this->name ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+
+        if (count($parts) >= 2) {
+            return strtoupper(substr($parts[0], 0, 1) . substr($parts[1], 0, 1));
+        }
+
+        return strtoupper(substr($parts[0] ?? '?', 0, 2));
     }
 
     // ── Relationships ──

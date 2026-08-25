@@ -64,7 +64,7 @@
                                 <img src="{{ asset('storage/' . $employee->photo) }}" alt="{{ $employee->full_name }}" class="w-8 h-8 rounded-full object-cover mr-2">
                             @else
                                 <div class="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white text-xs font-medium mr-2">
-                                    {{ strtoupper(substr($employee->first_name, 0, 1) . substr($employee->last_name, 0, 1)) }}
+                                    {{ $employee->initials }}
                                 </div>
                             @endif
                             <div>

@@ -43,7 +43,7 @@ class DepartmentStaffController extends Controller
         $employees = Employee::where('department_id', $department->id)
             ->with(['designation'])
             ->orderBy('status')
-            ->orderBy('first_name')
+            ->orderBy('name')
             ->get();
 
         // Today's attendance for this department
@@ -83,7 +83,7 @@ class DepartmentStaffController extends Controller
         // All departments for head assignment
         $allEmployees = Employee::active()
             ->where('department_id', $department->id)
-            ->orderBy('first_name')
+            ->orderBy('name')
             ->get();
 
         return view('admin.hr.department-staff.show', compact(

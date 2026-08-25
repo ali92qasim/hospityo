@@ -294,7 +294,7 @@
                                     <img src="{{ asset('storage/' . $employee->photo) }}" alt="{{ $displayName }}" class="w-7 h-7 rounded-full object-cover mr-2 print:hidden">
                                 @else
                                     <div class="w-7 h-7 bg-medical-blue rounded-full flex items-center justify-center text-white text-xs font-medium mr-2 print:hidden">
-                                        {{ strtoupper(substr($employee->first_name ?? $displayName, 0, 1) . substr($employee->last_name ?? '', 0, 1)) }}
+                                        {{ $employee->initials }}
                                     </div>
                                 @endif
                                 <div class="min-w-0">

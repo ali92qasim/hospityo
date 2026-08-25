@@ -24,7 +24,7 @@ class LeaveController extends Controller
         if ($request->employee_id) $query->where('employee_id', $request->employee_id);
 
         $leaveRequests = $query->latest()->paginate(15)->withQueryString();
-        $employees = Employee::active()->orderBy('first_name')->get();
+        $employees = Employee::active()->orderBy('name')->get();
 
         $stats = [
             'pending' => LeaveRequest::pending()->count(),
@@ -39,7 +39,7 @@ class LeaveController extends Controller
 
     public function create()
     {
-        $employees = Employee::active()->orderBy('first_name')->get();
+        $employees = Employee::active()->orderBy('name')->get();
         $leaveTypes = LeaveType::active()->get();
         return view('admin.hr.leave.create', compact('employees', 'leaveTypes'));
     }
@@ -176,7 +176,7 @@ class LeaveController extends Controller
     public function balances(Request $request)
     {
         $year = $request->input('year', date('Y'));
-        $employees = Employee::active()->with(['department'])->orderBy('first_name')->get();
+        $employees = Employee::active()->with(['department'])->orderBy('name')->get();
         $leaveTypes = LeaveType::active()->get();
 
         // Ensure balances exist for all employees
