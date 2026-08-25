@@ -10,6 +10,7 @@ export default defineConfig({
                 'resources/css/appointments-calendar.css',
                 'resources/css/doctors-form.css',
                 'resources/css/visits-form.css',
+                'resources/css/visit-workflow-ipd.css',
                 'resources/css/ot-calendar.css',
                 'resources/css/ot-surgeries.css',
                 'resources/js/app.js',
