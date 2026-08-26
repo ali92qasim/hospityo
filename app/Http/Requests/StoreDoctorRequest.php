@@ -31,4 +31,13 @@ class StoreDoctorRequest extends FormRequest
             'status' => 'required|in:active,inactive',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'email.unique' => 'This email is already in use by another doctor or user.',
+            'shift_end.after' => 'Shift end time must be after shift start time.',
+            'experience_years.max' => 'Experience years cannot exceed 50.',
+        ];
+    }
 }

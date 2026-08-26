@@ -6,7 +6,9 @@ use App\Http\Requests\StoreDoctorRequest;
 use App\Http\Requests\UpdateDoctorRequest;
 use App\Models\Doctor;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use App\Models\Role;
@@ -31,6 +33,20 @@ class DoctorController extends Controller
     public function create(): View
     {
         return view('admin.doctors.create');
+    }
+
+    public function emailAvailable(Request $request): JsonResponse
+    {
+        $email = trim((string) $request->query('email', ''));
+
+        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return response()->json(['available' => true]);
+        }
+
+        $taken = Doctor::query()->where('email', $email)->exists()
+            || User::query()->where('email', $email)->exists();
+
+        return response()->json(['available' => ! $taken]);
     }
 
     public function store(StoreDoctorRequest $request): RedirectResponse

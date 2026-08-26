@@ -1,7 +1,13 @@
 import JustValidate from 'just-validate';
+import {
+    bindRuntimeEmailCheck,
+    createEmailAvailabilityChecker,
+    justValidateFormConfig,
+} from './email-availability.js';
 
 const TIME_HI = /^([01]\d|2[0-3]):[0-5]\d$/;
 const INTEGER = /^-?\d+$/;
+const UNIQUE_EMAIL_MESSAGE = 'This email is already in use by another doctor or user.';
 
 const required = (attribute) => ({
     rule: 'required',
@@ -19,19 +25,17 @@ const inList = (attribute, allowed) => ({
     errorMessage: `The selected ${attribute} is invalid.`,
 });
 
-/**
- * Client rules mirror App\Http\Requests\StoreDoctorRequest.
- * unique/exists stay server-side (need the database).
- */
 export function initDoctorCreateValidation(form) {
     const shiftStart = form.querySelector('[name="shift_start"]');
+    const emailInput = form.querySelector('[name="email"]');
+    const emailAvailableUrl = form.dataset.emailAvailableUrl;
+    const isEmailAvailable = emailAvailableUrl
+        ? createEmailAvailabilityChecker(emailAvailableUrl)
+        : null;
 
     const validator = new JustValidate(form, {
-        errorFieldCssClass: 'border-red-500',
-        errorLabelCssClass: 'just-validate-error-label',
-        focusInvalidField: true,
-        lockForm: true,
-        validateBeforeSubmitting: true,
+        ...justValidateFormConfig,
+        submitFormAutomatically: true,
     });
 
     validator
@@ -43,6 +47,18 @@ export function initDoctorCreateValidation(form) {
         .addField('[name="email"]', [
             required('email'),
             { rule: 'email', errorMessage: 'The email field must be a valid email address.' },
+            ...(isEmailAvailable
+                ? [
+                    {
+                        validator: (value) => isEmailAvailable.isKnownAvailable(value),
+                        errorMessage: UNIQUE_EMAIL_MESSAGE,
+                    },
+                    {
+                        validator: isEmailAvailable,
+                        errorMessage: UNIQUE_EMAIL_MESSAGE,
+                    },
+                ]
+                : []),
         ])
         .addField('[name="gender"]', [required('gender'), inList('gender', ['male', 'female', 'other'])])
         .addField('[name="experience_years"]', [
@@ -81,6 +97,8 @@ export function initDoctorCreateValidation(form) {
             },
         ])
         .addField('[name="status"]', [required('status'), inList('status', ['active', 'inactive'])]);
+
+    bindRuntimeEmailCheck(emailInput, isEmailAvailable, validator);
 
     return validator;
 }

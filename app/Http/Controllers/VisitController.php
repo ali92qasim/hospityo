@@ -684,16 +684,13 @@ class VisitController extends Controller
                 $request->doctor_id ? (int) $request->doctor_id : null
             );
 
-            $fulfillmentType = $request->fulfillment_type;
-            $status = $fulfillmentType === 'external' ? 'external' : 'pending';
-
             $prescription = $visit->prescriptions()->create([
                 'patient_id' => $visit->patient_id,
                 'doctor_id' => $doctorId,
-                'fulfillment_type' => $fulfillmentType,
+                'fulfillment_type' => 'in_house',
                 'prescribed_date' => now(),
                 'notes' => $request->notes,
-                'status' => $status,
+                'status' => 'pending',
             ]);
 
             $totalAmount = 0;

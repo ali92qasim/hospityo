@@ -62,7 +62,28 @@ it('persists selling_price when creating a medicine', function () {
     $medicine = Medicine::where('name', 'Priced Medicine')->first();
 
     expect($medicine)->not->toBeNull()
-        ->and((float) $medicine->selling_price)->toBe(25.5);
+        ->and((float) $medicine->selling_price)->toBe(25.5)
+        ->and($medicine->strength)->toBeNull();
+});
+
+it('creates a medicine when strength is omitted', function () {
+    $response = $this->post(route('medicines.store'), [
+        'name' => 'AV',
+        'sku' => 'AV',
+        'selling_price' => '200',
+        'reorder_level' => '10',
+        'status' => 'active',
+        'manage_stock' => '1',
+    ]);
+
+    $response->assertRedirect(route('medicines.index'))
+        ->assertSessionHas('success');
+
+    $medicine = Medicine::where('sku', 'AV')->first();
+
+    expect($medicine)->not->toBeNull()
+        ->and($medicine->name)->toBe('AV')
+        ->and($medicine->strength)->toBeNull();
 });
 
 it('requires selling_price when updating a medicine', function () {

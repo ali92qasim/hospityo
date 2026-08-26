@@ -238,6 +238,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/doctors/data', [DoctorController::class, 'data'])
         ->name('doctors.data')
         ->middleware('permission:view doctors|create doctors|edit doctors|delete doctors');
+    Route::get('/doctors/email-available', [DoctorController::class, 'emailAvailable'])
+        ->name('doctors.email-available')
+        ->middleware('permission:create doctors|edit doctors');
     Route::resource('doctors', DoctorController::class)->middleware('permission:view doctors|create doctors|edit doctors|delete doctors');
     Route::resource('departments', DepartmentController::class)->middleware('permission:view departments|create departments|edit departments|delete departments');
     Route::get('/visits/data', [VisitController::class, 'data'])
@@ -529,7 +532,7 @@ Route::middleware('auth')->group(function () {
         ->name('medicines.import-status')
         ->middleware('permission:manage pharmacy');
     Route::resource('medicines', MedicineController::class)
-        ->only(['index', 'show'])
+        ->only(['index'])
         ->middleware('permission:view medicines|view services|view pharmacy|manage pharmacy');
     Route::resource('medicines', MedicineController::class)
         ->only(['create', 'store'])

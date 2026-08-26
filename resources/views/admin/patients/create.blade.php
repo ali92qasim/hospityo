@@ -16,7 +16,7 @@
             </div>
         </div>
 
-        <form action="{{ route('patients.store') }}" method="POST" class="p-6">
+        <form id="patient-create-form" data-landmark="patient-create-form" action="{{ route('patients.store') }}" method="POST" class="p-6" novalidate>
             @csrf
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -30,7 +30,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                    <input type="text" name="name" value="{{ old('name') }}" 
+                    <input type="text" name="name" value="{{ old('name') }}" maxlength="255"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
                            required>
                 </div>
@@ -54,7 +54,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                    <input type="tel" name="phone" value="{{ old('phone', request('phone')) }}" 
+                    <input type="tel" name="phone" value="{{ old('phone', request('phone')) }}" maxlength="20"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
                            required>
                 </div>
@@ -92,19 +92,19 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Contact Name</label>
-                    <input type="text" name="emergency_name" value="{{ old('emergency_name') }}" 
+                    <input type="text" name="emergency_name" value="{{ old('emergency_name') }}" maxlength="255"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Phone</label>
-                    <input type="tel" name="emergency_phone" value="{{ old('emergency_phone') }}" 
+                    <input type="tel" name="emergency_phone" value="{{ old('emergency_phone') }}" maxlength="20"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 </div>
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
-                    <input type="text" name="emergency_relation" value="{{ old('emergency_relation') }}" 
+                    <input type="text" name="emergency_relation" value="{{ old('emergency_relation') }}" maxlength="100"
                            placeholder="e.g., Father, Mother, Spouse, Sibling"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 </div>
@@ -126,4 +126,8 @@
         </form>
     </div>
 </div>
+
+@push('scripts')
+@vite(['resources/js/patients-form.js'])
+@endpush
 @endsection

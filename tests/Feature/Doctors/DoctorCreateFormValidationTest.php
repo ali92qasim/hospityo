@@ -35,7 +35,8 @@ it('create doctor form uses client validation hook matching store rules', functi
         ->assertOk()
         ->assertSee('id="doctor-create-form"', false)
         ->assertSee('novalidate', false)
-        ->assertSee('data-landmark="doctor-create-form"', false);
+        ->assertSee('data-landmark="doctor-create-form"', false)
+        ->assertSee('data-email-available-url="'.e(route('doctors.email-available')).'"', false);
 });
 
 it('store doctor request rules stay aligned with client validation contract', function () {
@@ -56,4 +57,58 @@ it('store doctor request rules stay aligned with client validation contract', fu
         'shift_end' => 'required|date_format:H:i|after:shift_start',
         'status' => 'required|in:active,inactive',
     ]);
+});
+
+it('client validator submits the form after checks pass', function () {
+    $js = file_get_contents(resource_path('js/doctor-create-validation.js'));
+
+    expect($js)->toContain('submitFormAutomatically: true')
+        ->and($js)->toContain('emailAvailableUrl')
+        ->and($js)->toContain('This email is already in use by another doctor or user.');
+});
+
+it('email availability endpoint reports taken emails without storing a doctor', function () {
+    $user = makeDoctorFormUser();
+
+    $this->actingAs($user)
+        ->getJson(route('doctors.email-available', ['email' => $user->email]))
+        ->assertOk()
+        ->assertJson(['available' => false]);
+
+    $this->actingAs($user)
+        ->getJson(route('doctors.email-available', ['email' => 'fresh-doctor-'.uniqid().'@example.com']))
+        ->assertOk()
+        ->assertJson(['available' => true]);
+});
+
+it('shows a unique email error when creating a doctor with an existing user email', function () {
+    $user = makeDoctorFormUser();
+    $department = \App\Models\Department::create([
+        'name' => 'Medicine',
+        'code' => 'MED-DOC-UNIQ',
+        'status' => 'active',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->from(route('doctors.create'))
+        ->post(route('doctors.store'), [
+            'name' => 'Dr Duplicate',
+            'specialization' => 'Cardiology',
+            'qualification' => 'MBBS',
+            'phone' => '03001234567',
+            'email' => $user->email,
+            'gender' => 'male',
+            'experience_years' => 5,
+            'consultation_fee' => 1000,
+            'department_id' => $department->id,
+            'shift_start' => '09:00',
+            'shift_end' => '17:00',
+            'status' => 'active',
+        ]);
+
+    $response->assertRedirect(route('doctors.create'))
+        ->assertSessionHasErrors('email');
+
+    $this->followRedirects($response)
+        ->assertSee('This email is already in use by another doctor or user.');
 });

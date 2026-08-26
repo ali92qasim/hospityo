@@ -131,23 +131,6 @@
                 </button>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Where will the patient get these medicines?</label>
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                            <input type="radio" name="fulfillment_type" value="in_house" class="text-medical-blue focus:ring-medical-blue" checked>
-                            In-house pharmacy
-                        </label>
-                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                            <input type="radio" name="fulfillment_type" value="external" class="text-medical-blue focus:ring-medical-blue">
-                            External pharmacy
-                        </label>
-                    </div>
-                    @error('fulfillment_type')
-                        <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Prescription Notes</label>
                     <textarea name="notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Additional notes or instructions..."></textarea>
                 </div>

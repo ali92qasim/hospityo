@@ -107,26 +107,23 @@ beforeEach(function () {
     ]);
 });
 
-it('creates external prescription with external status and no stock change', function () {
-    $stockBefore = InventoryTransaction::where('type', 'stock_out')->count();
+it('workflow prescription form does not ask where the patient will get medicines', function () {
+    $panel = file_get_contents(resource_path('views/admin/visits/workflow/_shared/_prescription-panel.blade.php'));
 
-    $this->post(route('visits.prescription', $this->visit), [
-        'fulfillment_type' => 'external',
-        'medicines' => [
-            ['medicine_id' => $this->medicine->id, 'quantity' => 2],
-        ],
-    ])->assertRedirect()->assertSessionHas('success');
+    expect($panel)->not->toContain('Where will the patient get these medicines?')
+        ->and($panel)->not->toContain('name="fulfillment_type"')
+        ->and($panel)->toContain('Create Prescription');
 
-    $prescription = Prescription::first();
-
-    expect($prescription->fulfillment_type)->toBe('external')
-        ->and($prescription->status)->toBe('external')
-        ->and(InventoryTransaction::where('type', 'stock_out')->count())->toBe($stockBefore);
+    expect(file_get_contents(resource_path('views/admin/visits/workflow/opd/_layout.blade.php')))
+        ->toContain('_shared._prescription-panel');
+    expect(file_get_contents(resource_path('views/admin/visits/workflow/ipd/_clinical-feed.blade.php')))
+        ->toContain('_shared._prescription-panel');
+    expect(file_get_contents(resource_path('views/admin/visits/workflow/emergency/_layout.blade.php')))
+        ->toContain('_shared._prescription-panel');
 });
 
-it('creates in house prescription as pending with selling price snapshot', function () {
+it('queues visit prescriptions in house for POS with the visit patient automatically', function () {
     $this->post(route('visits.prescription', $this->visit), [
-        'fulfillment_type' => 'in_house',
         'medicines' => [
             ['medicine_id' => $this->medicine->id, 'quantity' => 2],
         ],
@@ -136,7 +133,24 @@ it('creates in house prescription as pending with selling price snapshot', funct
 
     expect($prescription->fulfillment_type)->toBe('in_house')
         ->and($prescription->status)->toBe('pending')
+        ->and($prescription->patient_id)->toBe($this->visit->patient_id)
+        ->and(Prescription::inHousePending()->count())->toBe(1)
         ->and((float) $prescription->total_amount)->toBe(100.0)
         ->and((float) $prescription->items->first()->unit_price)->toBe(50.0)
         ->and((float) $prescription->items->first()->total_price)->toBe(100.0);
+});
+
+it('ignores posted external fulfillment so the prescription still reaches POS', function () {
+    $this->post(route('visits.prescription', $this->visit), [
+        'fulfillment_type' => 'external',
+        'medicines' => [
+            ['medicine_id' => $this->medicine->id, 'quantity' => 2],
+        ],
+    ])->assertRedirect()->assertSessionHas('success');
+
+    $prescription = Prescription::first();
+
+    expect($prescription->fulfillment_type)->toBe('in_house')
+        ->and($prescription->status)->toBe('pending')
+        ->and($prescription->patient_id)->toBe($this->patient->id);
 });

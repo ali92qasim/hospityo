@@ -14,6 +14,14 @@ it('bills table has prescription_id column', function () {
     expect(Schema::connection('tenant')->hasColumn('bills', 'prescription_id'))->toBeTrue();
 });
 
+it('medicines strength column is nullable', function () {
+    $column = collect(Schema::connection('tenant')->getColumns('medicines'))
+        ->firstWhere('name', 'strength');
+
+    expect($column)->not->toBeNull()
+        ->and($column['nullable'])->toBeTrue();
+});
+
 it('prescriptions status accepts external value', function () {
     $driver = Schema::connection('tenant')->getConnection()->getDriverName();
 

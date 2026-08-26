@@ -20,7 +20,7 @@
             </div>
         </div>
 
-        <form id="doctor-create-form" data-landmark="doctor-create-form" action="{{ route('doctors.store') }}" method="POST" class="p-6" novalidate>
+        <form id="doctor-create-form" data-landmark="doctor-create-form" data-email-available-url="{{ route('doctors.email-available') }}" action="{{ route('doctors.store') }}" method="POST" class="p-6" novalidate>
             @csrf
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -59,8 +59,11 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
                     <input type="email" name="email" value="{{ old('email') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent {{ $errors->has('email') ? 'border-red-500' : '' }}"
                            required>
+                    @error('email')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="md:col-span-2">

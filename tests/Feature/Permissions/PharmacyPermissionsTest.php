@@ -91,3 +91,35 @@ it('allows medicine index with view medicines', function () {
     $this->get(route('medicines.index'))
         ->assertOk();
 });
+
+it('does not crash when opening a medicine show url', function () {
+    bindPharmacyTenant();
+
+    $tab = Unit::create([
+        'name' => 'TAB/CAP',
+        'abbreviation' => 'TAB',
+        'conversion_factor' => 1,
+        'type' => 'solid',
+        'is_active' => true,
+    ]);
+
+    $category = MedicineCategory::create(['code' => 'TAB', 'name' => 'Tablets', 'is_active' => true]);
+
+    $medicine = Medicine::create([
+        'name' => 'Show Url Medicine',
+        'sku' => 'SHOW-MED-001',
+        'category_id' => $category->id,
+        'base_unit_id' => $tab->id,
+        'dispensing_unit_id' => $tab->id,
+        'manage_stock' => false,
+        'status' => 'active',
+        'selling_price' => 50,
+    ]);
+
+    $this->actingAs(pharmacyPermissionUser(['view medicines']));
+
+    $this->get('/medicines/'.$medicine->id)
+        ->assertMethodNotAllowed();
+
+    expect(\Illuminate\Support\Facades\Route::has('medicines.show'))->toBeFalse();
+});
