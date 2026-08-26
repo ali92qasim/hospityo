@@ -144,6 +144,26 @@ it('quick registers emergency visit from patient list and opens workflow', funct
         ->assertSessionMissing('success');
 });
 
+it('emergency workflow back link goes to emergency listing not opd', function () {
+    $user = makeVisitUser(['view visits', 'create visits', 'edit visits']);
+
+    $this->actingAs($user)
+        ->post(route('visits.quick-register'), [
+            'patient_id' => $this->patient->id,
+            'visit_type' => 'emergency',
+        ]);
+
+    $visit = Visit::where('patient_id', $this->patient->id)->where('visit_type', 'emergency')->latest('id')->first();
+
+    $this->get(route('visits.workflow', $visit))
+        ->assertOk()
+        ->assertSee('data-landmark="workflow-back-to-list"', false)
+        ->assertSee('Back to Emergency', false)
+        ->assertSee('href="'.e(route('visits.index', ['visit_type' => 'emergency'])).'"', false)
+        ->assertDontSee('Back to OPD', false)
+        ->assertDontSee('Back to Visits', false);
+});
+
 it('edit visit page shows read only visit type badge not select', function () {
     $user = makeVisitUser(['view visits', 'edit visits']);
 

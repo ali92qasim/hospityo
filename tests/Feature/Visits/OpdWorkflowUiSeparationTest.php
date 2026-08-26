@@ -83,6 +83,8 @@ it('renders opd workflow with handler-driven ui flags', function () {
         ->assertDontSee('data-landmark="ipd-episode-sidebar"', false)
         ->assertDontSee('data-landmark="emergency-triage-banner"', false)
         ->assertSee('High Queue Priority')
+        ->assertSee('data-landmark="workflow-back-to-list"', false)
+        ->assertSee('Back to OPD', false)
         ->assertSee('Record Vital Signs')
         ->assertSee('Doctor Assignment')
         ->assertSee('Lab tests')

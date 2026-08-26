@@ -74,6 +74,8 @@ it('renders ipd workflow with handler-driven ui flags before admission', functio
         ->assertSee('data-landmark="ipd-clinical-feed"', false)
         ->assertDontSee('data-landmark="opd-workflow-layout"', false)
         ->assertSee('Print IPD Report')
+        ->assertSee('data-landmark="workflow-back-to-list"', false)
+        ->assertSee('Back to Admitted Patients', false)
         ->assertSee('Select Bed for Admission')
         ->assertDontSee('Record Vital Signs');
 });

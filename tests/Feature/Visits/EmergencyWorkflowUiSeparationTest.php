@@ -96,7 +96,11 @@ it('renders emergency workflow with handler-driven ui flags', function () {
         ->assertSee('Severe trauma')
         ->assertSee('Doctor Assignment')
         ->assertSee('Emergency Care')
-        ->assertDontSee('Order Investigations');
+        ->assertDontSee('Order Investigations')
+        ->assertSee('data-landmark="workflow-back-to-list"', false)
+        ->assertSee('Back to Emergency', false)
+        ->assertSee('href="'.e(route('visits.index', ['visit_type' => 'emergency'])).'"', false)
+        ->assertDontSee('Back to OPD', false);
 });
 
 it('emergency handler exposes show_emergency_ui and triage flags', function () {
