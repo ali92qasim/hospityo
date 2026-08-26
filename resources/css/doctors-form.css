@@ -67,3 +67,14 @@
 .flatpickr-time .flatpickr-am-pm {
     color: #374151 !important;
 }
+
+.just-validate-error-label {
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+select.border-red-500 + .select2 .select2-selection--single {
+    border-color: #ef4444 !important;
+}

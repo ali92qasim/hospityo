@@ -20,7 +20,7 @@
             </div>
         </div>
 
-        <form action="{{ route('doctors.store') }}" method="POST" class="p-6">
+        <form id="doctor-create-form" data-landmark="doctor-create-form" action="{{ route('doctors.store') }}" method="POST" class="p-6" novalidate>
             @csrf
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -34,7 +34,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                    <input type="text" name="name" value="{{ old('name') }}"
+                    <input type="text" name="name" value="{{ old('name') }}" maxlength="255"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
@@ -51,7 +51,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                    <input type="tel" name="phone" value="{{ old('phone') }}"
+                    <input type="tel" name="phone" value="{{ old('phone') }}" maxlength="20"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
                 </div>
@@ -79,7 +79,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Specialization *</label>
-                    <input type="text" name="specialization" value="{{ old('specialization') }}"
+                    <input type="text" name="specialization" value="{{ old('specialization') }}" maxlength="255"
                            placeholder="e.g., Cardiology, Neurology"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
@@ -87,7 +87,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Qualification *</label>
-                    <input type="text" name="qualification" value="{{ old('qualification') }}"
+                    <input type="text" name="qualification" value="{{ old('qualification') }}" maxlength="255"
                            placeholder="e.g., MBBS, MD"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                            required>
@@ -95,7 +95,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">PMDC Number</label>
-                    <input type="text" name="pmdc_number" value="{{ old('pmdc_number') }}"
+                    <input type="text" name="pmdc_number" value="{{ old('pmdc_number') }}" maxlength="50"
                            placeholder="e.g., 12345-A"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 </div>
@@ -124,6 +124,7 @@
                         </option>
                         @endforeach
                     </select>
+                    <div data-error-slot="department_id"></div>
                 </div>
 
                 <!-- Schedule Information -->

@@ -35,6 +35,7 @@
         "filepond-plugin-file-validate-type": "^1.2.9",
         "flatpickr": "^4.6.13",
         "jquery": "^4.0.0",
+        "just-validate": "^4.3.0",
         "select2": "^4.1.0-rc.0"
     }
 }

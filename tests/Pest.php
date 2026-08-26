@@ -31,7 +31,7 @@ uses()
             '--database' => 'tenant',
         ]);
     })
-    ->in('Feature/Accounting', 'Feature/HR', 'Feature/Billing', 'Feature/Lab', 'Feature/Imaging', 'Feature/Pharmacy', 'Feature/Visits', 'Feature/Navigation', 'Feature/Module', 'Feature/Permissions', 'Feature/Commands', 'Unit/Services');
+        ->in('Feature/Accounting', 'Feature/HR', 'Feature/Billing', 'Feature/Lab', 'Feature/Imaging', 'Feature/Pharmacy', 'Feature/Visits', 'Feature/Doctors', 'Feature/Navigation', 'Feature/Module', 'Feature/Permissions', 'Feature/Commands', 'Unit/Services');
 
 /*
 |--------------------------------------------------------------------------

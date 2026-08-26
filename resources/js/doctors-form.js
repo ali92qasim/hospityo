@@ -17,8 +17,7 @@ import flatpickr from 'flatpickr';
 // Centralized error handler
 function handlePluginError(pluginName, error) {
     const message = `${pluginName} initialization failed.`;
-    
-    // Use jQuery error mechanism
+
     if ($ && $.error) {
         $.error(message);
     } else {
@@ -26,18 +25,46 @@ function handlePluginError(pluginName, error) {
     }
 }
 
-// DOM Ready (jQuery way – best practice when using jQuery plugins)
-$(function () {
+const flatpickrConfig = {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: 'H:i',
+    time_24hr: true,
+    minuteIncrement: 15,
+};
 
-    /* ==============================
-       SELECT2 INITIALIZATION
-    ============================== */
+function initTimePicker(input, { defaultHour, defaultMinute, onChange }) {
+    if (!input || input._flatpickr) {
+        return;
+    }
+
+    try {
+        flatpickr(input, {
+            ...flatpickrConfig,
+            defaultHour,
+            defaultMinute,
+            onChange,
+        });
+    } catch (error) {
+        handlePluginError('Flatpickr', error);
+    }
+}
+
+$(function () {
+    const form = document.getElementById('doctor-create-form');
+    const validationReady = form
+        ? import('./doctor-create-validation.js').then(({ initDoctorCreateValidation }) =>
+            initDoctorCreateValidation(form)
+        )
+        : null;
+
+    const revalidate = (selector) => {
+        validationReady?.then((validator) => validator.revalidateField(selector));
+    };
 
     const $departmentSelect = $('select[name="department_id"]');
 
     if ($departmentSelect.length) {
-
-        // Ensure Select2 exists before using it
         if (typeof $.fn.select2 !== 'function') {
             handlePluginError('Select2', new Error('Select2 is not loaded properly.'));
             return;
@@ -47,50 +74,24 @@ $(function () {
             placeholder: 'Select Department',
             allowClear: true,
             width: '100%',
-            theme: 'default'
+            theme: 'default',
         });
 
+        $departmentSelect.on('change', () => revalidate('[name="department_id"]'));
     }
 
-    /* ==============================
-       FLATPICKR INITIALIZATION
-    ============================== */
+    initTimePicker(document.querySelector('input[name="shift_start"]'), {
+        defaultHour: 9,
+        defaultMinute: 0,
+        onChange: () => {
+            revalidate('[name="shift_start"]');
+            revalidate('[name="shift_end"]');
+        },
+    });
 
-    const shiftStartInput = document.querySelector('input[name="shift_start"]');
-    const shiftEndInput   = document.querySelector('input[name="shift_end"]');
-
-    const flatpickrConfig = {
-        enableTime: true,
-        noCalendar: true,
-        dateFormat: "H:i",
-        time_24hr: true,
-        minuteIncrement: 15
-    };
-
-    if (shiftStartInput) {
-        try {
-            if (shiftStartInput._flatpickr) return;
-            flatpickr(shiftStartInput, {
-                ...flatpickrConfig,
-                defaultHour: 9,
-                defaultMinute: 0
-            });
-        } catch (error) {
-            handlePluginError('Flatpickr (shift_start)', error);
-        }
-    }
-
-    if (shiftEndInput) {
-        try {
-            if (shiftEndInput._flatpickr) return;
-            flatpickr(shiftEndInput, {
-                ...flatpickrConfig,
-                defaultHour: 17,
-                defaultMinute: 0
-            });
-        } catch (error) {
-            handlePluginError('Flatpickr (shift_end)', error);
-        }
-    }
-
+    initTimePicker(document.querySelector('input[name="shift_end"]'), {
+        defaultHour: 17,
+        defaultMinute: 0,
+        onChange: () => revalidate('[name="shift_end"]'),
+    });
 });
