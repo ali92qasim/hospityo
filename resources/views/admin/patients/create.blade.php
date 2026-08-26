@@ -4,6 +4,10 @@
 @section('page-title', 'Add New Patient')
 @section('page-description', 'Register a new patient in the system')
 
+@push('styles')
+@vite(['resources/css/patients-form.css'])
+@endpush
+
 @section('content')
 <div class="max-w-4xl mx-auto">
     <div class="bg-white rounded-lg shadow-sm">

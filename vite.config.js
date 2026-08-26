@@ -9,6 +9,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/css/appointments-calendar.css',
                 'resources/css/doctors-form.css',
+                'resources/css/patients-form.css',
                 'resources/css/visits-form.css',
                 'resources/css/visit-workflow-ipd.css',
                 'resources/css/ot-calendar.css',

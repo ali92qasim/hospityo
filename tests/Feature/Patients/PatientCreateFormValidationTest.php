@@ -40,6 +40,16 @@ it('create patient form uses client validation hook matching store rules', funct
         ->assertDontSee('data-email-available-url', false);
 });
 
+it('registers patient create vite assets in the vite config', function () {
+    $blade = file_get_contents(resource_path('views/admin/patients/create.blade.php'));
+    $config = file_get_contents(base_path('vite.config.js'));
+
+    expect($blade)->toContain("@vite(['resources/css/patients-form.css'])")
+        ->and($blade)->toContain("@vite(['resources/js/patients-form.js'])")
+        ->and($config)->toContain("'resources/css/patients-form.css'")
+        ->and($config)->toContain("'resources/js/patients-form.js'");
+});
+
 it('store patient request rules stay aligned with client validation contract', function () {
     expect((new StorePatientRequest)->rules())->toBe([
         'name' => 'required|string|max:255',
