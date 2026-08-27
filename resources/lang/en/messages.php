@@ -41,7 +41,7 @@ return [
     'import' => 'Import',
     'download' => 'Download',
     'upload' => 'Upload',
-    
+
     // Navigation
     'patients' => 'Patients',
     'doctors' => 'Doctors',
@@ -73,7 +73,7 @@ return [
     'roles' => 'Roles',
     'permissions' => 'Permissions',
     'audit_logs' => 'Audit Logs',
-    
+
     // Patient Management
     'patient_records' => 'Patient Records',
     'add_new_patient' => 'Add New Patient',
@@ -100,7 +100,7 @@ return [
     'patient_history' => 'Patient History',
     'medical_history' => 'Medical History',
     'no_patients_found' => 'No patients found',
-    
+
     // Doctor Management
     'doctor_name' => 'Doctor Name',
     'specialization' => 'Specialization',
@@ -110,7 +110,7 @@ return [
     'available_days' => 'Available Days',
     'available_time' => 'Available Time',
     'no_doctors_found' => 'No doctors found',
-    
+
     // Appointments
     'schedule_appointment' => 'Schedule Appointment',
     'appointment_date' => 'Appointment Date',
@@ -122,7 +122,7 @@ return [
     'cancelled' => 'Cancelled',
     'completed' => 'Completed',
     'no_appointments_found' => 'No appointments found',
-    
+
     // Visits
     'visit_type' => 'Visit Type',
     'visit_date' => 'Visit Date',
@@ -135,7 +135,7 @@ return [
     'diagnosis' => 'Diagnosis',
     'prescription' => 'Prescription',
     'no_visits_found' => 'No visits found',
-    
+
     // Medicines
     'medicine_name' => 'Medicine Name',
     'generic_name' => 'Generic Name',
@@ -154,7 +154,7 @@ return [
     'low_stock' => 'Low Stock',
     'out_of_stock' => 'Out of Stock',
     'no_medicines_found' => 'No medicines found',
-    
+
     // Billing
     'bill_number' => 'Bill Number',
     'bill_date' => 'Bill Date',
@@ -170,7 +170,7 @@ return [
     'card' => 'Card',
     'bank_transfer' => 'Bank Transfer',
     'no_bills_found' => 'No bills found',
-    
+
     // Reports
     'daily_cash_register' => 'Daily Cash Register',
     'patient_visit_report' => 'Patient Visit Report',
@@ -188,7 +188,7 @@ return [
     'from_date' => 'From Date',
     'to_date' => 'To Date',
     'generate_report' => 'Generate Report',
-    
+
     // Messages
     'success' => 'Success',
     'error' => 'Error',
@@ -203,7 +203,7 @@ return [
     'no_data_found' => 'No data found',
     'loading' => 'Loading...',
     'please_wait' => 'Please wait...',
-    
+
     // Quick Actions
     'quick_actions' => 'Quick Actions',
     'add_new_patient' => 'Add New Patient',
@@ -217,7 +217,7 @@ return [
     'no_patient_with_phone' => 'No patient found with this phone number',
     'add_visit' => 'Add Visit',
     'view_history' => 'View History',
-    
+
     // Stats
     'total_patients' => 'Total Patients',
     'total_doctors' => 'Doctors',
@@ -225,7 +225,7 @@ return [
     'total_visits' => 'Visits',
     'total_appointments' => 'Appointments',
     'emergency_cases' => 'Emergency Cases',
-    
+
     // Assigned Patients (Doctor Dashboard)
     'assigned_patients' => 'Assigned Patients',
     'no_patients_assigned' => 'No patients assigned yet',
@@ -233,7 +233,7 @@ return [
     'consult' => 'Consult',
     'check' => 'Check',
     'mark_as_checked' => 'Mark this patient as checked?',
-    
+
     // Backup & Restore
     'backup_restore' => 'Backup & Restore',
     'backup_restore_description' => 'Create and manage system backups',
@@ -252,7 +252,7 @@ return [
     'no_backups_found' => 'No backups found',
     'create_first_backup' => 'Create your first backup to get started',
     'important_information' => 'Important Information',
-    'backup_info_1' => 'Full backup includes database and uploaded files',
+    'backup_info_1' => 'Database backups include this hospital\'s data plus related account records; full backups also include uploaded files',
     'backup_info_2' => 'Backups are stored in storage/app/backups directory',
     'backup_info_3' => 'Download backups regularly and store them in a safe location',
     'backup_warning' => 'Restoring a backup will overwrite current data. This action cannot be undone!',
