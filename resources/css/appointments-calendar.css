@@ -154,8 +154,27 @@
     display: none !important;
 }
 
-/* Calendar date hover */
-.fc-daygrid-day:hover {
+.just-validate-error-label {
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+select.border-red-500 + .select2 .select2-selection--single {
+    border-color: #ef4444 !important;
+}
+
+.fc .fc-daygrid-day.fc-day-past {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+}
+
+.fc .fc-daygrid-day.fc-day-past:hover {
+    cursor: not-allowed;
+}
+
+.fc .fc-daygrid-day.fc-day-past .fc-event {
     cursor: pointer;
 }
 

@@ -24,7 +24,7 @@
                     <option value="{{ $doctor->id }}">Dr. {{ $doctor->name }} - {{ $doctor->specialization }}</option>
                     @endforeach
                 </select>
-                <button onclick="openAppointmentModal()" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <button type="button" id="open-appointment-modal" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                     <i class="fas fa-plus mr-2"></i>
                     New Appointment
                 </button>
@@ -44,34 +44,36 @@
             <div class="p-6 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-semibold text-gray-800" id="modal-title">Schedule Appointment</h3>
-                    <button onclick="closeAppointmentModal()" class="text-gray-400 hover:text-gray-600">
+                    <button type="button" class="js-close-appointment-modal text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
             </div>
 
-            <form id="appointmentForm" class="p-6">
+            <form id="appointmentForm" class="p-6" data-landmark="appointment-form" novalidate>
                 @csrf
                 <input type="hidden" id="appointment_id" name="appointment_id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Patient *</label>
-                        <select name="patient_id" id="patient_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                        <select name="patient_id" id="patient_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                             <option value="">Select Patient</option>
                             @foreach($patients as $patient)
                             <option value="{{ $patient->id }}">{{ $patient->name }} ({{ $patient->patient_no }})</option>
                             @endforeach
                         </select>
+                        <div data-error-slot="patient_id"></div>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Doctor *</label>
-                        <select name="doctor_id" id="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" required>
+                        <select name="doctor_id" id="doctor_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                             <option value="">Select Doctor</option>
                             @foreach($doctors as $doctor)
                             <option value="{{ $doctor->id }}">Dr. {{ $doctor->name }} - {{ $doctor->specialization }}</option>
                             @endforeach
                         </select>
+                        <div data-error-slot="doctor_id"></div>
                     </div>
 
                     <div id="status-field" class="hidden">
@@ -86,7 +88,7 @@
 
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Appointment Date & Time *</label>
-                        <input type="text" name="appointment_datetime" id="appointment_datetime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="YYYY-MM-DD HH:MM" required>
+                        <input type="text" name="appointment_datetime" id="appointment_datetime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="YYYY-MM-DD HH:MM">
                     </div>
 
                     <div class="md:col-span-2">
@@ -101,7 +103,7 @@
                 </div>
 
                 <div class="flex justify-end space-x-4 mt-6 sticky bottom-0 bg-white pt-4 border-t border-gray-200">
-                    <button type="button" onclick="closeAppointmentModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    <button type="button" class="js-close-appointment-modal px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                         Cancel
                     </button>
                     <button type="submit" class="px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700">
@@ -112,6 +114,8 @@
         </div>
     </div>
 </div>
+
+<script type="application/json" id="doctor-schedules-data">@json($doctorSchedules)</script>
 
 @push('scripts')
 @vite(['resources/js/appointments-calendar.js'])

@@ -26,7 +26,14 @@ class AppointmentController extends Controller
     {
         $patients = Patient::all();
         $doctors = Doctor::where('status', 'active')->get();
-        return view('admin.appointments.create', compact('patients', 'doctors'));
+        $doctorSchedules = $doctors->map(fn (Doctor $doctor) => [
+            'id' => $doctor->id,
+            'available_days' => $doctor->available_days ?? [],
+            'shift_start' => $doctor->shift_start ? substr((string) $doctor->shift_start, 0, 5) : null,
+            'shift_end' => $doctor->shift_end ? substr((string) $doctor->shift_end, 0, 5) : null,
+        ])->values();
+
+        return view('admin.appointments.create', compact('patients', 'doctors', 'doctorSchedules'));
     }
 
     public function store(StoreAppointmentRequest $request): JsonResponse|RedirectResponse
@@ -96,6 +103,7 @@ class AppointmentController extends Controller
                     'extendedProps' => [
                         'patient' => $appointment->patient->name,
                         'doctor' => $appointment->doctor->name,
+                        'doctor_id' => $appointment->doctor_id,
                         'status' => $appointment->status,
                         'reason' => $appointment->reason,
                         'appointment' => $appointment,

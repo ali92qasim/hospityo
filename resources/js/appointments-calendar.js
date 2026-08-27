@@ -1,160 +1,300 @@
-// Import styles
 import '../css/appointments-calendar.css';
 
-// Import jQuery first
 import $ from 'jquery';
 
-// Expose globally BEFORE plugins
 window.$ = window.jQuery = $;
 
-// Import Select2 properly
 import select2 from 'select2';
 select2(window, $);
 
-// Import dependencies
 import { Calendar } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import flatpickr from 'flatpickr';
+import {
+    doctorScheduleMessage,
+    findDoctorSchedule,
+    formatLocalDateTime,
+    initAppointmentValidation,
+    isPastCalendarDate,
+    readDoctorSchedules,
+} from './appointments-validation.js';
 
-console.log('Appointments calendar module loaded');
-
-// Initialize calendar when DOM is ready (jQuery way)
-$(function() {
-    console.log('DOM ready, initializing calendar...');
-    
+$(function () {
     const calendarEl = document.getElementById('calendar');
-    
-    if (!calendarEl) {
-        console.warn('Calendar element not found');
+    const appointmentForm = document.getElementById('appointmentForm');
+
+    if (!calendarEl || !appointmentForm) {
         return;
     }
 
-    let calendar = new Calendar(calendarEl, {
+    let pastAppointmentLock = false;
+    let appointmentValidator = null;
+    let suppressFieldRevalidate = false;
+
+    const calendar = new Calendar(calendarEl, {
         plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
         editable: true,
         selectable: true,
         selectMirror: true,
         dayMaxEvents: true,
         weekends: true,
-        eventContent: function(arg) {
+        selectAllow: function (info) {
+            return !isPastCalendarDate(info.startStr);
+        },
+        eventContent: function (arg) {
             const props = arg.event.extendedProps;
             return {
-                html: `<div class="fc-event-pill">${props.patient || arg.event.title}</div>`
+                html: `<div class="fc-event-pill">${props.patient || arg.event.title}</div>`,
             };
         },
-        events: function(info, successCallback, failureCallback) {
+        events: function (info, successCallback, failureCallback) {
             const doctorId = $('#doctor-filter').val();
             let url = '/calendar/events?start=' + info.startStr + '&end=' + info.endStr;
             if (doctorId) {
                 url += '&doctor_id=' + doctorId;
             }
-            
+
             fetch(url)
-                .then(response => response.json())
-                .then(data => successCallback(data))
-                .catch(error => {
-                    console.error('Error fetching events:', error);
+                .then((response) => response.json())
+                .then((data) => successCallback(data))
+                .catch((error) => {
                     failureCallback(error);
                 });
         },
-        dateClick: function(info) {
+        dateClick: function (info) {
+            if (isPastCalendarDate(info.dateStr)) {
+                showNotification('Error', 'Appointments cannot be booked on a past date.', 'error');
+                return;
+            }
+
             openAppointmentModal();
             const datetime = info.dateStr + ' 09:00';
             if (window.flatpickrInstance) {
                 window.flatpickrInstance.setDate(datetime);
             }
+            appointmentValidator?.revalidateField('[name="appointment_datetime"]');
         },
-        eventClick: function(info) {
-            const appointmentId = info.event.id;
-            loadAppointmentData(appointmentId);
+        eventClick: function (info) {
+            loadAppointmentData(info.event.id);
         },
-        eventDrop: function(info) {
+        eventDrop: function (info) {
+            const message = dropConstraintMessage(info.event, info.oldEvent);
+            if (message) {
+                info.revert();
+                showNotification('Error', message, 'error');
+                return;
+            }
             updateAppointmentDateTime(info.event.id, info.event.start);
         },
-        eventResize: function(info) {
+        eventResize: function (info) {
+            const message = dropConstraintMessage(info.event, info.oldEvent);
+            if (message) {
+                info.revert();
+                showNotification('Error', message, 'error');
+                return;
+            }
             updateAppointmentDateTime(info.event.id, info.event.start);
-        }
+        },
     });
 
     calendar.render();
-    console.log('✓ Calendar rendered');
 
-    // Doctor filter change
-    $('#doctor-filter').on('change', function() {
+    $('#doctor-filter').on('change', function () {
         calendar.refetchEvents();
     });
 
-    // Initialize Select2 for patient and doctor dropdowns
     const $patientSelect = $('#patient_id');
     const $doctorSelect = $('#doctor_id');
-    
-    if ($patientSelect.length && $doctorSelect.length) {
-        // Ensure Select2 exists before using it
-        if (typeof $.fn.select2 !== 'function') {
-            console.error('Select2 is not loaded properly');
+
+    if ($patientSelect.length && $doctorSelect.length && typeof $.fn.select2 === 'function') {
+        $patientSelect.select2({
+            placeholder: 'Select Patient',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#appointmentModal'),
+        });
+
+        $doctorSelect.select2({
+            placeholder: 'Select Doctor',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#appointmentModal'),
+        });
+    }
+
+    const appointmentDatetimeInput = document.getElementById('appointment_datetime');
+
+    if (appointmentDatetimeInput) {
+        window.flatpickrInstance = flatpickr(appointmentDatetimeInput, {
+            enableTime: true,
+            dateFormat: 'Y-m-d H:i',
+            time_24hr: true,
+            minDate: 'today',
+            minuteIncrement: 15,
+            allowInput: false,
+            disable: [isUnavailablePickerDate],
+            onChange: function () {
+                appointmentValidator?.revalidateField('[name="appointment_datetime"]');
+            },
+        });
+    }
+
+    $patientSelect.on('change', function () {
+        if (pastAppointmentLock || suppressFieldRevalidate) {
+            return;
+        }
+        appointmentValidator?.revalidateField('[name="patient_id"]');
+    });
+
+    $doctorSelect.on('change', function () {
+        if (pastAppointmentLock) {
             return;
         }
 
-        try {
-            $patientSelect.select2({
-                placeholder: 'Select Patient',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#appointmentModal')
-            });
-            
-            $doctorSelect.select2({
-                placeholder: 'Select Doctor',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#appointmentModal')
-            });
-            
-            console.log('✓ Select2 initialized on patient and doctor dropdowns');
-        } catch (error) {
-            console.error('Select2 initialization error:', error);
+        applyDoctorScheduleToPicker();
+
+        if (suppressFieldRevalidate) {
+            return;
         }
-    } else {
-        console.warn('Patient or Doctor select not found');
+
+        appointmentValidator?.revalidateField('[name="doctor_id"]');
+        appointmentValidator?.revalidateField('[name="appointment_datetime"]');
+    });
+
+    appointmentValidator = initAppointmentValidation(appointmentForm, {
+        isPastAppointmentLock: () => pastAppointmentLock,
+        onSuccess: submitAppointment,
+    });
+
+    $('#open-appointment-modal').on('click', function () {
+        openAppointmentModal();
+    });
+
+    $('.js-close-appointment-modal').on('click', function () {
+        closeAppointmentModal();
+    });
+
+    $('#appointmentModal').on('click', function (e) {
+        if (e.target === this || $(e.target).hasClass('flex')) {
+            closeAppointmentModal();
+        }
+    });
+
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && !$('#appointmentModal').hasClass('hidden')) {
+            closeAppointmentModal();
+        }
+    });
+
+    function currentDoctorSchedule() {
+        return findDoctorSchedule(readDoctorSchedules(), $doctorSelect.val());
     }
 
-    // Initialize Flatpickr for appointment datetime
-    const appointmentDatetimeInput = document.getElementById('appointment_datetime');
-    
-    if (appointmentDatetimeInput) {
-        try {
-            window.flatpickrInstance = flatpickr(appointmentDatetimeInput, {
-                enableTime: true,
-                dateFormat: "Y-m-d H:i",
-                time_24hr: true,
-                minDate: "today",
-                minuteIncrement: 15,
-                allowInput: true
-            });
-            console.log('✓ Flatpickr initialized on appointment_datetime');
-        } catch (error) {
-            console.error('Flatpickr initialization error:', error);
+    function isUnavailablePickerDate(date) {
+        const schedule = currentDoctorSchedule();
+
+        if (!schedule) {
+            return false;
         }
-    } else {
-        console.warn('Appointment datetime input not found');
+
+        const days = Array.isArray(schedule.available_days)
+            ? schedule.available_days.filter(Boolean)
+            : [];
+
+        if (days.length === 0) {
+            return true;
+        }
+
+        const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+        return !days.includes(weekday);
     }
 
-    // Form submission
-    $('#appointmentForm').on('submit', function(e) {
-        e.preventDefault();
-        
+    function applyDoctorScheduleToPicker() {
+        if (!window.flatpickrInstance) {
+            return;
+        }
+
+        const schedule = currentDoctorSchedule();
+
+        window.flatpickrInstance.set('disable', [isUnavailablePickerDate]);
+
+        if (schedule?.shift_start && schedule?.shift_end) {
+            window.flatpickrInstance.set('minTime', String(schedule.shift_start).slice(0, 5));
+            window.flatpickrInstance.set('maxTime', String(schedule.shift_end).slice(0, 5));
+        } else {
+            window.flatpickrInstance.set('minTime', null);
+            window.flatpickrInstance.set('maxTime', null);
+        }
+    }
+
+    function dropConstraintMessage(event, oldEvent) {
+        if (oldEvent?.start && isPastCalendarDate(formatLocalDateTime(oldEvent.start))) {
+            return 'Past appointments can only update status and notes.';
+        }
+
+        const datetime = formatLocalDateTime(event.start);
+        if (isPastCalendarDate(datetime)) {
+            return 'Appointments cannot be booked on a past date.';
+        }
+
+        const doctorId = event.extendedProps.doctor_id;
+        const schedule = findDoctorSchedule(readDoctorSchedules(), doctorId);
+
+        return doctorScheduleMessage(schedule, datetime);
+    }
+
+    function setPastAppointmentLock(locked) {
+        pastAppointmentLock = Boolean(locked);
+        $('#patient_id, #doctor_id').next('.select2').toggleClass('pointer-events-none opacity-60', pastAppointmentLock);
+        $('#appointment_datetime').toggleClass('bg-gray-50', pastAppointmentLock);
+
+        if (window.flatpickrInstance) {
+            window.flatpickrInstance.set('clickOpens', !pastAppointmentLock);
+            window.flatpickrInstance.set('minDate', pastAppointmentLock ? null : 'today');
+            window.flatpickrInstance.set('allowInput', false);
+        }
+    }
+
+    function openAppointmentModal() {
+        setPastAppointmentLock(false);
+        suppressFieldRevalidate = true;
+        $('#appointmentModal').removeClass('hidden');
+        $('#appointment_id').val('');
+        $('#appointmentForm')[0].reset();
+        $('#patient_id, #doctor_id').val(null).trigger('change');
+        $('#status-field').addClass('hidden');
+        $('#modal-title').text('Schedule Appointment');
+        $('#submit-text').text('Schedule Appointment');
+        applyDoctorScheduleToPicker();
+        if (window.flatpickrInstance) {
+            window.flatpickrInstance.clear();
+        }
+        suppressFieldRevalidate = false;
+    }
+
+    function closeAppointmentModal() {
+        suppressFieldRevalidate = true;
+        $('#appointmentModal').addClass('hidden');
+        $('#appointmentForm')[0].reset();
+        $('#patient_id, #doctor_id').val(null).trigger('change');
+        setPastAppointmentLock(false);
+        suppressFieldRevalidate = false;
+    }
+
+    function submitAppointment() {
         const appointmentId = $('#appointment_id').val();
         const url = appointmentId ? `/appointments/${appointmentId}` : '/appointments';
         const method = appointmentId ? 'PUT' : 'POST';
-        
+
         const formData = {
             patient_id: $('#patient_id').val(),
             doctor_id: $('#doctor_id').val(),
@@ -162,7 +302,7 @@ $(function() {
             reason: $('#reason').val(),
             notes: $('#notes').val(),
             status: $('#status').val() || 'scheduled',
-            _token: $('input[name="_token"]').val()
+            _token: $('input[name="_token"]').val(),
         };
 
         if (method === 'PUT') {
@@ -174,67 +314,24 @@ $(function() {
             method: 'POST',
             data: formData,
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success: function(response) {
+            success: function () {
                 closeAppointmentModal();
                 calendar.refetchEvents();
                 showNotification('Success', 'Appointment saved successfully', 'success');
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 const errors = xhr.responseJSON?.errors;
                 if (errors) {
                     let errorMessage = '';
-                    Object.values(errors).forEach(error => {
+                    Object.values(errors).forEach((error) => {
                         errorMessage += error[0] + '\n';
                     });
                     showNotification('Error', errorMessage, 'error');
                 } else {
                     showNotification('Error', 'Failed to save appointment', 'error');
                 }
-            }
+            },
         });
-    });
-
-    // Close modal when clicking the backdrop (outside the white box)
-    $('#appointmentModal').on('click', function(e) {
-        // Only close if the click is directly on the overlay or the flex wrapper, not the form content
-        if (e.target === this || $(e.target).hasClass('flex')) {
-            closeAppointmentModal();
-        }
-    });
-
-    // Close modal on Escape key
-    $(document).on('keydown', function(e) {
-        if (e.key === 'Escape' && !$('#appointmentModal').hasClass('hidden')) {
-            closeAppointmentModal();
-        }
-    });
-
-    // Make functions globally available
-    window.openAppointmentModal = openAppointmentModal;
-    window.closeAppointmentModal = closeAppointmentModal;
-    window.loadAppointmentData = loadAppointmentData;
-    window.updateAppointmentDateTime = updateAppointmentDateTime;
-    window.showNotification = showNotification;
-    
-    function openAppointmentModal() {
-        $('#appointmentModal').removeClass('hidden');
-        $('#appointment_id').val('');
-        $('#appointmentForm')[0].reset();
-        $('#patient_id, #doctor_id').val(null).trigger('change');
-        $('#status-field').addClass('hidden');
-        $('#modal-title').text('Schedule Appointment');
-        $('#submit-text').text('Schedule Appointment');
-        // Restore minDate for new appointments
-        if (window.flatpickrInstance) {
-            window.flatpickrInstance.set('minDate', 'today');
-            window.flatpickrInstance.clear();
-        }
-    }
-
-    function closeAppointmentModal() {
-        $('#appointmentModal').addClass('hidden');
-        $('#appointmentForm')[0].reset();
-        $('#patient_id, #doctor_id').val(null).trigger('change');
     }
 
     function loadAppointmentData(appointmentId) {
@@ -242,14 +339,17 @@ $(function() {
             url: `/appointments/${appointmentId}`,
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success: function(appointment) {
+            success: function (appointment) {
+                suppressFieldRevalidate = true;
                 $('#appointment_id').val(appointment.id);
+                setPastAppointmentLock(isPastCalendarDate(appointment.appointment_datetime));
                 $('#patient_id').val(appointment.patient_id).trigger('change');
                 $('#doctor_id').val(appointment.doctor_id).trigger('change');
                 if (window.flatpickrInstance && appointment.appointment_datetime) {
-                    // Remove minDate restriction when editing so past dates can be shown
-                    window.flatpickrInstance.set('minDate', null);
                     window.flatpickrInstance.setDate(appointment.appointment_datetime);
+                }
+                if (!pastAppointmentLock) {
+                    applyDoctorScheduleToPicker();
                 }
                 $('#reason').val(appointment.reason || '');
                 $('#notes').val(appointment.notes || '');
@@ -258,16 +358,17 @@ $(function() {
                 $('#modal-title').text('Edit Appointment');
                 $('#submit-text').text('Update Appointment');
                 $('#appointmentModal').removeClass('hidden');
+                suppressFieldRevalidate = false;
             },
-            error: function() {
+            error: function () {
                 showNotification('Error', 'Failed to load appointment data', 'error');
-            }
+            },
         });
     }
 
     function updateAppointmentDateTime(appointmentId, newDate) {
-        const datetime = newDate.toISOString().slice(0, 16).replace('T', ' ');
-        
+        const datetime = formatLocalDateTime(newDate);
+
         $.ajax({
             url: `/appointments/${appointmentId}`,
             method: 'POST',
@@ -275,15 +376,17 @@ $(function() {
             data: {
                 _method: 'PUT',
                 appointment_datetime: datetime,
-                _token: $('input[name="_token"]').val()
+                _token: $('input[name="_token"]').val(),
             },
-            success: function() {
+            success: function () {
                 showNotification('Success', 'Appointment time updated', 'success');
             },
-            error: function() {
-                showNotification('Error', 'Failed to update appointment time', 'error');
+            error: function (xhr) {
+                const errors = xhr.responseJSON?.errors;
+                const message = errors ? Object.values(errors)[0][0] : 'Failed to update appointment time';
+                showNotification('Error', message, 'error');
                 calendar.refetchEvents();
-            }
+            },
         });
     }
 
