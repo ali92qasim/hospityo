@@ -13,6 +13,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import flatpickr from 'flatpickr';
 import {
+    availableDoctorIds,
     doctorScheduleMessage,
     findDoctorSchedule,
     formatLocalDateTime,
@@ -132,6 +133,13 @@ $(function () {
 
     const $patientSelect = $('#patient_id');
     const $doctorSelect = $('#doctor_id');
+    const $allDoctorOptions = $doctorSelect.find('option').clone();
+    const doctorSelect2Config = {
+        placeholder: 'Select Doctor',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#appointmentModal'),
+    };
 
     if ($patientSelect.length && $doctorSelect.length && typeof $.fn.select2 === 'function') {
         $patientSelect.select2({
@@ -141,12 +149,7 @@ $(function () {
             dropdownParent: $('#appointmentModal'),
         });
 
-        $doctorSelect.select2({
-            placeholder: 'Select Doctor',
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#appointmentModal'),
-        });
+        $doctorSelect.select2(doctorSelect2Config);
     }
 
     const appointmentDatetimeInput = document.getElementById('appointment_datetime');
@@ -159,6 +162,7 @@ $(function () {
                 allowInput: false,
                 disable: [isUnavailablePickerDate],
                 onChange: function () {
+                    filterDoctorOptions();
                     appointmentValidator?.revalidateField('[name="appointment_datetime"]');
                 },
             }),
@@ -209,6 +213,48 @@ $(function () {
 
     function currentDoctorSchedule() {
         return findDoctorSchedule(readDoctorSchedules(), $doctorSelect.val());
+    }
+
+    function filterDoctorOptions() {
+        const datetime = String($('#appointment_datetime').val() || '').trim();
+        const availableIds = new Set(
+            availableDoctorIds(readDoctorSchedules(), datetime).map((id) => Number(id)),
+        );
+        const selectedId = $doctorSelect.val();
+        const keepSelected = Boolean($('#appointment_id').val());
+
+        $doctorSelect.empty();
+
+        $allDoctorOptions.each(function () {
+            if (!this.value) {
+                $doctorSelect.append($(this).clone());
+                return;
+            }
+
+            const available = availableIds.has(Number(this.value));
+            const retainAssigned = keepSelected && String(this.value) === String(selectedId);
+
+            if (available || retainAssigned) {
+                $doctorSelect.append($(this).clone());
+            }
+        });
+
+        if (selectedId && $doctorSelect.find('option').filter(function () {
+            return String(this.value) === String(selectedId);
+        }).length) {
+            $doctorSelect.val(selectedId);
+        } else if (selectedId) {
+            $doctorSelect.val(null);
+        }
+
+        if (typeof $.fn.select2 === 'function' && $doctorSelect.hasClass('select2-hidden-accessible')) {
+            $doctorSelect.select2('destroy');
+            $doctorSelect.select2(doctorSelect2Config);
+        }
+
+        if (selectedId && !$doctorSelect.val()) {
+            $doctorSelect.trigger('change');
+        }
     }
 
     function escapeHtml(value) {
@@ -397,6 +443,7 @@ $(function () {
         if (window.flatpickrInstance) {
             window.flatpickrInstance.clear();
         }
+        filterDoctorOptions();
         suppressFieldRevalidate = false;
     }
 
@@ -467,6 +514,7 @@ $(function () {
                 if (window.flatpickrInstance && appointment.appointment_datetime) {
                     window.flatpickrInstance.setDate(appointment.appointment_datetime);
                 }
+                filterDoctorOptions();
                 if (!pastAppointmentLock) {
                     applyDoctorScheduleToPicker();
                 }

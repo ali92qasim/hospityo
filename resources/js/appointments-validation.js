@@ -75,6 +75,54 @@ export function findDoctorSchedule(schedules, doctorId) {
     return schedules.find((schedule) => Number(schedule.id) === Number(doctorId)) || null;
 }
 
+export function isDoctorListedForDatetime(schedule, datetimeStr) {
+    if (!schedule) {
+        return false;
+    }
+
+    const days = Array.isArray(schedule.available_days)
+        ? schedule.available_days.filter((day) => typeof day === 'string' && day !== '')
+        : [];
+
+    if (days.length === 0) {
+        return false;
+    }
+
+    const date = parseAppointmentDateOrDatetime(datetimeStr);
+
+    if (!date) {
+        return false;
+    }
+
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+    if (!days.includes(weekday)) {
+        return false;
+    }
+
+    if (!hasClockTime(datetimeStr)) {
+        return true;
+    }
+
+    const minutes = (date.getHours() * 60) + date.getMinutes();
+    const start = timeToMinutes(schedule.shift_start);
+    const end = timeToMinutes(schedule.shift_end);
+
+    return minutes >= start && minutes <= end;
+}
+
+export function availableDoctorIds(schedules, datetimeStr, now = new Date()) {
+    if (!Array.isArray(schedules)) {
+        return [];
+    }
+
+    const value = String(datetimeStr || '').trim() || localDatePart(now);
+
+    return schedules
+        .filter((schedule) => isDoctorListedForDatetime(schedule, value))
+        .map((schedule) => schedule.id);
+}
+
 const OUTSIDE_HOURS_PREFIX = "The selected time is outside the doctor's availability";
 
 export function formatShiftClock(time) {
@@ -123,6 +171,28 @@ export function doctorScheduleMessage(schedule, datetimeStr) {
     }
 
     return null;
+}
+
+function hasClockTime(value) {
+    return /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(String(value || '').trim());
+}
+
+function parseAppointmentDateOrDatetime(value) {
+    const timed = parseAppointmentDatetime(value);
+
+    if (timed) {
+        return timed;
+    }
+
+    const match = String(value || '').trim().match(/^(\d{4}-\d{2}-\d{2})/);
+
+    if (!match) {
+        return null;
+    }
+
+    const [year, month, day] = match[1].split('-').map(Number);
+
+    return new Date(year, month - 1, day);
 }
 
 function parseAppointmentDatetime(value) {

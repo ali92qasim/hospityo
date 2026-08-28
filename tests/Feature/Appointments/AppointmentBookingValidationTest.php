@@ -178,6 +178,22 @@ it('appointment client validator uses just-validate and doctor schedule checks',
         ->and($js)->toContain("The selected time is outside the doctor's availability");
 });
 
+it('does not list a sunday-only doctor when booking on friday', function () {
+    exec('node '.escapeshellarg(base_path('tests/js/available-doctor-ids.mjs')), $output, $code);
+
+    expect($code)->toBe(0, implode("\n", $output));
+});
+
+it('rebuilds the booking doctor dropdown so unavailable doctors are not listed', function () {
+    $js = file_get_contents(resource_path('js/appointments-calendar.js'));
+
+    expect($js)->toContain('availableDoctorIds')
+        ->and($js)->toContain('function filterDoctorOptions')
+        ->and($js)->toContain('filterDoctorOptions()')
+        ->and($js)->toContain('$allDoctorOptions')
+        ->and($js)->toContain('$doctorSelect.empty()');
+});
+
 it('calendar events include appointment details for tooltips', function () {
     $appointment = Appointment::create(appointmentPayload([
         'appointment_datetime' => '2026-08-31 10:00:00',
