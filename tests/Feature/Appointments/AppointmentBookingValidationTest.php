@@ -184,14 +184,26 @@ it('does not list a sunday-only doctor when booking on friday', function () {
     expect($code)->toBe(0, implode("\n", $output));
 });
 
+it('schedule appointment modal defaults datetime to now and filters doctors by available days', function () {
+    $js = file_get_contents(resource_path('js/appointments-calendar.js'));
+    $open = strpos($js, 'function openAppointmentModal');
+    $close = strpos($js, 'function closeAppointmentModal');
+    $openBody = substr($js, $open, $close - $open);
+
+    expect($openBody)->toContain('formatLocalDateTime(new Date())')
+        ->and($openBody)->not->toContain('window.flatpickrInstance.clear()')
+        ->and($openBody)->toContain('filterDoctorOptions()');
+});
+
 it('rebuilds the booking doctor dropdown so unavailable doctors are not listed', function () {
     $js = file_get_contents(resource_path('js/appointments-calendar.js'));
+    $filter = strpos($js, 'function filterDoctorOptions');
+    $next = strpos($js, 'function escapeHtml');
+    $body = substr($js, $filter, $next - $filter);
 
     expect($js)->toContain('availableDoctorIds')
-        ->and($js)->toContain('function filterDoctorOptions')
-        ->and($js)->toContain('filterDoctorOptions()')
-        ->and($js)->toContain('$allDoctorOptions')
-        ->and($js)->toContain('$doctorSelect.empty()');
+        ->and($body)->toContain('$allDoctorOptions')
+        ->and(strpos($body, "select2('destroy')"))->toBeLessThan(strpos($body, '$doctorSelect.empty()'));
 });
 
 it('calendar events include appointment details for tooltips', function () {

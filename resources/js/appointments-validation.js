@@ -100,15 +100,7 @@ export function isDoctorListedForDatetime(schedule, datetimeStr) {
         return false;
     }
 
-    if (!hasClockTime(datetimeStr)) {
-        return true;
-    }
-
-    const minutes = (date.getHours() * 60) + date.getMinutes();
-    const start = timeToMinutes(schedule.shift_start);
-    const end = timeToMinutes(schedule.shift_end);
-
-    return minutes >= start && minutes <= end;
+    return true;
 }
 
 export function availableDoctorIds(schedules, datetimeStr, now = new Date()) {
@@ -171,10 +163,6 @@ export function doctorScheduleMessage(schedule, datetimeStr) {
     }
 
     return null;
-}
-
-function hasClockTime(value) {
-    return /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(String(value || '').trim());
 }
 
 function parseAppointmentDateOrDatetime(value) {

@@ -222,6 +222,11 @@ $(function () {
         );
         const selectedId = $doctorSelect.val();
         const keepSelected = Boolean($('#appointment_id').val());
+        const useSelect2 = typeof $.fn.select2 === 'function' && $doctorSelect.hasClass('select2-hidden-accessible');
+
+        if (useSelect2) {
+            $doctorSelect.select2('destroy');
+        }
 
         $doctorSelect.empty();
 
@@ -247,8 +252,7 @@ $(function () {
             $doctorSelect.val(null);
         }
 
-        if (typeof $.fn.select2 === 'function' && $doctorSelect.hasClass('select2-hidden-accessible')) {
-            $doctorSelect.select2('destroy');
+        if (typeof $.fn.select2 === 'function') {
             $doctorSelect.select2(doctorSelect2Config);
         }
 
@@ -441,7 +445,7 @@ $(function () {
         $('#submit-text').text('Schedule Appointment');
         applyDoctorScheduleToPicker();
         if (window.flatpickrInstance) {
-            window.flatpickrInstance.clear();
+            window.flatpickrInstance.setDate(formatLocalDateTime(new Date()), true);
         }
         filterDoctorOptions();
         suppressFieldRevalidate = false;
