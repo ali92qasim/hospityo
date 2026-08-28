@@ -31,6 +31,13 @@ export function openWorkflowAccordionSection(sectionId, { scroll = true } = {}) 
         return false;
     }
 
+    if (sectionId) {
+        const section = root.querySelector(`[data-workflow-section="${sectionId}"]`);
+        if (!section) {
+            return false;
+        }
+    }
+
     root.querySelectorAll('[data-workflow-section]').forEach((section) => {
         const id = section.dataset.workflowSection;
         setSectionOpen(root, id, sectionId !== '' && id === sectionId);
@@ -41,11 +48,7 @@ export function openWorkflowAccordionSection(sectionId, { scroll = true } = {}) 
     }
 
     const section = root.querySelector(`[data-workflow-section="${sectionId}"]`);
-    if (!section) {
-        return false;
-    }
-
-    if (scroll) {
+    if (scroll && section) {
         section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
@@ -71,14 +74,14 @@ export function initWorkflowAccordion(root) {
                 setSectionOpen(root, sectionId, false);
             } else {
                 openWorkflowAccordionSection(sectionId, { scroll: false });
+                const layout = document.getElementById('visit-workflow');
+                if (layout?.dataset.workflowLayout === 'ipd' && typeof window.switchVisitWorkflowTab === 'function') {
+                    window.switchVisitWorkflowTab(sectionId);
+                }
             }
         });
     });
 
-    const initial = root.dataset.initialSection;
-    if (initial) {
-        openWorkflowAccordionSection(initial, { scroll: false });
-    }
 }
 
 window.openWorkflowAccordionSection = openWorkflowAccordionSection;

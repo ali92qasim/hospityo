@@ -57,6 +57,7 @@
 .select2-dropdown {
     border-color: #d1d5db;
     border-radius: 0.5rem;
+    z-index: 80;
 }
 
 /* Select2 single-select styling for prescription form */

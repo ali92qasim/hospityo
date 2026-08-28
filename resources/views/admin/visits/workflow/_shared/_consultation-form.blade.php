@@ -8,6 +8,7 @@
 
         @php $expandPrimary = $expandPrimary ?? false; @endphp
 
+        <div data-consultation-tabs>
         <div class="border border-gray-200 rounded-lg mb-4">
             <button type="button" onclick="toggleAccordion('complaints')" class="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 flex justify-between items-center">
                 <span class="font-medium text-gray-800">Presenting Complaints</span>
@@ -111,6 +112,7 @@
         @elseif($workflowData['show_emergency_ui'] ?? false)
             @include('admin.visits.workflow.emergency._care')
         @endif
+        </div>
 
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">Next Visit Date (Optional)</label>

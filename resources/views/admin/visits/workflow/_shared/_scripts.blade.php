@@ -4,7 +4,8 @@ let itemIndex = 1;
 let testRowIndex = 1;
 
 function showTab(tabName) {
-    if (typeof window.openWorkflowAccordionSection === 'function' && window.openWorkflowAccordionSection(tabName)) {
+    if (typeof window.switchVisitWorkflowTab === 'function') {
+        window.switchVisitWorkflowTab(tabName);
         activeTab = tabName;
         return;
     }
@@ -15,9 +16,11 @@ function showTab(tabName) {
         content.classList.add('hidden');
     });
 
-    document.querySelectorAll('.tab-button, .workflow-action-button').forEach(button => {
-        button.classList.remove('border-medical-blue', 'text-medical-blue', 'bg-medical-light');
+    document.querySelectorAll('.tab-button, .workflow-action-button, [data-workflow-panel]').forEach(button => {
+        button.classList.remove('border-medical-blue', 'text-medical-blue', 'bg-medical-light', 'bg-purple-50');
         button.classList.add('border-transparent', 'text-gray-500');
+        button.removeAttribute('aria-current');
+        button.setAttribute('aria-selected', 'false');
     });
 
     const content = document.getElementById(tabName + '-content');
@@ -30,11 +33,15 @@ function showTab(tabName) {
     if (activeTabButton) {
         activeTabButton.classList.remove('border-transparent', 'text-gray-500');
         activeTabButton.classList.add('border-medical-blue', 'text-medical-blue');
+        activeTabButton.setAttribute('aria-current', 'page');
+        activeTabButton.setAttribute('aria-selected', 'true');
     }
 
     document.querySelectorAll(`[data-workflow-panel="${tabName}"]`).forEach(button => {
         button.classList.remove('border-transparent', 'text-gray-500');
-        button.classList.add('border-medical-blue', 'text-medical-blue', 'bg-medical-light');
+        button.classList.add('border-medical-blue', 'text-medical-blue', 'bg-purple-50');
+        button.setAttribute('aria-current', 'page');
+        button.setAttribute('aria-selected', 'true');
     });
 }
 
@@ -64,46 +71,33 @@ function addItem() {
 }
 
 function addTestRow(kind = 'lab') {
-    const tbody = document.getElementById(`${kind}-test-rows`);
-    if (!tbody) {
+    if (typeof window.addVisitWorkflowTestRow === 'function') {
+        window.addVisitWorkflowTestRow(kind);
         return;
     }
 
-    const form = document.getElementById(`${kind}-tests-form`);
-    const itemField = form?.dataset.itemField || 'lab_test_id';
-    const firstRow = tbody.querySelector('.test-row');
-    const testSelect = firstRow.querySelector(`select[name*="${itemField}"]`);
-    const testOptions = testSelect.innerHTML;
-    const nextIndex = tbody.querySelectorAll('.test-row').length;
+    const tbody = document.getElementById(`${kind}-test-rows`);
+    const template = document.getElementById(`${kind}-test-row-template`);
+    if (!tbody || !template?.content) {
+        return;
+    }
 
-    const newRow = document.createElement('tr');
-    newRow.className = 'test-row border-b border-gray-100 hover:bg-gray-25';
-    newRow.innerHTML = `
-        <td class="py-3 pr-4">
-            <select name="tests[${nextIndex}][${itemField}]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
-                ${testOptions}
-            </select>
-        </td>
-        <td class="py-3 px-3 text-center">
-            <input type="number" name="tests[${nextIndex}][quantity]" value="1" min="1" max="10" class="w-full px-2 py-2 text-sm text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" required>
-        </td>
-        <td class="py-3 px-3">
-            <select name="tests[${nextIndex}][priority]" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors priority-select" required>
-                <option value="routine">Routine</option>
-                <option value="urgent">Urgent</option>
-                <option value="stat">STAT</option>
-            </select>
-        </td>
-        <td class="py-3 px-3">
-            <input type="text" name="tests[${nextIndex}][clinical_notes]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-medical-blue transition-colors" placeholder="Optional notes...">
-        </td>
-        <td class="py-3 text-center">
-            <button type="button" onclick="removeTestRow(this, '${kind}')" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors" title="Remove test">
-                <i class="fas fa-times"></i>
-            </button>
-        </td>
-    `;
+    const nextIndex = tbody.querySelectorAll('.test-row').length;
+    const clone = template.content.cloneNode(true);
+    const newRow = clone.querySelector('tr');
+    if (!newRow) {
+        return;
+    }
+
+    newRow.querySelectorAll('[name]').forEach((el) => {
+        el.name = el.name.replaceAll('__INDEX__', String(nextIndex));
+    });
+
     tbody.appendChild(newRow);
+    const itemSelect = newRow.querySelector('.investigation-item-select');
+    if (itemSelect) {
+        itemSelect.value = '';
+    }
 
     if (typeof window.initVisitWorkflowSelect2 === 'function') {
         window.initVisitWorkflowSelect2(newRow);
@@ -117,7 +111,20 @@ function removeTestRow(button, kind = 'lab') {
     const tbody = document.getElementById(`${kind}-test-rows`);
     const rows = tbody.querySelectorAll('.test-row');
     if (rows.length > 1) {
-        button.closest('.test-row').remove();
+        const row = button.closest('.test-row');
+        if (window.jQuery) {
+            window.jQuery(row).find('select').each(function () {
+                const $select = window.jQuery(this);
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    try {
+                        $select.select2('destroy');
+                    } catch (error) {
+                        // Ignore.
+                    }
+                }
+            });
+        }
+        row.remove();
         updateRemoveButtons(kind);
         updateTestCount(kind);
     }

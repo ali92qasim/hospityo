@@ -46,7 +46,7 @@
                 </button>
             </div>
 
-            <div class="overflow-x-auto">
+            <div>
                 <table class="w-full">
                     <thead>
                         <tr class="text-xs font-semibold text-gray-600 uppercase tracking-wider border-b-2 border-gray-200">
@@ -60,24 +60,15 @@
                     <tbody id="{{ $rowsId }}" class="test-rows" data-kind="{{ $kind }}">
                         <tr class="test-row border-b border-gray-100">
                             <td class="py-3 pr-4">
-                                <select name="tests[0][{{ $itemField }}]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md" required>
-                                    <option value="">Select...</option>
-                                    @foreach($grouped as $cat => $catInvestigations)
-                                        <optgroup label="{{ $categoryLabels[$cat] ?? ucwords(str_replace('-', ' ', $cat)) }}">
-                                            @foreach($catInvestigations as $investigation)
-                                                <option value="{{ $investigation->id }}">
-                                                    {{ $investigation->name }} - {{ currency_symbol() }}{{ number_format($investigation->price, 0) }}
-                                                </option>
-                                            @endforeach
-                                        </optgroup>
-                                    @endforeach
+                                <select name="tests[0][{{ $itemField }}]" class="investigation-item-select w-full px-3 py-2 text-sm border border-gray-300 rounded-md" required>
+                                    @include('admin.visits.workflow.opd._investigation-options')
                                 </select>
                             </td>
                             <td class="py-3 px-3 text-center">
                                 <input type="number" name="tests[0][quantity]" value="1" min="1" max="10" class="w-full px-2 py-2 text-sm text-center border border-gray-300 rounded-md" required>
                             </td>
                             <td class="py-3 px-3">
-                                <select name="tests[0][priority]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md" required>
+                                <select name="tests[0][priority]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md priority-select" required>
                                     <option value="routine">Routine</option>
                                     <option value="urgent">Urgent</option>
                                     <option value="stat">STAT</option>
@@ -95,6 +86,34 @@
                     </tbody>
                 </table>
             </div>
+
+            <template id="{{ $catalog }}-test-row-template">
+                <tr class="test-row border-b border-gray-100 hover:bg-gray-25">
+                    <td class="py-3 pr-4">
+                        <select name="tests[__INDEX__][{{ $itemField }}]" class="investigation-item-select w-full px-3 py-2 text-sm border border-gray-300 rounded-md" required>
+                            @include('admin.visits.workflow.opd._investigation-options')
+                        </select>
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <input type="number" name="tests[__INDEX__][quantity]" value="1" min="1" max="10" class="w-full px-2 py-2 text-sm text-center border border-gray-300 rounded-md" required>
+                    </td>
+                    <td class="py-3 px-3">
+                        <select name="tests[__INDEX__][priority]" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md priority-select" required>
+                            <option value="routine">Routine</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="stat">STAT</option>
+                        </select>
+                    </td>
+                    <td class="py-3 px-3">
+                        <input type="text" name="tests[__INDEX__][clinical_notes]" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md" placeholder="Optional notes...">
+                    </td>
+                    <td class="py-3 text-center">
+                        <button type="button" onclick="removeTestRow(this, '{{ $kind }}')" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors" title="Remove test">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
+            </template>
 
             <div class="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500">
                 <span id="{{ $countId }}">1 selected</span>

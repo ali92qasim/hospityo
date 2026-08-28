@@ -24,8 +24,13 @@ function placeholderFor($select) {
         return 'Search doctor...';
     }
 
-    if ($select.attr('name')?.includes('lab_test_id') || $select.attr('name')?.includes('investigation')) {
-        return 'Search investigation...';
+    if (
+        $select.hasClass('investigation-item-select')
+        || $select.attr('name')?.includes('lab_test_id')
+        || $select.attr('name')?.includes('imaging_study_id')
+        || $select.attr('name')?.includes('investigation')
+    ) {
+        return 'Search...';
     }
 
     if ($select.attr('name')?.includes('payment') || $select.attr('name')?.includes('refund')) {
@@ -36,16 +41,25 @@ function placeholderFor($select) {
 }
 
 function initSingleSelect($select) {
-    if ($select.hasClass('select2-hidden-accessible') || isSkipped($select)) {
+    if (isSkipped($select) || ($select[0] && $select[0].closest('template'))) {
         return;
+    }
+
+    if ($select.hasClass('select2-hidden-accessible')) {
+        try {
+            $select.select2('destroy');
+        } catch (error) {
+            // Select2 was already torn down.
+        }
     }
 
     const isPriority = $select.hasClass('priority-select')
         || ($select.attr('name')?.includes('priority') && ! $select.attr('name')?.includes('priority_level'));
+    const isInvestigation = $select.hasClass('investigation-item-select');
 
     $select.select2({
         placeholder: placeholderFor($select),
-        allowClear: ! $select.prop('required'),
+        allowClear: isInvestigation || ! $select.prop('required'),
         width: '100%',
         minimumResultsForSearch: isPriority ? Infinity : 0,
     });
@@ -57,13 +71,67 @@ export function initVisitWorkflowSelect2(root = document) {
     }
 
     const $root = root instanceof $ ? root : $(root);
+    const $selects = $root.is('select') ? $root : $root.find('select');
 
-    $root.find('select').each(function () {
+    $selects.each(function () {
         initSingleSelect($(this));
     });
 }
 
+function cloneInvestigationTestRow(kind) {
+    const tbody = document.getElementById(`${kind}-test-rows`);
+    const template = document.getElementById(`${kind}-test-row-template`);
+
+    if (!tbody || !template?.content) {
+        return null;
+    }
+
+    const nextIndex = tbody.querySelectorAll('.test-row').length;
+    const clone = template.content.cloneNode(true);
+    const newRow = clone.querySelector('tr');
+
+    if (!newRow) {
+        return null;
+    }
+
+    newRow.querySelectorAll('[name]').forEach((el) => {
+        el.name = el.name.replaceAll('__INDEX__', String(nextIndex));
+    });
+
+    const itemSelect = newRow.querySelector('.investigation-item-select');
+    if (itemSelect) {
+        itemSelect.value = '';
+        itemSelect.removeAttribute('data-select2-id');
+        itemSelect.querySelectorAll('[data-select2-id]').forEach((el) => {
+            el.removeAttribute('data-select2-id');
+        });
+    }
+
+    tbody.appendChild(newRow);
+
+    return newRow;
+}
+
+export function addVisitWorkflowTestRow(kind = 'lab') {
+    const newRow = cloneInvestigationTestRow(kind);
+
+    if (!newRow) {
+        return;
+    }
+
+    initVisitWorkflowSelect2(newRow);
+
+    if (typeof window.updateRemoveButtons === 'function') {
+        window.updateRemoveButtons(kind);
+    }
+
+    if (typeof window.updateTestCount === 'function') {
+        window.updateTestCount(kind);
+    }
+}
+
 window.initVisitWorkflowSelect2 = initVisitWorkflowSelect2;
+window.addVisitWorkflowTestRow = addVisitWorkflowTestRow;
 
 $(function () {
     const workflowRoot = document.getElementById('visit-workflow');

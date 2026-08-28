@@ -23,7 +23,7 @@
     data-workflow-section="{{ $id }}"
     data-open="{{ $open ? '1' : '0' }}"
     @if($disabled) data-section-disabled="1" @endif
-    class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+    class="bg-white rounded-lg shadow-sm border border-gray-200"
 >
     <button
         type="button"

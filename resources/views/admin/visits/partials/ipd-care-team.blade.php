@@ -3,7 +3,7 @@
     $careTeamDoctors = $visit->careTeam;
 @endphp
 
-<div id="care-team-content" class="tab-content hidden">
+<div id="care-team-content" class="tab-content workflow-panel hidden bg-white rounded-lg shadow-sm p-6">
     <div class="space-y-6">
         <div class="bg-white border border-gray-200 rounded-lg p-6">
             <div class="flex items-center justify-between mb-4">

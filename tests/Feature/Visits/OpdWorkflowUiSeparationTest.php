@@ -91,6 +91,19 @@ it('renders opd workflow with handler-driven ui flags', function () {
         ->assertSee('Imaging')
         ->assertSee('Order lab tests')
         ->assertSee('Order imaging');
+
+    $html = $this->get(route('visits.workflow', $visit))->getContent();
+    $gpePos = strpos($html, 'id="gpe-content"');
+    $nextVisitPos = strpos($html, 'id="next-visit-date"');
+    $imagingPos = strpos($html, 'id="imaging-test-row-template"');
+
+    expect($html)->toContain('id="lab-test-row-template"')
+        ->and($html)->toContain('id="imaging-test-row-template"')
+        ->and($gpePos)->not->toBeFalse()
+        ->and($nextVisitPos)->not->toBeFalse()
+        ->and($imagingPos)->not->toBeFalse()
+        ->and($gpePos)->toBeLessThan($nextVisitPos)
+        ->and($nextVisitPos)->toBeLessThan($imagingPos);
 });
 
 it('opd handler exposes show_opd_ui and child queue priority', function () {

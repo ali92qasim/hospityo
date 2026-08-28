@@ -1,4 +1,4 @@
-<div id="gpe-tab-content" class="tab-content hidden">
+<div id="gpe-content" class="tab-content workflow-panel hidden bg-white rounded-lg shadow-sm p-6">
 
     @php
 
@@ -92,7 +92,7 @@
 
             @if($canSubmitGpe)
 
-                <form action="{{ route('visits.gpe-records.store', $visit) }}" method="POST" class="bg-white border border-gray-200 rounded-lg p-6" data-save-tab="gpe-tab">
+                <form action="{{ route('visits.gpe-records.store', $visit) }}" method="POST" class="bg-white border border-gray-200 rounded-lg p-6" data-save-tab="gpe">
 
                     @csrf
 

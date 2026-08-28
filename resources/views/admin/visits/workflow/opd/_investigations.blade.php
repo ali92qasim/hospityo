@@ -1,4 +1,7 @@
 @php
+    $filterCatalog = $catalog ?? null;
+    $showLab = $filterCatalog === null || $filterCatalog === 'lab';
+    $showImaging = $filterCatalog === null || $filterCatalog === 'imaging';
     $labInvestigations = $labTests ?? collect();
     $imagingInvestigations = $imagingStudies ?? collect();
     $categoryLabels = [
@@ -17,36 +20,56 @@
         'cardiac-diagnostics' => 'Cardiac Diagnostics',
         'radiology' => 'Radiology',
     ];
+    $headingPrefix = $filterCatalog ?? 'all';
+    $orderedTitle = match ($filterCatalog) {
+        'lab' => 'Ordered lab tests',
+        'imaging' => 'Ordered imaging',
+        default => 'Ordered Investigations',
+    };
+    $emptyMessage = match ($filterCatalog) {
+        'lab' => 'No lab tests ordered yet',
+        'imaging' => 'No imaging ordered yet',
+        default => 'No investigations ordered yet',
+    };
+    $countNoun = match ($filterCatalog) {
+        'lab' => 'lab test',
+        'imaging' => 'imaging study',
+        default => 'investigation',
+    };
 @endphp
 
 <div class="max-w-7xl mx-auto">
     @if($workflowData['can_order_labs'])
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-            @include('admin.visits.workflow.opd._investigation-order-section', [
-                'catalog' => 'lab',
-                'sectionTitle' => 'Lab tests',
-                'sectionIcon' => 'fa-flask',
-                'submitLabel' => 'Order lab tests',
-                'kindInvestigations' => $labInvestigations,
-                'categoryLabels' => $categoryLabels,
-                'visit' => $visit,
-                'workflowData' => $workflowData,
-                'formAction' => route('visits.order-multiple-lab-tests', $visit),
-                'itemField' => 'lab_test_id',
-            ])
+        <div class="grid grid-cols-1 {{ $filterCatalog ? '' : 'xl:grid-cols-2' }} gap-6 mb-8">
+            @if($showLab)
+                @include('admin.visits.workflow.opd._investigation-order-section', [
+                    'catalog' => 'lab',
+                    'sectionTitle' => 'Lab tests',
+                    'sectionIcon' => 'fa-flask',
+                    'submitLabel' => 'Order lab tests',
+                    'kindInvestigations' => $labInvestigations,
+                    'categoryLabels' => $categoryLabels,
+                    'visit' => $visit,
+                    'workflowData' => $workflowData,
+                    'formAction' => route('visits.order-multiple-lab-tests', $visit),
+                    'itemField' => 'lab_test_id',
+                ])
+            @endif
 
-            @include('admin.visits.workflow.opd._investigation-order-section', [
-                'catalog' => 'imaging',
-                'sectionTitle' => 'Imaging',
-                'sectionIcon' => 'fa-x-ray',
-                'submitLabel' => 'Order imaging',
-                'kindInvestigations' => $imagingInvestigations,
-                'categoryLabels' => $categoryLabels,
-                'visit' => $visit,
-                'workflowData' => $workflowData,
-                'formAction' => route('visits.order-multiple-imaging-studies', $visit),
-                'itemField' => 'imaging_study_id',
-            ])
+            @if($showImaging)
+                @include('admin.visits.workflow.opd._investigation-order-section', [
+                    'catalog' => 'imaging',
+                    'sectionTitle' => 'Imaging',
+                    'sectionIcon' => 'fa-x-ray',
+                    'submitLabel' => 'Order imaging',
+                    'kindInvestigations' => $imagingInvestigations,
+                    'categoryLabels' => $categoryLabels,
+                    'visit' => $visit,
+                    'workflowData' => $workflowData,
+                    'formAction' => route('visits.order-multiple-imaging-studies', $visit),
+                    'itemField' => 'imaging_study_id',
+                ])
+            @endif
         </div>
     @else
         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
@@ -63,25 +86,29 @@
 
     <div class="mt-8">
         @php
-            $labItems = $visit->labOrders->flatMap(fn ($order) => $order->items->map(fn ($item) => $item->setRelation('order', $order)));
-            $imagingItems = ($visit->imagingOrders ?? collect())->flatMap(fn ($order) => $order->items->map(fn ($item) => $item->setRelation('order', $order)));
+            $labItems = $showLab
+                ? $visit->labOrders->flatMap(fn ($order) => $order->items->map(fn ($item) => $item->setRelation('order', $order)))
+                : collect();
+            $imagingItems = $showImaging
+                ? ($visit->imagingOrders ?? collect())->flatMap(fn ($order) => $order->items->map(fn ($item) => $item->setRelation('order', $order)))
+                : collect();
             $allOrderItems = $labItems->concat($imagingItems);
             $pendingOrders = $allOrderItems->whereIn('status', ['ordered', 'collected', 'testing']);
             $completedOrders = $allOrderItems->whereIn('status', ['verified', 'reported']);
         @endphp
 
         <div class="flex justify-between items-center mb-4">
-            <h4 class="text-lg font-medium text-gray-800">Ordered Investigations</h4>
-            <span class="text-sm text-gray-500">{{ $allOrderItems->count() }} {{ Str::plural('investigation', $allOrderItems->count()) }}</span>
+            <h4 class="text-lg font-medium text-gray-800">{{ $orderedTitle }}</h4>
+            <span class="text-sm text-gray-500">{{ $allOrderItems->count() }} {{ Str::plural($countNoun, $allOrderItems->count()) }}</span>
         </div>
 
         <div class="space-y-6">
             @if($pendingOrders->count() > 0)
-                <section aria-labelledby="pending-tests-heading">
+                <section aria-labelledby="pending-{{ $headingPrefix }}-tests-heading">
                     <div class="flex flex-col sm:flex-row sm:items-center mb-4 gap-2">
                         <div class="flex items-center">
                             <div class="w-2 h-2 bg-yellow-500 rounded-full mr-3 animate-pulse"></div>
-                            <h5 id="pending-tests-heading" class="text-base font-semibold text-gray-900">Pending Results</h5>
+                            <h5 id="pending-{{ $headingPrefix }}-tests-heading" class="text-base font-semibold text-gray-900">Pending Results</h5>
                         </div>
                         <span class="px-2.5 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">{{ $pendingOrders->count() }}</span>
                     </div>
@@ -97,11 +124,11 @@
             @endif
 
             @if($completedOrders->count() > 0)
-                <section aria-labelledby="completed-tests-heading" class="mt-6">
+                <section aria-labelledby="completed-{{ $headingPrefix }}-tests-heading" class="mt-6">
                     <div class="flex flex-col sm:flex-row sm:items-center mb-4 gap-2">
                         <div class="flex items-center">
                             <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                            <h5 id="completed-tests-heading" class="text-base font-semibold text-gray-900">Completed Results</h5>
+                            <h5 id="completed-{{ $headingPrefix }}-tests-heading" class="text-base font-semibold text-gray-900">Completed Results</h5>
                         </div>
                         <span class="px-2.5 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">{{ $completedOrders->count() }}</span>
                     </div>
@@ -119,7 +146,7 @@
             @if($allOrderItems->count() === 0)
                 <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
                     <i class="fas fa-clipboard-list text-gray-400 text-3xl mb-3"></i>
-                    <p class="text-gray-500">No investigations ordered yet</p>
+                    <p class="text-gray-500">{{ $emptyMessage }}</p>
                 </div>
             @endif
         </div>
