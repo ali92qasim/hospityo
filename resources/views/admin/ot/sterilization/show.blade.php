@@ -99,7 +99,7 @@
             <div>
                 <p class="text-xs font-medium text-gray-500">Verified By</p>
                 @if($sterilization->verifiedByUser)
-                    <p class="text-green-700"><i class="fas fa-check-circle mr-1"></i>{{ $sterilization->verifiedByUser->name }} · {{ $sterilization->verified_at?->format('d M H:i') }}</p>
+                    <p class="text-green-700"><i class="fas fa-check-circle mr-1"></i>{{ $sterilization->verifiedByUser->name }} · {{ format_datetime($sterilization->verified_at) }}</p>
                 @else
                     <p class="text-gray-400">Not yet verified</p>
                 @endif

@@ -215,6 +215,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index')->middleware('permission:view settings|manage settings');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update')->middleware('permission:edit settings|manage settings');
+    Route::post('/settings/detect-timezone', [SettingsController::class, 'detectTimezone'])->name('settings.detect-timezone');
 
     // Billing & Subscription Routes
     Route::prefix('billing')->name('billing.')->group(function () {

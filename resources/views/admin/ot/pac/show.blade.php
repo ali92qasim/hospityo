@@ -52,7 +52,7 @@
         <div class="bg-white rounded-lg shadow-sm p-6">
             <h4 class="text-sm font-semibold text-gray-500 uppercase mb-3">Anaesthetist</h4>
             <p class="text-lg font-medium text-gray-900">{{ $pac->anaesthetist?->name ?? 'Unassigned' }}</p>
-            <p class="text-sm text-gray-600">Requested by: {{ $pac->requestedBy?->name }} · {{ $pac->created_at?->format('d M Y H:i') }}</p>
+            <p class="text-sm text-gray-600">Requested by: {{ $pac->requestedBy?->name }} · {{ format_datetime($pac->created_at) }}</p>
         </div>
     </div>
 
@@ -155,7 +155,7 @@
         <h4 class="text-sm font-semibold uppercase mb-2">Clearance Notes</h4>
         <p class="text-sm">{{ $pac->clearance_notes }}</p>
         @if($pac->cleared_at)
-        <p class="text-xs mt-2 opacity-75">Cleared at: {{ $pac->cleared_at->format('d M Y H:i') }}</p>
+        <p class="text-xs mt-2 opacity-75">Cleared at: {{ format_datetime($pac->cleared_at) }}</p>
         @endif
     </div>
     @endif

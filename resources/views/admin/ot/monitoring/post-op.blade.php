@@ -47,7 +47,7 @@
                 <tbody class="divide-y divide-gray-100">
                     @foreach($surgery->postOpMonitoring as $entry)
                     <tr>
-                        <td class="px-3 py-2 font-medium">{{ $entry->recorded_at?->format('d M H:i') }}</td>
+                        <td class="px-3 py-2 font-medium">{{ format_datetime($entry->recorded_at) }}</td>
                         <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded text-xs {{ $entry->phase === 'pacu' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700' }}">{{ strtoupper($entry->phase) }}</span></td>
                         <td class="px-3 py-2 capitalize">{{ $entry->consciousness_level ?? '—' }}</td>
                         <td class="px-3 py-2">{{ $entry->blood_pressure ?? '—' }}</td>

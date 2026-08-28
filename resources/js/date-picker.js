@@ -1,5 +1,6 @@
 import flatpickr from 'flatpickr';
 import '../css/date-picker.css';
+import { flatpickrTimeConfig } from './datetime-config';
 
 function initDatePickers(root = document) {
     // Convert all type="date" inputs to flatpickr
@@ -31,15 +32,13 @@ function initTimePickers(root = document) {
         const defaultMinute = input.dataset.defaultMinute ? parseInt(input.dataset.defaultMinute, 10) : undefined;
 
         flatpickr(input, {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: 'H:i',
-            time_24hr: true,
-            minuteIncrement: 15,
-            allowInput: true,
-            defaultDate: input.value || null,
-            ...(Number.isFinite(defaultHour) ? { defaultHour } : {}),
-            ...(Number.isFinite(defaultMinute) ? { defaultMinute } : {}),
+            ...flatpickrTimeConfig({
+                minuteIncrement: 15,
+                allowInput: true,
+                defaultDate: input.value || null,
+                ...(Number.isFinite(defaultHour) ? { defaultHour } : {}),
+                ...(Number.isFinite(defaultMinute) ? { defaultMinute } : {}),
+            }),
         });
     });
 }

@@ -93,7 +93,7 @@ class TenantProvisioningService
             'currency'      => 'PKR',
             'timezone'      => 'Asia/Karachi',
             'date_format'   => 'd/m/Y',
-            'time_format'   => 'H:i',
+            'time_format'   => 'h:i A',
         ];
     }
 

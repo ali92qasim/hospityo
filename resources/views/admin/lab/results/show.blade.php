@@ -122,7 +122,7 @@
                                 <div class="flex items-center p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                                     <div class="flex-1">
                                         <span class="text-blue-700 text-sm font-medium block">Ordered</span>
-                                        <span class="text-blue-900 font-semibold">{{ $labResult->labOrder->ordered_at->format('M d, Y H:i') }}</span>
+                                        <span class="text-blue-900 font-semibold">{{ format_datetime($labResult->labOrder->ordered_at) }}</span>
                                     </div>
                                     <i class="fas fa-check-circle text-blue-600"></i>
                                 </div>
@@ -130,7 +130,7 @@
                                     <div class="flex items-center p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
                                         <div class="flex-1">
                                             <span class="text-green-700 text-sm font-medium block">Sample Collected</span>
-                                            <span class="text-green-900 font-semibold">{{ $labResult->labOrder->sample_collected_at->format('M d, Y H:i') }}</span>
+                                            <span class="text-green-900 font-semibold">{{ format_datetime($labResult->labOrder->sample_collected_at) }}</span>
                                         </div>
                                         <i class="fas fa-vial text-green-600"></i>
                                     </div>
@@ -139,7 +139,7 @@
                                     <div class="flex items-center p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
                                         <div class="flex-1">
                                             <span class="text-purple-700 text-sm font-medium block">Testing Completed</span>
-                                            <span class="text-purple-900 font-semibold">{{ $labResult->tested_at->format('M d, Y H:i') }}</span>
+                                            <span class="text-purple-900 font-semibold">{{ format_datetime($labResult->tested_at) }}</span>
                                         </div>
                                         <i class="fas fa-microscope text-purple-600"></i>
                                     </div>
@@ -148,7 +148,7 @@
                                     <div class="flex items-center p-3 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
                                         <div class="flex-1">
                                             <span class="text-emerald-700 text-sm font-medium block">Verified</span>
-                                            <span class="text-emerald-900 font-semibold">{{ $labResult->verified_at->format('M d, Y H:i') }}</span>
+                                            <span class="text-emerald-900 font-semibold">{{ format_datetime($labResult->verified_at) }}</span>
                                         </div>
                                         <i class="fas fa-certificate text-emerald-600"></i>
                                     </div>
@@ -457,7 +457,7 @@
                             <i class="fas fa-calendar text-emerald-600 mr-3"></i>
                             <div>
                                 <span class="text-xs text-gray-600 block">Visit Date</span>
-                                <span class="text-gray-900">{{ $labResult->labOrder->visit->visit_datetime->format('M d, Y H:i') }}</span>
+                                <span class="text-gray-900">{{ format_datetime($labResult->labOrder->visit->visit_datetime) }}</span>
                             </div>
                         </div>
                         @if($labResult->labOrder->doctor)
@@ -484,7 +484,7 @@
                             <i class="fas fa-calendar-plus text-emerald-600 mr-3"></i>
                             <div>
                                 <span class="text-xs text-gray-600 block">Order Date</span>
-                                <span class="text-gray-900">{{ $labResult->labOrder->ordered_at?->format('M d, Y H:i') ?? '—' }}</span>
+                                <span class="text-gray-900">{{ format_datetime($labResult->labOrder->ordered_at) ?: '—' }}</span>
                             </div>
                         </div>
                         @if($labResult->labOrder->doctor)
@@ -545,7 +545,7 @@
                             </div>
                             <div class="text-blue-900 font-medium">{{ $labResult->technician->name ?? 'Not specified' }}</div>
                             @if($labResult->tested_at)
-                                <div class="text-xs text-blue-600 mt-1">{{ $labResult->tested_at->format('M d, Y H:i') }}</div>
+                                <div class="text-xs text-blue-600 mt-1">{{ format_datetime($labResult->tested_at) }}</div>
                             @endif
                         </div>
                         
@@ -557,7 +557,7 @@
                                 </div>
                                 <div class="text-green-900 font-medium">{{ $labResult->pathologist->name }}</div>
                                 @if($labResult->verified_at)
-                                    <div class="text-xs text-green-600 mt-1">{{ $labResult->verified_at->format('M d, Y H:i') }}</div>
+                                    <div class="text-xs text-green-600 mt-1">{{ format_datetime($labResult->verified_at) }}</div>
                                 @endif
                             </div>
                         @else

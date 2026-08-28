@@ -67,7 +67,7 @@
                 @forelse($logs as $log)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ $log->created_at->format('Y-m-d H:i:s') }}
+                            {{ format_datetime($log->created_at) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">

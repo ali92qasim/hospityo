@@ -7,6 +7,7 @@ import { Calendar } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { fullCalendarTimeConfig } from './datetime-config';
 
 document.addEventListener('DOMContentLoaded', function () {
     var calendarEl = document.getElementById('ot-calendar');
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var theatreFilter = document.getElementById('ot-theatre-filter');
 
     var calendar = new Calendar(calendarEl, {
+        ...fullCalendarTimeConfig(),
         plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
         initialView: 'dayGridMonth',
         headerToolbar: {

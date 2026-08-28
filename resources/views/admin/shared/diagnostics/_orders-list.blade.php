@@ -51,7 +51,7 @@
                         <span><i class="fas fa-user-md mr-1 text-gray-400 text-xs"></i>Dr. {{ $order->doctor->name }}</span>
                     @endif
                     <span class="text-gray-400">·</span>
-                    <span class="text-xs text-gray-500"><i class="fas fa-clock mr-1"></i>{{ $order->ordered_at?->format('M d, Y H:i') }}</span>
+                    <span class="text-xs text-gray-500"><i class="fas fa-clock mr-1"></i>{{ format_datetime($order->ordered_at) }}</span>
                 </div>
             </div>
         </div>

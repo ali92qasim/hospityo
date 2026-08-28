@@ -239,10 +239,10 @@
             <p class="text-sm text-gray-700"><strong>Date:</strong> {{ $surgery->scheduled_date?->format('d M Y') }}</p>
             <p class="text-sm text-gray-700"><strong>Time:</strong> {{ $surgery->scheduled_start_time ?? '—' }} — {{ $surgery->scheduled_end_time ?? '—' }}</p>
             @if($surgery->actual_start_time)
-            <p class="text-sm text-gray-700 mt-2"><strong>Actual Start:</strong> {{ $surgery->actual_start_time->format('d M Y H:i') }}</p>
+            <p class="text-sm text-gray-700 mt-2"><strong>Actual Start:</strong> {{ format_datetime($surgery->actual_start_time) }}</p>
             @endif
             @if($surgery->actual_end_time)
-            <p class="text-sm text-gray-700"><strong>Actual End:</strong> {{ $surgery->actual_end_time->format('d M Y H:i') }}</p>
+            <p class="text-sm text-gray-700"><strong>Actual End:</strong> {{ format_datetime($surgery->actual_end_time) }}</p>
             @endif
         </div>
 

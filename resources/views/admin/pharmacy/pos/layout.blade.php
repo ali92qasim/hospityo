@@ -10,6 +10,11 @@
         window.appConfig = {
             currency: @json(currency_symbol()),
             csrf: @json(csrf_token()),
+            timezone: @json(app_timezone()),
+            dateFormat: @json(setting('date_format', 'd/m/Y')),
+            timeFormat: @json(setting('time_format', 'h:i A')),
+            timezoneAutoSet: @json(setting('timezone_auto_set') === '1'),
+            detectTimezoneUrl: @json(url('/settings/detect-timezone')),
         };
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])

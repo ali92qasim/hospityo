@@ -110,10 +110,14 @@
             <div>
                 <label for="timezone" class="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
                 <select id="timezone" name="timezone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
-                    <option value="Asia/Karachi" {{ old('timezone', setting('timezone', 'Asia/Karachi')) == 'Asia/Karachi' ? 'selected' : '' }}>Asia/Karachi (PKT)</option>
-                    <option value="UTC" {{ old('timezone', setting('timezone', '')) == 'UTC' ? 'selected' : '' }}>UTC</option>
-                    <option value="America/New_York" {{ old('timezone', setting('timezone', '')) == 'America/New_York' ? 'selected' : '' }}>America/New_York (EST)</option>
-                    <option value="Europe/London" {{ old('timezone', setting('timezone', '')) == 'Europe/London' ? 'selected' : '' }}>Europe/London (GMT)</option>
+                    @php $selectedTimezone = old('timezone', setting('timezone', 'Asia/Karachi')); @endphp
+                    @foreach($timezones as $region => $zones)
+                        <optgroup label="{{ $region }}">
+                            @foreach($zones as $tz => $label)
+                                <option value="{{ $tz }}" {{ $selectedTimezone == $tz ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </optgroup>
+                    @endforeach
                 </select>
                 @error('timezone')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -136,8 +140,8 @@
             <div>
                 <label for="time_format" class="block text-sm font-medium text-gray-700 mb-2">Time Format</label>
                 <select id="time_format" name="time_format" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
-                    <option value="H:i" {{ old('time_format', setting('time_format', 'H:i')) == 'H:i' ? 'selected' : '' }}>24 Hour (HH:MM)</option>
-                    <option value="h:i A" {{ old('time_format', setting('time_format', '')) == 'h:i A' ? 'selected' : '' }}>12 Hour (HH:MM AM/PM)</option>
+                    <option value="h:i A" {{ old('time_format', setting('time_format', 'h:i A')) == 'h:i A' ? 'selected' : '' }}>12 Hour (HH:MM AM/PM)</option>
+                    <option value="H:i" {{ old('time_format', setting('time_format', '')) == 'H:i' ? 'selected' : '' }}>24 Hour (HH:MM)</option>
                 </select>
                 @error('time_format')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

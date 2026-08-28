@@ -101,12 +101,12 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
                     <input type="time" name="scheduled_start_time" value="{{ old('scheduled_start_time', $surgery->scheduled_start_time) }}"
-                        class="w-full border-gray-300 rounded-lg text-sm">
+                        class="w-full border-gray-300 rounded-lg text-sm js-time-picker">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">End Time (Est.)</label>
                     <input type="time" name="scheduled_end_time" value="{{ old('scheduled_end_time', $surgery->scheduled_end_time) }}"
-                        class="w-full border-gray-300 rounded-lg text-sm">
+                        class="w-full border-gray-300 rounded-lg text-sm js-time-picker">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Theatre</label>

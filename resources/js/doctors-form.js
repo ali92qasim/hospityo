@@ -13,6 +13,7 @@ select2(window, $);
 
 // Import Flatpickr
 import flatpickr from 'flatpickr';
+import { flatpickrTimeConfig } from './datetime-config';
 
 // Centralized error handler
 function handlePluginError(pluginName, error) {
@@ -26,11 +27,9 @@ function handlePluginError(pluginName, error) {
 }
 
 const flatpickrConfig = {
-    enableTime: true,
-    noCalendar: true,
-    dateFormat: 'H:i',
-    time_24hr: true,
-    minuteIncrement: 15,
+    ...flatpickrTimeConfig({
+        minuteIncrement: 15,
+    }),
 };
 
 function initTimePicker(input, { defaultHour, defaultMinute, onChange }) {

@@ -4,12 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateSettingsRequest;
 use App\Models\Setting;
+use DateTime;
+use DateTimeZone;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
     public function index()
     {
-        return view('settings.index');
+        return view('settings.index', [
+            'timezones' => $this->timezonesGroupedByRegion(),
+        ]);
     }
 
     public function update(UpdateSettingsRequest $request)
@@ -33,6 +39,50 @@ class SettingsController extends Controller
             }
         }
 
+        Setting::set('timezone_auto_set', '1');
+
         return redirect()->route('settings.index')->with('success', 'Settings updated successfully');
+    }
+
+    public function detectTimezone(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'timezone' => ['required', 'timezone'],
+        ]);
+
+        if (setting('timezone_auto_set') === '1') {
+            return response()->json([
+                'updated' => false,
+                'timezone' => setting('timezone', $validated['timezone']),
+            ]);
+        }
+
+        Setting::set('timezone', $validated['timezone']);
+        Setting::set('timezone_auto_set', '1');
+
+        if (setting('time_format', 'H:i') === 'H:i') {
+            Setting::set('time_format', 'h:i A');
+        }
+
+        return response()->json([
+            'updated' => true,
+            'timezone' => $validated['timezone'],
+        ]);
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private function timezonesGroupedByRegion(): array
+    {
+        $grouped = [];
+
+        foreach (DateTimeZone::listIdentifiers() as $timezone) {
+            $region = explode('/', $timezone, 2)[0];
+            $offset = (new DateTime('now', new DateTimeZone($timezone)))->format('P');
+            $grouped[$region][$timezone] = str_replace('_', ' ', $timezone).' (UTC'.$offset.')';
+        }
+
+        return $grouped;
     }
 }

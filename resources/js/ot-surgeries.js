@@ -19,6 +19,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 
 // Import Flatpickr
 import flatpickr from 'flatpickr';
+import { flatpickrDateTimeConfig, fullCalendarTimeConfig } from './datetime-config';
 
 $(function() {
     var calendarEl = document.getElementById('surgery-calendar');
@@ -26,6 +27,7 @@ $(function() {
 
     // ── FullCalendar ──────────────────────────────────────────────────────────
     var calendar = new Calendar(calendarEl, {
+        ...fullCalendarTimeConfig(),
         plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
         initialView: 'dayGridMonth',
         headerToolbar: {
@@ -103,12 +105,11 @@ $(function() {
     var datetimeInput = document.getElementById('surgery_datetime');
     if (datetimeInput) {
         window.surgeryDatePicker = flatpickr(datetimeInput, {
-            enableTime: true,
-            dateFormat: 'Y-m-d H:i',
-            time_24hr: true,
-            minDate: 'today',
-            minuteIncrement: 5,
-            allowInput: true
+            ...flatpickrDateTimeConfig({
+                minDate: 'today',
+                minuteIncrement: 5,
+                allowInput: true,
+            }),
         });
     }
 

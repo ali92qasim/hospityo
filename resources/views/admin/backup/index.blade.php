@@ -75,7 +75,7 @@
                                 {{ $backup['size'] }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $backup['date']->format('M d, Y H:i:s') }}
+                                {{ format_datetime($backup['date']) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">

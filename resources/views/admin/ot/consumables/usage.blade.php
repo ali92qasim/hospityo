@@ -44,7 +44,7 @@
                         <td class="py-2 text-gray-800">{{ $u->consumable?->name }}</td>
                         <td class="py-2 text-gray-700">{{ $u->quantity_used }}</td>
                         <td class="py-2 text-gray-500">{{ $u->serial_number ?? '—' }}</td>
-                        <td class="py-2 text-gray-400 text-xs">{{ $u->created_at?->format('d M H:i') }}</td>
+                        <td class="py-2 text-gray-400 text-xs">{{ format_datetime($u->created_at) }}</td>
                     </tr>
                     @endforeach
                 </tbody>

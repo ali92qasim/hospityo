@@ -45,7 +45,7 @@
                     <h4 class="text-sm font-medium text-gray-500 mb-2">Order Information</h4>
                     <div class="space-y-1 text-sm">
                         <div><span class="font-medium">Visit:</span> {{ $radiologyResult->investigationOrder->visit->visit_no }}</div>
-                        <div><span class="font-medium">Ordered:</span> {{ $radiologyResult->investigationOrder->ordered_at->format('M d, Y H:i') }}</div>
+                        <div><span class="font-medium">Ordered:</span> {{ format_datetime($radiologyResult->investigationOrder->ordered_at) }}</div>
                         <div><span class="font-medium">Doctor:</span> {{ $radiologyResult->investigationOrder->doctor->name ?? 'N/A' }}</div>
                     </div>
                 </div>
@@ -53,7 +53,7 @@
                     <h4 class="text-sm font-medium text-gray-500 mb-2">Result Information</h4>
                     <div class="space-y-1 text-sm">
                         <div><span class="font-medium">Radiologist:</span> {{ $radiologyResult->radiologist->name ?? 'N/A' }}</div>
-                        <div><span class="font-medium">Reported:</span> {{ $radiologyResult->reported_at ? $radiologyResult->reported_at->format('M d, Y H:i') : 'Not finalized' }}</div>
+                        <div><span class="font-medium">Reported:</span> {{ $radiologyResult->reported_at ? format_datetime($radiologyResult->reported_at) : 'Not finalized' }}</div>
                     </div>
                 </div>
             </div>

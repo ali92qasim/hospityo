@@ -44,7 +44,7 @@
     @if(request('date_from')) From: {{ request('date_from') }} &nbsp;|&nbsp; @endif
     @if(request('date_to')) To: {{ request('date_to') }} &nbsp;|&nbsp; @endif
     @if(request('bill_type')) Bill Type: {{ ucfirst(request('bill_type')) }} @endif
-    Printed: {{ now()->format('M d, Y H:i') }}
+    Printed: {{ format_datetime(now()) }}
 </div>
 
 <!-- Summary table -->

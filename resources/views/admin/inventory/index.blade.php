@@ -63,7 +63,7 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 <span class="block">{{ $transaction->created_at->format('M d, Y') }}</span>
-                                <span class="block text-xs text-gray-500">{{ $transaction->created_at->format('H:i') }}</span>
+                                <span class="block text-xs text-gray-500">{{ format_time($transaction->created_at) }}</span>
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-sm text-gray-900 max-w-[10rem] sm:max-w-none">
                                 <div class="font-medium truncate">{{ $transaction->medicine->name }}</div>

@@ -20,6 +20,7 @@ import {
     isPastCalendarDate,
     readDoctorSchedules,
 } from './appointments-validation.js';
+import { flatpickrDateTimeConfig, fullCalendarTimeConfig } from './datetime-config';
 
 $(function () {
     const calendarEl = document.getElementById('calendar');
@@ -34,6 +35,7 @@ $(function () {
     let suppressFieldRevalidate = false;
 
     const calendar = new Calendar(calendarEl, {
+        ...fullCalendarTimeConfig(),
         plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
         initialView: 'dayGridMonth',
         headerToolbar: {
@@ -151,16 +153,15 @@ $(function () {
 
     if (appointmentDatetimeInput) {
         window.flatpickrInstance = flatpickr(appointmentDatetimeInput, {
-            enableTime: true,
-            dateFormat: 'Y-m-d H:i',
-            time_24hr: true,
-            minDate: 'today',
-            minuteIncrement: 15,
-            allowInput: false,
-            disable: [isUnavailablePickerDate],
-            onChange: function () {
-                appointmentValidator?.revalidateField('[name="appointment_datetime"]');
-            },
+            ...flatpickrDateTimeConfig({
+                minDate: 'today',
+                minuteIncrement: 15,
+                allowInput: false,
+                disable: [isUnavailablePickerDate],
+                onChange: function () {
+                    appointmentValidator?.revalidateField('[name="appointment_datetime"]');
+                },
+            }),
         });
     }
 

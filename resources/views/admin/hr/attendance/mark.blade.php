@@ -106,12 +106,12 @@
                             <td class="px-6 py-4">
                                 <input type="time" name="attendance[{{ $employee->id }}][check_in]"
                                        value="{{ $existingTime->check_in ?? '' }}"
-                                       class="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                                       class="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent js-time-picker">
                             </td>
                             <td class="px-6 py-4">
                                 <input type="time" name="attendance[{{ $employee->id }}][check_out]"
                                        value="{{ $existingTime->check_out ?? '' }}"
-                                       class="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                                       class="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent js-time-picker">
                             </td>
                             <td class="px-6 py-4">
                                 <select name="attendance[{{ $employee->id }}][shift]"

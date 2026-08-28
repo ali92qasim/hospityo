@@ -36,7 +36,7 @@
         </div>
         <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Created At</p>
-            <p class="text-sm text-gray-900">{{ $settlement->created_at->format('M d, Y H:i') }}</p>
+            <p class="text-sm text-gray-900">{{ format_datetime($settlement->created_at) }}</p>
         </div>
     </div>
 </div>

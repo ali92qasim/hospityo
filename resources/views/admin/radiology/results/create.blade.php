@@ -52,7 +52,7 @@
                     <h4 class="font-medium text-purple-800 mb-2">Test Information</h4>
                     <div class="space-y-1 text-sm">
                         <div><span class="text-purple-600">Category:</span> {{ $investigationOrder->primaryCategoryLabel() }}</div>
-                        <div><span class="text-purple-600">Ordered:</span> {{ $investigationOrder->ordered_at ? $investigationOrder->ordered_at->format('M d, Y H:i') : 'N/A' }}</div>
+                        <div><span class="text-purple-600">Ordered:</span> {{ $investigationOrder->ordered_at ? format_datetime($investigationOrder->ordered_at) : 'N/A' }}</div>
                     </div>
                 </div>
             </div>

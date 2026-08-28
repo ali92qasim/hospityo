@@ -123,7 +123,7 @@ if (!function_exists('format_time')) {
             return '';
         }
         
-        $format = $format ?? setting('time_format', 'H:i');
+        $format = $format ?? setting('time_format', 'h:i A');
         
         if (is_string($time)) {
             $time = \Carbon\Carbon::parse($time);
@@ -153,7 +153,7 @@ if (!function_exists('format_datetime')) {
         }
         
         $dateFormat = $dateFormat ?? setting('date_format', 'd/m/Y');
-        $timeFormat = $timeFormat ?? setting('time_format', 'H:i');
+        $timeFormat = $timeFormat ?? setting('time_format', 'h:i A');
         
         if (is_string($datetime)) {
             $datetime = \Carbon\Carbon::parse($datetime);

@@ -56,7 +56,7 @@
                 <tbody class="divide-y divide-gray-100">
                     @foreach($surgery->operativeVitals as $v)
                     <tr>
-                        <td class="px-3 py-2 font-medium">{{ $v->recorded_at?->format('H:i') }}</td>
+                        <td class="px-3 py-2 font-medium">{{ format_time($v->recorded_at) }}</td>
                         <td class="px-3 py-2">{{ $v->blood_pressure_systolic }}/{{ $v->blood_pressure_diastolic }}</td>
                         <td class="px-3 py-2">{{ $v->heart_rate ?? '—' }}</td>
                         <td class="px-3 py-2">{{ $v->spo2 ?? '—' }}</td>

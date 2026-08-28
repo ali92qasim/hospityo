@@ -50,7 +50,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $visit->visit_datetime->format('M d, Y H:i') }}
+                            {{ format_datetime($visit->visit_datetime) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">

@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var theatreFilter = document.getElementById('ot-theatre-filter');
 
     var calendar = new FullCalendar.Calendar(calendarEl, {
+        ...(window.datetimeConfig ? window.datetimeConfig.fullCalendarTimeConfig() : {}),
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next today',

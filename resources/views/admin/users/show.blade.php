@@ -30,7 +30,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Created</label>
-                    <p class="text-gray-900">{{ $user->created_at->format('M d, Y H:i') }}</p>
+                    <p class="text-gray-900">{{ format_datetime($user->created_at) }}</p>
                 </div>
             </div>
         </div>

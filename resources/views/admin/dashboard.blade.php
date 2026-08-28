@@ -207,7 +207,7 @@
                             </span>
                         </td>
                         <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $visit->visit_datetime->format('M d, Y H:i') }}
+                            {{ format_datetime($visit->visit_datetime) }}
                         </td>
                         <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex gap-2">
@@ -253,7 +253,7 @@
                     </div>
                     <div class="flex justify-between gap-2">
                         <span class="text-gray-500">Visit Time:</span>
-                        <span class="text-gray-900 text-right">{{ $visit->visit_datetime->format('M d, Y H:i') }}</span>
+                        <span class="text-gray-900 text-right">{{ format_datetime($visit->visit_datetime) }}</span>
                     </div>
                 </div>
                 <div class="flex gap-2">

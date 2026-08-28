@@ -176,7 +176,7 @@
                                     <p class="text-sm font-medium text-yellow-800">
                                         <i class="fas fa-ban mr-1"></i>Voided
                                         @if($item->voided_at)
-                                            on {{ $item->voided_at->format('M d, Y H:i') }}
+                                            on {{ format_datetime($item->voided_at) }}
                                         @endif
                                     </p>
                                     @if($item->void_reason)

@@ -82,7 +82,7 @@
                                 </span>
                             @endif
                             <span class="text-sm text-gray-500">
-                                <i class="fas fa-calendar mr-1"></i>{{ $order->ordered_at->format('M d, H:i') }}
+                                <i class="fas fa-calendar mr-1"></i>{{ format_datetime($order->ordered_at) }}
                             </span>
                         </div>
                     </div>

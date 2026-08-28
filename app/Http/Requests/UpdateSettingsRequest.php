@@ -20,7 +20,7 @@ class UpdateSettingsRequest extends FormRequest
             'hospital_email' => 'required|email|max:255',
             'hospital_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'currency' => 'required|string|max:10',
-            'timezone' => 'required|string',
+            'timezone' => 'required|timezone',
             'date_format' => 'required|string',
             'time_format' => 'required|string'
         ];

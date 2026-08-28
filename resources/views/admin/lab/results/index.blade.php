@@ -84,7 +84,7 @@
                                             {{ $config['label'] }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-gray-600">{{ $order->ordered_at->format('M d, H:i') }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">{{ format_datetime($order->ordered_at) }}</td>
                                 </tr>
                                 @endforeach
                             @endforeach

@@ -94,7 +94,7 @@
                 <div class="flex-1">
                     <span class="text-sm text-gray-800 {{ $item->is_checked ? 'line-through text-gray-400' : '' }}">{{ $item->label }}</span>
                     @if($item->checked_at)
-                        <p class="text-xs text-gray-400 mt-0.5">Checked by {{ $item->checkedByUser?->name ?? 'Unknown' }} · {{ $item->checked_at->format('H:i') }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Checked by {{ $item->checkedByUser?->name ?? 'Unknown' }} · {{ format_time($item->checked_at) }}</p>
                     @endif
                 </div>
             </label>
@@ -131,7 +131,7 @@
                 <div class="flex-1">
                     <span class="text-sm text-gray-800 {{ $item->is_checked ? 'line-through text-gray-400' : '' }}">{{ $item->label }}</span>
                     @if($item->checked_at)
-                        <p class="text-xs text-gray-400 mt-0.5">Checked by {{ $item->checkedByUser?->name ?? 'Unknown' }} · {{ $item->checked_at->format('H:i') }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Checked by {{ $item->checkedByUser?->name ?? 'Unknown' }} · {{ format_time($item->checked_at) }}</p>
                     @endif
                 </div>
             </label>
@@ -168,7 +168,7 @@
                 <div class="flex-1">
                     <span class="text-sm text-gray-800 {{ $item->is_checked ? 'line-through text-gray-400' : '' }}">{{ $item->label }}</span>
                     @if($item->checked_at)
-                        <p class="text-xs text-gray-400 mt-0.5">Checked by {{ $item->checkedByUser?->name ?? 'Unknown' }} · {{ $item->checked_at->format('H:i') }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Checked by {{ $item->checkedByUser?->name ?? 'Unknown' }} · {{ format_time($item->checked_at) }}</p>
                     @endif
                 </div>
             </label>

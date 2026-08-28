@@ -123,7 +123,7 @@ class OperativeMonitoringController extends Controller
                 ->orderBy('recorded_at')
                 ->get()
                 ->map(fn($v) => [
-                    'time'      => $v->recorded_at?->format('H:i'),
+                    'time'      => $v->recorded_at ? format_time($v->recorded_at) : null,
                     'systolic'  => $v->blood_pressure_systolic,
                     'diastolic' => $v->blood_pressure_diastolic,
                     'hr'        => $v->heart_rate,

@@ -15,24 +15,28 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initFlatpickr() {
-    flatpickrInstance = flatpickr("#appointment_datetime", {
-        enableTime: true,
-        dateFormat: "Y-m-d H:i",
-        time_24hr: false,
-        minDate: "today",
-        minuteIncrement: 30,
-        defaultHour: 9,
-        defaultMinute: 0,
-        disable: [
-            function(date) {
-                // Disable Sundays (0 = Sunday)
-                return (date.getDay() === 0);
+    flatpickrInstance = flatpickr("#appointment_datetime", Object.assign(
+        window.datetimeConfig ? window.datetimeConfig.flatpickrDateTimeConfig() : {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: false,
+        },
+        {
+            minDate: "today",
+            minuteIncrement: 30,
+            defaultHour: 9,
+            defaultMinute: 0,
+            disable: [
+                function(date) {
+                    // Disable Sundays (0 = Sunday)
+                    return (date.getDay() === 0);
+                }
+            ],
+            locale: {
+                firstDayOfWeek: 1 // Start week on Monday
             }
-        ],
-        locale: {
-            firstDayOfWeek: 1 // Start week on Monday
         }
-    });
+    ));
 }
 
 function initSelect2() {
@@ -53,7 +57,9 @@ function initSelect2() {
 
 function initEditCalendar() {
     const calendarEl = document.getElementById('calendar');
-    calendar = new FullCalendar.Calendar(calendarEl, {
+    calendar = new FullCalendar.Calendar(calendarEl, Object.assign(
+        window.datetimeConfig ? window.datetimeConfig.fullCalendarTimeConfig() : {},
+        {
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next today',
@@ -95,7 +101,7 @@ function initEditCalendar() {
         height: 'auto',
         eventColor: '#0066CC',
         eventDisplay: 'block'
-    });
+    }));
 
     calendar.render();
 
