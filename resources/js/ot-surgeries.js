@@ -174,11 +174,11 @@ $(function() {
                 if (errors) {
                     var msg = '';
                     Object.values(errors).forEach(function(err) { msg += err[0] + '\n'; });
-                    alert(msg);
+                    if (window.Toast) window.Toast.error(msg);
                 } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                    alert(xhr.responseJSON.message);
+                    if (window.Toast) window.Toast.error(xhr.responseJSON.message);
                 } else {
-                    alert('Failed to schedule surgery');
+                    if (window.Toast) window.Toast.error('Failed to schedule surgery');
                 }
             }
         });

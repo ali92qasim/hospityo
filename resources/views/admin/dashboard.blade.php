@@ -217,7 +217,7 @@
                                 <form action="{{ route('visits.check-patient', $visit) }}" method="POST" class="inline">
                                     @csrf
                                     <button type="submit" class="text-green-600 hover:text-green-700"
-                                            onclick="return confirm('Mark this patient as checked?')">
+                                            data-confirm="Mark this patient as checked?" data-confirm-title="Check patient" data-confirm-text="Check" data-confirm-variant="success">
                                         <i class="fas fa-check"></i> Check
                                     </button>
                                 </form>
@@ -263,7 +263,7 @@
                     <form action="{{ route('visits.check-patient', $visit) }}" method="POST" class="flex-1">
                         @csrf
                         <button type="submit" class="w-full bg-green-600 text-white px-3 py-2.5 rounded-lg hover:bg-green-700 text-sm min-h-[44px]"
-                                onclick="return confirm('Mark this patient as checked?')">
+                                data-confirm="Mark this patient as checked?" data-confirm-title="Check patient" data-confirm-text="Check" data-confirm-variant="success">
                             <i class="fas fa-check mr-1"></i> Check
                         </button>
                     </form>

@@ -1,23 +1,12 @@
 /**
  * Lab result share helpers:
  * - Copy report verify-link
- * - Confirm finalize on verify form
  *
  * WhatsApp opens via a normal <a href="...?redirect=1"> so browsers do not block it.
+ * Verify/finalize confirmation is handled globally by confirm-dialog.js.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    const verifyForm = document.getElementById('verify-result-form');
-    if (verifyForm) {
-        verifyForm.addEventListener('submit', function (event) {
-            const button = verifyForm.querySelector('[data-confirm]');
-            const message = button?.dataset.confirm;
-            if (message && !window.confirm(message)) {
-                event.preventDefault();
-            }
-        });
-    }
-
     const copyBtn = document.getElementById('copy-report-link');
     if (!copyBtn) {
         return;
@@ -79,9 +68,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function notify(message, type) {
         if (window.Toast && typeof window.Toast[type] === 'function') {
             window.Toast[type](message);
-            return;
         }
-
-        alert(message);
     }
 });

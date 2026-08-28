@@ -37,20 +37,11 @@
     @csrf
     <input type="file" id="service-import-file" name="file"
            accept=".csv,.xlsx,.xls,.txt"
-           onchange="
-               if (this.files.length) {
-                   var name = this.files[0].name;
-                   var msg  = 'Import \'' + name + '\'?\n\n'
-                            + 'New services will be created.\n'
-                            + 'Existing services with the same code will be updated.\n\n'
-                            + 'Tip: Both CSV and Excel files are accepted.';
-                   if (confirm(msg)) {
-                       this.closest('form').submit();
-                   } else {
-                       this.value = '';
-                   }
-               }
-           ">
+           data-confirm-file="Import '{filename}'?"
+           data-confirm-title="Import services"
+           data-confirm-detail="New services will be created. Existing services with the same code will be updated. CSV and Excel files are accepted."
+           data-confirm-text="Import"
+           data-confirm-variant="success">
 </form>
 @endcan
 
@@ -131,7 +122,7 @@
                         </a>
                         <form method="POST" action="{{ route('services.destroy', $service) }}" class="inline">
                             @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Are you sure?')">
+                            <button type="submit" class="text-red-600 hover:text-red-700" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>

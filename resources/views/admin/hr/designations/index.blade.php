@@ -57,7 +57,7 @@
                         <a href="{{ route('hr.designations.edit', $designation) }}" class="text-medical-green hover:text-green-700">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form action="{{ route('hr.designations.destroy', $designation) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this designation?')">
+                        <form action="{{ route('hr.designations.destroy', $designation) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this designation?" data-confirm-variant="danger" data-confirm-text="Delete">>
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-red-600 hover:text-red-800">

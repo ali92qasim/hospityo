@@ -94,7 +94,7 @@
                                     <form action="{{ route('backup.destroy', $backup['name']) }}" 
                                           method="POST" 
                                           class="inline"
-                                          onsubmit="return confirm('{{ __('messages.confirm_delete_backup') }}')">
+                                          data-confirm="{{ __('messages.confirm_delete_backup') }}" data-confirm-variant="danger" data-confirm-text="{{ __('messages.delete') }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 

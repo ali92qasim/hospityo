@@ -54,6 +54,8 @@
         </main>
     </div>
 
+    @include('partials.confirm-dialog')
+
     @stack('scripts')
 
     {{-- Fire toast notifications for server-side flash messages --}}

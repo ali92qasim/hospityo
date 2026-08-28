@@ -43,7 +43,13 @@
                 </div>
                 @if($currentSubscription?->gateway === 'paddle' && $currentSubscription?->gateway_subscription_id)
                     <div class="flex gap-2">
-                        <button onclick="cancelSubscription()" class="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                        <button type="button"
+                                data-confirm="Are you sure you want to cancel your subscription? You will retain access until the end of the current billing period."
+                                data-confirm-title="Cancel subscription"
+                                data-confirm-text="Continue"
+                                data-confirm-variant="danger"
+                                data-confirm-toast="Please contact support to cancel your subscription. Email: billing@UseClinicSync.com"
+                                class="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
                             <i class="fas fa-times mr-1"></i>Cancel
                         </button>
                     </div>
@@ -222,12 +228,6 @@
                 successUrl: '{{ route("subscription.index") }}?success=1'
             }
         });
-    }
-
-    function cancelSubscription() {
-        if (!confirm('Are you sure you want to cancel your subscription? You will retain access until the end of the current billing period.')) return;
-        // For now, redirect to contact — full cancellation via API can be added later
-        alert('Please contact support to cancel your subscription. Email: billing@UseClinicSync.com');
     }
 </script>
 @endif

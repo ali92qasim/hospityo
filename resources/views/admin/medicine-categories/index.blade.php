@@ -142,7 +142,7 @@
                             <a href="{{ route('medicine-categories.edit', $category) }}" class="text-yellow-600 hover:text-yellow-800" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form method="POST" action="{{ route('medicine-categories.destroy', $category) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this category?')">
+                            <form method="POST" action="{{ route('medicine-categories.destroy', $category) }}" class="inline" data-confirm="Are you sure you want to delete this category?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                 @csrf @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
                                     <i class="fas fa-trash"></i>

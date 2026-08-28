@@ -33,7 +33,9 @@ $(function () {
     $('#order-form').on('submit', function (e) {
         if (hasDuplicates()) {
             e.preventDefault();
-            alert('Please remove duplicate rows before submitting.');
+            if (window.Toast) {
+                window.Toast.error('Please remove duplicate rows before submitting.');
+            }
         }
     });
 

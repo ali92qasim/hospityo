@@ -56,7 +56,7 @@
                         </a>
                         <form method="POST" action="{{ route('beds.destroy', $bed) }}" class="inline">
                             @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Are you sure?')" title="Delete">
+                            <button type="submit" class="text-red-600 hover:text-red-700" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>

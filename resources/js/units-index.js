@@ -252,30 +252,6 @@ function bootstrapImportPolling(root) {
     );
 }
 
-function bindDeleteConfirm(root) {
-    root.addEventListener('submit', function (event) {
-        const form = event.target.closest('form[data-confirm-delete="unit"]');
-        if (!form) {
-            return;
-        }
-
-        event.preventDefault();
-
-        confirmDialog({
-            title: 'Delete unit',
-            message: 'Delete this unit?',
-            detail: 'This action cannot be undone if the unit is not linked elsewhere.',
-            confirmText: 'Delete',
-            cancelText: 'Cancel',
-            variant: 'danger',
-        }).then(function (confirmed) {
-            if (confirmed) {
-                form.submit();
-            }
-        });
-    });
-}
-
 $(document).ready(function () {
     const root = document.getElementById('units-index');
     if (!root) {
@@ -285,7 +261,6 @@ $(document).ready(function () {
     handlePostReloadResult();
     bindImportForm(root);
     bootstrapImportPolling(root);
-    bindDeleteConfirm(root);
 
     unitsTable = initDataTable('.units-table', {
         ajax: '/units/data',
@@ -351,7 +326,7 @@ $(document).ready(function () {
                             <a href="/units/${id}/edit" class="text-yellow-600 hover:text-yellow-800" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form method="POST" action="/units/${id}" data-confirm-delete="unit">
+                            <form method="POST" action="/units/${id}" data-confirm="Delete this unit?" data-confirm-detail="This action cannot be undone if the unit is not linked elsewhere." data-confirm-variant="danger" data-confirm-text="Delete">
                                 <input type="hidden" name="_token" value="${window.csrf}">
                                 <input type="hidden" name="_method" value="DELETE">
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">

@@ -58,7 +58,13 @@
         <div class="flex items-center gap-2 flex-shrink-0">
             @if($order->status === 'ordered')
                 @if($isLabSurface)
-                <button onclick="collectSample({{ $order->id }})"
+                <button type="button"
+                        data-confirm="Mark sample as collected for this order?"
+                        data-confirm-title="Collect sample"
+                        data-confirm-text="Collect"
+                        data-confirm-variant="success"
+                        data-confirm-url="{{ route('investigation-orders.collect-sample', $order) }}"
+                        data-confirm-reload="true"
                         class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors">
                     <i class="fas fa-vial mr-1.5"></i>Collect Sample
                 </button>
@@ -68,7 +74,9 @@
                     <i class="fas fa-edit mr-1.5"></i>Edit
                 </a>
                 <form action="{{ $isLabSurface ? route('investigation-orders.destroy', $order) : route('imaging.orders.destroy', $order) }}" method="POST" class="inline"
-                      onsubmit="return confirm('Delete this order and all its items? This cannot be undone.')">
+                      data-confirm="Delete this order and all its items? This cannot be undone."
+                      data-confirm-variant="danger"
+                      data-confirm-text="Delete">
                     @csrf @method('DELETE')
                     <button type="submit"
                             class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
@@ -185,19 +193,3 @@
     </div>
 @endforelse
 </div>
-
-@if($isLabSurface)
-<script>
-function collectSample(orderId) {
-    if (confirm('Mark sample as collected for this order?')) {
-        fetch(`/investigation-orders/${orderId}/collect-sample`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'application/json'
-            }
-        }).then(() => location.reload());
-    }
-}
-</script>
-@endif

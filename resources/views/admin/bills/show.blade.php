@@ -272,7 +272,7 @@
                             @endcan
                             @can('delete payments')
                             <form method="POST" action="{{ route('bills.remove-payment', [$bill, $payment]) }}" class="inline"
-                                  onsubmit="return confirm('Are you sure you want to remove this payment? This will reverse the accounting entry.')">
+                                  data-confirm="Are you sure you want to remove this payment? This will reverse the accounting entry." data-confirm-title="Remove payment" data-confirm-variant="danger" data-confirm-text="Remove">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="text-xs text-red-500 hover:text-red-700" title="Remove payment">
                                     <i class="fas fa-times"></i> Remove

@@ -99,7 +99,7 @@
                         @endif
                         
                         @if(in_array($order->status, ['pending', 'approved']))
-                            <form action="{{ route('purchases.cancel', $order) }}" method="POST" class="inline" onsubmit="return confirm('Cancel this order?')">
+                            <form action="{{ route('purchases.cancel', $order) }}" method="POST" class="inline" data-confirm="Cancel this order?" data-confirm-variant="danger" data-confirm-text="Cancel order">>
                                 @csrf
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="Cancel">
                                     <i class="fas fa-times"></i>

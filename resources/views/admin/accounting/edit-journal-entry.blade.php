@@ -177,7 +177,7 @@ function addLine() {
 function removeLine(btn) {
     var tbody = document.getElementById('linesBody');
     if (tbody.rows.length <= 2) {
-        alert('A journal entry needs at least 2 lines.');
+        if (window.Toast) window.Toast.warning('A journal entry needs at least 2 lines.');
         return;
     }
     btn.closest('tr').remove();

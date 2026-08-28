@@ -32,13 +32,13 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     @if($payrollRun->status === 'draft')
-                        <form action="{{ route('hr.payroll.approve', $payrollRun) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to approve this payroll run?')">
+                        <form action="{{ route('hr.payroll.approve', $payrollRun) }}" method="POST" class="inline" data-confirm="Are you sure you want to approve this payroll run?" data-confirm-title="Approve payroll" data-confirm-text="Approve" data-confirm-variant="success">>
                             @csrf
                             <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
                                 <i class="fas fa-check mr-2"></i>Approve
                             </button>
                         </form>
-                        <form action="{{ route('hr.payroll.cancel', $payrollRun) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to cancel this payroll run?')">
+                        <form action="{{ route('hr.payroll.cancel', $payrollRun) }}" method="POST" class="inline" data-confirm="Are you sure you want to cancel this payroll run?" data-confirm-title="Cancel payroll" data-confirm-text="Cancel run" data-confirm-variant="danger">>
                             @csrf
                             <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center">
                                 <i class="fas fa-times mr-2"></i>Cancel

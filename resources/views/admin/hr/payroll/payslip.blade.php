@@ -227,7 +227,7 @@
                         @error('payment_date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" onclick="return confirm('Mark this payslip as paid?')">
+                        <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-confirm="Mark this payslip as paid?" data-confirm-title="Mark paid" data-confirm-text="Mark paid" data-confirm-variant="success">
                             <i class="fas fa-check-circle mr-2"></i>Mark as Paid
                         </button>
                     </div>

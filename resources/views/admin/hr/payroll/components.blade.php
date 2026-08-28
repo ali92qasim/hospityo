@@ -70,7 +70,7 @@
                             <a href="{{ route('hr.payroll.edit-component', $component) }}" class="text-medical-blue hover:text-blue-700" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form action="{{ route('hr.payroll.destroy-component', $component) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this component?')">
+                            <form action="{{ route('hr.payroll.destroy-component', $component) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this component?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
@@ -140,7 +140,7 @@
                             <a href="{{ route('hr.payroll.edit-component', $component) }}" class="text-medical-blue hover:text-blue-700" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form action="{{ route('hr.payroll.destroy-component', $component) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this component?')">
+                            <form action="{{ route('hr.payroll.destroy-component', $component) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this component?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">

@@ -127,7 +127,7 @@
                         <form method="POST" action="{{ route('doctor-share.rules.destroy', $rule) }}" class="inline">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Are you sure you want to delete this rule?')">
+                            <button type="submit" class="text-red-600 hover:text-red-700" data-confirm="Are you sure you want to delete this rule?" data-confirm-variant="danger" data-confirm-text="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>

@@ -362,7 +362,7 @@
                                 @endif
 
                                 <button type="submit" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
-                                        onclick="return confirm('Discharge patient and finalize the IPD bill?')">
+                                        data-confirm="Discharge patient and finalize the IPD bill?" data-confirm-title="Discharge patient" data-confirm-text="Discharge" data-confirm-variant="danger">
                                     <i class="fas fa-sign-out-alt mr-2"></i>Discharge & Finalize Invoice
                                 </button>
                             </div>

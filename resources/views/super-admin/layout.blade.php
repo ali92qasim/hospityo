@@ -24,6 +24,8 @@
         </main>
     </div>
 
+    @include('partials.confirm-dialog')
+
     @stack('scripts')
 
     <script>

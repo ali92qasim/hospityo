@@ -52,7 +52,7 @@
                         <a href="{{ route('users.edit', $user) }}" class="text-medical-blue hover:text-blue-700 mr-3"><i class="fas fa-edit"></i></a>
                         <form method="POST" action="{{ route('users.destroy', $user) }}" class="inline">
                             @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Are you sure?')">
+                            <button type="submit" class="text-red-600 hover:text-red-700" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>

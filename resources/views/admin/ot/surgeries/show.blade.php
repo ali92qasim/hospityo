@@ -31,7 +31,7 @@
             <div class="flex flex-wrap gap-2">
                 @if($surgery->status === 'scheduled')
                     <form action="{{ route('ot.surgeries.start', $surgery) }}" method="POST" class="inline"
-                          onsubmit="return confirm('Start this surgery? The OT will be marked as occupied.')">
+                          data-confirm="Start this surgery? The OT will be marked as occupied." data-confirm-title="Start surgery" data-confirm-text="Start" data-confirm-variant="success">
                         @csrf
                         <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 text-sm">
                             <i class="fas fa-play mr-1"></i>Start Surgery

@@ -60,7 +60,7 @@
         <div class="space-y-3">
             {{-- Suspend / Activate --}}
             @if($tenant->status === 'active')
-            <form method="POST" action="{{ route('super-admin.tenants.suspend', $tenant) }}" onsubmit="return confirm('Suspend {{ $tenant->name }}? Users will not be able to log in.')">
+            <form method="POST" action="{{ route('super-admin.tenants.suspend', $tenant) }}" data-confirm="Suspend {{ $tenant->name }}? Users will not be able to log in." data-confirm-title="Suspend tenant" data-confirm-variant="danger" data-confirm-text="Suspend">
                 @csrf
                 <button type="submit" class="w-full px-4 py-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
                     <i class="fas fa-ban mr-1"></i> Suspend Hospital

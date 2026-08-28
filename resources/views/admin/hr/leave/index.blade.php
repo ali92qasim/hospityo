@@ -155,7 +155,7 @@
                             <div class="flex flex-col gap-2">
                                 <form action="{{ route('hr.leave.approve', $request) }}" method="POST" class="inline">
                                     @csrf
-                                    <button type="submit" class="text-green-600 hover:text-green-800 text-sm font-medium" onclick="return confirm('Approve this leave request?')">
+                                    <button type="submit" class="text-green-600 hover:text-green-800 text-sm font-medium" data-confirm="Approve this leave request?" data-confirm-title="Approve leave" data-confirm-text="Approve" data-confirm-variant="success">
                                         <i class="fas fa-check mr-1"></i>Approve
                                     </button>
                                 </form>
@@ -178,7 +178,7 @@
                         @elseif($request->status === 'approved')
                             <form action="{{ route('hr.leave.cancel', $request) }}" method="POST" class="inline">
                                 @csrf
-                                <button type="submit" class="text-orange-600 hover:text-orange-800 text-sm font-medium" onclick="return confirm('Cancel this approved leave?')">
+                                <button type="submit" class="text-orange-600 hover:text-orange-800 text-sm font-medium" data-confirm="Cancel this approved leave?" data-confirm-title="Cancel leave" data-confirm-text="Cancel leave" data-confirm-variant="danger">
                                     <i class="fas fa-ban mr-1"></i>Cancel
                                 </button>
                             </form>

@@ -96,7 +96,7 @@ $(document).ready(function () {
                             <a href="/doctors/${id}/edit" class="inline-flex items-center justify-center w-7 h-7 rounded text-medical-green hover:bg-green-50" title="Edit">
                                 <i class="fas fa-edit text-xs"></i>
                             </a>
-                            <form method="POST" action="/doctors/${id}" onsubmit="return confirm('Are you sure?')">
+                            <form method="POST" action="/doctors/${id}" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
                                 <input type="hidden" name="_token" value="${window.csrf}">
                                 <input type="hidden" name="_method" value="DELETE">
                                 <button type="submit" class="inline-flex items-center justify-center w-7 h-7 rounded text-red-600 hover:bg-red-50" title="Delete">

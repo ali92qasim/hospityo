@@ -52,7 +52,7 @@
                                 <a href="{{ route('prescription-instructions.edit', $instruction) }}" class="text-yellow-600 hover:text-yellow-800" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="{{ route('prescription-instructions.destroy', $instruction) }}" method="POST" class="inline" onsubmit="return confirm('Delete this instruction?')">
+                                <form action="{{ route('prescription-instructions.destroy', $instruction) }}" method="POST" class="inline" data-confirm="Delete this instruction?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">

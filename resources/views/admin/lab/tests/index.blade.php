@@ -18,7 +18,12 @@
     </div>
     <form id="import-form" action="{{ route('lab.tests.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
         @csrf
-        <input type="file" id="import-file" name="file" accept=".csv" onchange="if(this.files.length){if(confirm('Import '+this.files[0].name+' as lab tests? Existing tests with same code will be updated.')){this.closest('form').submit();}else{this.value='';}}">
+        <input type="file" id="import-file" name="file" accept=".csv"
+               data-confirm-file="Import {filename} as lab tests?"
+               data-confirm-title="Import lab tests"
+               data-confirm-detail="Existing tests with the same code will be updated."
+               data-confirm-text="Import"
+               data-confirm-variant="success">
     </form>
 </div>
 

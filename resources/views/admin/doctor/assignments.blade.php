@@ -60,7 +60,7 @@
                                 <form action="{{ route('visits.check-patient', $visit) }}" method="POST" class="inline">
                                     @csrf
                                     <button type="submit" class="text-green-600 hover:text-green-700 ml-2" 
-                                            onclick="return confirm('Mark this patient as checked?')">
+                                            data-confirm="Mark this patient as checked?" data-confirm-title="Check patient" data-confirm-text="Check" data-confirm-variant="success">
                                         <i class="fas fa-check"></i> Check
                                     </button>
                                 </form>

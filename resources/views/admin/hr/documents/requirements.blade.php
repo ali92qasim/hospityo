@@ -115,7 +115,7 @@
 
                     {{-- Actions --}}
                     <td class="px-6 py-4 text-sm font-medium">
-                        <form action="{{ route('hr.documents.destroy-requirement', $requirement) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this requirement?')">
+                        <form action="{{ route('hr.documents.destroy-requirement', $requirement) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this requirement?" data-confirm-variant="danger" data-confirm-text="Delete">>
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">

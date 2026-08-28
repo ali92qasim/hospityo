@@ -412,5 +412,6 @@
 })();
 </script>
 
+@include('partials.confirm-dialog')
 </body>
 </html>

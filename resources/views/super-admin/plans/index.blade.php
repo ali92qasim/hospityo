@@ -59,7 +59,7 @@
                     <i class="fas fa-edit mr-1"></i> Edit
                 </a>
                 @if($plan->tenants_count === 0)
-                <form method="POST" action="{{ route('super-admin.plans.destroy', $plan) }}" onsubmit="return confirm('Delete {{ $plan->name }}?')" class="flex-1">
+                <form method="POST" action="{{ route('super-admin.plans.destroy', $plan) }}" data-confirm="Delete {{ $plan->name }}?" data-confirm-variant="danger" data-confirm-text="Delete" class="flex-1">
                     @csrf @method('DELETE')
                     <button type="submit" class="w-full px-3 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
                         <i class="fas fa-trash mr-1"></i> Delete

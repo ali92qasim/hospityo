@@ -360,7 +360,7 @@
                     </div>
                     <div>
                         <button type="submit" class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                                onclick="return confirm('Are you sure you want to transfer this employee?')">
+                                data-confirm="Are you sure you want to transfer this employee?" data-confirm-title="Transfer employee" data-confirm-text="Transfer" data-confirm-variant="primary">
                             <i class="fas fa-exchange-alt mr-2"></i>Transfer
                         </button>
                     </div>

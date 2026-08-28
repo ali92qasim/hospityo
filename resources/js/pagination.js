@@ -80,7 +80,7 @@ $(document).ready(function () {
                         <i class="fas fa-edit"></i>
                     </a>
 
-                    <form method="POST" action="${resourceBase}/${id}" onsubmit="return confirm('Delete?')">
+                    <form method="POST" action="${resourceBase}/${id}" data-confirm="Delete this item?" data-confirm-variant="danger" data-confirm-text="Delete">
                         <input type="hidden" name="_token" value="${window.csrf}">
                         <input type="hidden" name="_method" value="DELETE">
                         <button class="text-red-600">

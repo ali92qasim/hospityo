@@ -202,7 +202,7 @@
                 <input type="hidden" name="department_id" value="{{ request('department_id') }}">
                 <button type="submit"
                         class="inline-flex items-center justify-center h-10 px-4 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                        onclick="return confirm('This will auto-generate the roster for this period. Existing assignments may be overwritten. Continue?')">
+                        data-confirm="This will auto-generate the roster for this period. Existing assignments may be overwritten. Continue?" data-confirm-title="Auto-generate roster" data-confirm-text="Generate" data-confirm-variant="primary">
                     <i class="fas fa-magic mr-2"></i>Auto Generate
                 </button>
             </form>

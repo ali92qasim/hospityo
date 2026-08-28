@@ -104,7 +104,7 @@
                 </form>
             @endif
             
-            <form action="{{ route('purchases.cancel', $purchase) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to cancel this order?')">
+            <form action="{{ route('purchases.cancel', $purchase) }}" method="POST" class="inline" data-confirm="Are you sure you want to cancel this order?" data-confirm-variant="danger" data-confirm-text="Cancel order">>
                 @csrf
                 <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
                     <i class="fas fa-times mr-2"></i>Cancel Order

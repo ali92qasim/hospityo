@@ -37,7 +37,7 @@
                     <td class="px-6 py-4 text-sm space-x-2">
                         <a href="{{ url('/page/' . $page->slug) }}" target="_blank" class="text-gray-500 hover:text-gray-700"><i class="fas fa-eye"></i></a>
                         <a href="{{ route('super-admin.pages.edit', $page) }}" class="text-medical-blue hover:text-blue-700"><i class="fas fa-edit"></i></a>
-                        <form action="{{ route('super-admin.pages.destroy', $page) }}" method="POST" class="inline" onsubmit="return confirm('Delete this page?')">
+                        <form action="{{ route('super-admin.pages.destroy', $page) }}" method="POST" class="inline" data-confirm="Delete this page?" data-confirm-variant="danger" data-confirm-text="Delete">>
                             @csrf @method('DELETE')
                             <button type="submit" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
                         </form>

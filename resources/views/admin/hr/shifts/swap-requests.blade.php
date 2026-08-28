@@ -106,14 +106,14 @@
                                 <form action="{{ route('hr.shifts.approve-swap', $request) }}" method="POST" class="inline">
                                     @csrf
                                     <button type="submit" class="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors"
-                                            onclick="return confirm('Approve this shift swap request?')">
+                                            data-confirm="Approve this shift swap request?" data-confirm-title="Approve swap" data-confirm-text="Approve" data-confirm-variant="success">
                                         <i class="fas fa-check mr-1"></i>Approve
                                     </button>
                                 </form>
                                 <form action="{{ route('hr.shifts.reject-swap', $request) }}" method="POST" class="inline">
                                     @csrf
                                     <button type="submit" class="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
-                                            onclick="return confirm('Reject this shift swap request?')">
+                                            data-confirm="Reject this shift swap request?" data-confirm-title="Reject swap" data-confirm-text="Reject" data-confirm-variant="danger">
                                         <i class="fas fa-times mr-1"></i>Reject
                                     </button>
                                 </form>

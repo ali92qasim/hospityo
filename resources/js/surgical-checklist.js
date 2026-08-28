@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-check-double mr-1"></i>Confirm Phase';
-                alert(data.message || 'Failed to confirm phase.');
+                if (window.Toast) window.Toast.error(data.message || 'Failed to confirm phase.');
             }
         })
         .catch(function () {

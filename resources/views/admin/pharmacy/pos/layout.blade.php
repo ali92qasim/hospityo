@@ -30,6 +30,7 @@
 
     @include('admin.pharmacy.pos.partials.checkout-bar')
     @include('admin.pharmacy.pos.partials.payment-modal')
+    @include('partials.confirm-dialog')
 
     @vite(['resources/js/pharmacy-pos.js'])
     @stack('scripts')

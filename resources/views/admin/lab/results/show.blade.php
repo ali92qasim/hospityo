@@ -28,7 +28,7 @@
             @if($labResult->status === 'preliminary')
                 <form action="{{ route('lab-results.verify', $labResult) }}" method="POST" class="inline" id="verify-result-form">
                     @csrf
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-confirm="Verify and finalize this result? This action cannot be undone.">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-confirm="Verify and finalize this result? This action cannot be undone." data-confirm-title="Verify result" data-confirm-text="Verify" data-confirm-variant="success">
                         <i class="fas fa-check-circle mr-2"></i>Verify & Finalize
                     </button>
                 </form>

@@ -1,4 +1,5 @@
 import { initDataTable } from './datatable';
+import confirmDialog from './confirm-dialog';
 
 const statusConfig = {
     preliminary: {
@@ -58,28 +59,35 @@ function reloadLabResultsTable() {
 }
 
 function verifyResult(resultId) {
-    if (!confirm('Verify and finalize this result?')) {
-        return;
-    }
+    confirmDialog({
+        title: 'Verify result',
+        message: 'Verify and finalize this result?',
+        confirmText: 'Verify',
+        variant: 'success',
+    }).then(function (confirmed) {
+        if (!confirmed) {
+            return;
+        }
 
-    fetch(`/lab-results/${resultId}/verify`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': window.csrf,
-            'X-Requested-With': 'XMLHttpRequest',
-            Accept: 'application/json',
-        },
-    })
-        .then(function (response) {
-            if (!response.ok) {
-                throw new Error('Verify request failed');
-            }
-
-            reloadLabResultsTable();
+        fetch(`/lab-results/${resultId}/verify`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': window.csrf,
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+            },
         })
-        .catch(function () {
-            alert('Failed to verify result. Please try again.');
-        });
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Verify request failed');
+                }
+
+                reloadLabResultsTable();
+            })
+            .catch(function () {
+                window.Toast?.error('Failed to verify result. Please try again.');
+            });
+    });
 }
 
 function bindVerifyButtons(root) {

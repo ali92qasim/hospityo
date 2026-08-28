@@ -61,7 +61,7 @@
                         <a href="{{ route('suppliers.edit', $supplier) }}" class="text-yellow-600 hover:text-yellow-800 mr-3">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form action="{{ route('suppliers.destroy', $supplier) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?')">
+                        <form action="{{ route('suppliers.destroy', $supplier) }}" method="POST" class="inline" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-red-600 hover:text-red-800">

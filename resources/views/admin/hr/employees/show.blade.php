@@ -267,7 +267,7 @@
                             <a href="{{ asset('storage/' . $document->file_path) }}" target="_blank" class="text-medical-blue hover:text-blue-700">
                                 <i class="fas fa-download"></i>
                             </a>
-                            <form action="{{ route('hr.employees.delete-document', $document) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this document?')">
+                            <form action="{{ route('hr.employees.delete-document', $document) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this document?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800">

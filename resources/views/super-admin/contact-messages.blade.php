@@ -33,7 +33,7 @@
                     <td class="px-6 py-4 text-sm space-x-2">
                         <button onclick="viewMessage({{ $msg->id }})" class="text-medical-blue hover:text-blue-700" title="View"><i class="fas fa-eye"></i></button>
                         <a href="mailto:{{ $msg->email }}?subject=Re: {{ $msg->subject }}" class="text-green-600 hover:text-green-700" title="Reply"><i class="fas fa-reply"></i></a>
-                        <form action="{{ route('super-admin.contact-messages.destroy', $msg) }}" method="POST" class="inline" onsubmit="return confirm('Delete this message?')">
+                        <form action="{{ route('super-admin.contact-messages.destroy', $msg) }}" method="POST" class="inline" data-confirm="Delete this message?" data-confirm-variant="danger" data-confirm-text="Delete">>
                             @csrf @method('DELETE')
                             <button type="submit" class="text-red-600 hover:text-red-800" title="Delete"><i class="fas fa-trash"></i></button>
                         </form>

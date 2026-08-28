@@ -280,7 +280,7 @@
                 </form>
                 @endif
                 
-                <form method="POST" action="{{ route('profile.destroy') }}" onsubmit="return confirm('Are you sure? This action cannot be undone.')">
+                <form method="POST" action="{{ route('profile.destroy') }}" data-confirm="Are you sure? This action cannot be undone." data-confirm-title="Delete account" data-confirm-variant="danger" data-confirm-text="Delete">
                     @csrf @method('DELETE')
                     <input type="password" name="password" placeholder="Enter password to confirm" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-2 text-sm" required>

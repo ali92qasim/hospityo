@@ -10,7 +10,7 @@
             @if($prescription->status === 'pending')
                 <form method="POST" action="{{ route('prescriptions.dispense', $prescription) }}" class="inline">
                     @csrf
-                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700" onclick="return confirm('Dispense this prescription?')">
+                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700" data-confirm="Dispense this prescription?" data-confirm-title="Dispense" data-confirm-text="Dispense" data-confirm-variant="success">
                         <i class="fas fa-check mr-2"></i>Dispense
                     </button>
                 </form>
