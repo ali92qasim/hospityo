@@ -19,6 +19,7 @@
         $visitLabel = $visitType === 'ipd' ? 'IPD' : ($visitType === 'opd' ? 'OPD' : 'Lab');
     @endphp
     <title>Lab Report - {{ $order->order_number }}</title>
+    @include('partials.favicon')
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 

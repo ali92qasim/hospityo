@@ -53,3 +53,39 @@ test('landing page html includes favicon link tags', function () {
 test('sign in page html includes favicon link tags', function () {
     assertFaviconLinks($this->get('/signin'));
 });
+
+test('not found page html includes favicon link tags', function () {
+    $response = $this->get('/this-route-does-not-exist-favicon');
+
+    $response->assertNotFound();
+    $html = $response->getContent();
+
+    expect($html)->toContain('rel="icon"')
+        ->and($html)->toContain('favicon.svg')
+        ->and($html)->toContain('favicon.ico')
+        ->and($html)->toContain('rel="apple-touch-icon"')
+        ->and($html)->toContain('apple-touch-icon.png');
+});
+
+test('every full html blade document includes the favicon partial', function () {
+    $missing = [];
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator(resource_path('views'))
+    );
+
+    foreach ($iterator as $file) {
+        if (! $file->isFile() || $file->getExtension() !== 'php') {
+            continue;
+        }
+
+        $contents = file_get_contents($file->getPathname());
+        if (! str_contains($contents, '<!DOCTYPE html>')) {
+            continue;
+        }
+        if (! str_contains($contents, "@include('partials.favicon')")) {
+            $missing[] = str_replace(resource_path('views') . DIRECTORY_SEPARATOR, '', $file->getPathname());
+        }
+    }
+
+    expect($missing)->toBeEmpty('Missing @include(\'partials.favicon\') in: '.implode(', ', $missing));
+});

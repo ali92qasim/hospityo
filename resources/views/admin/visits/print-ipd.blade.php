@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPD Report - {{ $visit->visit_no }}</title>
+    @include('partials.favicon')
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.35; color: #111; background: #e5e7eb; }

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payslip - {{ $payslip->employee->full_name }} - {{ $payslip->payrollRun->period_label }}</title>
+    @include('partials.favicon')
     <style>
         * {
             margin: 0;

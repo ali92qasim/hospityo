@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Share Report</title>
+    @include('partials.favicon')
     <style>
         body { font-family: Arial, sans-serif; font-size: 12px; color: #333; margin: 20px; }
         h1 { font-size: 18px; font-weight: bold; margin-bottom: 4px; }

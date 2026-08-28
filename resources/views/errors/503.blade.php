@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="5">
     <title>503 - Server Busy</title>
+    @include('partials.favicon')
     @vite(['resources/css/app.css'])
 </head>
 <body class="bg-gray-100">
