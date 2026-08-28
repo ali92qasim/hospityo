@@ -75,6 +75,20 @@ export function findDoctorSchedule(schedules, doctorId) {
     return schedules.find((schedule) => Number(schedule.id) === Number(doctorId)) || null;
 }
 
+const OUTSIDE_HOURS_PREFIX = "The selected time is outside the doctor's availability";
+
+export function formatShiftClock(time) {
+    return String(time || '').slice(0, 5);
+}
+
+export function outsideHoursMessage(shiftStart, shiftEnd) {
+    return `${OUTSIDE_HOURS_PREFIX} (${formatShiftClock(shiftStart)} to ${formatShiftClock(shiftEnd)}).`;
+}
+
+export function isOutsideHoursMessage(message) {
+    return typeof message === 'string' && message.startsWith(OUTSIDE_HOURS_PREFIX);
+}
+
 export function doctorScheduleMessage(schedule, datetimeStr) {
     if (!schedule) {
         return null;
@@ -105,7 +119,7 @@ export function doctorScheduleMessage(schedule, datetimeStr) {
     const end = timeToMinutes(schedule.shift_end);
 
     if (minutes < start || minutes > end) {
-        return "The selected time is outside the doctor's scheduled hours.";
+        return outsideHoursMessage(schedule.shift_start, schedule.shift_end);
     }
 
     return null;
@@ -185,11 +199,12 @@ export function initAppointmentValidation(form, options = {}) {
                         return true;
                     }
 
-                    const message = doctorScheduleMessage(currentSchedule(), value);
-
-                    return message !== "The selected time is outside the doctor's scheduled hours.";
+                    return !isOutsideHoursMessage(doctorScheduleMessage(currentSchedule(), value));
                 },
-                errorMessage: "The selected time is outside the doctor's scheduled hours.",
+                errorMessage: (value) => (
+                    doctorScheduleMessage(currentSchedule(), value)
+                    || outsideHoursMessage(currentSchedule()?.shift_start, currentSchedule()?.shift_end)
+                ),
             },
         ]);
 

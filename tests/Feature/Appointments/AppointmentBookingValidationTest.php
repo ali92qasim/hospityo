@@ -120,7 +120,7 @@ it('rejects booking outside the doctor shift hours', function () {
     ]))
         ->assertUnprocessable()
         ->assertJsonValidationErrors('appointment_datetime')
-        ->assertJsonFragment(["The selected time is outside the doctor's scheduled hours."]);
+        ->assertJsonFragment(["The selected time is outside the doctor's availability (09:00 to 17:00)."]);
 
     expect(Appointment::count())->toBe(0);
 });
@@ -174,7 +174,38 @@ it('appointment client validator uses just-validate and doctor schedule checks',
     expect($js)->toContain("from 'just-validate'")
         ->and($js)->toContain('submitFormAutomatically: false')
         ->and($js)->toContain('The selected doctor has no available days scheduled.')
-        ->and($js)->toContain('Appointments cannot be booked on a past date.');
+        ->and($js)->toContain('Appointments cannot be booked on a past date.')
+        ->and($js)->toContain("The selected time is outside the doctor's availability");
+});
+
+it('calendar events include appointment details for tooltips', function () {
+    $appointment = Appointment::create(appointmentPayload([
+        'appointment_datetime' => '2026-08-31 10:00:00',
+        'status' => 'scheduled',
+        'reason' => 'Follow up',
+    ]));
+
+    $this->getJson(route('calendar.events'))
+        ->assertOk()
+        ->assertJsonFragment([
+            'id' => $appointment->id,
+            'patient' => 'Booking Patient',
+            'doctor' => 'Dr. Schedule',
+            'status' => 'scheduled',
+            'reason' => 'Follow up',
+        ]);
+});
+
+it('appointment calendar shows pointer on dates and tooltips on booked events', function () {
+    $css = file_get_contents(resource_path('css/appointments-calendar.css'));
+    $js = file_get_contents(resource_path('js/appointments-calendar.js'));
+
+    expect($css)
+        ->toContain('.fc-daygrid-day:not(.fc-day-past)')
+        ->and($css)->toContain('.appointment-event-tooltip')
+        ->and($js)->toContain('appointment-event-tooltip')
+        ->and($js)->toContain('eventMouseEnter')
+        ->and($js)->toContain('eventMouseLeave');
 });
 
 it('rejects changing the datetime of a past appointment', function () {

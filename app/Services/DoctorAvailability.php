@@ -31,10 +31,19 @@ class DoctorAvailability
         $shiftEndMinutes = $this->timeToMinutes((string) $doctor->shift_end);
 
         if ($appointmentMinutes < $shiftStartMinutes || $appointmentMinutes > $shiftEndMinutes) {
-            return "The selected time is outside the doctor's scheduled hours.";
+            return sprintf(
+                "The selected time is outside the doctor's availability (%s to %s).",
+                $this->clock((string) $doctor->shift_start),
+                $this->clock((string) $doctor->shift_end)
+            );
         }
 
         return null;
+    }
+
+    private function clock(string $time): string
+    {
+        return Carbon::parse($time)->format('H:i');
     }
 
     /**

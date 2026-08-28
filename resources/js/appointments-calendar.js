@@ -55,6 +55,21 @@ $(function () {
                 html: `<div class="fc-event-pill">${props.patient || arg.event.title}</div>`,
             };
         },
+        eventDidMount: function (info) {
+            info.el.setAttribute('tabindex', '0');
+            info.el.setAttribute('aria-label', appointmentTooltipAria(info.event));
+            info.el.addEventListener('focus', () => showAppointmentTooltip(info.el, info.event));
+            info.el.addEventListener('blur', hideAppointmentTooltip);
+        },
+        eventMouseEnter: function (info) {
+            showAppointmentTooltip(info.el, info.event);
+        },
+        eventMouseLeave: function () {
+            hideAppointmentTooltip();
+        },
+        eventDragStart: function () {
+            hideAppointmentTooltip();
+        },
         events: function (info, successCallback, failureCallback) {
             const doctorId = $('#doctor-filter').val();
             let url = '/calendar/events?start=' + info.startStr + '&end=' + info.endStr;
@@ -70,6 +85,7 @@ $(function () {
                 });
         },
         dateClick: function (info) {
+            hideAppointmentTooltip();
             if (isPastCalendarDate(info.dateStr)) {
                 showNotification('Error', 'Appointments cannot be booked on a past date.', 'error');
                 return;
@@ -83,6 +99,7 @@ $(function () {
             appointmentValidator?.revalidateField('[name="appointment_datetime"]');
         },
         eventClick: function (info) {
+            hideAppointmentTooltip();
             loadAppointmentData(info.event.id);
         },
         eventDrop: function (info) {
@@ -175,6 +192,7 @@ $(function () {
     });
 
     $('#open-appointment-modal').on('click', function () {
+        hideAppointmentTooltip();
         openAppointmentModal();
     });
 
@@ -196,6 +214,112 @@ $(function () {
 
     function currentDoctorSchedule() {
         return findDoctorSchedule(readDoctorSchedules(), $doctorSelect.val());
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function humanizeStatus(status) {
+        const label = String(status || '').replace(/_/g, ' ').trim();
+
+        if (!label) {
+            return '—';
+        }
+
+        return label.replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+
+    function formatTooltipDateTime(date) {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+            return '—';
+        }
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const hour24 = date.getHours();
+        const hour12 = hour24 % 12 || 12;
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const meridiem = hour24 >= 12 ? 'PM' : 'AM';
+
+        return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} ${hour12}:${minutes} ${meridiem}`;
+    }
+
+    function appointmentTooltipRows(event) {
+        const props = event.extendedProps || {};
+        const rows = [
+            ['Patient', props.patient || event.title || '—'],
+            ['Doctor', props.doctor ? `Dr. ${props.doctor}` : '—'],
+            ['When', formatTooltipDateTime(event.start)],
+            ['Status', humanizeStatus(props.status)],
+        ];
+
+        if (props.reason) {
+            rows.push(['Reason', props.reason]);
+        }
+
+        return rows;
+    }
+
+    function appointmentTooltipAria(event) {
+        return appointmentTooltipRows(event)
+            .map(([label, value]) => `${label}: ${value}`)
+            .join(', ');
+    }
+
+    function appointmentTooltipHtml(event) {
+        return appointmentTooltipRows(event)
+            .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
+            .join('');
+    }
+
+    function tooltipElement() {
+        let el = document.getElementById('appointment-event-tooltip');
+
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'appointment-event-tooltip';
+            el.className = 'appointment-event-tooltip';
+            el.setAttribute('role', 'tooltip');
+            document.body.appendChild(el);
+        }
+
+        return el;
+    }
+
+    function showAppointmentTooltip(anchor, event) {
+        const el = tooltipElement();
+        el.innerHTML = `<dl>${appointmentTooltipHtml(event)}</dl>`;
+        el.classList.add('is-visible');
+
+        const rect = anchor.getBoundingClientRect();
+        const tooltipRect = el.getBoundingClientRect();
+        let left = rect.left;
+        let top = rect.bottom + 8;
+
+        if (left + tooltipRect.width > window.innerWidth - 8) {
+            left = window.innerWidth - tooltipRect.width - 8;
+        }
+
+        if (top + tooltipRect.height > window.innerHeight - 8) {
+            top = rect.top - tooltipRect.height - 8;
+        }
+
+        el.style.left = `${Math.max(8, left)}px`;
+        el.style.top = `${Math.max(8, top)}px`;
+    }
+
+    function hideAppointmentTooltip() {
+        const el = document.getElementById('appointment-event-tooltip');
+
+        if (!el) {
+            return;
+        }
+
+        el.classList.remove('is-visible');
     }
 
     function isUnavailablePickerDate(date) {

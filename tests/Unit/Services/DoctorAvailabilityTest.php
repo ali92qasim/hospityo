@@ -43,9 +43,9 @@ it('rejects a time outside the doctor shift', function () {
     $doctor = makeScheduleDoctor();
 
     expect($service->failureReason($doctor, Carbon::parse('2026-08-31 08:45')))
-        ->toBe("The selected time is outside the doctor's scheduled hours.")
+        ->toBe("The selected time is outside the doctor's availability (09:00 to 17:00).")
         ->and($service->failureReason($doctor, Carbon::parse('2026-08-31 17:15')))
-        ->toBe("The selected time is outside the doctor's scheduled hours.");
+        ->toBe("The selected time is outside the doctor's availability (09:00 to 17:00).");
 });
 
 it('accepts a datetime on an available day inside the shift including boundaries', function () {
