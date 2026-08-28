@@ -16,6 +16,7 @@ class QuickRegisterVisitRequest extends FormRequest
         return [
             'patient_id' => 'required|exists:tenant.patients,id',
             'visit_type' => 'required|in:opd,emergency',
+            'from' => 'nullable|in:patients',
         ];
     }
 }

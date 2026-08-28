@@ -8,12 +8,7 @@
         'discharged' => 'bg-orange-100 text-orange-800',
         'completed' => 'bg-gray-100 text-gray-800',
     ];
-    $backListLabel = match ($visit->visit_type) {
-        'opd' => 'OPD',
-        'ipd' => 'Admitted Patients',
-        'emergency' => 'Emergency',
-        default => 'Visits',
-    };
+    $backLink = \App\Support\VisitWorkflowBackLink::resolve($visit, request('from'));
 @endphp
 <div class="bg-white rounded-lg shadow-sm mb-6">
     <div class="p-6">
@@ -37,8 +32,8 @@
                 <a href="{{ route('visits.print', $visit) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
                     <i class="fas fa-print mr-2"></i>{{ $workflowData['print_label'] }}
                 </a>
-                <a href="{{ route('visits.index', ['visit_type' => $visit->visit_type]) }}" data-landmark="workflow-back-to-list" class="text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to {{ $backListLabel }}
+                <a href="{{ $backLink['url'] }}" data-landmark="workflow-back-to-list" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to {{ $backLink['label'] }}
                 </a>
             </div>
         </div>

@@ -256,7 +256,10 @@ class VisitController extends Controller
             'visit_datetime' => now(),
         ]);
 
-        return redirect()->route('visits.workflow', $visit);
+        return redirect()->route('visits.workflow', [
+            'visit' => $visit,
+            'from' => $request->validated('from') ?? 'patients',
+        ]);
     }
 
     public function store(StoreVisitRequest $request)

@@ -113,6 +113,7 @@ it('quick registers opd visit from patient list and opens workflow without flash
         ->post(route('visits.quick-register'), [
             'patient_id' => $this->patient->id,
             'visit_type' => 'opd',
+            'from' => 'patients',
         ])
         ->assertRedirect()
         ->assertSessionHasNoErrors()
@@ -136,12 +137,56 @@ it('quick registers emergency visit from patient list and opens workflow', funct
         ->post(route('visits.quick-register'), [
             'patient_id' => $this->patient->id,
             'visit_type' => 'emergency',
+            'from' => 'patients',
         ]);
 
     $visit = Visit::where('patient_id', $this->patient->id)->where('visit_type', 'emergency')->latest('id')->first();
 
-    $response->assertRedirect(route('visits.workflow', $visit))
+    $response->assertRedirect(route('visits.workflow', ['visit' => $visit, 'from' => 'patients']))
         ->assertSessionMissing('success');
+});
+
+it('quick registers opd visit from patient list and back link goes to patients', function () {
+    $user = makeVisitUser(['view visits', 'create visits', 'edit visits']);
+
+    $this->actingAs($user)
+        ->post(route('visits.quick-register'), [
+            'patient_id' => $this->patient->id,
+            'visit_type' => 'opd',
+            'from' => 'patients',
+        ]);
+
+    $visit = Visit::where('patient_id', $this->patient->id)->where('visit_type', 'opd')->latest('id')->first();
+
+    expect($visit)->not->toBeNull();
+
+    $this->get(route('visits.workflow', ['visit' => $visit, 'from' => 'patients']))
+        ->assertOk()
+        ->assertSee('data-landmark="workflow-back-to-list"', false)
+        ->assertSee('Back to Patients', false)
+        ->assertSee('href="'.e(route('patients.index')).'"', false)
+        ->assertDontSee('Back to OPD', false);
+});
+
+it('quick registers emergency visit from patient list and back link goes to patients', function () {
+    $user = makeVisitUser(['view visits', 'create visits', 'edit visits']);
+
+    $response = $this->actingAs($user)
+        ->post(route('visits.quick-register'), [
+            'patient_id' => $this->patient->id,
+            'visit_type' => 'emergency',
+            'from' => 'patients',
+        ]);
+
+    $visit = Visit::where('patient_id', $this->patient->id)->where('visit_type', 'emergency')->latest('id')->first();
+
+    $response->assertRedirect(route('visits.workflow', ['visit' => $visit, 'from' => 'patients']));
+
+    $this->get(route('visits.workflow', ['visit' => $visit, 'from' => 'patients']))
+        ->assertOk()
+        ->assertSee('Back to Patients', false)
+        ->assertSee('href="'.e(route('patients.index')).'"', false)
+        ->assertDontSee('Back to Emergency', false);
 });
 
 it('emergency workflow back link goes to emergency listing not opd', function () {
@@ -162,6 +207,14 @@ it('emergency workflow back link goes to emergency listing not opd', function ()
         ->assertSee('href="'.e(route('visits.index', ['visit_type' => 'emergency'])).'"', false)
         ->assertDontSee('Back to OPD', false)
         ->assertDontSee('Back to Visits', false);
+});
+
+it('patients listing quick register forms include patients origin', function () {
+    $script = file_get_contents(resource_path('js/patients-index.js'));
+
+    expect($script)
+        ->toContain('name="from"')
+        ->toContain('value="patients"');
 });
 
 it('edit visit page shows read only visit type badge not select', function () {

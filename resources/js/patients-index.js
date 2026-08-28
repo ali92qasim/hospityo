@@ -27,6 +27,7 @@ function buildVisitRegisterLinks(id) {
             <input type="hidden" name="_token" value="${csrf}">
             <input type="hidden" name="patient_id" value="${id}">
             <input type="hidden" name="visit_type" value="${visitType}">
+            <input type="hidden" name="from" value="patients">
             <button type="submit" class="${buttonClass}" title="${title}">
                 <i class="fas ${iconClass}"></i>
             </button>
