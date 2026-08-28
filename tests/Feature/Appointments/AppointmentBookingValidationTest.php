@@ -208,6 +208,15 @@ it('appointment calendar shows pointer on dates and tooltips on booked events', 
         ->and($js)->toContain('eventMouseLeave');
 });
 
+it('appointment modal does not close when the overlay is clicked', function () {
+    $js = file_get_contents(resource_path('js/appointments-calendar.js'));
+
+    expect($js)
+        ->toContain("$('.js-close-appointment-modal').on('click'")
+        ->and($js)->not->toContain("$('#appointmentModal').on('click'")
+        ->and($js)->toContain("if (e.key === 'Escape'");
+});
+
 it('rejects changing the datetime of a past appointment', function () {
     $appointment = Appointment::create([
         'patient_id' => $this->patient->id,

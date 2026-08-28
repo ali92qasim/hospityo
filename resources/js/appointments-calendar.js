@@ -201,12 +201,6 @@ $(function () {
         closeAppointmentModal();
     });
 
-    $('#appointmentModal').on('click', function (e) {
-        if (e.target === this || $(e.target).hasClass('flex')) {
-            closeAppointmentModal();
-        }
-    });
-
     $(document).on('keydown', function (e) {
         if (e.key === 'Escape' && !$('#appointmentModal').hasClass('hidden')) {
             closeAppointmentModal();
