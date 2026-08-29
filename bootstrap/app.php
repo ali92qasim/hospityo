@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'module' => \App\Http\Middleware\CheckModule::class,
+            'settings.section' => \App\Http\Middleware\EnsureSettingsSection::class,
             'super_admin' => \App\Http\Middleware\SuperAdminAuth::class,
         ]);
 
