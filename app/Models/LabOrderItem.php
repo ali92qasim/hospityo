@@ -53,4 +53,9 @@ class LabOrderItem extends Model
             ? $this->result !== null
             : $this->result()->exists();
     }
+
+    public function hasParameters(): bool
+    {
+        return $this->investigation?->parameters?->count() > 0;
+    }
 }
