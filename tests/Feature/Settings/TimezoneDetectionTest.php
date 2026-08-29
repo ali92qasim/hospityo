@@ -106,7 +106,7 @@ it('lists IANA timezones with UTC offsets on the settings page', function () {
     Permission::findOrCreate('view settings', 'web');
     $this->user->givePermissionTo('view settings');
 
-    $this->get(route('settings.index'))
+    $this->get(route('settings.hospital-info'))
         ->assertOk()
         ->assertSee('Asia/Karachi (UTC+05:00)', false);
 });
