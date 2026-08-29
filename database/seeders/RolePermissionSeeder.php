@@ -246,6 +246,9 @@ class RolePermissionSeeder extends Seeder
         'view audit logs',
 
         // ── Settings ──────────────────────────────────────────────────────────
+        'access settings',
+        'access settings.hospital-info',
+        'access settings.prescription-print',
         'manage settings', // DEPRECATED: use granular settings permissions below
         'view settings',
         'edit settings',
@@ -351,6 +354,7 @@ class RolePermissionSeeder extends Seeder
             'manage user roles',
             'view users', 'create users', 'edit users', 'delete users',
             'view audit logs',
+            'access settings',
             'manage settings', // DEPRECATED: backward compatibility
             'view settings', 'edit settings',
             'manage backup', // DEPRECATED: backward compatibility
@@ -386,6 +390,7 @@ class RolePermissionSeeder extends Seeder
             'view appointments', 'create appointments', 'edit appointments',
             'view visits', 'create visits',
             'view bills', 'create bills', 'create payments', 'edit payments',
+            'access settings',
             'manage settings',
         ],
         'Lab Technician' => [

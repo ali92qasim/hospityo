@@ -427,6 +427,9 @@ class PermissionRegistry
             'label' => 'Settings',
             'groups' => [
                 'settings' => [
+                    'access settings',
+                    'access settings.hospital-info',
+                    'access settings.prescription-print',
                     'manage settings',
                     'view settings',
                     'edit settings',
