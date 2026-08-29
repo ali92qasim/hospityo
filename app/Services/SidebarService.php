@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Tenant;
+use App\Support\SettingsAccess;
+use App\Support\SettingsSectionRegistry;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 /**
@@ -345,6 +347,24 @@ class SidebarService
         // ── Backup & Restore ──────────────────────────────────────────────────
         if ($this->hasModule($tenant, 'backup') && $user->canAny(['view backup', 'create backup', 'restore backup', 'delete backup', 'manage backup'])) {
             $menu[] = $this->link('backup', 'Backup & Restore', 'fa-database', 'backup.index', ['backup.*']);
+        }
+
+        if (SettingsAccess::canAccessAnySection($user)) {
+            $items = [];
+            foreach (SettingsSectionRegistry::children() as $section) {
+                if (! SettingsAccess::canAccessSection($user, $section['key'], 'GET')) {
+                    continue;
+                }
+                $items[] = $this->item(
+                    $section['label'],
+                    $section['icon'],
+                    $section['route'],
+                    [$section['route']],
+                );
+            }
+            if ($items !== []) {
+                $menu[] = $this->group('settings', 'Settings', $items, ['settings.*']);
+            }
         }
 
         return $menu;

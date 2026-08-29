@@ -130,3 +130,26 @@ it('does not render pharmacy on dashboard when tenant lacks pharmacy module', fu
         ->assertOk()
         ->assertDontSee('>Pharmacy<', false);
 });
+
+it('shows settings group when the user can access any section and hides it otherwise', function () {
+    Permission::findOrCreate('access settings.hospital-info', 'web');
+    $user = sidebarUserWithPermissions(['access settings.hospital-info']);
+    $tenant = sidebarTenantWithModules([]);
+
+    $menu = $this->service->build($user, $tenant);
+    $group = collect($menu)->firstWhere('id', 'settings');
+
+    expect($group)->not->toBeNull()
+        ->and(collect($group['items'])->pluck('label')->all())->toBe(['Hospital Info']);
+
+    $denied = sidebarUserWithPermissions([]);
+    expect(collect($this->service->build($denied, $tenant))->pluck('id'))->not->toContain('settings');
+});
+
+it('does not require a saas settings module to show the settings group', function () {
+    Permission::findOrCreate('access settings', 'web');
+    $user = sidebarUserWithPermissions(['access settings']);
+    $tenant = sidebarTenantWithModules(['patients']);
+
+    expect(collect($this->service->build($user, $tenant))->pluck('id'))->toContain('settings');
+});
