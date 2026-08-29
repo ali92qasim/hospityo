@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Support\SettingsAccess;
+use App\Support\SettingsSectionRegistry;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +30,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        View::composer('settings.shell', function ($view) {
+            $user = auth()->user();
+            $tabs = [];
+            if ($user) {
+                foreach (SettingsSectionRegistry::children() as $section) {
+                    if (SettingsAccess::canAccessSection($user, $section['key'], 'GET')) {
+                        $tabs[] = $section;
+                    }
+                }
+            }
+            $view->with('settingsTabs', $tabs);
+        });
+
         // Disconnect DB connections after each queue job so persistent
         // connections are released back to the pool and don't accumulate.
         Queue::after(function (JobProcessed $event) {

@@ -32,6 +32,7 @@ use App\Http\Controllers\VisitController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PrescriptionPrintTemplateController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\UserController;
@@ -213,9 +214,23 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index')->middleware('permission:view settings|manage settings');
-    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update')->middleware('permission:edit settings|manage settings');
-    Route::post('/settings/detect-timezone', [SettingsController::class, 'detectTimezone'])->name('settings.detect-timezone');
+    Route::get('/settings', [SettingsController::class, 'index'])
+        ->name('settings.index');
+
+    Route::get('/settings/hospital-info', [SettingsController::class, 'hospitalInfo'])
+        ->name('settings.hospital-info')
+        ->middleware('settings.section:settings.hospital-info');
+
+    Route::post('/settings', [SettingsController::class, 'update'])
+        ->name('settings.update')
+        ->middleware('settings.section:settings.hospital-info');
+
+    Route::post('/settings/detect-timezone', [SettingsController::class, 'detectTimezone'])
+        ->name('settings.detect-timezone');
+
+    Route::get('/settings/prescription-print-templates', [PrescriptionPrintTemplateController::class, 'index'])
+        ->name('settings.prescription-print-templates.index')
+        ->middleware('settings.section:settings.prescription-print');
 
     // Billing & Subscription Routes
     Route::prefix('billing')->name('billing.')->group(function () {

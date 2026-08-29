@@ -1,26 +1,13 @@
-@extends('admin.layout')
+@extends('settings.shell')
 
-@section('title', 'System Settings')
-
-@section('content')
-<div class="mb-6">
-    <h1 class="text-xl sm:text-2xl font-bold text-gray-800">System Settings</h1>
-</div>
-
-@if(session('success'))
-    <div class="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-        <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
-    </div>
-@endif
-
+@section('settings-section')
 <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-lg font-semibold text-gray-800 mb-4">
         <i class="fas fa-hospital mr-2 text-medical-blue"></i>Hospital Information
     </h2>
     <form method="POST" action="{{ route('settings.update') }}" enctype="multipart/form-data">
         @csrf
-        
-        <!-- Hospital Logo -->
+
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">Hospital Logo</label>
             <div class="flex items-center space-x-6">
@@ -35,7 +22,7 @@
                 </div>
                 <label class="block">
                     <span class="sr-only">Choose logo</span>
-                    <input type="file" name="hospital_logo" accept="image/*" 
+                    <input type="file" name="hospital_logo" accept="image/*"
                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-medical-blue file:text-white hover:file:bg-blue-700">
                 </label>
             </div>
@@ -43,13 +30,13 @@
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="md:col-span-2">
                 <label for="hospital_name" class="block text-sm font-medium text-gray-700 mb-2">Hospital Name</label>
-                <input type="text" id="hospital_name" name="hospital_name" 
-                       value="{{ old('hospital_name', setting('hospital_name', 'Hospital Management System')) }}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                <input type="text" id="hospital_name" name="hospital_name"
+                       value="{{ old('hospital_name', setting('hospital_name', 'Hospital Management System')) }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                        required>
                 @error('hospital_name')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -59,7 +46,7 @@
             <div class="md:col-span-2">
                 <label for="hospital_address" class="block text-sm font-medium text-gray-700 mb-2">Hospital Address</label>
                 <textarea id="hospital_address" name="hospital_address" rows="3"
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                           required>{{ old('hospital_address', setting('hospital_address', '123 Medical Street, Healthcare City')) }}</textarea>
                 @error('hospital_address')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -68,9 +55,9 @@
 
             <div>
                 <label for="hospital_phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                <input type="text" id="hospital_phone" name="hospital_phone" 
-                       value="{{ old('hospital_phone', setting('hospital_phone', '+92-XXX-XXXXXXX')) }}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                <input type="text" id="hospital_phone" name="hospital_phone"
+                       value="{{ old('hospital_phone', setting('hospital_phone', '+92-XXX-XXXXXXX')) }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                        required>
                 @error('hospital_phone')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -79,9 +66,9 @@
 
             <div>
                 <label for="hospital_email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                <input type="email" id="hospital_email" name="hospital_email" 
-                       value="{{ old('hospital_email', setting('hospital_email', 'info@hospital.com')) }}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" 
+                <input type="email" id="hospital_email" name="hospital_email"
+                       value="{{ old('hospital_email', setting('hospital_email', 'info@hospital.com')) }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                        required>
                 @error('hospital_email')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

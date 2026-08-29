@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateSettingsRequest;
 use App\Models\Setting;
+use App\Support\SettingsAccess;
+use App\Support\SettingsSectionRegistry;
 use DateTime;
 use DateTimeZone;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +15,19 @@ class SettingsController extends Controller
 {
     public function index()
     {
-        return view('settings.index', [
+        $user = auth()->user();
+        foreach (SettingsSectionRegistry::children() as $section) {
+            if (SettingsAccess::canAccessSection($user, $section['key'], 'GET') && $section['route']) {
+                return redirect()->route($section['route']);
+            }
+        }
+
+        abort(403);
+    }
+
+    public function hospitalInfo()
+    {
+        return view('settings.hospital-info', [
             'timezones' => $this->timezonesGroupedByRegion(),
         ]);
     }
