@@ -41,7 +41,7 @@ final class SettingsSectionRegistry
             'parentKey' => 'settings',
             'order' => 20,
             'route' => 'settings.prescription-print-templates.index',
-            'view' => 'settings.prescription-print-placeholder',
+            'view' => 'settings.prescription-print-templates.index',
         ],
     ];
 

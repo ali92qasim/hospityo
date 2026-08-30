@@ -228,9 +228,26 @@ Route::middleware('auth')->group(function () {
     Route::post('/settings/detect-timezone', [SettingsController::class, 'detectTimezone'])
         ->name('settings.detect-timezone');
 
-    Route::get('/settings/prescription-print-templates', [PrescriptionPrintTemplateController::class, 'index'])
-        ->name('settings.prescription-print-templates.index')
-        ->middleware('settings.section:settings.prescription-print');
+    Route::middleware('settings.section:settings.prescription-print')->group(function () {
+        Route::get('/settings/prescription-print-templates', [PrescriptionPrintTemplateController::class, 'index'])
+            ->name('settings.prescription-print-templates.index');
+        Route::get('/settings/prescription-print-templates/create', [PrescriptionPrintTemplateController::class, 'create'])
+            ->name('settings.prescription-print-templates.create');
+        Route::post('/settings/prescription-print-templates', [PrescriptionPrintTemplateController::class, 'store'])
+            ->name('settings.prescription-print-templates.store');
+        Route::get('/settings/prescription-print-templates/{prescription_print_template}/edit', [PrescriptionPrintTemplateController::class, 'edit'])
+            ->name('settings.prescription-print-templates.edit');
+        Route::put('/settings/prescription-print-templates/{prescription_print_template}', [PrescriptionPrintTemplateController::class, 'update'])
+            ->name('settings.prescription-print-templates.update');
+        Route::delete('/settings/prescription-print-templates/{prescription_print_template}', [PrescriptionPrintTemplateController::class, 'destroy'])
+            ->name('settings.prescription-print-templates.destroy');
+        Route::post('/settings/prescription-print-templates/{prescription_print_template}/activate', [PrescriptionPrintTemplateController::class, 'activate'])
+            ->name('settings.prescription-print-templates.activate');
+        Route::post('/settings/prescription-print-templates/{prescription_print_template}/deactivate', [PrescriptionPrintTemplateController::class, 'deactivate'])
+            ->name('settings.prescription-print-templates.deactivate');
+        Route::get('/settings/prescription-print-templates/{prescription_print_template}/calibration', [PrescriptionPrintTemplateController::class, 'calibration'])
+            ->name('settings.prescription-print-templates.calibration');
+    });
 
     // Billing & Subscription Routes
     Route::prefix('billing')->name('billing.')->group(function () {
