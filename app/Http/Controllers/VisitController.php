@@ -1081,6 +1081,15 @@ class VisitController extends Controller
             'prescriptions.items.prescriptionInstruction',
         ]);
 
+        $pdf = app(\App\Services\PrescriptionPrintService::class)->renderPrescriptionPdf($visit);
+
+        if (is_string($pdf) && $pdf !== '') {
+            return response($pdf, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="prescription-'.$visit->visit_no.'.pdf"',
+            ]);
+        }
+
         return view('admin.visits.print', compact('visit', 'settings'));
     }
 }
