@@ -102,6 +102,36 @@
     <input type="hidden" name="fields[{{ $key }}][visible]" value="{{ old("fields.$key.visible", data_get($field, 'visible') ? 1 : 0) }}">
 @endforeach
 
+@isset($template)
+    <section class="mt-8 border-t border-gray-200 pt-6">
+        <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h3 class="text-base font-semibold text-gray-800">Visual field positioner</h3>
+                <p class="text-sm text-gray-500">
+                    @if($template->mode === 'overlay_physical')
+                        This image is a positioning guide only. It is never printed on prescriptions.
+                    @else
+                        This image is printed as the PDF page background.
+                    @endif
+                </p>
+            </div>
+        </div>
+
+        <div id="prescription-print-editor"
+             data-paper-width-mm="{{ $paperDimensions['width'] }}"
+             data-paper-height-mm="{{ $paperDimensions['height'] }}"
+             data-fields="{{ $editorFields->toJson() }}"
+             data-rx="{{ json_encode([
+                 'start_y' => $template->rx_start_y,
+                 'row_height' => $template->rx_row_height,
+                 'max_rows' => $template->rx_max_rows,
+             ]) }}"
+             data-background-url="{{ $template->background_image_path ? asset('storage/'.$template->background_image_path) : '' }}">
+            <p class="text-sm text-gray-500">Loading visual editor…</p>
+        </div>
+    </section>
+@endisset
+
 <div class="mt-6 flex items-center gap-3">
     <button type="submit" class="rounded-lg bg-medical-blue px-4 py-2 text-sm font-medium text-white hover:opacity-90">
         {{ isset($template) ? 'Save changes' : 'Create template' }}

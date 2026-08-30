@@ -53,7 +53,7 @@ class PrescriptionPrintTemplateController extends Controller
     {
         $validated = $request->validated();
 
-        DB::transaction(function () use ($request, $validated): void {
+        $template = DB::transaction(function () use ($request, $validated): PrescriptionPrintTemplate {
             $attributes = Arr::except($validated, ['background_image', 'fields']);
 
             if ($request->hasFile('background_image')) {
@@ -64,11 +64,13 @@ class PrescriptionPrintTemplateController extends Controller
             $template = PrescriptionPrintTemplate::create($attributes);
             $this->templates->seedDefaultFields($template);
             $this->updateFields($template, $validated['fields'] ?? []);
+
+            return $template;
         });
 
         return redirect()
-            ->route('settings.prescription-print-templates.index')
-            ->with('success', 'Prescription print template created.');
+            ->route('settings.prescription-print-templates.edit', $template)
+            ->with('success', 'Prescription print template created. Position its fields before activating it.');
     }
 
     public function edit(PrescriptionPrintTemplate $prescriptionPrintTemplate): View

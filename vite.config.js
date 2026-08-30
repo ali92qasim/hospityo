@@ -27,6 +27,7 @@ export default defineConfig({
                 'resources/js/patients-index.js',
                 'resources/js/patients-form.js',
                 'resources/js/prescription-form.js',
+                'resources/js/prescription-print-template-editor.js',
                 'resources/js/pharmacy-pos.js',
                 'resources/js/wards-form.js',
                 'resources/js/inventory-form.js',

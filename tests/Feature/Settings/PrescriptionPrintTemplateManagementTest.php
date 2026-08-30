@@ -111,13 +111,23 @@ it('renders the index inside the settings shell for parent access', function () 
         ->assertSee('Prescription Print Templates');
 });
 
+it('loads the visual editor script on the edit view', function () {
+    $this->actingAs(printTemplateUser(['access settings.prescription-print']));
+    $template = createPrintTemplate([], true);
+
+    $this->get(route('settings.prescription-print-templates.edit', $template))
+        ->assertOk()
+        ->assertSee('prescription-print-template-editor', false);
+});
+
 it('stores a template and one field for every catalog key', function () {
     $this->actingAs(printTemplateUser(['access settings.prescription-print']));
 
-    $this->post(route('settings.prescription-print-templates.store'), printTemplatePayload())
-        ->assertRedirect(route('settings.prescription-print-templates.index'));
+    $response = $this->post(route('settings.prescription-print-templates.store'), printTemplatePayload());
 
     $template = PrescriptionPrintTemplate::where('name', 'Main prescription')->firstOrFail();
+
+    $response->assertRedirect(route('settings.prescription-print-templates.edit', $template));
 
     expect($template->fields)->toHaveCount(count(PrescriptionPrintFieldCatalog::keys()))
         ->and($template->fields->pluck('field_key')->sort()->values()->all())
@@ -166,10 +176,10 @@ it('stores an optional overlay image without using it as a printed background', 
     $payload = printTemplatePayload();
     $payload['background_image'] = UploadedFile::fake()->image('letterhead.png');
 
-    $this->post(route('settings.prescription-print-templates.store'), $payload)
-        ->assertRedirect(route('settings.prescription-print-templates.index'));
+    $response = $this->post(route('settings.prescription-print-templates.store'), $payload);
 
     $template = PrescriptionPrintTemplate::firstOrFail();
+    $response->assertRedirect(route('settings.prescription-print-templates.edit', $template));
     Storage::disk('public')->assertExists($template->background_image_path);
 
     $layout = (new PrescriptionPrintLayoutBuilder)->buildCalibration($template);
