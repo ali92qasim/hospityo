@@ -14,6 +14,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PrescriptionPrintTemplateController extends Controller
@@ -125,7 +126,18 @@ class PrescriptionPrintTemplateController extends Controller
 
     public function activate(PrescriptionPrintTemplate $prescriptionPrintTemplate): RedirectResponse
     {
-        $this->templates->activate($prescriptionPrintTemplate);
+        try {
+            $this->templates->activate($prescriptionPrintTemplate);
+        } catch (ValidationException $exception) {
+            if (request()->expectsJson()) {
+                throw $exception;
+            }
+
+            return back()
+                ->withErrors($exception->errors())
+                ->withInput()
+                ->setStatusCode(422);
+        }
 
         return redirect()
             ->route('settings.prescription-print-templates.index')

@@ -3,8 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Support\PrescriptionPrintFieldCatalog;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class StorePrescriptionPrintTemplateRequest extends FormRequest
 {
@@ -41,5 +43,17 @@ class StorePrescriptionPrintTemplateRequest extends FormRequest
             'fields.*.align' => ['required', Rule::in(['left', 'center', 'right'])],
             'fields.*.visible' => ['required', 'boolean'],
         ];
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        if ($this->expectsJson()) {
+            parent::failedValidation($validator);
+        }
+
+        throw new ValidationException(
+            $validator,
+            back()->withErrors($validator)->withInput()->setStatusCode(422),
+        );
     }
 }
