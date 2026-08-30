@@ -171,7 +171,7 @@ class PrescriptionPrintLayoutBuilder
                 ? max(6.0, 11.0 * $maxRows / count($lines))
                 : 11.0;
 
-            $this->appendRows($pages[0]['elements'], $lines, 0.0, $spacing, $fontSize);
+            $this->appendRows($pages[0]['elements'], $lines, $startY, $spacing, $fontSize);
 
             return;
         }

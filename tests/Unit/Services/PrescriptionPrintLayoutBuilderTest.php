@@ -127,7 +127,7 @@ it('shrinks rx spacing to fit every row on one page', function () {
 
     expect($layout['pages'])->toHaveCount(1)
         ->and($rx)->toHaveCount(3)
-        ->and($rx[1]['y_mm'] - $rx[0]['y_mm'])->toEqual(20 / 3);
+        ->and($rx[1]['y_mm'] - $rx[0]['y_mm'])->toEqualWithDelta(20 / 3, 0.0001);
 });
 
 it('caps overflowing rx rows with a continuation note', function () {
