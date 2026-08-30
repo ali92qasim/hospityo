@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Department;
+use App\Models\Doctor;
 use App\Models\PrescriptionPrintTemplate;
 use App\Models\User;
 use App\Services\PrescriptionPrintLayoutBuilder;
@@ -80,6 +82,30 @@ function createPrintTemplate(array $overrides = [], bool $seedFields = false): P
     return $template;
 }
 
+function printTemplateDoctor(): Doctor
+{
+    $department = Department::create([
+        'name' => 'Print Templates',
+        'code' => 'PRINT-TEMPLATES',
+        'status' => 'active',
+    ]);
+
+    return Doctor::create([
+        'name' => 'Print Template Doctor',
+        'specialization' => 'General',
+        'qualification' => 'MBBS',
+        'phone' => '03001112233',
+        'email' => 'print-template-doctor-'.uniqid().'@example.com',
+        'gender' => 'male',
+        'experience_years' => 5,
+        'consultation_fee' => 1000,
+        'shift_start' => '09:00:00',
+        'shift_end' => '17:00:00',
+        'status' => 'active',
+        'department_id' => $department->id,
+    ]);
+}
+
 it('requires authentication and prescription print settings access', function () {
     $this->get(route('settings.prescription-print-templates.index'))
         ->assertRedirect(route('login'));
@@ -155,6 +181,36 @@ it('activates a complete clinic default and deactivates the previous default', f
 
     expect($previous->fresh()->is_active)->toBeFalse()
         ->and($replacement->fresh()->is_active)->toBeTrue();
+});
+
+it('deactivates the clinic default when an active doctor template becomes the default', function () {
+    $this->actingAs(printTemplateUser(['access settings.prescription-print']));
+    $doctor = printTemplateDoctor();
+    $clinicDefault = createPrintTemplate([
+        'name' => 'Clinic default',
+        'is_active' => true,
+    ], true);
+    $doctorTemplate = createPrintTemplate([
+        'name' => 'Doctor template',
+        'doctor_id' => $doctor->id,
+        'is_active' => true,
+    ], true);
+
+    $this->put(
+        route('settings.prescription-print-templates.update', $doctorTemplate),
+        printTemplatePayload([
+            'name' => 'Doctor template',
+            'doctor_id' => null,
+        ])
+    )->assertRedirect(route('settings.prescription-print-templates.index'));
+
+    expect($clinicDefault->fresh()->is_active)->toBeFalse()
+        ->and($doctorTemplate->fresh()->doctor_id)->toBeNull()
+        ->and($doctorTemplate->fresh()->is_active)->toBeTrue()
+        ->and(PrescriptionPrintTemplate::query()
+            ->whereNull('doctor_id')
+            ->where('is_active', true)
+            ->count())->toBe(1);
 });
 
 it('requires a background image when storing a digitized template', function () {

@@ -99,7 +99,16 @@ class PrescriptionPrintTemplateController extends Controller
                     ->store(tenant_storage_path('prescription-print-templates'), 'public');
             }
 
-            $prescriptionPrintTemplate->update($attributes);
+            $prescriptionPrintTemplate->fill($attributes);
+
+            if (
+                $prescriptionPrintTemplate->is_active
+                && $prescriptionPrintTemplate->isDirty('doctor_id')
+            ) {
+                $this->templates->deactivateActiveSiblings($prescriptionPrintTemplate);
+            }
+
+            $prescriptionPrintTemplate->save();
             $this->updateFields($prescriptionPrintTemplate, $validated['fields'] ?? []);
         });
 

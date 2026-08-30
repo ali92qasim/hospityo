@@ -40,6 +40,13 @@ class PrescriptionPrintTemplateService
             ]);
         }
 
+        $this->deactivateActiveSiblings($template);
+
+        $template->update(['is_active' => true]);
+    }
+
+    public function deactivateActiveSiblings(PrescriptionPrintTemplate $template): void
+    {
         PrescriptionPrintTemplate::query()
             ->where('id', '!=', $template->id)
             ->where('is_active', true)
@@ -49,8 +56,6 @@ class PrescriptionPrintTemplateService
                 fn ($query) => $query->where('doctor_id', $template->doctor_id),
             )
             ->update(['is_active' => false]);
-
-        $template->update(['is_active' => true]);
     }
 
     public function deactivate(PrescriptionPrintTemplate $template): void

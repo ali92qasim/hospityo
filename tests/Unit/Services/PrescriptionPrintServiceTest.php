@@ -133,6 +133,18 @@ it('renders overlay mode without printing its reference background', function ()
         ->and($pdf)->toStartWith('%PDF');
 });
 
+it('returns null when a digitized template background file is missing', function () {
+    [$doctor, $visit] = prescriptionPdfVisit('MISSING-BACKGROUND');
+    $template = activePrescriptionPdfTemplate(
+        $doctor,
+        'tenants/demo/missing-digitized-background.png'
+    );
+    $template->update(['mode' => 'digitized_background']);
+
+    expect(app(\App\Services\PrescriptionPrintService::class)->renderPrescriptionPdf($visit))
+        ->toBeNull();
+});
+
 it('renders a calibration sheet as a PDF string', function () {
     [$doctor] = prescriptionPdfVisit('CALIBRATION');
     $template = activePrescriptionPdfTemplate($doctor);

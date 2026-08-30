@@ -28,6 +28,13 @@ class PrescriptionPrintService
         try {
             $layout = $this->layoutBuilder->build($visit, $template);
 
+            if (
+                $template->mode === 'digitized_background'
+                && $layout['background_path'] === null
+            ) {
+                return null;
+            }
+
             return Pdf::loadView('pdf.prescription-print', ['layout' => $layout])
                 ->setPaper($this->dompdfSize($layout['paper_size']), $layout['orientation'])
                 ->output();
