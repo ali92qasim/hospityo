@@ -128,8 +128,9 @@ it('refuses to activate an incomplete template and leaves it inactive', function
     $this->actingAs(printTemplateUser(['access settings.prescription-print']));
     $template = createPrintTemplate();
 
-    $this->post(route('settings.prescription-print-templates.activate', $template))
-        ->assertSessionHasErrors('is_active');
+    $this->postJson(route('settings.prescription-print-templates.activate', $template))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('is_active');
 
     expect($template->fresh()->is_active)->toBeFalse();
 });
@@ -149,11 +150,12 @@ it('activates a complete clinic default and deactivates the previous default', f
 it('requires a background image when storing a digitized template', function () {
     $this->actingAs(printTemplateUser(['access settings.prescription-print']));
 
-    $this->post(
+    $this->postJson(
         route('settings.prescription-print-templates.store'),
         printTemplatePayload(['mode' => 'digitized_background'])
     )
-        ->assertSessionHasErrors('background_image');
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('background_image');
 
     expect(PrescriptionPrintTemplate::count())->toBe(0);
 });
