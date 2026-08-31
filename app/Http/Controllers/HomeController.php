@@ -12,11 +12,23 @@ class HomeController extends Controller
     {
         $tenant = Tenant::current();
         if ($tenant) {
+            if ($tenant->status === 'provisioning') {
+                return redirect(config('app.url').'/register/'.$tenant->id.'/provisioning');
+            }
+
+            if ($tenant->status === 'failed') {
+                return response()->view('errors.tenant-failed', ['tenant' => $tenant], 500);
+            }
+
+            if ($tenant->status === 'suspended') {
+                return response()->view('errors.tenant-suspended', ['tenant' => $tenant], 403);
+            }
+
             if (auth()->check()) {
                 return redirect()->route('dashboard');
             }
 
-            return redirect(config('app.url') . '/signin');
+            return redirect(config('app.url').'/signin');
         }
 
         try {

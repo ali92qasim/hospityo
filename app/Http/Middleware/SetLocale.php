@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -17,32 +18,41 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if locale is set in session
         if (Session::has('locale')) {
             $locale = Session::get('locale');
-        } 
-        // Check if locale is set in request
-        elseif ($request->has('locale')) {
+        } elseif ($request->has('locale')) {
             $locale = $request->get('locale');
             Session::put('locale', $locale);
-        }
-        // Check if user has a preferred locale (only when tenant is active)
-        elseif (\App\Models\Tenant::checkCurrent() && $request->user() && $request->user()->locale) {
-            $locale = $request->user()->locale;
-        }
-        // Use default locale
-        else {
-            $locale = config('app.locale');
+        } else {
+            $locale = $this->preferredLocaleFromActiveTenantUser($request)
+                ?? config('app.locale');
         }
 
-        // Validate locale
         $availableLocales = ['en', 'fr', 'es', 'de', 'ar'];
-        if (!in_array($locale, $availableLocales)) {
+        if (! in_array($locale, $availableLocales, true)) {
             $locale = config('app.locale');
         }
 
         App::setLocale($locale);
 
         return $next($request);
+    }
+
+    /**
+     * Resolve a signed-in user's locale only after the tenant database is ready.
+     * Loading $request->user() while status is "provisioning" queries a
+     * database that does not exist yet and throws.
+     */
+    protected function preferredLocaleFromActiveTenantUser(Request $request): ?string
+    {
+        $tenant = Tenant::current();
+
+        if (! $tenant || ! $tenant->isActive()) {
+            return null;
+        }
+
+        $locale = $request->user()?->locale;
+
+        return is_string($locale) && $locale !== '' ? $locale : null;
     }
 }

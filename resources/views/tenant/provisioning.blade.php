@@ -133,15 +133,16 @@
 
     function poll() {
         pollCount++;
-        if (pollCount > maxPolls) { showError(); return; }
         if (pollCount % 3 === 0 && currentStep < steps.length - 1) advanceStep();
+
+        var interval = pollCount > maxPolls ? 5000 : 2000;
 
         fetch(statusUrl)
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.status === 'active') { showSuccess(); }
                 else if (data.status === 'failed') { showError(); }
-                else { setTimeout(poll, 2000); }
+                else { setTimeout(poll, interval); }
             })
             .catch(function() { setTimeout(poll, 3000); });
     }
