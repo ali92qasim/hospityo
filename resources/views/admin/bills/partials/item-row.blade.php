@@ -8,8 +8,12 @@
             <label class="block text-xs font-medium text-gray-500 mb-1">Item Type</label>
             <select class="item-type-select w-full px-2 py-2 border border-gray-300 rounded-lg text-sm">
                 <option value="service" @selected($itemType === 'service')>Service</option>
-                <option value="lab" @selected($itemType === 'lab')>Lab test</option>
-                <option value="imaging" @selected($itemType === 'imaging')>Imaging study</option>
+                @if($canLabBillItems ?? true)
+                    <option value="lab" @selected($itemType === 'lab')>Lab test</option>
+                @endif
+                @if($canImagingBillItems ?? true)
+                    <option value="imaging" @selected($itemType === 'imaging')>Imaging study</option>
+                @endif
             </select>
         </div>
         <div class="col-span-3 item-service-col {{ $itemType !== 'service' ? 'hidden' : '' }}">

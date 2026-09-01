@@ -72,16 +72,20 @@
         <button type="button" onclick="showTab('gpe')" id="gpe-tab" data-workflow-panel="gpe" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
             <i class="fas fa-notes-medical mr-2 text-indigo-600"></i>GPE Records
         </button>
-        @if($workflowData['show_investigations'])
+        @if($workflowData['show_lab_investigations'] ?? false)
             <button type="button" onclick="showTab('lab')" id="lab-tab" data-workflow-panel="lab" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
                 <i class="fas fa-flask mr-2 text-teal-600"></i>Lab
             </button>
+        @endif
+        @if($workflowData['show_imaging_investigations'] ?? false)
             <button type="button" onclick="showTab('imaging')" id="imaging-tab" data-workflow-panel="imaging" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
                 <i class="fas fa-x-ray mr-2 text-indigo-500"></i>Imaging
             </button>
         @endif
+        @if($workflowData['show_prescriptions'] ?? true)
         <button type="button" onclick="showTab('prescription')" id="prescription-tab" data-workflow-panel="prescription" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
             <i class="fas fa-prescription mr-2 text-green-600"></i>Prescription
         </button>
+        @endif
     </div>
 </aside>

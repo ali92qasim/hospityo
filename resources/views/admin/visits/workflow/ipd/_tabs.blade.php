@@ -12,9 +12,9 @@
         ['id' => 'vitals', 'label' => 'Vitals', 'icon' => 'fa-heartbeat'],
         ['id' => 'consultation', 'label' => 'Round Note', 'icon' => 'fa-stethoscope'],
         ['id' => 'gpe', 'label' => 'GPE', 'icon' => 'fa-notes-medical'],
-        ['id' => 'lab', 'label' => 'Lab', 'icon' => 'fa-flask', 'show' => $workflowData['show_investigations'] ?? false],
-        ['id' => 'imaging', 'label' => 'Imaging', 'icon' => 'fa-x-ray', 'show' => $workflowData['show_investigations'] ?? false],
-        ['id' => 'prescription', 'label' => 'Prescription', 'icon' => 'fa-prescription'],
+        ['id' => 'lab', 'label' => 'Lab', 'icon' => 'fa-flask', 'show' => $workflowData['show_lab_investigations'] ?? false],
+        ['id' => 'imaging', 'label' => 'Imaging', 'icon' => 'fa-x-ray', 'show' => $workflowData['show_imaging_investigations'] ?? false],
+        ['id' => 'prescription', 'label' => 'Prescription', 'icon' => 'fa-prescription', 'show' => $workflowData['show_prescriptions'] ?? true],
         ['id' => 'care-team', 'label' => 'Care Team', 'icon' => 'fa-users'],
     ];
 @endphp

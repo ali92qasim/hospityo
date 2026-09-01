@@ -62,7 +62,7 @@
                 <div class="mb-4">
                     <p class="text-sm font-medium text-gray-700 mb-2">Or select specific bill types:</p>
                     <div class="flex flex-wrap gap-2">
-                        @foreach(['opd' => 'OPD', 'ipd' => 'IPD', 'emergency' => 'Emergency', 'lab' => 'Lab', 'imaging' => 'Imaging', 'pharmacy' => 'Pharmacy'] as $val => $label)
+                        @foreach($entitledTaxBillTypes ?? [] as $val => $label)
                         <label class="flex items-center px-3 py-2 border rounded-lg cursor-pointer text-sm {{ in_array($val, $selectedBillTypes) ? 'border-medical-blue bg-blue-50' : 'border-gray-200 hover:border-gray-300' }}">
                             <input type="checkbox" name="bill_types[]" value="{{ $val }}" {{ in_array($val, $selectedBillTypes) ? 'checked' : '' }}
                                    class="h-3.5 w-3.5 text-medical-blue border-gray-300 rounded mr-2">

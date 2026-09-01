@@ -1,7 +1,9 @@
 @php
     $filterCatalog = $catalog ?? null;
-    $showLab = $filterCatalog === null || $filterCatalog === 'lab';
-    $showImaging = $filterCatalog === null || $filterCatalog === 'imaging';
+    $showLab = ($filterCatalog === null || $filterCatalog === 'lab')
+        && ($workflowData['show_lab_investigations'] ?? true);
+    $showImaging = ($filterCatalog === null || $filterCatalog === 'imaging')
+        && ($workflowData['show_imaging_investigations'] ?? true);
     $labInvestigations = $labTests ?? collect();
     $imagingInvestigations = $imagingStudies ?? collect();
     $categoryLabels = [

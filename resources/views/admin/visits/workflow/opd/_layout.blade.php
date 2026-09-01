@@ -45,6 +45,7 @@
                 @include('admin.visits.workflow._shared._consultation-form', ['expandPrimary' => true])
             </x-workflow-accordion-section>
 
+            @if($workflowData['show_prescriptions'] ?? true)
             <x-workflow-accordion-section
                 id="prescription"
                 title="Add Prescription"
@@ -57,6 +58,7 @@
             >
                 @include('admin.visits.workflow._shared._prescription-panel')
             </x-workflow-accordion-section>
+            @endif
 
             @if($workflowData['show_investigations'])
                 <x-workflow-accordion-section

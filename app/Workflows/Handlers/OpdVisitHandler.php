@@ -6,6 +6,7 @@ use App\Contracts\VisitTypeHandler;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Doctor;
+use App\Models\Tenant;
 use App\Models\Visit;
 use Illuminate\Support\Collection;
 
@@ -45,7 +46,10 @@ class OpdVisitHandler implements VisitTypeHandler
         return [
             'steps' => $this->workflowSteps(),
             'default_tab' => 'vitals',
-            'show_investigations' => true,
+            'show_lab_investigations' => Tenant::currentHasModule('laboratory'),
+            'show_imaging_investigations' => Tenant::currentHasModule('imaging'),
+            'show_investigations' => Tenant::currentHasModule('laboratory') || Tenant::currentHasModule('imaging'),
+            'show_prescriptions' => Tenant::currentHasModule('pharmacy'),
             'consultation_label' => 'Consultation',
             'queue_priority' => $visit->queuePriority(),
             'show_opd_ui' => true,

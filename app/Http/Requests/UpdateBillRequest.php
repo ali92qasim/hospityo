@@ -2,13 +2,41 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateBillRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        if (! auth()->check()) {
+            return false;
+        }
+
+        $module = match ($this->input('bill_type')) {
+            'pharmacy' => 'pharmacy',
+            'emergency' => 'emergency',
+            'ipd' => 'ipd',
+            default => null,
+        };
+
+        if ($module) {
+            Tenant::abortUnlessCurrentHasModule($module);
+        }
+
+        foreach ($this->input('items', []) as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            if (! empty($item['lab_test_id'])) {
+                Tenant::abortUnlessCurrentHasModule('laboratory');
+            }
+            if (! empty($item['imaging_study_id'])) {
+                Tenant::abortUnlessCurrentHasModule('imaging');
+            }
+        }
+
+        return true;
     }
 
     public function rules(): array

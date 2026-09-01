@@ -9,6 +9,7 @@ use App\Models\Bill;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Service;
+use App\Models\Tenant;
 use App\Models\Visit;
 use App\Services\BillItemCategoryResolver;
 use Illuminate\Support\Facades\DB;
@@ -54,10 +55,21 @@ class BillController extends Controller
     {
         $patients = Patient::all();
         $services = Service::active()->get();
-        $labTests = \App\Models\LabTest::active()->orderBy('category')->orderBy('name')->get();
-        $imagingStudies = \App\Models\ImagingStudy::active()->orderBy('category')->orderBy('name')->get();
+        $canLabBillItems = Tenant::currentHasModule('laboratory');
+        $canImagingBillItems = Tenant::currentHasModule('imaging');
+        $labTests = $canLabBillItems
+            ? \App\Models\LabTest::active()->orderBy('category')->orderBy('name')->get()
+            : collect();
+        $imagingStudies = $canImagingBillItems
+            ? \App\Models\ImagingStudy::active()->orderBy('category')->orderBy('name')->get()
+            : collect();
         $visits = Visit::with('patient')->latest()->take(50)->get();
-        return view('admin.bills.create', compact('patients', 'services', 'labTests', 'imagingStudies', 'visits'));
+        $billTypes = $this->entitledBillTypes();
+
+        return view('admin.bills.create', compact(
+            'patients', 'services', 'labTests', 'imagingStudies', 'visits',
+            'billTypes', 'canLabBillItems', 'canImagingBillItems'
+        ));
     }
 
     public function store(StoreBillRequest $request)
@@ -159,11 +171,22 @@ class BillController extends Controller
     {
         $patients = Patient::all();
         $services = Service::active()->get();
-        $labTests = \App\Models\LabTest::active()->orderBy('category')->orderBy('name')->get();
-        $imagingStudies = \App\Models\ImagingStudy::active()->orderBy('category')->orderBy('name')->get();
+        $canLabBillItems = Tenant::currentHasModule('laboratory');
+        $canImagingBillItems = Tenant::currentHasModule('imaging');
+        $labTests = $canLabBillItems
+            ? \App\Models\LabTest::active()->orderBy('category')->orderBy('name')->get()
+            : collect();
+        $imagingStudies = $canImagingBillItems
+            ? \App\Models\ImagingStudy::active()->orderBy('category')->orderBy('name')->get()
+            : collect();
         $visits = Visit::with('patient')->latest()->take(50)->get();
         $bill->load(['billItems', 'patient']);
-        return view('admin.bills.edit', compact('bill', 'patients', 'services', 'labTests', 'imagingStudies', 'visits'));
+        $billTypes = $this->entitledBillTypes($bill->bill_type);
+
+        return view('admin.bills.edit', compact(
+            'bill', 'patients', 'services', 'labTests', 'imagingStudies', 'visits',
+            'billTypes', 'canLabBillItems', 'canImagingBillItems'
+        ));
     }
 
     public function update(UpdateBillRequest $request, Bill $bill)
@@ -519,6 +542,30 @@ class BillController extends Controller
         $nextNumber = ($lastNumber ?? 0) + 1;
 
         return $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function entitledBillTypes(?string $alwaysInclude = null): array
+    {
+        $types = ['opd' => 'OPD'];
+
+        if (Tenant::currentHasModule('ipd')) {
+            $types['ipd'] = 'IPD';
+        }
+        if (Tenant::currentHasModule('emergency')) {
+            $types['emergency'] = 'Emergency';
+        }
+        if (Tenant::currentHasModule('pharmacy')) {
+            $types['pharmacy'] = 'Pharmacy';
+        }
+
+        if ($alwaysInclude && ! isset($types[$alwaysInclude])) {
+            $types[$alwaysInclude] = strtoupper($alwaysInclude);
+        }
+
+        return $types;
     }
 
     private function buildBillItemAttributes(array $item, string $billType): array

@@ -7,6 +7,7 @@ use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Bed;
 use App\Models\Doctor;
+use App\Models\Tenant;
 use App\Models\Visit;
 use App\Services\IpdDraftBillService;
 use Illuminate\Support\Collection;
@@ -69,7 +70,10 @@ class IpdVisitHandler implements VisitTypeHandler
         return [
             'steps' => $this->workflowSteps(),
             'default_tab' => 'admission',
-            'show_investigations' => true,
+            'show_lab_investigations' => Tenant::currentHasModule('laboratory'),
+            'show_imaging_investigations' => Tenant::currentHasModule('imaging'),
+            'show_investigations' => Tenant::currentHasModule('laboratory') || Tenant::currentHasModule('imaging'),
+            'show_prescriptions' => Tenant::currentHasModule('pharmacy'),
             'consultation_label' => 'Consultation',
             'show_opd_ui' => false,
             'show_emergency_ui' => false,

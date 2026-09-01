@@ -27,10 +27,9 @@
                 <label for="bill_type" class="block text-sm font-medium text-gray-700 mb-2">Bill Type</label>
                 <select id="bill_type" name="bill_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
                     <option value="">Select Type</option>
-                    <option value="opd">OPD</option>
-                    <option value="ipd">IPD</option>
-                    <option value="emergency">Emergency</option>
-                    <option value="pharmacy">Pharmacy</option>
+                    @foreach($billTypes as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
                 </select>
                 @error('bill_type')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>

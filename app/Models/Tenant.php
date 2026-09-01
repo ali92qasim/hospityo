@@ -76,6 +76,31 @@ class Tenant extends BaseTenant
     }
 
     /**
+     * Plan check for the current tenant. No current tenant (tests, central)
+     * matches CheckModule: allow.
+     */
+    public static function currentHasModule(string $module): bool
+    {
+        $tenant = static::current();
+
+        if (! $tenant) {
+            return true;
+        }
+
+        return $tenant->hasModule($module);
+    }
+
+    /**
+     * Same 403 copy as CheckModule when the current tenant lacks a module.
+     */
+    public static function abortUnlessCurrentHasModule(string $module): void
+    {
+        if (! static::currentHasModule($module)) {
+            abort(403, 'Your plan does not include the '.ModuleRegistry::nameFor($module).' module. Please upgrade your plan.');
+        }
+    }
+
+    /**
      * Get all modules available to this tenant.
      */
     public function availableModules(): array

@@ -32,8 +32,12 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">Test Type</label>
             <select name="test_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                 <option value="">All Types</option>
-                <option value="lab" {{ $testType == 'lab' ? 'selected' : '' }}>Laboratory</option>
-                <option value="radiology" {{ $testType == 'radiology' ? 'selected' : '' }}>Radiology</option>
+                @if($canLab ?? false)
+                    <option value="lab" {{ $testType == 'lab' ? 'selected' : '' }}>Laboratory</option>
+                @endif
+                @if($canImaging ?? false)
+                    <option value="radiology" {{ $testType == 'radiology' ? 'selected' : '' }}>Radiology</option>
+                @endif
             </select>
         </div>
         <div class="flex items-end">

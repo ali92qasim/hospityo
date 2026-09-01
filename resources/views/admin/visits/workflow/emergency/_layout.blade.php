@@ -52,6 +52,7 @@
                 @include('admin.visits.workflow._shared._consultation-form')
             </x-workflow-accordion-section>
 
+            @if($workflowData['show_prescriptions'] ?? true)
             <x-workflow-accordion-section
                 id="prescription"
                 title="Add Prescription"
@@ -64,6 +65,7 @@
             >
                 @include('admin.visits.workflow._shared._prescription-panel')
             </x-workflow-accordion-section>
+            @endif
         </div>
 
         @if(in_array($visit->status, ['with_doctor', 'triaged']) && ($workflowData['show_complete_visit_button'] ?? false))

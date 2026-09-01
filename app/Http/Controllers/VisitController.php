@@ -27,6 +27,7 @@ use App\Http\Requests\StoreIpdDoctorVisitNoteRequest;
 use App\Http\Requests\UpdateIpdDoctorVisitNoteRequest;
 use App\Models\Visit;
 use App\Models\Patient;
+use App\Models\Tenant;
 use App\Models\Doctor;
 use App\Models\Department;
 use App\Models\ImagingStudy;
@@ -345,8 +346,10 @@ class VisitController extends Controller
 
         $workflowData = array_merge($workflowData, [
             'can_consult' => $handler->canConsult($visit),
-            'can_prescribe' => $handler->canPrescribe($visit),
-            'can_order_labs' => $handler->canOrderLabs($visit),
+            'can_prescribe' => $handler->canPrescribe($visit) && Tenant::currentHasModule('pharmacy'),
+            'can_order_labs' => $handler->canOrderLabs($visit) && (
+                Tenant::currentHasModule('laboratory') || Tenant::currentHasModule('imaging')
+            ),
             'workflow_accordion' => true,
             'show_order_doctor_picker' => $handler->showOrderDoctorPicker($visit, $authDoctor),
             'resolved_initial_tab' => $handler->resolveInitialTab($visit),

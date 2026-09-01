@@ -8,6 +8,7 @@ use App\Models\DoctorShareItem;
 use App\Models\DoctorShareRule;
 use App\Models\DoctorShareSettlement;
 use App\Models\Service;
+use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,8 +53,10 @@ class DoctorShareController extends Controller
     {
         $doctors        = Doctor::orderBy('name')->get();
         $services       = Service::orderBy('name')->get();
+        $appliesToOptions = $this->entitledAppliesToOptions();
+        $investigationScopeOptions = $this->entitledInvestigationScopeOptions();
 
-        return view('admin.doctor-share.rules.create', compact('doctors', 'services'));
+        return view('admin.doctor-share.rules.create', compact('doctors', 'services', 'appliesToOptions', 'investigationScopeOptions'));
     }
 
     /**
@@ -92,12 +95,16 @@ class DoctorShareController extends Controller
         $services       = Service::orderBy('name')->get();
 
         $hasPendingItems = $rule->shareItems()->where('status', 'pending')->exists();
+        $appliesToOptions = $this->entitledAppliesToOptions($rule->applies_to);
+        $investigationScopeOptions = $this->entitledInvestigationScopeOptions($rule->investigation_scope);
 
         return view('admin.doctor-share.rules.edit', compact(
             'rule',
             'doctors',
             'services',
-            'hasPendingItems'
+            'hasPendingItems',
+            'appliesToOptions',
+            'investigationScopeOptions'
         ));
     }
 
@@ -403,8 +410,9 @@ class DoctorShareController extends Controller
     public function reportsIndex(Request $request): View
     {
         [$summary, $details, $doctors] = $this->buildReportData($request, paginate: true);
+        $reportBillTypes = $this->entitledReportBillTypes();
 
-        return view('admin.doctor-share.reports.index', compact('summary', 'details', 'doctors'));
+        return view('admin.doctor-share.reports.index', compact('summary', 'details', 'doctors', 'reportBillTypes'));
     }
 
     /**
@@ -455,6 +463,7 @@ class DoctorShareController extends Controller
         }
 
         if ($request->filled('bill_type')) {
+            $this->abortUnlessReportBillTypeEntitled((string) $request->bill_type);
             $baseQuery->whereHas('bill', function ($q) use ($request) {
                 $q->where('bill_type', $request->bill_type);
             });
@@ -528,7 +537,133 @@ class DoctorShareController extends Controller
         $validated['lab_test_id'] = null;
         $validated['imaging_study_id'] = null;
 
+        $this->abortUnlessAppliesToEntitled($validated['applies_to']);
+        $this->abortUnlessInvestigationScopeEntitled($validated['investigation_scope']);
+
         return $validated;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function entitledAppliesToOptions(?string $alwaysInclude = null): array
+    {
+        $options = ['all' => 'All'];
+
+        foreach ([
+            'opd' => ['visits', 'Opd'],
+            'ipd' => ['ipd', 'Ipd'],
+            'lab' => ['laboratory', 'Lab'],
+            'imaging' => ['imaging', 'Imaging'],
+            'emergency' => ['emergency', 'Emergency'],
+        ] as $value => [$module, $label]) {
+            if (Tenant::currentHasModule($module)) {
+                $options[$value] = $label;
+            }
+        }
+
+        if ($alwaysInclude && ! isset($options[$alwaysInclude])) {
+            $options[$alwaysInclude] = ucfirst($alwaysInclude);
+        }
+
+        return $options;
+    }
+
+    private function abortUnlessAppliesToEntitled(string $appliesTo): void
+    {
+        $module = match ($appliesTo) {
+            'opd' => 'visits',
+            'ipd' => 'ipd',
+            'lab' => 'laboratory',
+            'imaging' => 'imaging',
+            'emergency' => 'emergency',
+            default => null,
+        };
+
+        if ($module) {
+            Tenant::abortUnlessCurrentHasModule($module);
+        }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function entitledInvestigationScopeOptions(?string $alwaysInclude = null): array
+    {
+        $options = ['all' => 'All Investigations'];
+
+        if (Tenant::currentHasModule('laboratory')) {
+            $options['lab'] = 'Lab Tests Only';
+        }
+        if (Tenant::currentHasModule('imaging')) {
+            $options['imaging'] = 'Imaging Only';
+        }
+
+        if ($alwaysInclude && ! isset($options[$alwaysInclude])) {
+            $options[$alwaysInclude] = match ($alwaysInclude) {
+                'lab' => 'Lab Tests Only',
+                'imaging' => 'Imaging Only',
+                default => ucfirst($alwaysInclude),
+            };
+        }
+
+        return $options;
+    }
+
+    private function abortUnlessInvestigationScopeEntitled(string $scope): void
+    {
+        $module = match ($scope) {
+            'lab' => 'laboratory',
+            'imaging' => 'imaging',
+            default => null,
+        };
+
+        if ($module) {
+            Tenant::abortUnlessCurrentHasModule($module);
+        }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function entitledReportBillTypes(): array
+    {
+        $types = [];
+
+        if (Tenant::currentHasModule('visits')) {
+            $types['opd'] = 'OPD';
+        }
+        if (Tenant::currentHasModule('ipd')) {
+            $types['ipd'] = 'IPD';
+        }
+        if (Tenant::currentHasModule('laboratory') || Tenant::currentHasModule('imaging')) {
+            $types['investigation'] = 'Investigation';
+        }
+        if (Tenant::currentHasModule('emergency')) {
+            $types['emergency'] = 'Emergency';
+        }
+
+        return $types;
+    }
+
+    private function abortUnlessReportBillTypeEntitled(string $billType): void
+    {
+        match ($billType) {
+            'opd' => Tenant::abortUnlessCurrentHasModule('visits'),
+            'ipd' => Tenant::abortUnlessCurrentHasModule('ipd'),
+            'emergency' => Tenant::abortUnlessCurrentHasModule('emergency'),
+            'investigation' => $this->abortUnlessDiagnosticsEntitled(),
+            default => null,
+        };
+    }
+
+    private function abortUnlessDiagnosticsEntitled(): void
+    {
+        if (Tenant::currentHasModule('laboratory') || Tenant::currentHasModule('imaging')) {
+            return;
+        }
+
+        Tenant::abortUnlessCurrentHasModule('laboratory');
     }
 
     private function validateRuleScope(array $validated, ?int $excludeRuleId = null): ?string

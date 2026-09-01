@@ -2,13 +2,20 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 
 class OrderMultipleLabTestsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        if (! auth()->check()) {
+            return false;
+        }
+
+        Tenant::abortUnlessCurrentHasModule('laboratory');
+
+        return true;
     }
 
     public function rules(): array

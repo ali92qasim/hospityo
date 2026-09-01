@@ -41,12 +41,9 @@
             <div>
                 <label for="applies_to" class="block text-sm font-medium text-gray-700 mb-2">Applies To</label>
                 <select id="applies_to" name="applies_to" required class="w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                    <option value="all" {{ old('applies_to', 'all') == 'all' ? 'selected' : '' }}>All</option>
-                    <option value="opd" {{ old('applies_to') == 'opd' ? 'selected' : '' }}>Opd</option>
-                    <option value="ipd" {{ old('applies_to') == 'ipd' ? 'selected' : '' }}>Ipd</option>
-                    <option value="lab" {{ old('applies_to') == 'lab' ? 'selected' : '' }}>Lab</option>
-                    <option value="imaging" {{ old('applies_to') == 'imaging' ? 'selected' : '' }}>Imaging</option>
-                    <option value="emergency" {{ old('applies_to') == 'emergency' ? 'selected' : '' }}>Emergency</option>
+                    @foreach($appliesToOptions as $value => $label)
+                    <option value="{{ $value }}" {{ old('applies_to', 'all') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
                 </select>
                 @error('applies_to')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
@@ -71,7 +68,7 @@
             <div class="md:col-span-2">
                 <label for="investigation_scope" class="block text-sm font-medium text-gray-700 mb-2">Investigation Scope</label>
                 <select id="investigation_scope" name="investigation_scope" class="w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
-                    @foreach(['all' => 'All Investigations', 'lab' => 'Lab Tests Only', 'imaging' => 'Imaging Only'] as $value => $label)
+                    @foreach($investigationScopeOptions as $value => $label)
                         <option value="{{ $value }}" {{ old('investigation_scope', 'all') === $value ? 'selected' : '' }}>
                             {{ $label }}
                         </option>

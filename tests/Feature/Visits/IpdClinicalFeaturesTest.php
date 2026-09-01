@@ -256,6 +256,7 @@ it('requires prescription doctor_id to be an active care team member for ipd', f
         'strength' => '500mg',
         'status' => 'active',
         'manage_stock' => false,
+        'selling_price' => 10,
     ]);
 
     $this->post(route('visits.prescription', $this->visit), [

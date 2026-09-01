@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +10,13 @@ class CreatePrescriptionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        if (! auth()->check()) {
+            return false;
+        }
+
+        Tenant::abortUnlessCurrentHasModule('pharmacy');
+
+        return true;
     }
 
     public function rules(): array

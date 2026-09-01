@@ -72,10 +72,9 @@
                     <div class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-800 uppercase">IPD</div>
                 @else
                     <select id="bill_type" name="bill_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
-                        <option value="opd" @selected($bill->bill_type == 'opd')>OPD</option>
-                        <option value="ipd" @selected($bill->bill_type == 'ipd')>IPD</option>
-                        <option value="emergency" @selected($bill->bill_type == 'emergency')>Emergency</option>
-                        <option value="pharmacy" @selected($bill->bill_type == 'pharmacy')>Pharmacy</option>
+                        @foreach($billTypes as $value => $label)
+                            <option value="{{ $value }}" @selected($bill->bill_type == $value)>{{ $label }}</option>
+                        @endforeach
                     </select>
                 @endif
             </div>

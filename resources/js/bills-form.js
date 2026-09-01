@@ -8,6 +8,7 @@ let itemIndex = window._billItemCount ?? 1;
 let rawServiceOptions = '';
 let rawLabTestOptions = '';
 let rawImagingStudyOptions = '';
+let rawItemTypeOptions = '';
 const currencySymbol = window._currencySymbol || '';
 const paidAmount = parseFloat(window._billPaidAmount) || 0;
 
@@ -16,6 +17,7 @@ $(function () {
     rawServiceOptions = $firstRow.find('.service-select').html();
     rawLabTestOptions = $firstRow.find('.lab-test-select').html();
     rawImagingStudyOptions = $firstRow.find('.imaging-study-select').html();
+    rawItemTypeOptions = $firstRow.find('.item-type-select').html();
 
     // Patient & bill type Select2
     $('#patient_id').select2({ placeholder: 'Select Patient', allowClear: true, width: '100%' });
@@ -41,9 +43,7 @@ $(function () {
                     <div class="col-span-2">
                         <label class="block text-xs font-medium text-gray-500 mb-1">Item Type</label>
                         <select class="item-type-select w-full px-2 py-2 border border-gray-300 rounded-lg text-sm">
-                            <option value="service">Service</option>
-                            <option value="lab">Lab test</option>
-                            <option value="imaging">Imaging study</option>
+                            ${rawItemTypeOptions}
                         </select>
                     </div>
                     <div class="col-span-3 item-service-col">

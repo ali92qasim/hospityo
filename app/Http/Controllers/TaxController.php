@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tax;
 use App\Models\Department;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 
 class TaxController extends Controller
@@ -17,7 +18,9 @@ class TaxController extends Controller
     public function create()
     {
         $departments = Department::orderBy('name')->get();
-        return view('admin.taxes.create', compact('departments'));
+        $entitledTaxBillTypes = $this->entitledTaxBillTypes();
+
+        return view('admin.taxes.create', compact('departments', 'entitledTaxBillTypes'));
     }
 
     public function store(Request $request)
@@ -49,7 +52,9 @@ class TaxController extends Controller
     {
         $tax->load('mappings');
         $departments = Department::orderBy('name')->get();
-        return view('admin.taxes.edit', compact('tax', 'departments'));
+        $entitledTaxBillTypes = $this->entitledTaxBillTypes();
+
+        return view('admin.taxes.edit', compact('tax', 'departments', 'entitledTaxBillTypes'));
     }
 
     public function update(Request $request, Tax $tax)
@@ -98,6 +103,10 @@ class TaxController extends Controller
 
         // Bill types
         foreach ($request->input('bill_types', []) as $billType) {
+            $module = $this->moduleForTaxBillType((string) $billType);
+            if ($module) {
+                Tenant::abortUnlessCurrentHasModule($module);
+            }
             $tax->mappings()->create(['applicable_on' => 'bill_type', 'applicable_value' => $billType]);
             $hasMappings = true;
         }
@@ -141,5 +150,41 @@ class TaxController extends Controller
             'total_tax' => round($totalTax, 2),
             'breakdown' => $breakdown,
         ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function entitledTaxBillTypes(): array
+    {
+        $types = [];
+
+        foreach ([
+            'opd' => ['visits', 'OPD'],
+            'ipd' => ['ipd', 'IPD'],
+            'emergency' => ['emergency', 'Emergency'],
+            'lab' => ['laboratory', 'Lab'],
+            'imaging' => ['imaging', 'Imaging'],
+            'pharmacy' => ['pharmacy', 'Pharmacy'],
+        ] as $value => [$module, $label]) {
+            if (Tenant::currentHasModule($module)) {
+                $types[$value] = $label;
+            }
+        }
+
+        return $types;
+    }
+
+    private function moduleForTaxBillType(string $billType): ?string
+    {
+        return match ($billType) {
+            'opd' => 'visits',
+            'ipd' => 'ipd',
+            'emergency' => 'emergency',
+            'lab' => 'laboratory',
+            'imaging' => 'imaging',
+            'pharmacy' => 'pharmacy',
+            default => null,
+        };
     }
 }

@@ -40,10 +40,9 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Bill Type</label>
             <select name="bill_type" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
                 <option value="">All Types</option>
-                <option value="opd" {{ request('bill_type') == 'opd' ? 'selected' : '' }}>OPD</option>
-                <option value="ipd" {{ request('bill_type') == 'ipd' ? 'selected' : '' }}>IPD</option>
-                <option value="investigation" {{ request('bill_type') == 'investigation' ? 'selected' : '' }}>Investigation</option>
-                <option value="emergency" {{ request('bill_type') == 'emergency' ? 'selected' : '' }}>Emergency</option>
+                @foreach($reportBillTypes as $value => $label)
+                    <option value="{{ $value }}" {{ request('bill_type') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
             </select>
         </div>
         <div class="flex items-end gap-2">

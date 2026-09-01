@@ -23,6 +23,7 @@ use App\Models\Ward;
 use App\Models\Bed;
 use App\Models\Department;
 use App\Models\Patient;
+use App\Models\Tenant;
 use App\Models\DoctorShareItem;
 use App\Models\DoctorShareAllocation;
 use Illuminate\Http\Request;
@@ -394,13 +395,26 @@ class ReportController extends Controller
         $startDate = $request->input('start_date', today()->startOfMonth()->format('Y-m-d'));
         $endDate   = $request->input('end_date', today()->format('Y-m-d'));
         $testType  = $request->input('test_type');
+        $canLab = Tenant::currentHasModule('laboratory');
+        $canImaging = Tenant::currentHasModule('imaging');
 
-        $labOrders = LabOrder::whereBetween('ordered_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->with(['items.labTest', 'patient', 'doctor', 'result'])
-            ->get();
-        $imagingOrders = ImagingOrder::whereBetween('ordered_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->with(['items.imagingStudy', 'patient', 'doctor'])
-            ->get();
+        if ($testType === 'lab') {
+            Tenant::abortUnlessCurrentHasModule('laboratory');
+        }
+        if (in_array($testType, ['radiology', 'imaging'], true)) {
+            Tenant::abortUnlessCurrentHasModule('imaging');
+        }
+
+        $labOrders = $canLab
+            ? LabOrder::whereBetween('ordered_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                ->with(['items.labTest', 'patient', 'doctor', 'result'])
+                ->get()
+            : collect();
+        $imagingOrders = $canImaging
+            ? ImagingOrder::whereBetween('ordered_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                ->with(['items.imagingStudy', 'patient', 'doctor'])
+                ->get()
+            : collect();
 
         if ($testType === 'lab') {
             $orders = $labOrders;
@@ -481,7 +495,7 @@ class ReportController extends Controller
 
         return view('admin.reports.lab-tests', compact(
             'orders', 'stats', 'testBreakdown', 'doctorOrders', 'dailyTrend', 'avgTurnaroundTime',
-            'startDate', 'endDate', 'testType'
+            'startDate', 'endDate', 'testType', 'canLab', 'canImaging'
         ));
     }
 

@@ -6,6 +6,7 @@ use App\Contracts\VisitTypeHandler;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Doctor;
+use App\Models\Tenant;
 use App\Models\Visit;
 use Illuminate\Support\Collection;
 
@@ -46,6 +47,9 @@ class EmergencyVisitHandler implements VisitTypeHandler
             'steps' => $this->workflowSteps(),
             'default_tab' => 'triage',
             'show_investigations' => false,
+            'show_lab_investigations' => false,
+            'show_imaging_investigations' => false,
+            'show_prescriptions' => Tenant::currentHasModule('pharmacy'),
             'consultation_label' => 'Emergency Care',
             'show_opd_ui' => false,
             'show_ipd_ui' => false,
