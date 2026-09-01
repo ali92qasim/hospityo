@@ -47,16 +47,32 @@ function laboratoryTenant(): Tenant
     return $tenant;
 }
 
+function diagnosticsTenant(array $modules = ['laboratory', 'imaging']): Tenant
+{
+    $tenant = Mockery::mock(Tenant::class);
+    $tenant->shouldReceive('hasModule')
+        ->andReturnUsing(fn (string $module) => in_array($module, $modules, true));
+
+    return $tenant;
+}
+
 it('shows laboratory and imaging groups instead of diagnostics', function () {
-    $menu = $this->service->build(diagnosticsNavUser(), laboratoryTenant());
+    $menu = $this->service->build(diagnosticsNavUser(), diagnosticsTenant());
     $labels = collect($menu)->pluck('label');
 
     expect($labels)->toContain('Laboratory', 'Imaging')
         ->not->toContain('Diagnostics');
 });
 
+it('hides imaging when the tenant has laboratory but not the imaging module', function () {
+    $labels = collect($this->service->build(diagnosticsNavUser(), laboratoryTenant()))->pluck('label');
+
+    expect($labels)->toContain('Laboratory')
+        ->and($labels)->not->toContain('Imaging');
+});
+
 it('lists kind-specific child links in each diagnostics group', function () {
-    $menu = $this->service->build(diagnosticsNavUser(), laboratoryTenant());
+    $menu = $this->service->build(diagnosticsNavUser(), diagnosticsTenant());
 
     $lab = collect($menu)->firstWhere('label', 'Laboratory');
     $imaging = collect($menu)->firstWhere('label', 'Imaging');

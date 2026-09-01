@@ -74,3 +74,43 @@ it('allows pharmacy pos when tenant has pharmacy module', function () {
         ->assertOk()
         ->assertSee('POS Counter');
 });
+
+it('blocks emergency visit list when tenant lacks the emergency module', function () {
+    bindTenantWithModules(['visits']);
+    $this->actingAs(moduleGateUser(['view visits']));
+
+    $this->get(route('visits.index', ['visit_type' => 'emergency']))
+        ->assertForbidden();
+});
+
+it('allows emergency visit list when tenant has the emergency module', function () {
+    bindTenantWithModules(['emergency']);
+    $this->actingAs(moduleGateUser(['view visits']));
+
+    $this->get(route('visits.index', ['visit_type' => 'emergency']))
+        ->assertOk();
+});
+
+it('allows opd visit list when tenant has visits but not emergency', function () {
+    bindTenantWithModules(['visits']);
+    $this->actingAs(moduleGateUser(['view visits']));
+
+    $this->get(route('visits.index', ['visit_type' => 'opd']))
+        ->assertOk();
+});
+
+it('blocks hospital info settings when tenant lacks the settings child module', function () {
+    bindTenantWithModules(['settings']);
+    $this->actingAs(moduleGateUser(['access settings']));
+
+    $this->get(route('settings.hospital-info'))
+        ->assertForbidden();
+});
+
+it('allows hospital info settings when tenant has settings and the child module', function () {
+    bindTenantWithModules(['settings', 'settings.hospital-info']);
+    $this->actingAs(moduleGateUser(['access settings']));
+
+    $this->get(route('settings.hospital-info'))
+        ->assertOk();
+});

@@ -428,11 +428,15 @@ class PermissionRegistry
             'groups' => [
                 'settings' => [
                     'access settings',
-                    'access settings.hospital-info',
-                    'access settings.prescription-print',
                     'manage settings',
                     'view settings',
                     'edit settings',
+                ],
+                'hospital info' => [
+                    'access settings.hospital-info',
+                ],
+                'prescription print' => [
+                    'access settings.prescription-print',
                 ],
             ],
         ],

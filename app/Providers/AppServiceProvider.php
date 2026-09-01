@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Support\SettingsAccess;
 use App\Support\SettingsSectionRegistry;
+use App\Models\Tenant;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobFailed;
@@ -32,9 +33,13 @@ class AppServiceProvider extends ServiceProvider
     {
         View::composer('settings.shell', function ($view) {
             $user = auth()->user();
+            $tenant = Tenant::current();
             $tabs = [];
             if ($user) {
                 foreach (SettingsSectionRegistry::children() as $section) {
+                    if ($tenant && (! $tenant->hasModule('settings') || ! $tenant->hasModule($section['key']))) {
+                        continue;
+                    }
                     if (SettingsAccess::canAccessSection($user, $section['key'], 'GET')) {
                         $tabs[] = $section;
                     }

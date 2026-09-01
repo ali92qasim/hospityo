@@ -57,7 +57,7 @@ class PlanController extends Controller
                 'price'         => $validated['price'],
                 'billing_cycle' => $validated['billing_cycle'],
                 'paddle_price_id' => $validated['paddle_price_id'] ?? null,
-                'modules'       => $validated['modules'],
+                'modules'       => ModuleRegistry::normalize($validated['modules']),
                 'limits'        => array_filter([
                     'max_users'    => $validated['max_users'] ?? null,
                     'max_patients' => $validated['max_patients'] ?? null,
@@ -110,7 +110,7 @@ class PlanController extends Controller
                 'price'         => $validated['price'],
                 'billing_cycle' => $validated['billing_cycle'],
                 'paddle_price_id' => $validated['paddle_price_id'] ?? null,
-                'modules'       => $validated['modules'],
+                'modules'       => ModuleRegistry::normalize($validated['modules']),
                 'limits'        => array_filter([
                     'max_users'    => $validated['max_users'] ?? null,
                     'max_patients' => $validated['max_patients'] ?? null,

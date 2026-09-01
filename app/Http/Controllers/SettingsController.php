@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateSettingsRequest;
 use App\Models\Setting;
+use App\Models\Tenant;
 use App\Support\SettingsAccess;
 use App\Support\SettingsSectionRegistry;
 use DateTime;
@@ -17,7 +18,7 @@ class SettingsController extends Controller
     {
         $user = auth()->user();
         foreach (SettingsSectionRegistry::children() as $section) {
-            if (SettingsAccess::canAccessSection($user, $section['key'], 'GET') && $section['route']) {
+            if ($section['route'] && SettingsAccess::canAccessSection($user, $section['key'], 'GET') && $this->tenantHasSettingsSection($section['key'])) {
                 return redirect()->route($section['route']);
             }
         }
@@ -98,5 +99,16 @@ class SettingsController extends Controller
         }
 
         return $grouped;
+    }
+
+    private function tenantHasSettingsSection(string $sectionKey): bool
+    {
+        $tenant = Tenant::current();
+
+        if (! $tenant) {
+            return true;
+        }
+
+        return $tenant->hasModule('settings') && $tenant->hasModule($sectionKey);
     }
 }

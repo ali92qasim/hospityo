@@ -70,6 +70,10 @@ it('preserves custom module selections when merging', function () {
         'audit',
         'backup',
         'imaging',
+        'emergency',
+        'settings',
+        'settings.hospital-info',
+        'settings.prescription-print',
     ]);
 });
 
@@ -90,10 +94,24 @@ it('is idempotent when run multiple times', function () {
     expect($plan->fresh()->modules)->toBe($afterFirst);
 });
 
-it('does not add departments when starter set is incomplete', function () {
+it('adds emergency when plan has visits but not emergency', function () {
     $plan = Plan::create([
-        'slug' => 'reports-only',
-        'name' => 'Reports Only',
+        'slug' => 'opd-only',
+        'name' => 'OPD Only',
+        'price' => 10,
+        'billing_cycle' => 'monthly',
+        'modules' => ['visits'],
+    ]);
+
+    $this->artisan('plans:sync-modules')->assertSuccessful();
+
+    expect($plan->fresh()->modules)->toContain('emergency', 'visits');
+});
+
+it('adds settings and children when a plan has none', function () {
+    $plan = Plan::create([
+        'slug' => 'no-settings',
+        'name' => 'No Settings',
         'price' => 10,
         'billing_cycle' => 'monthly',
         'modules' => ['reports'],
@@ -101,5 +119,10 @@ it('does not add departments when starter set is incomplete', function () {
 
     $this->artisan('plans:sync-modules')->assertSuccessful();
 
-    expect($plan->fresh()->modules)->toBe(['reports']);
+    expect($plan->fresh()->modules)->toEqualCanonicalizing([
+        'reports',
+        'settings',
+        'settings.hospital-info',
+        'settings.prescription-print',
+    ]);
 });

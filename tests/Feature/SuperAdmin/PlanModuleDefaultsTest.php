@@ -38,3 +38,14 @@ it('includes departments in starter plan', function () {
     $starter = Plan::where('slug', 'starter')->first();
     expect($starter->modules)->toContain('departments');
 });
+
+it('includes emergency and settings children in starter plan', function () {
+    $this->seed(PlanSeeder::class);
+    $starter = Plan::where('slug', 'starter')->first();
+    expect($starter->modules)->toContain(
+        'emergency',
+        'settings',
+        'settings.hospital-info',
+        'settings.prescription-print',
+    );
+});

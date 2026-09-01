@@ -112,7 +112,7 @@ it('uses a single emergency sidebar link', function () {
 
     $user = makeSidebarUser(['view visits']);
 
-    $tenant = makeTenantWithModules(['visits']);
+    $tenant = makeTenantWithModules(['emergency']);
 
     $menu = $this->service->build($user, $tenant);
 
@@ -158,9 +158,9 @@ it('gates ipd visit links behind both ipd and visits modules', function () {
 
 
 
-    expect(collect($menu)->pluck('label'))->toContain('OPD', 'Emergency')
+    expect(collect($menu)->pluck('label'))->toContain('OPD')
 
-        ->and(collect($menu)->pluck('label'))->not->toContain('IPD Management');
+        ->and(collect($menu)->pluck('label'))->not->toContain('Emergency', 'IPD Management');
 
 });
 

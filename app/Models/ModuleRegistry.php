@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Http\Request;
+
 /**
  * Central registry of all SaaS modules.
  *
@@ -40,6 +42,12 @@ class ModuleRegistry
             'group'       => 'Clinical',
             'description' => 'Outpatient visits and clinical workflows.',
             'routes'      => ['visits.', 'test-orders.'],
+        ],
+        'emergency' => [
+            'name'        => 'Emergency',
+            'group'       => 'Clinical',
+            'description' => 'Emergency visits and triage workflows.',
+            'routes'      => [],
         ],
         'departments' => [
             'name'        => 'Departments',
@@ -133,14 +141,50 @@ class ModuleRegistry
             'description' => 'Database backup and restore utilities.',
             'routes'      => ['backup.'],
         ],
+        'settings' => [
+            'name'        => 'Settings',
+            'group'       => 'Admin',
+            'description' => 'Hospital configuration and print templates.',
+            'routes'      => ['settings.index'],
+            'children'    => ['settings.hospital-info', 'settings.prescription-print'],
+        ],
+        'settings.hospital-info' => [
+            'name'        => 'Hospital Info',
+            'group'       => 'Admin',
+            'parent'      => 'settings',
+            'description' => 'Hospital name, contact, timezone, and branding.',
+            'routes'      => ['settings.hospital-info', 'settings.update'],
+        ],
+        'settings.prescription-print' => [
+            'name'        => 'Prescription Print Templates',
+            'group'       => 'Admin',
+            'parent'      => 'settings',
+            'description' => 'Prescription print layout templates.',
+            'routes'      => ['settings.prescription-print-templates.'],
+        ],
     ];
 
     /**
-     * Get all module slugs.
+     * Get all module slugs, including nested children.
+     *
+     * @return list<string>
      */
     public static function all(): array
     {
         return array_keys(static::$modules);
+    }
+
+    /**
+     * Top-level module slugs (excludes nested children).
+     *
+     * @return list<string>
+     */
+    public static function topLevel(): array
+    {
+        return array_keys(array_filter(
+            static::$modules,
+            fn (array $definition) => empty($definition['parent'])
+        ));
     }
 
     /**
@@ -152,20 +196,74 @@ class ModuleRegistry
     }
 
     /**
+     * Parent slug for a nested module, if any.
+     */
+    public static function parentOf(string $slug): ?string
+    {
+        return static::$modules[$slug]['parent'] ?? null;
+    }
+
+    /**
+     * Ensure selected child slugs also include their parent.
+     *
+     * @param  list<string>  $slugs
+     * @return list<string>
+     */
+    public static function normalize(array $slugs): array
+    {
+        $normalized = $slugs;
+
+        foreach ($slugs as $slug) {
+            $parent = static::parentOf($slug);
+            if ($parent && ! in_array($parent, $normalized, true)) {
+                $normalized[] = $parent;
+            }
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    /**
+     * Resolve the SaaS module for the current HTTP request.
+     */
+    public static function moduleForRequest(Request $request): ?string
+    {
+        $routeName = $request->route()?->getName();
+
+        if (! $routeName) {
+            return null;
+        }
+
+        if (str_starts_with($routeName, 'visits.') || str_starts_with($routeName, 'test-orders.')) {
+            return match (static::visitTypeFromRequest($request)) {
+                'emergency' => 'emergency',
+                'ipd' => 'ipd',
+                default => 'visits',
+            };
+        }
+
+        return static::moduleForRoute($routeName);
+    }
+
+    /**
      * Find which module a route name belongs to.
      * Returns null if the route isn't gated by any module.
      */
     public static function moduleForRoute(string $routeName): ?string
     {
+        $bestSlug = null;
+        $bestLength = -1;
+
         foreach (static::$modules as $slug => $definition) {
-            foreach ($definition['routes'] as $prefix) {
-                if (str_starts_with($routeName, $prefix)) {
-                    return $slug;
+            foreach ($definition['routes'] ?? [] as $prefix) {
+                if (str_starts_with($routeName, $prefix) && strlen($prefix) > $bestLength) {
+                    $bestSlug = $slug;
+                    $bestLength = strlen($prefix);
                 }
             }
         }
 
-        return null;
+        return $bestSlug;
     }
 
     /**
@@ -174,5 +272,23 @@ class ModuleRegistry
     public static function nameFor(string $slug): string
     {
         return static::$modules[$slug]['name'] ?? $slug;
+    }
+
+    private static function visitTypeFromRequest(Request $request): ?string
+    {
+        $route = $request->route();
+        $visit = $route && $route->hasParameters() ? $route->parameter('visit') : null;
+
+        if (is_object($visit) && isset($visit->visit_type)) {
+            return $visit->visit_type;
+        }
+
+        $type = $request->query('visit_type') ?? $request->input('visit_type');
+
+        if (is_string($type) && in_array($type, ['opd', 'ipd', 'emergency'], true)) {
+            return $type;
+        }
+
+        return null;
     }
 }

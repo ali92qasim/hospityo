@@ -99,7 +99,7 @@
 @php
     $selectedModules = old('modules', $plan->modules ?? []);
     $groupOrder = ['Clinical', 'Diagnostics', 'Finance', 'Operations', 'Admin'];
-    $moduleEntries = collect($modules);
+    $moduleEntries = collect($modules)->filter(fn ($def) => empty($def['parent'] ?? null));
 @endphp
 @foreach($groupOrder as $group)
     @php $groupModules = $moduleEntries->filter(fn ($def, $slug) => ($def['group'] ?? 'Other') === $group); @endphp
@@ -108,19 +108,73 @@
         <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">{{ $group }}</h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             @foreach($groupModules as $slug => $def)
-            <label class="flex items-start p-3 border rounded-lg cursor-pointer hover:border-medical-blue/30 transition-colors {{ in_array($slug, $selectedModules) ? 'border-medical-blue bg-blue-50' : 'border-gray-200' }}">
-                <input type="checkbox" name="modules[]" value="{{ $slug }}"
-                       class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue mr-3 mt-0.5"
-                       {{ in_array($slug, $selectedModules) ? 'checked' : '' }}>
-                <div>
-                    <span class="text-sm font-medium text-gray-800">{{ $def['name'] }}</span>
-                    @if(!empty($def['description']))
-                    <p class="text-xs text-gray-400 mt-0.5">{{ $def['description'] }}</p>
-                    @endif
+            <div class="p-3 border rounded-lg {{ in_array($slug, $selectedModules) ? 'border-medical-blue bg-blue-50' : 'border-gray-200' }}">
+                <label class="flex items-start cursor-pointer hover:border-medical-blue/30 transition-colors">
+                    <input type="checkbox" name="modules[]" value="{{ $slug }}"
+                           data-module-parent="{{ $slug }}"
+                           class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue mr-3 mt-0.5"
+                           {{ in_array($slug, $selectedModules) ? 'checked' : '' }}>
+                    <div>
+                        <span class="text-sm font-medium text-gray-800">{{ $def['name'] }}</span>
+                        @if(!empty($def['description']))
+                        <p class="text-xs text-gray-400 mt-0.5">{{ $def['description'] }}</p>
+                        @endif
+                    </div>
+                </label>
+                @if(!empty($def['children']))
+                <div class="mt-3 ml-7 space-y-2">
+                    @foreach($def['children'] as $childSlug)
+                        @php $childDef = $modules[$childSlug] ?? null; @endphp
+                        @if($childDef)
+                        <label class="flex items-start cursor-pointer">
+                            <input type="checkbox" name="modules[]" value="{{ $childSlug }}"
+                                   data-module-child-of="{{ $slug }}"
+                                   class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue mr-2 mt-0.5"
+                                   {{ in_array($childSlug, $selectedModules) ? 'checked' : '' }}
+                                   {{ in_array($slug, $selectedModules) ? '' : 'disabled' }}>
+                            <div>
+                                <span class="text-sm text-gray-700">{{ $childDef['name'] }}</span>
+                                @if(!empty($childDef['description']))
+                                <p class="text-xs text-gray-400 mt-0.5">{{ $childDef['description'] }}</p>
+                                @endif
+                            </div>
+                        </label>
+                        @endif
+                    @endforeach
                 </div>
-            </label>
+                @endif
+            </div>
             @endforeach
         </div>
     </div>
     @endif
 @endforeach
+<script>
+(function () {
+    document.querySelectorAll('[data-module-parent]').forEach(function (parentBox) {
+        const children = document.querySelectorAll('[data-module-child-of="' + parentBox.value + '"]');
+        if (!children.length) {
+            return;
+        }
+        parentBox.addEventListener('change', function () {
+            children.forEach(function (child) {
+                child.disabled = !parentBox.checked;
+                child.checked = parentBox.checked;
+            });
+        });
+        children.forEach(function (child) {
+            child.addEventListener('change', function () {
+                if (child.checked) {
+                    parentBox.checked = true;
+                    children.forEach(function (sibling) {
+                        sibling.disabled = false;
+                    });
+                }
+            });
+        });
+        children.forEach(function (child) {
+            child.disabled = !parentBox.checked;
+        });
+    });
+})();
+</script>

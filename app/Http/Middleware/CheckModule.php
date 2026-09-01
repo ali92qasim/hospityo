@@ -42,6 +42,11 @@ class CheckModule
                 abort(403, 'Your plan does not include the ' . ModuleRegistry::nameFor($module) . ' module. Please upgrade your plan.');
             }
 
+            $parent = ModuleRegistry::parentOf($module);
+            if ($parent && ! $tenant->hasModule($parent)) {
+                abort(403, 'Your plan does not include the ' . ModuleRegistry::nameFor($parent) . ' module. Please upgrade your plan.');
+            }
+
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -57,12 +62,6 @@ class CheckModule
      */
     protected function detectModule(Request $request): ?string
     {
-        $routeName = $request->route()?->getName();
-
-        if (! $routeName) {
-            return null;
-        }
-
-        return ModuleRegistry::moduleForRoute($routeName);
+        return ModuleRegistry::moduleForRequest($request);
     }
 }

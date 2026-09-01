@@ -18,7 +18,8 @@ class PlanSeeder extends Seeder
                 'billing_cycle' => 'monthly',
                 'trial_days'    => 14,
                 'modules'       => [
-                    'patients', 'doctors', 'departments', 'appointments', 'visits', 'billing',
+                    'patients', 'doctors', 'departments', 'appointments', 'visits', 'emergency', 'billing',
+                    'settings', 'settings.hospital-info', 'settings.prescription-print',
                 ],
                 'limits'        => [
                     'max_users'    => 3,
@@ -35,8 +36,9 @@ class PlanSeeder extends Seeder
                 'billing_cycle' => 'monthly',
                 'trial_days'    => 14,
                 'modules'       => [
-                    'patients', 'doctors', 'departments', 'appointments', 'visits', 'billing',
+                    'patients', 'doctors', 'departments', 'appointments', 'visits', 'emergency', 'billing',
                     'pharmacy', 'laboratory', 'imaging', 'ipd', 'reports', 'rbac',
+                    'settings', 'settings.hospital-info', 'settings.prescription-print',
                 ],
                 'limits'        => [
                     'max_users'    => 25,
@@ -53,9 +55,10 @@ class PlanSeeder extends Seeder
                 'billing_cycle' => 'monthly',
                 'trial_days'    => 30,
                 'modules'       => [
-                    'patients', 'doctors', 'departments', 'appointments', 'visits', 'billing',
+                    'patients', 'doctors', 'departments', 'appointments', 'visits', 'emergency', 'billing',
                     'pharmacy', 'laboratory', 'imaging', 'ipd', 'reports', 'rbac',
                     'ot', 'hr', 'doctor-share', 'accounting', 'audit', 'backup',
+                    'settings', 'settings.hospital-info', 'settings.prescription-print',
                 ],
                 'limits'        => [
                     'max_users'    => null, // unlimited

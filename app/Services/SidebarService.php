@@ -45,7 +45,7 @@ class SidebarService
         }
 
         // ── Departments ───────────────────────────────────────────────────────
-        if ($user->can('view departments')) {
+        if ($this->hasModule($tenant, 'departments') && $user->can('view departments')) {
             $menu[] = $this->link('departments', 'Departments', 'fa-building', 'departments.index', ['departments.*']);
         }
 
@@ -63,7 +63,7 @@ class SidebarService
         }
 
         // ── Emergency (single sidebar link → typed list) ─────────────────────
-        if ($this->hasModule($tenant, 'visits') && $user->can('view visits')) {
+        if ($this->hasModule($tenant, 'emergency') && $user->can('view visits')) {
             $menu[] = $this->link(
                 'emergency',
                 'Emergency',
@@ -172,28 +172,29 @@ class SidebarService
                     'lab-orders.*', 'lab-results.*',
                 ]);
             }
+        }
 
-            if ($user->can('view radiology results')) {
-                $imagingItems = [];
-                if ($user->can('view investigations')) {
-                    $imagingItems[] = $this->item('Imaging Studies', 'fa-x-ray', 'imaging.studies.index', [
-                        'imaging.studies.*',
-                    ]);
-                }
-                if ($user->can('view investigation orders') || $user->can('view lab orders')) {
-                    $imagingItems[] = $this->item('Imaging Orders', 'fa-clipboard-list', 'imaging.orders.index', [
-                        'imaging.orders.*',
-                    ]);
-                }
-                $imagingItems[] = $this->item('Imaging Reports', 'fa-file-image', 'imaging.reports.index', [
-                    'imaging.reports.*', 'radiology-results.*',
+        // ── Imaging ───────────────────────────────────────────────────────────
+        if ($this->hasModule($tenant, 'imaging') && $user->can('view radiology results')) {
+            $imagingItems = [];
+            if ($user->can('view investigations')) {
+                $imagingItems[] = $this->item('Imaging Studies', 'fa-x-ray', 'imaging.studies.index', [
+                    'imaging.studies.*',
                 ]);
-                if ($imagingItems !== []) {
-                    $menu[] = $this->group('imaging', 'Imaging', $imagingItems, [
-                        'imaging.studies.*', 'imaging.orders.*', 'imaging.reports.*',
-                        'radiology-results.*',
-                    ]);
-                }
+            }
+            if ($user->can('view investigation orders') || $user->can('view lab orders')) {
+                $imagingItems[] = $this->item('Imaging Orders', 'fa-clipboard-list', 'imaging.orders.index', [
+                    'imaging.orders.*',
+                ]);
+            }
+            $imagingItems[] = $this->item('Imaging Reports', 'fa-file-image', 'imaging.reports.index', [
+                'imaging.reports.*', 'radiology-results.*',
+            ]);
+            if ($imagingItems !== []) {
+                $menu[] = $this->group('imaging', 'Imaging', $imagingItems, [
+                    'imaging.studies.*', 'imaging.orders.*', 'imaging.reports.*',
+                    'radiology-results.*',
+                ]);
             }
         }
 
@@ -349,9 +350,12 @@ class SidebarService
             $menu[] = $this->link('backup', 'Backup & Restore', 'fa-database', 'backup.index', ['backup.*']);
         }
 
-        if (SettingsAccess::canAccessAnySection($user)) {
+        if ($this->hasModule($tenant, 'settings') && SettingsAccess::canAccessAnySection($user)) {
             $items = [];
             foreach (SettingsSectionRegistry::children() as $section) {
+                if (! $this->hasModule($tenant, $section['key'])) {
+                    continue;
+                }
                 if (! SettingsAccess::canAccessSection($user, $section['key'], 'GET')) {
                     continue;
                 }

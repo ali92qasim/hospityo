@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\ModuleRegistry;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 
 it('maps pharmacy pos routes to pharmacy module', function () {
     expect(ModuleRegistry::moduleForRoute('pharmacy.pos.index'))->toBe('pharmacy');
@@ -30,6 +32,45 @@ it('maps taxes routes to billing module', function () {
     expect(ModuleRegistry::moduleForRoute('taxes.index'))->toBe('billing');
 });
 
-it('registers exactly 18 modules', function () {
-    expect(ModuleRegistry::all())->toHaveCount(18);
+it('maps settings child routes to their child modules', function () {
+    expect(ModuleRegistry::moduleForRoute('settings.hospital-info'))->toBe('settings.hospital-info')
+        ->and(ModuleRegistry::moduleForRoute('settings.update'))->toBe('settings.hospital-info')
+        ->and(ModuleRegistry::moduleForRoute('settings.prescription-print-templates.index'))
+        ->toBe('settings.prescription-print')
+        ->and(ModuleRegistry::moduleForRoute('settings.index'))->toBe('settings');
+});
+
+it('does not gate timezone detection under settings', function () {
+    expect(ModuleRegistry::moduleForRoute('settings.detect-timezone'))->toBeNull();
+});
+
+it('resolves visit routes to emergency or ipd from visit type', function () {
+    $named = fn (string $query) => tap(Request::create('/visits?'.$query, 'GET'), function (Request $request) {
+        $request->setRouteResolver(fn () => new Route(['GET'], '/visits', [
+            'as' => 'visits.index',
+            'uses' => fn () => null,
+        ]));
+    });
+
+    expect(ModuleRegistry::moduleForRequest($named('visit_type=emergency')))->toBe('emergency')
+        ->and(ModuleRegistry::moduleForRequest($named('visit_type=ipd')))->toBe('ipd')
+        ->and(ModuleRegistry::moduleForRequest($named('visit_type=opd')))->toBe('visits');
+});
+
+it('lists settings children under the settings parent and emergency as top-level', function () {
+    expect(ModuleRegistry::all())->toContain('emergency', 'settings', 'settings.hospital-info', 'settings.prescription-print')
+        ->and(ModuleRegistry::topLevel())->toContain('emergency', 'settings')
+        ->and(ModuleRegistry::topLevel())->not->toContain('settings.hospital-info', 'settings.prescription-print')
+        ->and(ModuleRegistry::parentOf('settings.hospital-info'))->toBe('settings')
+        ->and(ModuleRegistry::parentOf('emergency'))->toBeNull();
+});
+
+it('normalizes selected children by adding their parent slug', function () {
+    expect(ModuleRegistry::normalize(['settings.hospital-info', 'visits']))
+        ->toEqualCanonicalizing(['settings.hospital-info', 'visits', 'settings']);
+});
+
+it('registers 20 top-level modules including emergency and settings', function () {
+    expect(ModuleRegistry::topLevel())->toHaveCount(20)
+        ->and(ModuleRegistry::all())->toHaveCount(22);
 });

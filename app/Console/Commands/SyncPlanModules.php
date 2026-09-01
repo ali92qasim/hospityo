@@ -61,6 +61,19 @@ class SyncPlanModules extends Command
             $toAdd[] = 'imaging';
         }
 
+        if (in_array('visits', $modules, true) && ! in_array('emergency', $modules, true)) {
+            $toAdd[] = 'emergency';
+        }
+
+        if (! in_array('settings', $modules, true)
+            && ! in_array('settings.hospital-info', $modules, true)
+            && ! in_array('settings.prescription-print', $modules, true)
+        ) {
+            $toAdd[] = 'settings';
+            $toAdd[] = 'settings.hospital-info';
+            $toAdd[] = 'settings.prescription-print';
+        }
+
         if ($this->needsDepartments($modules)) {
             $toAdd[] = 'departments';
         }

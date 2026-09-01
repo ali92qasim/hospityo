@@ -3,6 +3,7 @@
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\SidebarService;
+use App\Support\PermissionRegistry;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -131,10 +132,31 @@ it('does not render pharmacy on dashboard when tenant lacks pharmacy module', fu
         ->assertDontSee('>Pharmacy<', false);
 });
 
+it('hides departments when the tenant plan omits the departments module', function () {
+    $user = sidebarUserWithPermissions(['view departments']);
+    $tenant = sidebarTenantWithModules(['patients', 'visits']);
+
+    expect(sidebarMenuLabels($user, $tenant))->not->toContain('Departments');
+});
+
+it('shows departments when the tenant has the departments module and the user can view them', function () {
+    $user = sidebarUserWithPermissions(['view departments']);
+    $tenant = sidebarTenantWithModules(['departments']);
+
+    expect(sidebarMenuLabels($user, $tenant))->toContain('Departments');
+});
+
+it('hides every saas-gated sidebar section when the tenant has no modules', function () {
+    $user = sidebarUserWithPermissions(PermissionRegistry::all());
+    $tenant = sidebarTenantWithModules([]);
+
+    expect(sidebarMenuLabels($user, $tenant))->toBe(['Dashboard']);
+});
+
 it('shows settings group when the user can access any section and hides it otherwise', function () {
     Permission::findOrCreate('access settings.hospital-info', 'web');
     $user = sidebarUserWithPermissions(['access settings.hospital-info']);
-    $tenant = sidebarTenantWithModules([]);
+    $tenant = sidebarTenantWithModules(['settings', 'settings.hospital-info']);
 
     $menu = $this->service->build($user, $tenant);
     $group = collect($menu)->firstWhere('id', 'settings');
@@ -146,10 +168,40 @@ it('shows settings group when the user can access any section and hides it other
     expect(collect($this->service->build($denied, $tenant))->pluck('id'))->not->toContain('settings');
 });
 
-it('does not require a saas settings module to show the settings group', function () {
+it('hides the settings group when the tenant plan omits the settings module', function () {
     Permission::findOrCreate('access settings', 'web');
     $user = sidebarUserWithPermissions(['access settings']);
     $tenant = sidebarTenantWithModules(['patients']);
 
-    expect(collect($this->service->build($user, $tenant))->pluck('id'))->toContain('settings');
+    expect(collect($this->service->build($user, $tenant))->pluck('id'))->not->toContain('settings');
+});
+
+it('shows only settings children that the tenant plan grants', function () {
+    $user = sidebarUserWithPermissions(['access settings']);
+    $tenant = sidebarTenantWithModules(['settings', 'settings.hospital-info']);
+
+    $group = collect($this->service->build($user, $tenant))->firstWhere('id', 'settings');
+
+    expect($group)->not->toBeNull()
+        ->and(collect($group['items'])->pluck('label')->all())->toBe(['Hospital Info']);
+});
+
+it('hides emergency when the tenant has visits but not the emergency module', function () {
+    $user = sidebarUserWithPermissions(['view visits']);
+    $tenant = sidebarTenantWithModules(['visits']);
+
+    $labels = sidebarMenuLabels($user, $tenant);
+
+    expect($labels)->toContain('OPD')
+        ->and($labels)->not->toContain('Emergency');
+});
+
+it('shows emergency independently of the visits module', function () {
+    $user = sidebarUserWithPermissions(['view visits']);
+    $tenant = sidebarTenantWithModules(['emergency']);
+
+    $labels = sidebarMenuLabels($user, $tenant);
+
+    expect($labels)->toContain('Emergency')
+        ->and($labels)->not->toContain('OPD');
 });

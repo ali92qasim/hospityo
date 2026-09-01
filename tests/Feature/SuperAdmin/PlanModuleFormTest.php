@@ -38,6 +38,11 @@ it('renders module checkboxes with slug values not numeric indices', function ()
         ->get(route('super-admin.plans.edit', $plan))
         ->assertOk()
         ->assertSee('name="modules[]" value="visits"', false)
+        ->assertSee('name="modules[]" value="emergency"', false)
+        ->assertSee('name="modules[]" value="settings"', false)
+        ->assertSee('name="modules[]" value="settings.hospital-info"', false)
+        ->assertSee('name="modules[]" value="settings.prescription-print"', false)
+        ->assertSee('data-module-child-of="settings"', false)
         ->assertSee('name="modules[]" value="pharmacy"', false)
         ->assertDontSee('name="modules[]" value="0"', false);
 });

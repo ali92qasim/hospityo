@@ -13,7 +13,7 @@ beforeEach(function () {
     ]);
 });
 
-function bindAdminTenant(array $modules = ['rbac', 'audit', 'backup']): Tenant
+function bindAdminTenant(array $modules = ['rbac', 'audit', 'backup', 'settings', 'settings.hospital-info', 'settings.prescription-print']): Tenant
 {
     $tenant = Mockery::mock(Tenant::class)->makePartial();
     $tenant->id = 1;
