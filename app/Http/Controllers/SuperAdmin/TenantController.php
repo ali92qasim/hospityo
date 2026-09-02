@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ModuleRegistry;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Services\TenantModuleProvisioner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class TenantController extends Controller
 {
@@ -78,9 +81,16 @@ class TenantController extends Controller
         try {
             $tenant->update(['status' => 'active']);
 
+            $message = "{$tenant->name} has been activated.";
+            $provisioner = app(TenantModuleProvisioner::class);
+            if ($provisioner->needsAutoGrant($tenant)) {
+                $provisioner->grant($tenant, $tenant->plan?->modules ?? []);
+                $message .= ' Default roles were provisioned.';
+            }
+
             Log::info('[SuperAdmin] Tenant activated', ['tenant_id' => $tenant->id, 'slug' => $tenant->slug]);
 
-            return back()->with('success', "{$tenant->name} has been activated.");
+            return back()->with('success', $message);
         } catch (\Throwable $e) {
             Log::error('[SuperAdmin] Tenant activate failed', ['tenant_id' => $tenant->id, 'error' => $e->getMessage()]);
             return back()->with('error', 'Failed to activate tenant.');
@@ -89,7 +99,9 @@ class TenantController extends Controller
 
     public function changePlan(Request $request, Tenant $tenant)
     {
-        $request->validate(['plan_id' => 'required|exists:plans,id']);
+        $request->validate([
+            'plan_id' => ['required', Rule::exists(Plan::class, 'id')],
+        ]);
 
         try {
             $newPlan = Plan::findOrFail($request->plan_id);
@@ -122,10 +134,54 @@ class TenantController extends Controller
                 'new_plan'  => $newPlan->slug,
             ]);
 
-            return back()->with('success', "{$tenant->name} plan {$action} to {$newPlan->name}.");
+            $message = "{$tenant->name} plan {$action} to {$newPlan->name}.";
+            $provisioner = app(TenantModuleProvisioner::class);
+            if ($provisioner->needsAutoGrant($tenant)) {
+                $provisioner->grant($tenant, $newPlan->modules ?? []);
+
+                return back()->with('success', $message.' Default roles were provisioned.');
+            }
+
+            $added = array_values(array_diff($newPlan->modules ?? [], $oldPlan?->modules ?? []));
+            if ($added !== []) {
+                return back()
+                    ->with('success', $message)
+                    ->with('pending_module_grant', [
+                        'modules' => $added,
+                        'labels' => array_map(fn (string $slug) => ModuleRegistry::nameFor($slug), $added),
+                    ]);
+            }
+
+            return back()->with('success', $message);
         } catch (\Throwable $e) {
             Log::error('[SuperAdmin] Plan change failed', ['tenant_id' => $tenant->id, 'error' => $e->getMessage()]);
             return back()->with('error', 'Failed to change plan.');
+        }
+    }
+
+    public function grantModules(Request $request, Tenant $tenant)
+    {
+        $validated = $request->validate([
+            'modules' => 'required|array|min:1',
+            'modules.*' => ['string', Rule::in(ModuleRegistry::all())],
+        ]);
+
+        try {
+            app(TenantModuleProvisioner::class)->grant(
+                $tenant,
+                ModuleRegistry::normalize($validated['modules']),
+            );
+
+            Log::info('[SuperAdmin] Tenant module permissions granted', [
+                'tenant_id' => $tenant->id,
+                'modules' => $validated['modules'],
+            ]);
+
+            return back()->with('success', "Permissions granted on {$tenant->name}.");
+        } catch (\Throwable $e) {
+            Log::error('[SuperAdmin] Tenant module grant failed', ['tenant_id' => $tenant->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Failed to grant module permissions.');
         }
     }
 

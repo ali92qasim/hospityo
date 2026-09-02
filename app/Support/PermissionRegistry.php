@@ -491,6 +491,23 @@ class PermissionRegistry
     }
 
     /**
+     * @return list<string>
+     */
+    public static function forModule(string $module): array
+    {
+        $groups = static::$modules[$module]['groups'] ?? [];
+        $permissions = [];
+
+        foreach ($groups as $groupPermissions) {
+            foreach ($groupPermissions as $permission) {
+                $permissions[] = $permission;
+            }
+        }
+
+        return array_values(array_unique($permissions));
+    }
+
+    /**
      * Flat unique list of all registered permission strings.
      *
      * @return list<string>

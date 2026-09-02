@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\ModuleRegistry;
 use App\Models\Plan;
+use App\Services\TenantModuleProvisioner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -103,6 +104,7 @@ class PlanController extends Controller
         ]);
 
         try {
+            $previousModules = $plan->modules ?? [];
             $plan->update([
                 'name'          => $validated['name'],
                 'slug'          => $validated['slug'] ?: Str::slug($validated['name']),
@@ -122,7 +124,19 @@ class PlanController extends Controller
                 'is_custom_pricing' => $request->boolean('is_custom_pricing', false),
             ]);
 
-            return redirect()->route('super-admin.plans.index')->with('success', 'Plan updated.');
+            $added = array_values(array_diff($plan->fresh()->modules ?? [], $previousModules));
+            $redirect = redirect()->route('super-admin.plans.index')->with('success', 'Plan updated.');
+
+            if ($added !== [] && $plan->tenants()->count() > 0) {
+                $redirect->with('pending_plan_module_grant', [
+                    'plan_id' => $plan->id,
+                    'modules' => $added,
+                    'labels' => array_map(fn (string $slug) => ModuleRegistry::nameFor($slug), $added),
+                    'tenant_count' => $plan->tenants()->count(),
+                ]);
+            }
+
+            return $redirect;
         } catch (\Throwable $e) {
             Log::error('[SuperAdmin] Plan update failed', ['error' => $e->getMessage()]);
             return back()->withInput()->with('error', 'Failed to update plan.');
@@ -141,6 +155,35 @@ class PlanController extends Controller
         } catch (\Throwable $e) {
             Log::error('[SuperAdmin] Plan delete failed', ['error' => $e->getMessage()]);
             return back()->with('error', 'Failed to delete plan.');
+        }
+    }
+
+    public function grantModules(Request $request, Plan $plan)
+    {
+        $validated = $request->validate([
+            'modules' => 'required|array|min:1',
+            'modules.*' => ['string', Rule::in(ModuleRegistry::all())],
+        ]);
+
+        try {
+            $modules = ModuleRegistry::normalize($validated['modules']);
+            $provisioner = app(TenantModuleProvisioner::class);
+
+            foreach ($plan->tenants as $tenant) {
+                $provisioner->grant($tenant, $modules);
+            }
+
+            Log::info('[SuperAdmin] Plan module permissions granted', [
+                'plan_id' => $plan->id,
+                'modules' => $modules,
+                'tenants' => $plan->tenants()->count(),
+            ]);
+
+            return back()->with('success', 'Module permissions granted on hospitals using '.$plan->name.'.');
+        } catch (\Throwable $e) {
+            Log::error('[SuperAdmin] Plan module grant failed', ['plan_id' => $plan->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Failed to grant module permissions.');
         }
     }
 }

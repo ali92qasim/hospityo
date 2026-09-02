@@ -41,6 +41,10 @@ class SeedTenantData implements ShouldQueue, NotTenantAware
         // and is called first inside TenantOnboardingSeeder.
         $this->seedEssentialData();
 
+        $planModules = $this->tenant->fresh()->plan?->modules ?? [];
+        app(\App\Services\TenantModuleProvisioner::class)
+            ->grant($this->tenant, $planModules, keepCurrent: true);
+
         $this->seedAdminUser();
         $this->seedDefaultSettings();
 

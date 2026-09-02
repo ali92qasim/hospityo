@@ -154,6 +154,7 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::post('/tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
         Route::post('/tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
         Route::post('/tenants/{tenant}/change-plan', [TenantController::class, 'changePlan'])->name('tenants.change-plan');
+        Route::post('/tenants/{tenant}/grant-modules', [TenantController::class, 'grantModules'])->name('tenants.grant-modules');
 
         // Plan management
         Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
@@ -161,6 +162,7 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
         Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
         Route::put('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
+        Route::post('/plans/{plan}/grant-modules', [PlanController::class, 'grantModules'])->name('plans.grant-modules');
         Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
 
         // Page management

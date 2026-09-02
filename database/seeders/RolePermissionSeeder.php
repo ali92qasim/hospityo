@@ -439,4 +439,20 @@ class RolePermissionSeeder extends Seeder
             $role->syncPermissions($permissions);
         }
     }
+
+    /**
+     * @return list<string>
+     */
+    public static function catalogPermissions(): array
+    {
+        return self::PERMISSIONS;
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    public static function defaultRolePermissions(): array
+    {
+        return self::ROLE_PERMISSIONS;
+    }
 }
