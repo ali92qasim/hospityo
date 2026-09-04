@@ -84,7 +84,7 @@ it('builds HMIS ATC-style skus from medicine attributes', function () {
     expect(Medicine::buildSkuFromAttributes('OXIDIL 1GM INJ', '1GM', 'INJ'))->toBe('OXI-1GM-INJ')
         ->and(Medicine::buildSkuFromAttributes('Paracetamol', '500MG', 'TAB', 'GSK', 'Paracetamol'))->toBe('PARACET-500MG-TAB-GSK')
         ->and(Medicine::buildSkuFromAttributes('Paracetamol', '500MG', 'TAB', 'GSK', 'Paracetamol', 'N02BE01'))->toBe('N02BE01-500MG-TAB-GSK')
-        ->and(Medicine::uniqueSku('OXI-1GM-INJ', fn () => true))->toBe('OXI-1GM-INJ-001')
+        ->and(Medicine::uniqueSku('OXI-1GM-INJ', fn (string $sku) => $sku === 'OXI-1GM-INJ'))->toBe('OXI-1GM-INJ-001')
         ->and(Medicine::skuPlaceholder())->toBe('N02BE01-500MG-TAB-GSK');
 });
 
