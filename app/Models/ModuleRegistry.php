@@ -245,6 +245,51 @@ class ModuleRegistry
         return static::$modules[$slug]['parent'] ?? null;
     }
 
+    public static function planAllows(?Tenant $tenant, string $slug): bool
+    {
+        $definition = static::$modules[$slug] ?? null;
+        if ($definition === null) {
+            return false;
+        }
+        if (($definition['entitlement'] ?? 'plan') === 'always') {
+            return true;
+        }
+        if ($tenant === null) {
+            return true;
+        }
+
+        return $tenant->hasModule($slug);
+    }
+
+    public static function allows(?Tenant $tenant, ?\Illuminate\Contracts\Auth\Access\Authorizable $user, string $slug): bool
+    {
+        if (! static::planAllows($tenant, $slug)) {
+            return false;
+        }
+
+        $parent = static::parentOf($slug);
+        if ($parent !== null && ! static::planAllows($tenant, $parent)) {
+            return false;
+        }
+
+        if ($user === null) {
+            return true;
+        }
+
+        $names = \App\Support\PermissionRegistry::forModule($slug);
+        if ($names === []) {
+            return true;
+        }
+
+        foreach ($names as $name) {
+            if ($user->can($name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Ensure selected child slugs also include their parent.
      *
