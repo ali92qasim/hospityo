@@ -70,14 +70,26 @@ it('normalizes selected children by adding their parent slug', function () {
         ->toEqualCanonicalizing(['settings.hospital-info', 'visits', 'settings']);
 });
 
+it('maps each operational report route to its child slug', function () {
+    expect(ModuleRegistry::moduleForRoute('reports.daily-cash-register'))->toBe('reports.daily-cash-register')
+        ->and(ModuleRegistry::moduleForRoute('reports.lab-tests'))->toBe('reports.investigations')
+        ->and(ModuleRegistry::moduleForRoute('reports.investigations'))->toBe('reports.investigations')
+        ->and(ModuleRegistry::parentOf('reports.revenue'))->toBe('reports')
+        ->and(ModuleRegistry::topLevel())->toHaveCount(20)
+        ->and(ModuleRegistry::all())->toHaveCount(35)
+        ->and(ModuleRegistry::normalize(['reports.revenue']))->toEqualCanonicalizing(['reports.revenue', 'reports'])
+        ->and(ModuleRegistry::normalize(['reports']))->toBe(['reports'])
+        ->and(ModuleRegistry::definitions()['reports']['children'])->toBe(ModuleRegistry::REPORT_CHILD_SLUGS);
+});
+
 it('registers 20 top-level modules including emergency and settings', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(22);
+        ->and(ModuleRegistry::all())->toHaveCount(35);
 });
 
 it('declares entitlement and child-access flags without changing slug sets', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(22);
+        ->and(ModuleRegistry::all())->toHaveCount(35);
 
     $reports = ModuleRegistry::definitions()['reports'];
     expect($reports['entitlement'] ?? 'plan')->toBe('plan')

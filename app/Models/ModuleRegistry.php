@@ -13,6 +13,22 @@ use Illuminate\Http\Request;
  */
 class ModuleRegistry
 {
+    public const REPORT_CHILD_SLUGS = [
+        'reports.daily-cash-register',
+        'reports.patient-visits',
+        'reports.revenue',
+        'reports.outstanding-bills',
+        'reports.investigations',
+        'reports.medicine-sales',
+        'reports.inventory-status',
+        'reports.expiry-report',
+        'reports.doctor-performance',
+        'reports.appointment-statistics',
+        'reports.ipd-report',
+        'reports.department-performance',
+        'reports.patient-demographics',
+    ];
+
     /**
      * Module definitions.
      * Key = module slug (stored in plans.modules JSON).
@@ -154,6 +170,125 @@ class ModuleRegistry
             'entitlement' => 'plan',
             'child_access_requires_explicit_grant' => true,
             'routes'      => ['reports.'],
+            'children'    => [
+                'reports.daily-cash-register',
+                'reports.patient-visits',
+                'reports.revenue',
+                'reports.outstanding-bills',
+                'reports.investigations',
+                'reports.medicine-sales',
+                'reports.inventory-status',
+                'reports.expiry-report',
+                'reports.doctor-performance',
+                'reports.appointment-statistics',
+                'reports.ipd-report',
+                'reports.department-performance',
+                'reports.patient-demographics',
+            ],
+        ],
+        'reports.daily-cash-register' => [
+            'name'        => 'Daily Cash Register',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Daily cash register report.',
+            'routes'      => ['reports.daily-cash-register'],
+        ],
+        'reports.patient-visits' => [
+            'name'        => 'Patient Visits',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Patient visit report.',
+            'routes'      => ['reports.patient-visits'],
+        ],
+        'reports.revenue' => [
+            'name'        => 'Revenue Report',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Revenue report.',
+            'routes'      => ['reports.revenue'],
+        ],
+        'reports.outstanding-bills' => [
+            'name'        => 'Outstanding Bills',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Outstanding bills report.',
+            'routes'      => ['reports.outstanding-bills'],
+        ],
+        'reports.investigations' => [
+            'name'        => 'Investigation Report',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Lab and imaging investigation report.',
+            'routes'      => ['reports.investigations', 'reports.lab-tests'],
+        ],
+        'reports.medicine-sales' => [
+            'name'        => 'Medicine Sales',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Medicine sales report.',
+            'routes'      => ['reports.medicine-sales'],
+        ],
+        'reports.inventory-status' => [
+            'name'        => 'Inventory Status',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Inventory status report.',
+            'routes'      => ['reports.inventory-status'],
+        ],
+        'reports.expiry-report' => [
+            'name'        => 'Expiry Report',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Medicine expiry report.',
+            'routes'      => ['reports.expiry-report'],
+        ],
+        'reports.doctor-performance' => [
+            'name'        => 'Doctor Performance',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Doctor performance report.',
+            'routes'      => ['reports.doctor-performance'],
+        ],
+        'reports.appointment-statistics' => [
+            'name'        => 'Appointment Statistics',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Appointment statistics report.',
+            'routes'      => ['reports.appointment-statistics'],
+        ],
+        'reports.ipd-report' => [
+            'name'        => 'IPD Report',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'IPD report.',
+            'routes'      => ['reports.ipd-report'],
+        ],
+        'reports.department-performance' => [
+            'name'        => 'Department Performance',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Department performance report.',
+            'routes'      => ['reports.department-performance'],
+        ],
+        'reports.patient-demographics' => [
+            'name'        => 'Patient Demographics',
+            'group'       => 'Admin',
+            'parent'      => 'reports',
+            'entitlement' => 'plan',
+            'description' => 'Patient demographics report.',
+            'routes'      => ['reports.patient-demographics'],
         ],
         'rbac' => [
             'name'        => 'User & Role Management',
@@ -205,6 +340,11 @@ class ModuleRegistry
             'routes'      => ['settings.prescription-print-templates.'],
         ],
     ];
+
+    public static function reportChildSlugs(): array
+    {
+        return self::REPORT_CHILD_SLUGS;
+    }
 
     /**
      * Get all module slugs, including nested children.
