@@ -487,32 +487,32 @@ it('hides unentitled doctor-share applies_to options', function () {
 // ── 7. Reports investigation test_type ───────────────────────────────────────
 
 it('rejects investigation report test_type lab when laboratory is not entitled', function () {
-    bindEntitlementTenant(['reports']);
-    $this->actingAs(entitlementUser(['view reports']));
+    bindEntitlementTenant(['reports', 'reports.investigations']);
+    $this->actingAs(entitlementUser(['view reports', 'view reports.investigations']));
 
     $this->get(route('reports.lab-tests', ['test_type' => 'lab']))
         ->assertForbidden();
 });
 
 it('rejects investigation report test_type radiology when imaging is not entitled', function () {
-    bindEntitlementTenant(['reports']);
-    $this->actingAs(entitlementUser(['view reports']));
+    bindEntitlementTenant(['reports', 'reports.investigations']);
+    $this->actingAs(entitlementUser(['view reports', 'view reports.investigations']));
 
     $this->get(route('reports.lab-tests', ['test_type' => 'radiology']))
         ->assertForbidden();
 });
 
 it('allows investigation report test_type lab when laboratory is entitled', function () {
-    bindEntitlementTenant(['reports', 'laboratory']);
-    $this->actingAs(entitlementUser(['view reports']));
+    bindEntitlementTenant(['reports', 'reports.investigations', 'laboratory']);
+    $this->actingAs(entitlementUser(['view reports', 'view reports.investigations']));
 
     $this->get(route('reports.lab-tests', ['test_type' => 'lab']))
         ->assertOk();
 });
 
 it('hides unentitled investigation report test_type options', function () {
-    bindEntitlementTenant(['reports']);
-    $this->actingAs(entitlementUser(['view reports']));
+    bindEntitlementTenant(['reports', 'reports.investigations']);
+    $this->actingAs(entitlementUser(['view reports', 'view reports.investigations']));
 
     $this->get(route('reports.lab-tests'))
         ->assertOk()

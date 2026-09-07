@@ -852,21 +852,49 @@ Route::middleware('auth')->group(function () {
     Route::resource('permissions', PermissionController::class)->middleware('permission:view permissions|create permissions|edit permissions|delete permissions');
 
     // Reports Routes
-    Route::prefix('reports')->name('reports.')->middleware('permission:view reports')->group(function () {
-        Route::get('daily-cash-register', [ReportController::class, 'dailyCashRegister'])->name('daily-cash-register');
-        Route::get('patient-visits', [ReportController::class, 'patientVisits'])->name('patient-visits');
-        Route::get('revenue', [ReportController::class, 'revenue'])->name('revenue');
-        Route::get('outstanding-bills', [ReportController::class, 'outstandingBills'])->name('outstanding-bills');
-        Route::get('lab-tests', [ReportController::class, 'labTests'])->name('lab-tests');
-        Route::get('investigations', [ReportController::class, 'labTests'])->name('investigations');
-        Route::get('medicine-sales', [ReportController::class, 'medicineSales'])->name('medicine-sales');
-        Route::get('inventory-status', [ReportController::class, 'inventoryStatus'])->name('inventory-status');
-        Route::get('expiry-report', [ReportController::class, 'expiryReport'])->name('expiry-report');
-        Route::get('doctor-performance', [ReportController::class, 'doctorPerformance'])->name('doctor-performance');
-        Route::get('appointment-statistics', [ReportController::class, 'appointmentStatistics'])->name('appointment-statistics');
-        Route::get('ipd-report', [ReportController::class, 'ipdReport'])->name('ipd-report');
-        Route::get('department-performance', [ReportController::class, 'departmentPerformance'])->name('department-performance');
-        Route::get('patient-demographics', [ReportController::class, 'patientDemographics'])->name('patient-demographics');
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('daily-cash-register', [ReportController::class, 'dailyCashRegister'])
+            ->middleware('permission:view reports.daily-cash-register')
+            ->name('daily-cash-register');
+        Route::get('patient-visits', [ReportController::class, 'patientVisits'])
+            ->middleware('permission:view reports.patient-visits')
+            ->name('patient-visits');
+        Route::get('revenue', [ReportController::class, 'revenue'])
+            ->middleware('permission:view reports.revenue')
+            ->name('revenue');
+        Route::get('outstanding-bills', [ReportController::class, 'outstandingBills'])
+            ->middleware('permission:view reports.outstanding-bills')
+            ->name('outstanding-bills');
+        Route::get('lab-tests', [ReportController::class, 'labTests'])
+            ->middleware('permission:view reports.investigations')
+            ->name('lab-tests');
+        Route::get('investigations', [ReportController::class, 'labTests'])
+            ->middleware('permission:view reports.investigations')
+            ->name('investigations');
+        Route::get('medicine-sales', [ReportController::class, 'medicineSales'])
+            ->middleware('permission:view reports.medicine-sales')
+            ->name('medicine-sales');
+        Route::get('inventory-status', [ReportController::class, 'inventoryStatus'])
+            ->middleware('permission:view reports.inventory-status')
+            ->name('inventory-status');
+        Route::get('expiry-report', [ReportController::class, 'expiryReport'])
+            ->middleware('permission:view reports.expiry-report')
+            ->name('expiry-report');
+        Route::get('doctor-performance', [ReportController::class, 'doctorPerformance'])
+            ->middleware('permission:view reports.doctor-performance')
+            ->name('doctor-performance');
+        Route::get('appointment-statistics', [ReportController::class, 'appointmentStatistics'])
+            ->middleware('permission:view reports.appointment-statistics')
+            ->name('appointment-statistics');
+        Route::get('ipd-report', [ReportController::class, 'ipdReport'])
+            ->middleware('permission:view reports.ipd-report')
+            ->name('ipd-report');
+        Route::get('department-performance', [ReportController::class, 'departmentPerformance'])
+            ->middleware('permission:view reports.department-performance')
+            ->name('department-performance');
+        Route::get('patient-demographics', [ReportController::class, 'patientDemographics'])
+            ->middleware('permission:view reports.patient-demographics')
+            ->name('patient-demographics');
     });
 
     // Audit Logs
