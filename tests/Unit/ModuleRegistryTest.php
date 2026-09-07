@@ -74,3 +74,21 @@ it('registers 20 top-level modules including emergency and settings', function (
     expect(ModuleRegistry::topLevel())->toHaveCount(20)
         ->and(ModuleRegistry::all())->toHaveCount(22);
 });
+
+it('declares entitlement and child-access flags without changing slug sets', function () {
+    expect(ModuleRegistry::topLevel())->toHaveCount(20)
+        ->and(ModuleRegistry::all())->toHaveCount(22);
+
+    $reports = ModuleRegistry::definitions()['reports'];
+    expect($reports['entitlement'] ?? 'plan')->toBe('plan')
+        ->and($reports['child_access_requires_explicit_grant'] ?? false)->toBeTrue()
+        ->and($reports['parent'] ?? null)->toBeNull();
+
+    $backup = ModuleRegistry::definitions()['backup'];
+    expect($backup['entitlement'] ?? 'plan')->toBe('plan')
+        ->and($backup['child_access_requires_explicit_grant'] ?? false)->toBeFalse();
+
+    $settingsChild = ModuleRegistry::definitions()['settings.hospital-info'];
+    expect($settingsChild['entitlement'] ?? 'plan')->toBe('plan')
+        ->and(array_key_exists('child_access_requires_explicit_grant', $settingsChild))->toBeFalse();
+});
