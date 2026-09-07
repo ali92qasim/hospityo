@@ -45,12 +45,14 @@
     @if($isPending)
         <div class="mt-3 pt-3 border-t border-yellow-200">
             @if($isImaging)
+                @if(\App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'imaging'))
                 <a href="{{ route('radiology-results.create', $orderItem->order) }}"
                    class="inline-flex items-center px-3 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all w-full justify-center">
                     <i class="fas fa-file-medical mr-2"></i>
                     Enter Imaging Report
                 </a>
-            @else
+                @endif
+            @elseif(\App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'laboratory'))
                 <a href="{{ route('lab-orders.results.create', $orderItem) }}"
                    class="inline-flex items-center px-3 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all w-full justify-center">
                     <i class="fas fa-plus mr-2"></i>
@@ -61,11 +63,15 @@
     @endif
 
     @if(! $isPending && $orderItem->result)
+        @if($isImaging
+            ? \App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'imaging')
+            : \App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'laboratory'))
         <div class="mt-3 pt-3 border-t border-green-200 flex gap-2">
             <a href="{{ route('lab-results.report', $orderItem->result) }}"
                class="flex-1 inline-flex items-center justify-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-all">
                 <i class="fas fa-file-medical mr-2"></i>View
             </a>
         </div>
+        @endif
     @endif
 </div>

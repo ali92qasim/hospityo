@@ -34,10 +34,17 @@ function buildVisitRegisterLinks(id) {
         </form>
     `;
 
-    return `
-        ${buildForm('opd', 'fa-stethoscope', 'Register OPD visit and open workflow', 'text-blue-600 hover:text-blue-800')}
-        ${buildForm('emergency', 'fa-ambulance', 'Register Emergency visit and open workflow', 'text-red-600 hover:text-red-800')}
-    `;
+    const links = [];
+
+    if (root.dataset.allowVisits === '1') {
+        links.push(buildForm('opd', 'fa-stethoscope', 'Register OPD visit and open workflow', 'text-blue-600 hover:text-blue-800'));
+    }
+
+    if (root.dataset.allowEmergency === '1') {
+        links.push(buildForm('emergency', 'fa-ambulance', 'Register Emergency visit and open workflow', 'text-red-600 hover:text-red-800'));
+    }
+
+    return links.join('\n');
 }
 
 $(document).ready(function () {

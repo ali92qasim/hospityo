@@ -125,14 +125,14 @@
                                 {{ Str::limit($item->clinical_notes, 60) }}
                             </div>
                         @endif
-                        @if($isLabSurface)
+                        @if($isLabSurface && \App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'laboratory'))
                             <div class="mt-3 pt-3 border-t border-yellow-200">
                                 <a href="{{ route('lab-orders.results.create', $item) }}"
                                    class="inline-flex items-center px-3 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all w-full justify-center">
                                     <i class="fas fa-plus mr-2"></i>Enter Lab Result
                                 </a>
                             </div>
-                        @elseif(! $isLabSurface)
+                        @elseif(! $isLabSurface && \App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'imaging'))
                             <div class="mt-3 pt-3 border-t border-yellow-200">
                                 <a href="{{ route('radiology-results.create', $order) }}"
                                    class="inline-flex items-center px-3 py-2 bg-medical-blue text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all w-full justify-center">
@@ -164,7 +164,7 @@
                                 </span>
                             </div>
                         </div>
-                        @if($isLabSurface && $item->result)
+                        @if($isLabSurface && $item->result && \App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'laboratory'))
                             <div class="mt-3 pt-3 border-t border-green-200 flex gap-2">
                                 <a href="{{ route('lab-results.show', $item->result) }}"
                                    class="flex-1 inline-flex items-center justify-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-all">

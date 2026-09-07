@@ -58,7 +58,7 @@
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CDs5V8Li.css",
+    "file": "assets/app-CSeOAkat.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -183,7 +183,7 @@
     "isEntry": true
   },
   "resources/js/bills-form.js": {
-    "file": "assets/bills-form-BLEJVeQj.js",
+    "file": "assets/bills-form-BK0TkfaL.js",
     "name": "bills-form",
     "src": "resources/js/bills-form.js",
     "isEntry": true,
@@ -471,7 +471,7 @@
     ]
   },
   "resources/js/patients-index.js": {
-    "file": "assets/patients-index-Bl2zjBLX.js",
+    "file": "assets/patients-index-DTN7j--w.js",
     "name": "patients-index",
     "src": "resources/js/patients-index.js",
     "isEntry": true,

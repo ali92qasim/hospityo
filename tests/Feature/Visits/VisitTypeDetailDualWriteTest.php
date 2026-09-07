@@ -2,11 +2,14 @@
 
 use App\Models\Department;
 use App\Models\Doctor;
+use App\Models\EmergencyVisit;
+use App\Models\IpdVisit;
 use App\Models\OpdVisit;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\VisitTypeDetailMismatchLogger;
+use App\Services\VisitTypeDetailSyncService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Permission;
@@ -60,6 +63,28 @@ beforeEach(function () {
         'status' => 'active',
         'department_id' => $department->id,
     ]);
+});
+
+it('createForVisit is idempotent when called twice for the same visit', function () {
+    $cases = [
+        'opd' => OpdVisit::class,
+        'ipd' => IpdVisit::class,
+        'emergency' => EmergencyVisit::class,
+    ];
+
+    foreach ($cases as $visitType => $childClass) {
+        $visit = Visit::create([
+            'patient_id' => $this->patient->id,
+            'visit_type' => $visitType,
+            'visit_datetime' => now(),
+            'status' => 'registered',
+        ]);
+
+        VisitTypeDetailSyncService::createForVisit($visit);
+        VisitTypeDetailSyncService::createForVisit($visit);
+
+        expect($childClass::where('visit_id', $visit->id)->count())->toBe(1);
+    }
 });
 
 it('store creates opd child row when dual write enabled', function () {

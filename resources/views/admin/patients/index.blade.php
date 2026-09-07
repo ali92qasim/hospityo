@@ -7,6 +7,8 @@
 @section('content')
 <div id="patients-index"
      @can('create visits') data-can-create-visits="1" @endcan
+     @if(\App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'visits')) data-allow-visits="1" @endif
+     @if(\App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'emergency')) data-allow-emergency="1" @endif
      data-quick-register-url="{{ route('visits.quick-register') }}">
 <div class="flex justify-between items-center mb-6">
     <div>

@@ -142,6 +142,7 @@
                             </div>
 
                             <div class="flex flex-wrap gap-2">
+                                @if(\App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), 'billing'))
                                 @if($ipdBill)
                                     <a href="{{ route('bills.show', $ipdBill) }}"
                                        class="inline-flex items-center px-3 py-1.5 text-sm bg-medical-blue text-white rounded-lg hover:bg-blue-700">
@@ -170,6 +171,7 @@
                                     </a>
                                 @else
                                     <p class="text-sm text-amber-700">No draft bill found for this admission.</p>
+                                @endif
                                 @endif
                             </div>
 

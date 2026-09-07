@@ -5,9 +5,12 @@
 @section('page-description', 'UseClinicSync Overview')
 
 @section('content')
+@php
+    $moduleAllows = fn (string $slug) => \App\Models\ModuleRegistry::allows(\App\Models\Tenant::current(), auth()->user(), $slug);
+@endphp
 
 {{-- Near-expiry medicine alert banner --}}
-@if(isset($nearExpiryCount) && $nearExpiryCount > 0)
+@if(isset($nearExpiryCount) && $nearExpiryCount > 0 && $moduleAllows('pharmacy'))
 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div class="flex items-center">
         <i class="fas fa-exclamation-triangle text-amber-500 mr-3 flex-shrink-0"></i>
@@ -87,7 +90,8 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
+    @if($moduleAllows('appointments'))
+    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6" data-dashboard-tile="appointments">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-calendar-check text-white text-lg sm:text-xl"></i>
@@ -98,6 +102,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
         <div class="flex items-center gap-3">
@@ -111,7 +116,8 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
+    @if($moduleAllows('visits'))
+    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6" data-dashboard-tile="visits">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-400 rounded-lg flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-stethoscope text-white text-lg sm:text-xl"></i>
@@ -122,8 +128,10 @@
             </div>
         </div>
     </div>
+    @endif
 
-    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
+    @if($moduleAllows('ipd'))
+    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6" data-dashboard-tile="ipd">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-procedures text-white text-lg sm:text-xl"></i>
@@ -134,8 +142,10 @@
             </div>
         </div>
     </div>
+    @endif
 
-    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
+    @if($moduleAllows('emergency'))
+    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6" data-dashboard-tile="emergency">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-heartbeat text-white text-lg sm:text-xl"></i>
@@ -146,6 +156,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
         <div class="flex items-center gap-3">
@@ -310,7 +321,8 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
+    @if($moduleAllows('departments'))
+    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6" data-dashboard-tile="departments">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-building text-white text-lg sm:text-xl"></i>
@@ -321,6 +333,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
         <div class="flex items-center gap-3">
@@ -334,7 +347,8 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
+    @if($moduleAllows('appointments'))
+    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6" data-dashboard-tile="appointments">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-calendar-check text-white text-lg sm:text-xl"></i>
@@ -345,8 +359,10 @@
             </div>
         </div>
     </div>
+    @endif
 
-    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6">
+    @if($moduleAllows('emergency'))
+    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6" data-dashboard-tile="emergency">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-heartbeat text-white text-lg sm:text-xl"></i>
@@ -357,6 +373,7 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 <div class="bg-white rounded-lg shadow-sm p-3 sm:p-4 md:p-6">
@@ -386,15 +403,21 @@
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    @if($moduleAllows('visits'))
                     <a href="#" id="add-visit-btn" class="bg-medical-blue text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 text-sm text-center min-h-[44px] flex items-center justify-center">
                         <i class="fas fa-plus mr-2"></i>Add Visit
                     </a>
+                    @endif
+                    @if($moduleAllows('appointments'))
                     <a href="#" id="schedule-appointment-btn" class="bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm text-center min-h-[44px] flex items-center justify-center">
                         <i class="fas fa-calendar-plus mr-2"></i>Schedule Appointment
                     </a>
+                    @endif
+                    @if($moduleAllows('patients'))
                     <a href="#" id="view-history-btn" class="bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 text-sm text-center min-h-[44px] flex items-center justify-center">
                         <i class="fas fa-history mr-2"></i>View History
                     </a>
+                    @endif
                 </div>
             </div>
 
@@ -406,14 +429,17 @@
                         <p class="text-xs sm:text-sm text-yellow-600">No patient found with this phone number</p>
                     </div>
                 </div>
+                @if($moduleAllows('patients'))
                 <a href="{{ route('patients.create') }}" id="add-patient-btn" class="bg-yellow-600 text-white px-4 py-2.5 rounded-lg hover:bg-yellow-700 text-sm inline-flex items-center justify-center min-h-[44px]">
                     <i class="fas fa-user-plus mr-2"></i>Add New Patient
                 </a>
+                @endif
             </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        @if($moduleAllows('patients'))
         <a href="{{ route('patients.create') }}" class="flex items-center p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors min-h-[72px]">
             <i class="fas fa-plus-circle text-medical-blue text-2xl mr-3 flex-shrink-0"></i>
             <div class="min-w-0 flex-1">
@@ -429,7 +455,9 @@
                 <p class="text-xs sm:text-sm text-gray-600 truncate">Manage patient records</p>
             </div>
         </a>
+        @endif
 
+        @if($moduleAllows('appointments'))
         <a href="{{ route('appointments.create') }}" class="flex items-center p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors min-h-[72px]">
             <i class="fas fa-calendar-plus text-yellow-500 text-2xl mr-3 flex-shrink-0"></i>
             <div class="min-w-0 flex-1">
@@ -437,6 +465,7 @@
                 <p class="text-xs sm:text-sm text-gray-600 truncate">Book new appointment</p>
             </div>
         </a>
+        @endif
     </div>
 </div>
 @endif

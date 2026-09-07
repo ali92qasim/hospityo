@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Appointment;
 use App\Models\Doctor;
 use App\Models\InventoryTransaction;
+use App\Models\ModuleRegistry;
+use App\Models\Tenant;
 use App\Models\Visit;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -18,7 +20,8 @@ class DashboardController extends Controller
 
         $nearExpiryCount = 0;
         try {
-            if ($user->hasAnyRole(['Super Admin', 'Hospital Administrator', 'Pharmacist'])) {
+            if ($user->hasAnyRole(['Super Admin', 'Hospital Administrator', 'Pharmacist'])
+                && ModuleRegistry::allows(Tenant::current(), $user, 'pharmacy')) {
                 $nearExpiryCount = InventoryTransaction::nearExpiry(6)->count();
             }
         } catch (\Throwable $e) {
