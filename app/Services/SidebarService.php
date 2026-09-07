@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ModuleRegistry;
 use App\Models\Tenant;
 use App\Support\SettingsAccess;
 use App\Support\SettingsSectionRegistry;
@@ -346,7 +347,7 @@ class SidebarService
         }
 
         // ── Backup & Restore ──────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'backup') && $user->canAny(['view backup', 'create backup', 'restore backup', 'delete backup', 'manage backup'])) {
+        if (ModuleRegistry::allows($tenant, $user, 'backup')) {
             $menu[] = $this->link('backup', 'Backup & Restore', 'fa-database', 'backup.index', ['backup.*']);
         }
 
