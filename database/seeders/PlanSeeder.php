@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ModuleRegistry;
 use App\Models\Plan;
 use Illuminate\Database\Seeder;
 
@@ -35,11 +36,11 @@ class PlanSeeder extends Seeder
                 'price'         => 49.00,
                 'billing_cycle' => 'monthly',
                 'trial_days'    => 14,
-                'modules'       => [
+                'modules'       => array_merge([
                     'patients', 'doctors', 'departments', 'appointments', 'visits', 'emergency', 'billing',
                     'pharmacy', 'laboratory', 'imaging', 'ipd', 'reports', 'rbac',
                     'settings', 'settings.hospital-info', 'settings.prescription-print',
-                ],
+                ], ModuleRegistry::REPORT_CHILD_SLUGS),
                 'limits'        => [
                     'max_users'    => 25,
                     'max_patients' => null, // unlimited
@@ -54,12 +55,12 @@ class PlanSeeder extends Seeder
                 'price'         => 149.00,
                 'billing_cycle' => 'monthly',
                 'trial_days'    => 30,
-                'modules'       => [
+                'modules'       => array_merge([
                     'patients', 'doctors', 'departments', 'appointments', 'visits', 'emergency', 'billing',
                     'pharmacy', 'laboratory', 'imaging', 'ipd', 'reports', 'rbac',
                     'ot', 'hr', 'doctor-share', 'accounting', 'audit', 'backup',
                     'settings', 'settings.hospital-info', 'settings.prescription-print',
-                ],
+                ], ModuleRegistry::REPORT_CHILD_SLUGS),
                 'limits'        => [
                     'max_users'    => null, // unlimited
                     'max_patients' => null,

@@ -346,6 +346,15 @@ class ModuleRegistry
         return self::REPORT_CHILD_SLUGS;
     }
 
+    public static function backfillReportChildren(array $modules): array
+    {
+        if (! in_array('reports', $modules, true)) {
+            return array_values($modules);
+        }
+
+        return array_values(array_unique([...$modules, ...self::REPORT_CHILD_SLUGS]));
+    }
+
     /**
      * Get all module slugs, including nested children.
      *

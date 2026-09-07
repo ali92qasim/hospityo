@@ -45,6 +45,22 @@ function catalogTenant(array $modules): Tenant
     ]);
 }
 
+it('persists backfilled report children on a plan row', function () {
+    $plan = Plan::create([
+        'slug' => 'backfill-'.uniqid(),
+        'name' => 'Backfill Plan',
+        'price' => 0,
+        'billing_cycle' => 'monthly',
+        'modules' => ['reports'],
+        'is_active' => true,
+    ]);
+
+    $plan->modules = ModuleRegistry::backfillReportChildren($plan->modules);
+    $plan->save();
+
+    expect($plan->fresh()->modules)->toContain('reports.ipd-report', 'reports.daily-cash-register');
+});
+
 it('planAllows matches hasModule for top-level slugs including backup', function () {
     $tenant = catalogTenant(['backup', 'patients']);
 

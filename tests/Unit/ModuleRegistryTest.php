@@ -70,6 +70,16 @@ it('normalizes selected children by adding their parent slug', function () {
         ->toEqualCanonicalizing(['settings.hospital-info', 'visits', 'settings']);
 });
 
+it('backfills all report children only when reports is already on the plan', function () {
+    expect(ModuleRegistry::backfillReportChildren(['patients']))->toBe(['patients'])
+        ->and(ModuleRegistry::backfillReportChildren(['reports']))
+            ->toEqualCanonicalizing(array_merge(['reports'], ModuleRegistry::reportChildSlugs()))
+        ->and(ModuleRegistry::backfillReportChildren(['reports', 'reports.revenue']))
+            ->toContain('reports.revenue', 'reports.daily-cash-register')
+            ->and(count(array_unique(ModuleRegistry::backfillReportChildren(['reports', 'reports.revenue']))))
+            ->toBe(1 + count(ModuleRegistry::reportChildSlugs()));
+});
+
 it('maps each operational report route to its child slug', function () {
     expect(ModuleRegistry::moduleForRoute('reports.daily-cash-register'))->toBe('reports.daily-cash-register')
         ->and(ModuleRegistry::moduleForRoute('reports.lab-tests'))->toBe('reports.investigations')
