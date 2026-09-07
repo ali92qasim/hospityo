@@ -266,23 +266,35 @@ class SidebarService
         }
 
         // ── Reports ───────────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'reports') && $user->can('view reports')) {
-            $items = [
-                $this->item('Daily Cash Register', 'fa-cash-register', 'reports.daily-cash-register', ['reports.daily-cash-register']),
-                $this->item('Patient Visits', 'fa-user-clock', 'reports.patient-visits', ['reports.patient-visits']),
-                $this->item('Revenue Report', 'fa-chart-line', 'reports.revenue', ['reports.revenue']),
-                $this->item('Outstanding Bills', 'fa-file-invoice-dollar', 'reports.outstanding-bills', ['reports.outstanding-bills']),
-                $this->item('Investigation Report', 'fa-flask', 'reports.investigations', ['reports.investigations', 'reports.lab-tests']),
-                $this->item('Medicine Sales', 'fa-pills', 'reports.medicine-sales', ['reports.medicine-sales']),
-                $this->item('Inventory Status', 'fa-boxes', 'reports.inventory-status', ['reports.inventory-status']),
-                $this->item('Expiry Report', 'fa-calendar-times', 'reports.expiry-report', ['reports.expiry-report']),
-                $this->item('Doctor Performance', 'fa-user-md', 'reports.doctor-performance', ['reports.doctor-performance']),
-                $this->item('Appointment Statistics', 'fa-calendar-alt', 'reports.appointment-statistics', ['reports.appointment-statistics']),
-                $this->item('IPD Report', 'fa-procedures', 'reports.ipd-report', ['reports.ipd-report']),
-                $this->item('Department Performance', 'fa-building', 'reports.department-performance', ['reports.department-performance']),
-                $this->item('Patient Demographics', 'fa-chart-pie', 'reports.patient-demographics', ['reports.patient-demographics']),
+        if (ModuleRegistry::allows($tenant, $user, 'reports')) {
+            $reportItemMap = [
+                'reports.daily-cash-register' => ['Daily Cash Register', 'fa-cash-register', 'reports.daily-cash-register', ['reports.daily-cash-register']],
+                'reports.patient-visits' => ['Patient Visits', 'fa-user-clock', 'reports.patient-visits', ['reports.patient-visits']],
+                'reports.revenue' => ['Revenue Report', 'fa-chart-line', 'reports.revenue', ['reports.revenue']],
+                'reports.outstanding-bills' => ['Outstanding Bills', 'fa-file-invoice-dollar', 'reports.outstanding-bills', ['reports.outstanding-bills']],
+                'reports.investigations' => ['Investigation Report', 'fa-flask', 'reports.investigations', ['reports.investigations', 'reports.lab-tests']],
+                'reports.medicine-sales' => ['Medicine Sales', 'fa-pills', 'reports.medicine-sales', ['reports.medicine-sales']],
+                'reports.inventory-status' => ['Inventory Status', 'fa-boxes', 'reports.inventory-status', ['reports.inventory-status']],
+                'reports.expiry-report' => ['Expiry Report', 'fa-calendar-times', 'reports.expiry-report', ['reports.expiry-report']],
+                'reports.doctor-performance' => ['Doctor Performance', 'fa-user-md', 'reports.doctor-performance', ['reports.doctor-performance']],
+                'reports.appointment-statistics' => ['Appointment Statistics', 'fa-calendar-alt', 'reports.appointment-statistics', ['reports.appointment-statistics']],
+                'reports.ipd-report' => ['IPD Report', 'fa-procedures', 'reports.ipd-report', ['reports.ipd-report']],
+                'reports.department-performance' => ['Department Performance', 'fa-building', 'reports.department-performance', ['reports.department-performance']],
+                'reports.patient-demographics' => ['Patient Demographics', 'fa-chart-pie', 'reports.patient-demographics', ['reports.patient-demographics']],
             ];
-            $menu[] = $this->group('reports', 'Reports', $items, ['reports.*']);
+
+            $items = [];
+            foreach (ModuleRegistry::reportChildSlugs() as $slug) {
+                if (! ModuleRegistry::allows($tenant, $user, $slug)) {
+                    continue;
+                }
+                [$label, $icon, $route, $patterns] = $reportItemMap[$slug];
+                $items[] = $this->item($label, $icon, $route, $patterns);
+            }
+
+            if ($items !== []) {
+                $menu[] = $this->group('reports', 'Reports', $items, ['reports.*']);
+            }
         }
 
         // ── HR ────────────────────────────────────────────────────────────────
