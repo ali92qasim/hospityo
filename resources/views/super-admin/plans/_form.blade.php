@@ -112,6 +112,7 @@
                 <label class="flex items-start cursor-pointer hover:border-medical-blue/30 transition-colors">
                     <input type="checkbox" name="modules[]" value="{{ $slug }}"
                            data-module-parent="{{ $slug }}"
+                           data-child-access-requires-explicit-grant="{{ !empty($def['child_access_requires_explicit_grant']) ? '1' : '0' }}"
                            class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue mr-3 mt-0.5"
                            {{ in_array($slug, $selectedModules) ? 'checked' : '' }}>
                     <div>
@@ -157,9 +158,14 @@
             return;
         }
         parentBox.addEventListener('change', function () {
+            const explicit = parentBox.getAttribute('data-child-access-requires-explicit-grant') === '1';
             children.forEach(function (child) {
                 child.disabled = !parentBox.checked;
-                child.checked = parentBox.checked;
+                if (!parentBox.checked) {
+                    child.checked = false;
+                } else if (!explicit) {
+                    child.checked = true;
+                }
             });
         });
         children.forEach(function (child) {
