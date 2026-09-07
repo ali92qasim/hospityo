@@ -189,3 +189,31 @@ it('dry-run command does not write permissions', function () {
     expect(Permission::count())->toBe(0)
         ->and(Role::count())->toBe(0);
 });
+
+it('does not grant report child permissions when only the reports module is granted', function () {
+    $provisioner = app(\App\Services\TenantModuleProvisioner::class);
+    $provisioner->grant($this->tenant, ['reports']);
+
+    $this->tenant->makeCurrent();
+    $ha = \App\Models\Role::where('name', 'Hospital Administrator')->first();
+
+    expect(\App\Support\PermissionRegistry::forModule('reports'))->toBe(['view reports'])
+        ->and($ha->hasPermissionTo('view reports'))->toBeTrue()
+        ->and($ha->hasPermissionTo('view reports.daily-cash-register'))->toBeFalse()
+        ->and(\App\Models\Permission::where('name', 'view reports.daily-cash-register')->exists())->toBeTrue();
+});
+
+it('grants a report child only when that slug is in the grant list', function () {
+    app(\App\Services\TenantModuleProvisioner::class)->grant(
+        $this->tenant,
+        ['reports', 'reports.daily-cash-register'],
+    );
+
+    $this->tenant->makeCurrent();
+    $ha = \App\Models\Role::where('name', 'Hospital Administrator')->first();
+    $super = \App\Models\Role::where('name', 'Super Admin')->first();
+
+    expect($ha->hasPermissionTo('view reports.daily-cash-register'))->toBeTrue()
+        ->and($super->hasPermissionTo('view reports.daily-cash-register'))->toBeTrue()
+        ->and($ha->hasPermissionTo('view reports.revenue'))->toBeFalse();
+});

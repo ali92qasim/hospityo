@@ -92,6 +92,21 @@ class TenantModuleProvisioner
                         }
                     }
 
+                    $parentSlug = ModuleRegistry::parentOf($module);
+                    $explicitGrantChild = $parentSlug !== null
+                        && ! empty(ModuleRegistry::definitions()[$parentSlug]['child_access_requires_explicit_grant']);
+
+                    if ($explicitGrantChild) {
+                        $hospitalAdmin = Role::where('name', 'Hospital Administrator')->first();
+                        if ($hospitalAdmin && ! $this->roleHas($hospitalAdmin, $name)) {
+                            $granted++;
+                            if (! $dryRun) {
+                                $hospitalAdmin->givePermissionTo($name);
+                                $hospitalAdmin->unsetRelation('permissions');
+                            }
+                        }
+                    }
+
                     foreach ($roleLists as $roleName => $allowed) {
                         if (! in_array($name, $allowed, true)) {
                             continue;

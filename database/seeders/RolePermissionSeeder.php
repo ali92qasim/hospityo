@@ -163,6 +163,19 @@ class RolePermissionSeeder extends Seeder
 
         // ── Reports ───────────────────────────────────────────────────────────
         'view reports',
+        'view reports.daily-cash-register',
+        'view reports.patient-visits',
+        'view reports.revenue',
+        'view reports.outstanding-bills',
+        'view reports.investigations',
+        'view reports.medicine-sales',
+        'view reports.inventory-status',
+        'view reports.expiry-report',
+        'view reports.doctor-performance',
+        'view reports.appointment-statistics',
+        'view reports.ipd-report',
+        'view reports.department-performance',
+        'view reports.patient-demographics',
 
         // ── HR ────────────────────────────────────────────────────────────────
         'view hr', // DEPRECATED: use granular HR permissions below

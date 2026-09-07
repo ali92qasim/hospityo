@@ -273,6 +273,84 @@ class PermissionRegistry
                 ],
             ],
         ],
+        'reports.daily-cash-register' => [
+            'label' => 'Daily Cash Register',
+            'groups' => [
+                'reports' => ['view reports.daily-cash-register'],
+            ],
+        ],
+        'reports.patient-visits' => [
+            'label' => 'Patient Visits',
+            'groups' => [
+                'reports' => ['view reports.patient-visits'],
+            ],
+        ],
+        'reports.revenue' => [
+            'label' => 'Revenue Report',
+            'groups' => [
+                'reports' => ['view reports.revenue'],
+            ],
+        ],
+        'reports.outstanding-bills' => [
+            'label' => 'Outstanding Bills',
+            'groups' => [
+                'reports' => ['view reports.outstanding-bills'],
+            ],
+        ],
+        'reports.investigations' => [
+            'label' => 'Investigation Report',
+            'groups' => [
+                'reports' => ['view reports.investigations'],
+            ],
+        ],
+        'reports.medicine-sales' => [
+            'label' => 'Medicine Sales',
+            'groups' => [
+                'reports' => ['view reports.medicine-sales'],
+            ],
+        ],
+        'reports.inventory-status' => [
+            'label' => 'Inventory Status',
+            'groups' => [
+                'reports' => ['view reports.inventory-status'],
+            ],
+        ],
+        'reports.expiry-report' => [
+            'label' => 'Expiry Report',
+            'groups' => [
+                'reports' => ['view reports.expiry-report'],
+            ],
+        ],
+        'reports.doctor-performance' => [
+            'label' => 'Doctor Performance',
+            'groups' => [
+                'reports' => ['view reports.doctor-performance'],
+            ],
+        ],
+        'reports.appointment-statistics' => [
+            'label' => 'Appointment Statistics',
+            'groups' => [
+                'reports' => ['view reports.appointment-statistics'],
+            ],
+        ],
+        'reports.ipd-report' => [
+            'label' => 'IPD Report',
+            'groups' => [
+                'reports' => ['view reports.ipd-report'],
+            ],
+        ],
+        'reports.department-performance' => [
+            'label' => 'Department Performance',
+            'groups' => [
+                'reports' => ['view reports.department-performance'],
+            ],
+        ],
+        'reports.patient-demographics' => [
+            'label' => 'Patient Demographics',
+            'groups' => [
+                'reports' => ['view reports.patient-demographics'],
+            ],
+        ],
         'hr' => [
             'label' => 'HR & Payroll',
             'groups' => [
