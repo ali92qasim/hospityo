@@ -38,12 +38,12 @@ class CheckModule
                 return $next($request);
             }
 
-            if (! $tenant->hasModule($module)) {
+            if (! ModuleRegistry::planAllows($tenant, $module)) {
                 abort(403, 'Your plan does not include the ' . ModuleRegistry::nameFor($module) . ' module. Please upgrade your plan.');
             }
 
             $parent = ModuleRegistry::parentOf($module);
-            if ($parent && ! $tenant->hasModule($parent)) {
+            if ($parent && ! ModuleRegistry::planAllows($tenant, $parent)) {
                 abort(403, 'Your plan does not include the ' . ModuleRegistry::nameFor($parent) . ' module. Please upgrade your plan.');
             }
 
