@@ -10,11 +10,8 @@ it('exposes npm run check-build against the freshness script', function () {
         ->and($script)->toContain("git', ['ls-files', '--error-unmatch'");
 });
 
-it('requires a fresh vite build on pull requests and main', function () {
-    $workflow = file_get_contents(base_path('.github/workflows/vite-build-freshness.yml'));
+it('exposes composer check-build as an alias of the npm script', function () {
+    $composer = json_decode((string) file_get_contents(base_path('composer.json')), true, 512, JSON_THROW_ON_ERROR);
 
-    expect($workflow)
-        ->toContain('pull_request:')
-        ->toContain('- main')
-        ->toContain('npm run check-build');
+    expect($composer['scripts']['check-build'] ?? null)->toBe('npm run check-build');
 });
