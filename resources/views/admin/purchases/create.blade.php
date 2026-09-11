@@ -127,17 +127,8 @@
 </div>
 
 <script>
-window._purchaseMedicineUnits = @json($medicines->mapWithKeys(fn ($m) => [
-    $m->id => [
-        'base_unit_id' => $m->base_unit_id,
-    ],
-])->all());
-window._allUnits = @json($units->map(fn ($u) => [
-    'id' => $u->id,
-    'abbreviation' => $u->abbreviation,
-    'name' => $u->name,
-    'base_unit_id' => $u->base_unit_id ?? $u->id,
-])->values());
+window._purchaseMedicineUnits = @json($purchaseMedicineUnits);
+window._allUnits = @json($allUnits);
 </script>
 
 @vite(['resources/js/purchases-form.js'])

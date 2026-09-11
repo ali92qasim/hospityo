@@ -38,7 +38,27 @@ class PurchaseController extends Controller
         $suppliers = Supplier::active()->get();
         $medicines = Medicine::where('status', 'active')->with('baseUnit')->get();
         $units = Unit::active()->get();
-        return view('admin.purchases.create', compact('suppliers', 'medicines', 'units'));
+
+        $purchaseMedicineUnits = $medicines->mapWithKeys(fn ($medicine) => [
+            $medicine->id => [
+                'base_unit_id' => $medicine->base_unit_id,
+            ],
+        ])->all();
+
+        $allUnits = $units->map(fn ($unit) => [
+            'id' => $unit->id,
+            'abbreviation' => $unit->abbreviation,
+            'name' => $unit->name,
+            'base_unit_id' => $unit->base_unit_id ?? $unit->id,
+        ])->values();
+
+        return view('admin.purchases.create', compact(
+            'suppliers',
+            'medicines',
+            'units',
+            'purchaseMedicineUnits',
+            'allUnits',
+        ));
     }
 
     public function store(StorePurchaseOrderRequest $request)

@@ -99,3 +99,18 @@ it('rejects receive when unit_id is missing on a line item', function () {
 
     expect(InventoryTransaction::count())->toBe(0);
 });
+
+it('renders the create purchase order page', function () {
+    $this->withoutVite();
+    $this->withoutMiddleware([
+        \App\Http\Middleware\EnsureTenantActive::class,
+        \App\Http\Middleware\SetTenantTimezone::class,
+        \App\Http\Middleware\CheckModule::class,
+    ]);
+
+    $this->get(route('purchases.create'))
+        ->assertOk()
+        ->assertSee('Purchase Order Details', false)
+        ->assertSee('window._purchaseMedicineUnits', false)
+        ->assertSee('window._allUnits', false);
+});
