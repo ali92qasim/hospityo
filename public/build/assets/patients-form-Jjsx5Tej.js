@@ -1,2 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/patient-create-validation-CKQgwV5e.js","assets/email-availability-DgAIhMn0.js"])))=>i.map(i=>d[i]);
-import{_ as i}from"./preload-helper-I4rgV-VL.js";/* empty css                      */const e=document.getElementById("patient-create-form");e&&i(async()=>{const{initPatientCreateValidation:t}=await import("./patient-create-validation-CKQgwV5e.js");return{initPatientCreateValidation:t}},__vite__mapDeps([0,1])).then(({initPatientCreateValidation:t})=>{t(e)});

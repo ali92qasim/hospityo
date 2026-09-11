@@ -1,1 +1,0 @@
-import{j as e}from"./jquery.module-R5Nq7kwZ.js";import{s as l}from"./select2-CG5SnV5s.js";l(window,e);e(function(){e("#category-select").select2({placeholder:"Search category...",allowClear:!0,width:"100%"}),e("#sample-type-select").select2({placeholder:"Search sample type...",allowClear:!0,width:"100%"})});

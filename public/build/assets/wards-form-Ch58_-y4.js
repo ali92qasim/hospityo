@@ -1,1 +1,0 @@
-import{j as e}from"./jquery.module-R5Nq7kwZ.js";import{s as r}from"./select2-CG5SnV5s.js";r(window,e);e(function(){e("#department_id").select2({placeholder:"Search department...",allowClear:!0,width:"100%"})});

@@ -1,1 +1,0 @@
-document.addEventListener("DOMContentLoaded",function(){const n=document.getElementById("lab-report-print-btn");n&&n.addEventListener("click",function(){window.print()});const t=document.getElementById("lab-report-close-btn");t&&t.addEventListener("click",function(){window.close()}),window.location.search.includes("print=1")&&window.print()});
