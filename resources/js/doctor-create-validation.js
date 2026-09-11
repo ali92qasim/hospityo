@@ -9,6 +9,63 @@ const TIME_HI = /^([01]\d|2[0-3]):[0-5]\d$/;
 const INTEGER = /^-?\d+$/;
 const UNIQUE_EMAIL_MESSAGE = 'This email is already in use by another doctor or user.';
 
+function padClock(hours, minutes) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function parseClock(value) {
+    const raw = String(value ?? '').trim();
+
+    if (TIME_HI.test(raw)) {
+        return raw;
+    }
+
+    const match = raw.match(/^(\d{1,2}):([0-5]\d)(?:\s*(AM|PM))?$/i);
+
+    if (!match) {
+        return '';
+    }
+
+    let hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    const ampm = match[3]?.toUpperCase();
+
+    if (ampm === 'PM' && hours < 12) {
+        hours += 12;
+    } else if (ampm === 'AM' && hours === 12) {
+        hours = 0;
+    }
+
+    const clock = padClock(hours, minutes);
+
+    return TIME_HI.test(clock) ? clock : '';
+}
+
+export function readShiftClock(input) {
+    if (!input) {
+        return '';
+    }
+
+    const picker = input._flatpickr;
+    const selected = picker?.selectedDates?.[0];
+
+    if (selected instanceof Date && !Number.isNaN(selected.getTime())) {
+        return padClock(selected.getHours(), selected.getMinutes());
+    }
+
+    return parseClock(input.value) || parseClock(picker?.altInput?.value);
+}
+
+function commitShiftClock(input) {
+    const clock = readShiftClock(input);
+
+    if (input && clock && input.value !== clock) {
+        input.value = clock;
+    }
+
+    return clock;
+}
+
 const required = (attribute) => ({
     rule: 'required',
     errorMessage: `The ${attribute} field is required.`,
@@ -27,6 +84,7 @@ const inList = (attribute, allowed) => ({
 
 export function initDoctorCreateValidation(form) {
     const shiftStart = form.querySelector('[name="shift_start"]');
+    const shiftEnd = form.querySelector('[name="shift_end"]');
     const emailInput = form.querySelector('[name="email"]');
     const emailAvailableUrl = form.dataset.emailAvailableUrl;
     const isEmailAvailable = emailAvailableUrl
@@ -79,20 +137,31 @@ export function initDoctorCreateValidation(form) {
             errorsContainer: '[data-error-slot="department_id"]',
         })
         .addField('[name="shift_start"]', [
-            required('shift start'),
             {
-                validator: (value) => TIME_HI.test(value),
+                validator: () => commitShiftClock(shiftStart) !== '',
+                errorMessage: required('shift start').errorMessage,
+            },
+            {
+                validator: () => TIME_HI.test(commitShiftClock(shiftStart)),
                 errorMessage: 'The shift start field must match the format H:i.',
             },
         ])
         .addField('[name="shift_end"]', [
-            required('shift end'),
             {
-                validator: (value) => TIME_HI.test(value),
+                validator: () => commitShiftClock(shiftEnd) !== '',
+                errorMessage: required('shift end').errorMessage,
+            },
+            {
+                validator: () => TIME_HI.test(commitShiftClock(shiftEnd)),
                 errorMessage: 'The shift end field must match the format H:i.',
             },
             {
-                validator: (value) => TIME_HI.test(shiftStart?.value) && value > shiftStart.value,
+                validator: () => {
+                    const start = commitShiftClock(shiftStart);
+                    const end = commitShiftClock(shiftEnd);
+
+                    return TIME_HI.test(start) && TIME_HI.test(end) && end > start;
+                },
                 errorMessage: 'The shift end field must be a date after shift start.',
             },
         ])

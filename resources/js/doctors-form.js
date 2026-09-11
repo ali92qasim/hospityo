@@ -32,8 +32,28 @@ const flatpickrConfig = {
     }),
 };
 
+function bindTimePickerChange(input, onChange) {
+    const picker = input?._flatpickr;
+
+    if (!picker || typeof onChange !== 'function') {
+        return;
+    }
+
+    const existing = picker.config.onChange;
+    const hooks = (Array.isArray(existing) ? existing : [existing]).filter(Boolean);
+
+    if (!hooks.includes(onChange)) {
+        picker.config.onChange = [...hooks, onChange];
+    }
+}
+
 function initTimePicker(input, { defaultHour, defaultMinute, onChange }) {
-    if (!input || input._flatpickr) {
+    if (!input) {
+        return;
+    }
+
+    if (input._flatpickr) {
+        bindTimePickerChange(input, onChange);
         return;
     }
 

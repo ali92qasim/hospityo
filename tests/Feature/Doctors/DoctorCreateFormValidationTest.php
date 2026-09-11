@@ -64,7 +64,14 @@ it('client validator submits the form after checks pass', function () {
 
     expect($js)->toContain('submitFormAutomatically: true')
         ->and($js)->toContain('emailAvailableUrl')
-        ->and($js)->toContain('This email is already in use by another doctor or user.');
+        ->and($js)->toContain('This email is already in use by another doctor or user.')
+        ->and($js)->toContain('readShiftClock');
+});
+
+it('client validator treats a selected flatpickr shift time as present', function () {
+    exec('node '.escapeshellarg(base_path('tests/js/doctor-create-shift-times.mjs')), $output, $code);
+
+    expect($code)->toBe(0, implode("\n", $output));
 });
 
 it('email availability endpoint reports taken emails without storing a doctor', function () {
