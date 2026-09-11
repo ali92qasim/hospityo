@@ -37,6 +37,7 @@
     @csrf
     <input type="file" id="service-import-file" name="file"
            accept=".csv,.xlsx,.xls,.txt"
+           data-native-file-input
            data-confirm-file="Import '{filename}'?"
            data-confirm-title="Import services"
            data-confirm-detail="New services will be created. Existing services with the same code will be updated. CSV and Excel files are accepted."

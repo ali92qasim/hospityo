@@ -38,6 +38,7 @@
       class="hidden">
     @csrf
     <input type="file"
+           data-native-file-input
            data-medicine-import-file
            name="file"
            accept=".csv,.xlsx,.xls,.txt">

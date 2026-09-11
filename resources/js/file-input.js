@@ -12,6 +12,22 @@ FilePond.registerPlugin(
 
 const DEFAULT_MAX_SIZE = '10MB';
 
+function isProgrammaticImportInput(input) {
+    if (input.hasAttribute('data-confirm-file')) {
+        return true;
+    }
+
+    for (const attribute of input.attributes) {
+        if (attribute.name.endsWith('-import-file')) {
+            return true;
+        }
+    }
+
+    const form = input.closest('form');
+
+    return Boolean(form && (form.classList.contains('hidden') || form.hasAttribute('hidden')));
+}
+
 function shouldEnhanceInput(input) {
     if (!(input instanceof HTMLInputElement)) {
         return false;
@@ -26,6 +42,12 @@ function shouldEnhanceInput(input) {
     }
 
     if (input.hasAttribute('data-native-file-input') || input.hasAttribute('onchange')) {
+        return false;
+    }
+
+    // Hidden import pickers are opened by a visible button. FilePond replaces
+    // the original input (and its id/data attributes), so those buttons do nothing.
+    if (isProgrammaticImportInput(input)) {
         return false;
     }
 

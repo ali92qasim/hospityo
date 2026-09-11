@@ -19,6 +19,7 @@
     <form id="import-form" action="{{ route('imaging.studies.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
         @csrf
         <input type="file" id="import-file" name="file" accept=".csv"
+               data-native-file-input
                data-confirm-file="Import {filename} as imaging studies?"
                data-confirm-title="Import imaging studies"
                data-confirm-detail="Existing studies with the same code will be updated."

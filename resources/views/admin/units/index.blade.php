@@ -44,6 +44,7 @@
       class="hidden">
     @csrf
     <input type="file"
+           data-native-file-input
            data-unit-import-file
            name="file"
            accept=".csv,.xlsx,.xls,.txt">

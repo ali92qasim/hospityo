@@ -19,6 +19,7 @@
     <form id="import-form" action="{{ route('lab.tests.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
         @csrf
         <input type="file" id="import-file" name="file" accept=".csv"
+               data-native-file-input
                data-confirm-file="Import {filename} as lab tests?"
                data-confirm-title="Import lab tests"
                data-confirm-detail="Existing tests with the same code will be updated."
