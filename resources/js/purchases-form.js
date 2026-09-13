@@ -12,9 +12,9 @@ function getUnitsForMedicine(medicineId) {
     const medicine = window._purchaseMedicineUnits?.[medicineId];
     if (!medicine) return [];
 
-    const baseUnitId = medicine.base_unit_id;
-    return (window._allUnits ?? []).filter(
-        (u) => u.base_unit_id === baseUnitId || u.id === baseUnitId
+    const baseUnitId = Number(medicine.base_unit_id);
+    return (Array.isArray(window._allUnits) ? window._allUnits : []).filter(
+        (u) => Number(u.base_unit_id) === baseUnitId || Number(u.id) === baseUnitId
     );
 }
 

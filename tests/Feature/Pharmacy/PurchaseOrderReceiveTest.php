@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
+use App\Services\PurchaseOrderUnitPayload;
 
 beforeEach(function () {
     $tenant = new Tenant;
@@ -113,4 +114,31 @@ it('renders the create purchase order page', function () {
         ->assertSee('Purchase Order Details', false)
         ->assertSee('window._purchaseMedicineUnits', false)
         ->assertSee('window._allUnits', false);
+});
+
+it('includes the medicine base and packing units in the create page payload', function () {
+    $this->withoutVite();
+    $this->withoutMiddleware([
+        \App\Http\Middleware\EnsureTenantActive::class,
+        \App\Http\Middleware\SetTenantTimezone::class,
+        \App\Http\Middleware\CheckModule::class,
+    ]);
+
+    $html = $this->get(route('purchases.create'))->assertOk()->getContent();
+
+    preg_match('/window\._purchaseMedicineUnits = (.*);/', $html, $medicineJson);
+    preg_match('/window\._allUnits = (.*);/', $html, $unitsJson);
+
+    expect($medicineJson[1] ?? null)->not->toBeNull()
+        ->and($unitsJson[1] ?? null)->not->toBeNull();
+
+    $payload = new PurchaseOrderUnitPayload(
+        json_decode($medicineJson[1], true),
+        json_decode($unitsJson[1], true),
+    );
+
+    $ids = array_column($payload->unitsFor($this->medicine->id), 'id');
+
+    expect($ids)->toContain($this->tab->id)
+        ->and($ids)->toContain($this->p10->id);
 });

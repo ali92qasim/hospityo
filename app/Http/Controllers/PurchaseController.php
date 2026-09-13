@@ -10,6 +10,7 @@ use App\Models\Medicine;
 use App\Models\InventoryTransaction;
 use App\Models\Unit;
 use App\Services\MedicineStockConversion;
+use App\Services\PurchaseOrderUnitPayload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -39,18 +40,9 @@ class PurchaseController extends Controller
         $medicines = Medicine::where('status', 'active')->with('baseUnit')->get();
         $units = Unit::active()->get();
 
-        $purchaseMedicineUnits = $medicines->mapWithKeys(fn ($medicine) => [
-            $medicine->id => [
-                'base_unit_id' => $medicine->base_unit_id,
-            ],
-        ])->all();
-
-        $allUnits = $units->map(fn ($unit) => [
-            'id' => $unit->id,
-            'abbreviation' => $unit->abbreviation,
-            'name' => $unit->name,
-            'base_unit_id' => $unit->base_unit_id ?? $unit->id,
-        ])->values();
+        $unitPayload = PurchaseOrderUnitPayload::make($medicines, $units);
+        $purchaseMedicineUnits = $unitPayload->medicines;
+        $allUnits = $unitPayload->allUnits;
 
         return view('admin.purchases.create', compact(
             'suppliers',
