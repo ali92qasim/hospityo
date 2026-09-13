@@ -12,7 +12,7 @@ class DoctorAvailability
         return $this->failureReason($doctor, $datetime) === null;
     }
 
-    public function failureReason(Doctor $doctor, Carbon $datetime): ?string
+    public function failureReasonOnDate(Doctor $doctor, Carbon $date): ?string
     {
         $availableDays = $this->availableDays($doctor);
 
@@ -20,10 +20,21 @@ class DoctorAvailability
             return 'The selected doctor has no available days scheduled.';
         }
 
-        $weekday = $datetime->format('l');
+        $weekday = $date->format('l');
 
         if (! in_array($weekday, $availableDays, true)) {
             return 'The selected doctor is not available on this day.';
+        }
+
+        return null;
+    }
+
+    public function failureReason(Doctor $doctor, Carbon $datetime): ?string
+    {
+        $dayReason = $this->failureReasonOnDate($doctor, $datetime);
+
+        if ($dayReason !== null) {
+            return $dayReason;
         }
 
         $appointmentMinutes = $this->timeToMinutes($datetime->format('H:i'));

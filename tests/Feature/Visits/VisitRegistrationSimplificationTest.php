@@ -77,7 +77,8 @@ it('shows new opd patient button on list for users with create visits', function
     $this->actingAs($user)
         ->get(route('visits.index', ['visit_type' => 'opd']))
         ->assertOk()
-        ->assertSee('+ New OPD Patient')
+        ->assertSee('New OPD Patient')
+        ->assertDontSee('+ New OPD Patient')
         ->assertDontSee('data-default-date-filter=', false);
 });
 

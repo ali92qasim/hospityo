@@ -1,3 +1,4 @@
+@unless($flashAsToast ?? false)
 @if(session('success'))
     <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center">
         <i class="fas fa-check-circle mr-2"></i>
@@ -11,6 +12,7 @@
         {{ session('error') }}
     </div>
 @endif
+@endunless
 
 @if(session('pending_module_grant') && isset($tenant) && request()->routeIs('super-admin.*'))
     @php $pendingGrant = session('pending_module_grant'); @endphp

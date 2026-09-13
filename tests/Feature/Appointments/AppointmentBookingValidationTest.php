@@ -195,6 +195,16 @@ it('schedule appointment modal defaults datetime to now and filters doctors by a
         ->and($openBody)->toContain('filterDoctorOptions()');
 });
 
+it('calendar date click filters doctors for the clicked day instead of today', function () {
+    $js = file_get_contents(resource_path('js/appointments-calendar.js'));
+    $start = strpos($js, 'dateClick: function (info)');
+    $end = strpos($js, 'eventClick: function (info)');
+    $body = substr($js, $start, $end - $start);
+
+    expect($body)->toContain("openAppointmentModal(info.dateStr + ' 09:00')")
+        ->and($body)->not->toContain('openAppointmentModal();');
+});
+
 it('rebuilds the booking doctor dropdown so unavailable doctors are not listed', function () {
     $js = file_get_contents(resource_path('js/appointments-calendar.js'));
     $filter = strpos($js, 'function filterDoctorOptions');

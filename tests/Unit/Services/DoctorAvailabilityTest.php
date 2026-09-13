@@ -56,3 +56,20 @@ it('accepts a datetime on an available day inside the shift including boundaries
         ->and($service->isAvailableAt($doctor, Carbon::parse('2026-08-31 17:00')))->toBeTrue()
         ->and($service->failureReason($doctor, Carbon::parse('2026-08-31 10:30')))->toBeNull();
 });
+
+it('accepts an available weekday without checking shift hours', function () {
+    $service = new DoctorAvailability();
+    $doctor = makeScheduleDoctor();
+
+    expect($service->failureReasonOnDate($doctor, Carbon::parse('2026-08-31 00:00')))->toBeNull()
+        ->and($service->failureReason($doctor, Carbon::parse('2026-08-31 00:00')))
+        ->toBe("The selected time is outside the doctor's availability (09:00 to 17:00).");
+});
+
+it('rejects a date-only weekday that is not on the doctor schedule', function () {
+    $service = new DoctorAvailability();
+    $doctor = makeScheduleDoctor(['available_days' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday']]);
+
+    expect($service->failureReasonOnDate($doctor, Carbon::parse('2026-08-30')))
+        ->toBe('The selected doctor is not available on this day.');
+});

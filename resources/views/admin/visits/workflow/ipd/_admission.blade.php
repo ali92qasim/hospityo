@@ -11,8 +11,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Ward</label>
                                 <select id="ward-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue">
                                     <option value="">All Wards</option>
-                                    @foreach($availableBeds->groupBy('ward.name') as $wardName => $beds)
-                                        <option value="{{ $wardName }}">{{ $wardName }}</option>
+                                    @foreach($wards ?? [] as $ward)
+                                        <option value="{{ $ward->name }}">{{ $ward->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -34,6 +34,14 @@
                                         </div>
                                     </div>
                                 @endforeach
+                                <div id="bed-empty-state"
+                                     data-landmark="ipd-bed-empty-state"
+                                     class="col-span-full rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 {{ ($availableBeds ?? collect())->isEmpty() ? '' : 'hidden' }}">
+                                    <div class="flex items-start gap-2">
+                                        <i class="fas fa-info-circle mt-0.5"></i>
+                                        <p data-bed-empty-message>Beds will appear here once they are added to a ward.</p>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Selected Bed Info -->

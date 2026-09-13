@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Visit;
+use App\Services\DoctorAvailability;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 
 class UpdateConsultationRequest extends FormRequest
 {
@@ -39,5 +42,36 @@ class UpdateConsultationRequest extends FormRequest
             'notes' => 'nullable|string',
             'next_visit_date' => 'nullable|date|after_or_equal:today',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $date = $this->input('next_visit_date');
+
+            if (! $date) {
+                return;
+            }
+
+            $visit = $this->route('visit');
+            $doctor = $visit instanceof Visit ? $visit->doctor : null;
+
+            if (! $doctor) {
+                return;
+            }
+
+            $reason = app(DoctorAvailability::class)->failureReasonOnDate(
+                $doctor,
+                Carbon::parse($date)
+            );
+
+            if ($reason) {
+                $validator->errors()->add('next_visit_date', $reason);
+            }
+        });
     }
 }

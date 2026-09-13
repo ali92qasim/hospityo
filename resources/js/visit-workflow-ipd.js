@@ -14,12 +14,37 @@
         return tabName;
     }
 
-    window.switchVisitWorkflowTab = function (tabName) {
-        if (!tabName) {
+    function lockedWorkflowTabReason(tabName) {
+        const button = document.querySelector(`[data-workflow-panel="${tabName}"][data-tab-locked="1"]`);
+
+        if (!button) {
+            return null;
+        }
+
+        return button.dataset.tabLockReason || 'Complete the previous step first.';
+    }
+
+    function warnLockedWorkflowTab(reason) {
+        if (window.Toast && typeof window.Toast.warning === 'function') {
+            window.Toast.warning(reason);
             return;
         }
 
+        window.alert(reason);
+    }
+
+    window.switchVisitWorkflowTab = function (tabName) {
+        if (!tabName) {
+            return false;
+        }
+
         tabName = resolveWorkflowTabName(tabName);
+
+        const lockReason = lockedWorkflowTabReason(tabName);
+        if (lockReason) {
+            warnLockedWorkflowTab(lockReason);
+            return false;
+        }
 
         const accordionIds = new Set(
             [...document.querySelectorAll('[data-workflow-section]')].map((el) => el.dataset.workflowSection)
@@ -71,6 +96,8 @@
             button.setAttribute('aria-current', 'page');
             button.setAttribute('aria-selected', 'true');
         });
+
+        return true;
     };
 
     window.saveVisitWorkflowTab = function (tabName) {
@@ -86,7 +113,7 @@
 
         try {
             const savedTab = resolveWorkflowTabName(sessionStorage.getItem(TAB_STORAGE_KEY));
-            if (savedTab && (document.getElementById(`${savedTab}-content`) || document.querySelector(`[data-workflow-section="${savedTab}"]`))) {
+            if (savedTab && !lockedWorkflowTabReason(savedTab) && (document.getElementById(`${savedTab}-content`) || document.querySelector(`[data-workflow-section="${savedTab}"]`))) {
                 tabToShow = savedTab;
             }
             sessionStorage.removeItem(TAB_STORAGE_KEY);

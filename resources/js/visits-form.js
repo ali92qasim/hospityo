@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import select2 from 'select2';
 import flatpickr from 'flatpickr';
+import { isDoctorListedForDatetime } from './appointments-validation.js';
 
 // Initialize Select2
 select2(window, $);
@@ -89,6 +90,10 @@ $(function() {
     // Initialize Flatpickr for next visit date
     if ($('#next-visit-date').length) {
         try {
+            const schedule = readAssignedDoctorSchedule();
+            const nextVisitInput = document.getElementById('next-visit-date');
+            const unavailableMessage = 'The selected doctor is not available on this day.';
+
             flatpickr('#next-visit-date', {
                 dateFormat: 'Y-m-d',
                 minDate: 'today',
@@ -97,6 +102,24 @@ $(function() {
                 altFormat: 'F j, Y',
                 locale: {
                     firstDayOfWeek: 1
+                },
+                disable: schedule
+                    ? [function (date) {
+                        return !isDoctorListedForDatetime(schedule, localDateString(date));
+                    }]
+                    : [],
+            });
+
+            nextVisitInput?.form?.addEventListener('submit', function (event) {
+                const value = String(nextVisitInput.value || '').trim();
+
+                if (!value || !schedule) {
+                    return;
+                }
+
+                if (!isDoctorListedForDatetime(schedule, value)) {
+                    event.preventDefault();
+                    showNextVisitDateError(unavailableMessage);
                 }
             });
         } catch (error) {
@@ -104,3 +127,35 @@ $(function() {
         }
     }
 });
+
+function readAssignedDoctorSchedule() {
+    const el = document.querySelector('#assigned-doctor-schedule');
+
+    if (!el) {
+        return null;
+    }
+
+    try {
+        const parsed = JSON.parse(el.textContent);
+
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
+function localDateString(date) {
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+}
+
+function showNextVisitDateError(message) {
+    const slot = document.querySelector('[data-error-slot="next_visit_date"]');
+
+    if (slot) {
+        slot.textContent = message;
+    }
+}

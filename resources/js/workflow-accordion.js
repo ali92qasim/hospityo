@@ -66,6 +66,12 @@ export function initWorkflowAccordion(root) {
             const section = root.querySelector(`[data-workflow-section="${sectionId}"]`);
 
             if (section?.dataset.sectionDisabled === '1') {
+                const reason = section.dataset.sectionLockReason
+                    || toggle.getAttribute('title')
+                    || 'Complete the previous step first.';
+                if (window.Toast && typeof window.Toast.warning === 'function') {
+                    window.Toast.warning(reason);
+                }
                 return;
             }
 

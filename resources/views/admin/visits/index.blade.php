@@ -34,7 +34,7 @@
             <a href="{{ route('visits.create', ['visit_type' => $visitType ?? 'opd']) }}"
                class="bg-medical-blue text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm font-medium shadow-sm">
                 <i class="fas fa-plus mr-2"></i>
-                + {{ $newPatientLabel ?? 'New Patient' }}
+                {{ $newPatientLabel ?? 'New Patient' }}
             </a>
             @endcan
         </div>

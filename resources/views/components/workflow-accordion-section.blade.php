@@ -22,7 +22,7 @@
 <section
     data-workflow-section="{{ $id }}"
     data-open="{{ $open ? '1' : '0' }}"
-    @if($disabled) data-section-disabled="1" @endif
+    @if($disabled) data-section-disabled="1" data-section-lock-reason="{{ $stateLabel ?? 'Complete the previous step first.' }}" @endif
     class="bg-white rounded-lg shadow-sm border border-gray-200"
 >
     <button
@@ -30,7 +30,8 @@
         data-workflow-section-toggle="{{ $id }}"
         aria-expanded="{{ $open ? 'true' : 'false' }}"
         aria-controls="workflow-section-panel-{{ $id }}"
-        class="w-full flex items-center gap-3 px-4 py-3 min-h-[44px] text-left hover:bg-gray-50"
+        @if($disabled) aria-disabled="true" title="{{ $stateLabel ?? 'Complete the previous step first.' }}" @endif
+        class="w-full flex items-center gap-3 px-4 py-3 min-h-[44px] text-left {{ $disabled ? 'cursor-not-allowed opacity-70' : 'hover:bg-gray-50' }}"
     >
         <i class="fas {{ $icon }} {{ $iconColor }} w-5"></i>
         <span class="flex-1 text-sm font-medium text-gray-800">{{ $title }}</span>

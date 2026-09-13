@@ -375,6 +375,7 @@ class VisitController extends Controller
 
         if ($handler->type() === VisitType::Ipd) {
             $data['availableBeds'] = $workflowData['available_beds'] ?? Bed::with('ward')->where('status', 'available')->get();
+            $data['wards'] = $workflowData['wards'] ?? Ward::query()->where('status', 'active')->orderBy('name')->get();
             $data['activeComplaints'] = IpdClinicalService::activeComplaintsForPatient($visit->patient_id);
         }
 

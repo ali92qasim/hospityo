@@ -54,38 +54,71 @@
         @empty
             <p class="text-sm text-gray-500">No care team members yet.</p>
         @endforelse
-        <button type="button" onclick="showTab('care-team')" data-workflow-panel="care-team" class="workflow-action-button mt-4 w-full text-sm text-purple-700 hover:text-purple-900 font-medium">
-            <i class="fas fa-user-plus mr-1"></i>Manage Care Team
-        </button>
+        @include('admin.visits.workflow.ipd._nav-button', [
+            'id' => 'care-team',
+            'label' => 'Manage Care Team',
+            'icon' => 'fa-user-plus',
+            'iconColor' => 'text-purple-600',
+            'access' => $workflowData['tab_access']['care-team'] ?? ['unlocked' => true],
+            'extraClass' => 'mt-4',
+        ])
     </div>
 
     <div class="bg-white rounded-lg shadow-sm p-4 space-y-2">
-        <button type="button" onclick="showTab('admission')" id="admission-tab" data-workflow-panel="admission" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
-            <i class="fas fa-bed mr-2 text-purple-600"></i>Admission
-        </button>
-        <button type="button" onclick="showTab('vitals')" id="vitals-tab" data-workflow-panel="vitals" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
-            <i class="fas fa-heartbeat mr-2 text-red-500"></i>Record Vitals
-        </button>
-        <button type="button" onclick="showTab('consultation')" id="consultation-tab" data-workflow-panel="consultation" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
-            <i class="fas fa-stethoscope mr-2 text-medical-blue"></i>Consultation
-        </button>
-        <button type="button" onclick="showTab('gpe')" id="gpe-tab" data-workflow-panel="gpe" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
-            <i class="fas fa-notes-medical mr-2 text-indigo-600"></i>GPE Records
-        </button>
+        @include('admin.visits.workflow.ipd._nav-button', [
+            'id' => 'admission',
+            'label' => 'Admission',
+            'icon' => 'fa-bed',
+            'iconColor' => 'text-purple-600',
+            'access' => $workflowData['tab_access']['admission'] ?? ['unlocked' => true],
+        ])
+        @include('admin.visits.workflow.ipd._nav-button', [
+            'id' => 'vitals',
+            'label' => 'Record Vitals',
+            'icon' => 'fa-heartbeat',
+            'iconColor' => 'text-red-500',
+            'access' => $workflowData['tab_access']['vitals'] ?? ['unlocked' => false, 'lock_reason' => 'Complete the previous step first.'],
+        ])
+        @include('admin.visits.workflow.ipd._nav-button', [
+            'id' => 'consultation',
+            'label' => 'Consultation',
+            'icon' => 'fa-stethoscope',
+            'iconColor' => 'text-medical-blue',
+            'access' => $workflowData['tab_access']['consultation'] ?? ['unlocked' => false, 'lock_reason' => 'Complete the previous step first.'],
+        ])
+        @include('admin.visits.workflow.ipd._nav-button', [
+            'id' => 'gpe',
+            'label' => 'GPE Records',
+            'icon' => 'fa-notes-medical',
+            'iconColor' => 'text-indigo-600',
+            'access' => $workflowData['tab_access']['gpe'] ?? ['unlocked' => false, 'lock_reason' => 'Complete the previous step first.'],
+        ])
         @if($workflowData['show_lab_investigations'] ?? false)
-            <button type="button" onclick="showTab('lab')" id="lab-tab" data-workflow-panel="lab" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
-                <i class="fas fa-flask mr-2 text-teal-600"></i>Lab
-            </button>
+            @include('admin.visits.workflow.ipd._nav-button', [
+                'id' => 'lab',
+                'label' => 'Lab',
+                'icon' => 'fa-flask',
+                'iconColor' => 'text-teal-600',
+                'access' => $workflowData['tab_access']['lab'] ?? ['unlocked' => false, 'lock_reason' => 'Complete the previous step first.'],
+            ])
         @endif
         @if($workflowData['show_imaging_investigations'] ?? false)
-            <button type="button" onclick="showTab('imaging')" id="imaging-tab" data-workflow-panel="imaging" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
-                <i class="fas fa-x-ray mr-2 text-indigo-500"></i>Imaging
-            </button>
+            @include('admin.visits.workflow.ipd._nav-button', [
+                'id' => 'imaging',
+                'label' => 'Imaging',
+                'icon' => 'fa-x-ray',
+                'iconColor' => 'text-indigo-500',
+                'access' => $workflowData['tab_access']['imaging'] ?? ['unlocked' => false, 'lock_reason' => 'Complete the previous step first.'],
+            ])
         @endif
         @if($workflowData['show_prescriptions'] ?? true)
-        <button type="button" onclick="showTab('prescription')" id="prescription-tab" data-workflow-panel="prescription" class="workflow-action-button w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-sm font-medium text-gray-700">
-            <i class="fas fa-prescription mr-2 text-green-600"></i>Prescription
-        </button>
+            @include('admin.visits.workflow.ipd._nav-button', [
+                'id' => 'prescription',
+                'label' => 'Prescription',
+                'icon' => 'fa-prescription',
+                'iconColor' => 'text-green-600',
+                'access' => $workflowData['tab_access']['prescription'] ?? ['unlocked' => false, 'lock_reason' => 'Complete the previous step first.'],
+            ])
         @endif
     </div>
 </aside>

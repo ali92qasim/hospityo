@@ -5,17 +5,6 @@
 @section('page-description', 'Manage laboratory test orders')
 
 @section('content')
-@if(session('success'))
-    <div class="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center">
-        <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
-    </div>
-@endif
-@if(session('error'))
-    <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-        <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
-    </div>
-@endif
-
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
     <div class="flex flex-wrap items-center gap-3">
         <select onchange="filterOrders()" id="status-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">

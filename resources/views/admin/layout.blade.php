@@ -49,7 +49,7 @@
                     </a>
                 </div>
             @endif
-            @include('partials.alerts')
+            @include('partials.alerts', ['flashAsToast' => true])
             @yield('content')
         </main>
     </div>

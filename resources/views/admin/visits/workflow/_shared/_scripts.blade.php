@@ -5,8 +5,9 @@ let testRowIndex = 1;
 
 function showTab(tabName) {
     if (typeof window.switchVisitWorkflowTab === 'function') {
-        window.switchVisitWorkflowTab(tabName);
-        activeTab = tabName;
+        if (window.switchVisitWorkflowTab(tabName)) {
+            activeTab = tabName;
+        }
         return;
     }
 

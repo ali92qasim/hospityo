@@ -28,12 +28,6 @@
     </form>
 </div>
 
-@if(session('success'))
-<div class="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
-    <p class="text-sm font-medium text-green-800"><i class="fas fa-check-circle mr-1"></i>{{ session('success') }}</p>
-</div>
-@endif
-
 @if(session('import_pending'))
 <script>
 (function () {

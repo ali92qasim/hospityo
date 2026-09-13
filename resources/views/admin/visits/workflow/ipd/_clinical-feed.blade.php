@@ -4,14 +4,18 @@
     $initialSection = $workflowData['initial_section'] ?? 'vitals';
     $hasCareTeam = $visit->hasActiveCareTeam();
     $clinicalTimeline = IpdClinicalService::clinicalTimelineEvents($visit);
+    $tabAccess = $workflowData['tab_access'] ?? [];
+    $consultationUnlocked = $tabAccess['consultation']['unlocked'] ?? $hasCareTeam;
+    $prescriptionUnlocked = $tabAccess['prescription']['unlocked'] ?? ($workflowData['can_prescribe'] ?? false);
+    $labsUnlocked = $tabAccess['lab']['unlocked'] ?? ($workflowData['can_order_labs'] ?? false);
     $vitalsState = $visit->allVitalSigns->isNotEmpty() ? 'done' : ($initialSection === 'vitals' ? 'next' : 'idle');
-    $consultationState = ! $hasCareTeam
+    $consultationState = ! $consultationUnlocked
         ? 'locked'
         : ($visit->consultation ? 'done' : ($initialSection === 'consultation' ? 'next' : 'idle'));
-    $prescriptionState = ! ($workflowData['can_prescribe'] ?? false)
+    $prescriptionState = ! $prescriptionUnlocked
         ? 'locked'
         : ($initialSection === 'prescription' ? 'next' : 'idle');
-    $testsState = ! ($workflowData['can_order_labs'] ?? false)
+    $testsState = ! $labsUnlocked
         ? 'locked'
         : (in_array($initialSection, ['tests', 'lab', 'imaging'], true) ? 'next' : 'idle');
 @endphp
@@ -43,9 +47,9 @@
                 icon="fa-stethoscope"
                 icon-color="text-indigo-600"
                 :state="$consultationState"
-                state-label="Add care team first"
+                :state-label="$tabAccess['consultation']['lock_reason'] ?? 'Add care team first'"
                 :open="$initialSection === 'consultation'"
-                :disabled="! $hasCareTeam"
+                :disabled="! $consultationUnlocked"
             >
                 @include('admin.visits.workflow._shared._consultation-form')
             </x-workflow-accordion-section>
@@ -57,9 +61,9 @@
                 icon="fa-prescription"
                 icon-color="text-green-600"
                 :state="$prescriptionState"
-                state-label="Add care team first"
+                :state-label="$tabAccess['prescription']['lock_reason'] ?? 'Add care team first'"
                 :open="$initialSection === 'prescription'"
-                :disabled="! ($workflowData['can_prescribe'] ?? false)"
+                :disabled="! $prescriptionUnlocked"
             >
                 @include('admin.visits.workflow._shared._prescription-panel')
             </x-workflow-accordion-section>
@@ -72,9 +76,9 @@
                     icon="fa-flask"
                     icon-color="text-teal-600"
                     :state="$testsState"
-                    state-label="Add care team first"
+                    :state-label="$tabAccess['lab']['lock_reason'] ?? 'Add care team first'"
                     :open="$initialSection === 'lab'"
-                    :disabled="! ($workflowData['can_order_labs'] ?? false)"
+                    :disabled="! $labsUnlocked"
                 >
                     @include('admin.visits.workflow.opd._investigations', ['catalog' => 'lab'])
                 </x-workflow-accordion-section>
@@ -87,9 +91,9 @@
                     icon="fa-x-ray"
                     icon-color="text-indigo-500"
                     :state="$testsState"
-                    state-label="Add care team first"
+                    :state-label="$tabAccess['imaging']['lock_reason'] ?? 'Add care team first'"
                     :open="$initialSection === 'imaging'"
-                    :disabled="! ($workflowData['can_order_labs'] ?? false)"
+                    :disabled="! $labsUnlocked"
                 >
                     @include('admin.visits.workflow.opd._investigations', ['catalog' => 'imaging'])
                 </x-workflow-accordion-section>

@@ -117,7 +117,9 @@
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">Next Visit Date (Optional)</label>
             <input type="text" id="next-visit-date" name="next_visit_date" value="{{ old('next_visit_date', $visit->consultation?->next_visit_date?->format('Y-m-d')) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue" placeholder="Select date">
+            <p data-error-slot="next_visit_date" class="text-red-500 text-xs mt-1">@error('next_visit_date'){{ $message }}@enderror</p>
         </div>
+        <script type="application/json" id="assigned-doctor-schedule">@json($visit->doctor ? ['id' => $visit->doctor->id, 'available_days' => $visit->doctor->available_days ?? []] : null)</script>
 
         <div class="flex flex-wrap gap-3">
             <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">

@@ -9,6 +9,7 @@ use App\Models\Bed;
 use App\Models\Doctor;
 use App\Models\Tenant;
 use App\Models\Visit;
+use App\Models\Ward;
 use App\Services\IpdDraftBillService;
 use Illuminate\Support\Collection;
 
@@ -89,10 +90,79 @@ class IpdVisitHandler implements VisitTypeHandler
             'care_team_prescribe_message' => 'Add at least one doctor to the Care Team before creating prescriptions.',
             'care_team_labs_message' => 'Add at least one doctor to the Care Team before ordering investigations.',
             'available_beds' => Bed::with('ward')->where('status', 'available')->get(),
+            'wards' => Ward::query()->where('status', 'active')->orderBy('name')->get(),
             'draft_bill' => $draftBill,
             'settlement' => $settlement,
             'expected_discharge_date' => $visit->ipdDetails?->expected_discharge_date,
             'workflow_accordion' => true,
+            'tab_access' => $this->tabAccess($visit),
+        ];
+    }
+
+    /**
+     * Sequential IPD tab unlock state driven by completed steps.
+     *
+     * @return array<string, array{unlocked: bool, complete: bool, lock_reason: ?string}>
+     */
+    public function tabAccess(Visit $visit): array
+    {
+        $visit->loadMissing(['admission', 'allVitalSigns', 'careTeam', 'consultation']);
+
+        $admitted = (bool) $visit->admission;
+        $hasVitals = $visit->allVitalSigns->isNotEmpty();
+        $hasCareTeam = $visit->hasActiveCareTeam();
+        $hasConsultation = (bool) $visit->consultation;
+        $admissionFirst = 'Complete the Admission step first.';
+        $vitalsFirst = 'Record vital signs first.';
+        $careTeamFirst = 'Add a doctor to the Care Team first.';
+        $clinicalUnlocked = $admitted && $hasVitals && $hasCareTeam;
+        $clinicalReason = ! $admitted
+            ? $admissionFirst
+            : (! $hasVitals ? $vitalsFirst : (! $hasCareTeam ? $careTeamFirst : null));
+
+        return [
+            'admission' => [
+                'unlocked' => true,
+                'complete' => $admitted,
+                'lock_reason' => null,
+            ],
+            'vitals' => [
+                'unlocked' => $admitted,
+                'complete' => $hasVitals,
+                'lock_reason' => $admitted ? null : $admissionFirst,
+            ],
+            'care-team' => [
+                'unlocked' => $admitted,
+                'complete' => $hasCareTeam,
+                'lock_reason' => $admitted ? null : $admissionFirst,
+            ],
+            'consultation' => [
+                'unlocked' => $clinicalUnlocked,
+                'complete' => $hasConsultation,
+                'lock_reason' => $clinicalReason,
+            ],
+            'gpe' => [
+                'unlocked' => $clinicalUnlocked,
+                'complete' => $visit->ipdGpeRecords()->exists(),
+                'lock_reason' => $clinicalReason,
+            ],
+            'lab' => [
+                'unlocked' => $clinicalUnlocked,
+                'complete' => false,
+                'lock_reason' => $clinicalReason,
+            ],
+            'imaging' => [
+                'unlocked' => $clinicalUnlocked,
+                'complete' => false,
+                'lock_reason' => $clinicalReason,
+            ],
+            'prescription' => [
+                'unlocked' => $clinicalUnlocked,
+                'complete' => $visit->relationLoaded('prescriptions')
+                    ? $visit->prescriptions->isNotEmpty()
+                    : $visit->prescriptions()->exists(),
+                'lock_reason' => $clinicalReason,
+            ],
         ];
     }
 

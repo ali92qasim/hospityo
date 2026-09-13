@@ -94,11 +94,7 @@ $(function () {
                 return;
             }
 
-            openAppointmentModal();
-            const datetime = info.dateStr + ' 09:00';
-            if (window.flatpickrInstance) {
-                window.flatpickrInstance.setDate(datetime);
-            }
+            openAppointmentModal(info.dateStr + ' 09:00');
             appointmentValidator?.revalidateField('[name="appointment_datetime"]');
         },
         eventClick: function (info) {
@@ -433,7 +429,7 @@ $(function () {
         }
     }
 
-    function openAppointmentModal() {
+    function openAppointmentModal(initialDatetime) {
         setPastAppointmentLock(false);
         suppressFieldRevalidate = true;
         $('#appointmentModal').removeClass('hidden');
@@ -444,8 +440,9 @@ $(function () {
         $('#modal-title').text('Schedule Appointment');
         $('#submit-text').text('Schedule Appointment');
         applyDoctorScheduleToPicker();
+        const datetime = initialDatetime || formatLocalDateTime(new Date());
         if (window.flatpickrInstance) {
-            window.flatpickrInstance.setDate(formatLocalDateTime(new Date()), true);
+            window.flatpickrInstance.setDate(datetime, true);
         }
         filterDoctorOptions();
         suppressFieldRevalidate = false;
