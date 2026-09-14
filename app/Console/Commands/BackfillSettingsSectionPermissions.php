@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
+use Spatie\Permission\PermissionRegistrar;
 
 class BackfillSettingsSectionPermissions extends Command
 {
@@ -30,7 +31,7 @@ class BackfillSettingsSectionPermissions extends Command
     public function handle(): int
     {
         if (Tenant::checkCurrent()) {
-            $this->backfillCurrent();
+            $this->backfillWithCacheIsolation(Tenant::current());
 
             return self::SUCCESS;
         }
@@ -45,7 +46,7 @@ class BackfillSettingsSectionPermissions extends Command
 
         foreach ($tenants as $tenant) {
             $tenant->makeCurrent();
-            $this->backfillCurrent();
+            $this->backfillWithCacheIsolation($tenant);
             Tenant::forgetCurrent();
         }
 
@@ -62,6 +63,17 @@ class BackfillSettingsSectionPermissions extends Command
         } catch (QueryException) {
             return collect();
         }
+    }
+
+    private function backfillWithCacheIsolation(Tenant $tenant): void
+    {
+        $registrar = app(PermissionRegistrar::class);
+        $registrar->cacheKey = 'spatie.permission.cache.tenant.'.$tenant->id;
+        $registrar->forgetCachedPermissions();
+
+        $this->backfillCurrent();
+
+        $registrar->forgetCachedPermissions();
     }
 
     private function backfillCurrent(): void
