@@ -66,8 +66,8 @@ it('blocks accounting journal entries when tenant lacks accounting module', func
         ->assertForbidden();
 });
 
-it('allows pharmacy pos when tenant has pharmacy module', function () {
-    bindTenantWithModules(['pharmacy']);
+it('allows pharmacy pos when tenant has pharmacy and the child module', function () {
+    bindTenantWithModules(['pharmacy', 'pharmacy.pos']);
     $this->actingAs(moduleGateUser(['dispense pharmacy']));
 
     $this->get(route('pharmacy.pos.index'))
