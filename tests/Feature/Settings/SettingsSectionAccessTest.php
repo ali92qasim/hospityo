@@ -84,6 +84,7 @@ it('does not let manage settings open child sections', function () {
 
     $this->get(route('settings.hospital-info'))->assertForbidden();
     $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
+    $this->get(route('settings.index'))->assertForbidden();
 });
 
 it('allows legacy view settings to read hospital info but not update it', function () {

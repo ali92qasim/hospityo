@@ -151,12 +151,12 @@ it('allows settings index with view settings', function () {
         ->assertRedirect(route('settings.hospital-info'));
 });
 
-it('allows settings index with deprecated manage settings', function () {
+it('blocks settings index with deprecated manage settings', function () {
     bindAdminTenant();
     $this->actingAs(adminPermissionUser(['manage settings']));
 
     $this->get(route('settings.index'))
-        ->assertRedirect(route('settings.hospital-info'));
+        ->assertForbidden();
 });
 
 it('blocks settings update without edit settings permission', function () {

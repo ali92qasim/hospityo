@@ -114,7 +114,7 @@ it('requires authentication and prescription print settings access', function ()
     $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
 });
 
-it('allows child parent and legacy settings permissions but rejects hospital-only access', function () {
+it('allows child print access but rejects parent manage and hospital-only access', function () {
     $this->actingAs(printTemplateUser(['access settings.prescription-print']));
     $this->get(route('settings.prescription-print-templates.index'))->assertOk();
 
