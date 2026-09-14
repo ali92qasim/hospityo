@@ -14,40 +14,35 @@ final class SettingsAccess
 
         $method = strtoupper($httpMethod ?? request()?->method() ?? 'GET');
 
-        if (self::hasParentAccess($user, $method)) {
-            return true;
-        }
-
-        return $user->can(SettingsSectionRegistry::permissionName($sectionKey));
-    }
-
-    public static function canAccessAnySection(Authenticatable $user): bool
-    {
-        if (self::hasParentAccess($user, 'GET') || self::hasParentAccess($user, 'POST')) {
-            return true;
-        }
-
-        foreach (SettingsSectionRegistry::childKeys() as $key) {
-            if ($user->can(SettingsSectionRegistry::permissionName($key))) {
-                return true;
+        if ($sectionKey === 'settings.hospital-info') {
+            if (in_array($method, ['GET', 'HEAD'], true)) {
+                return $user->can('access settings.hospital-info') || $user->can('view settings');
             }
+
+            if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+                return $user->can('access settings.hospital-info') || $user->can('edit settings');
+            }
+
+            return false;
+        }
+
+        if ($sectionKey === 'settings.prescription-print') {
+            return $user->can('access settings.prescription-print');
         }
 
         return false;
     }
 
-    private static function hasParentAccess(Authenticatable $user, string $method): bool
+    public static function canAccessAnySection(Authenticatable $user): bool
     {
         if ($user->can('access settings') || $user->can('manage settings')) {
             return true;
         }
 
-        if (in_array($method, ['GET', 'HEAD'], true) && $user->can('view settings')) {
-            return true;
-        }
-
-        if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && $user->can('edit settings')) {
-            return true;
+        foreach (SettingsSectionRegistry::childKeys() as $key) {
+            if (self::canAccessSection($user, $key, 'GET')) {
+                return true;
+            }
         }
 
         return false;

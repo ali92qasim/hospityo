@@ -42,13 +42,12 @@ function validSettingsPayload(): array
     ];
 }
 
-it('allows parent settings access to both children and redirects to the first child', function () {
+it('does not let parent access settings open child sections', function () {
     $this->actingAs(settingsAccessUser(['access settings']));
 
-    $this->get(route('settings.hospital-info'))->assertOk();
-    $this->get(route('settings.prescription-print-templates.index'))->assertOk();
-    $this->get(route('settings.index'))
-        ->assertRedirect(route('settings.hospital-info'));
+    $this->get(route('settings.hospital-info'))->assertForbidden();
+    $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
+    $this->get(route('settings.index'))->assertForbidden();
 });
 
 it('allows child-only print access and filters the settings tabs', function () {
@@ -80,11 +79,11 @@ it('forbids all settings routes without permissions', function () {
     $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
 });
 
-it('allows legacy manage settings access to both children', function () {
+it('does not let manage settings open child sections', function () {
     $this->actingAs(settingsAccessUser(['manage settings']));
 
-    $this->get(route('settings.hospital-info'))->assertOk();
-    $this->get(route('settings.prescription-print-templates.index'))->assertOk();
+    $this->get(route('settings.hospital-info'))->assertForbidden();
+    $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
 });
 
 it('allows legacy view settings to read hospital info but not update it', function () {
@@ -92,6 +91,7 @@ it('allows legacy view settings to read hospital info but not update it', functi
 
     $this->get(route('settings.hospital-info'))->assertOk();
     $this->post(route('settings.update'), validSettingsPayload())->assertForbidden();
+    $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
 });
 
 it('allows legacy edit settings to update hospital info but not read it', function () {
@@ -100,4 +100,11 @@ it('allows legacy edit settings to update hospital info but not read it', functi
     $this->post(route('settings.update'), validSettingsPayload())
         ->assertRedirect(route('settings.index'));
     $this->get(route('settings.hospital-info'))->assertForbidden();
+    $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
+});
+
+it('allows group access settings plus hospital-info child to open hospital info', function () {
+    $this->actingAs(settingsAccessUser(['access settings', 'access settings.hospital-info']));
+
+    $this->get(route('settings.hospital-info'))->assertOk();
 });

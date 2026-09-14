@@ -177,7 +177,7 @@ it('hides the settings group when the tenant plan omits the settings module', fu
 });
 
 it('shows only settings children that the tenant plan grants', function () {
-    $user = sidebarUserWithPermissions(['access settings']);
+    $user = sidebarUserWithPermissions(['access settings.hospital-info']);
     $tenant = sidebarTenantWithModules(['settings', 'settings.hospital-info']);
 
     $group = collect($this->service->build($user, $tenant))->firstWhere('id', 'settings');
