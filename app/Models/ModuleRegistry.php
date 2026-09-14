@@ -29,6 +29,21 @@ class ModuleRegistry
         'reports.patient-demographics',
     ];
 
+    public const ACCOUNTING_CHILD_SLUGS = [
+        'accounting.profit-loss',
+        'accounting.balance-sheet',
+        'accounting.general-ledger',
+        'accounting.patient-ledger',
+        'accounting.vendor-ledger',
+        'accounting.employee-ledger',
+    ];
+
+    public const PHARMACY_CHILD_SLUGS = [
+        'pharmacy.pos',
+        'pharmacy.inventory',
+        'pharmacy.catalog',
+    ];
+
     /**
      * Module definitions.
      * Key = module slug (stored in plans.modules JSON).
@@ -96,20 +111,103 @@ class ModuleRegistry
             'group'       => 'Finance',
             'description' => 'Chart of accounts, journals, and financial reports.',
             'entitlement' => 'plan',
-            'child_access_requires_explicit_grant' => false,
+            'child_access_requires_explicit_grant' => true,
             'routes'      => ['accounting.'],
+            'children'    => [
+                'accounting.profit-loss',
+                'accounting.balance-sheet',
+                'accounting.general-ledger',
+                'accounting.patient-ledger',
+                'accounting.vendor-ledger',
+                'accounting.employee-ledger',
+            ],
+        ],
+        'accounting.profit-loss' => [
+            'name'        => 'Profit & Loss',
+            'group'       => 'Finance',
+            'parent'      => 'accounting',
+            'entitlement' => 'plan',
+            'description' => 'Profit and loss statement.',
+            'routes'      => ['accounting.profit-loss'],
+        ],
+        'accounting.balance-sheet' => [
+            'name'        => 'Balance Sheet',
+            'group'       => 'Finance',
+            'parent'      => 'accounting',
+            'entitlement' => 'plan',
+            'description' => 'Balance sheet statement.',
+            'routes'      => ['accounting.balance-sheet'],
+        ],
+        'accounting.general-ledger' => [
+            'name'        => 'General Ledger',
+            'group'       => 'Finance',
+            'parent'      => 'accounting',
+            'entitlement' => 'plan',
+            'description' => 'General ledger.',
+            'routes'      => ['accounting.general-ledger'],
+        ],
+        'accounting.patient-ledger' => [
+            'name'        => 'Patient Ledger',
+            'group'       => 'Finance',
+            'parent'      => 'accounting',
+            'entitlement' => 'plan',
+            'description' => 'Patient ledger.',
+            'routes'      => ['accounting.patient-ledger'],
+        ],
+        'accounting.vendor-ledger' => [
+            'name'        => 'Vendor Ledger',
+            'group'       => 'Finance',
+            'parent'      => 'accounting',
+            'entitlement' => 'plan',
+            'description' => 'Vendor ledger.',
+            'routes'      => ['accounting.vendor-ledger'],
+        ],
+        'accounting.employee-ledger' => [
+            'name'        => 'Employee Ledger',
+            'group'       => 'Finance',
+            'parent'      => 'accounting',
+            'entitlement' => 'plan',
+            'description' => 'Employee ledger.',
+            'routes'      => ['accounting.employee-ledger'],
         ],
         'pharmacy' => [
             'name'        => 'Pharmacy & Inventory',
             'group'       => 'Clinical',
             'description' => 'Medicines, inventory, prescriptions, and POS.',
             'entitlement' => 'plan',
-            'child_access_requires_explicit_grant' => false,
+            'child_access_requires_explicit_grant' => true,
+            'routes'      => ['prescriptions.'],
+            'children'    => [
+                'pharmacy.pos',
+                'pharmacy.inventory',
+                'pharmacy.catalog',
+            ],
+        ],
+        'pharmacy.pos' => [
+            'name'        => 'POS',
+            'group'       => 'Clinical',
+            'parent'      => 'pharmacy',
+            'entitlement' => 'plan',
+            'description' => 'Pharmacy point of sale.',
+            'routes'      => ['pharmacy.pos.'],
+        ],
+        'pharmacy.inventory' => [
+            'name'        => 'Inventory',
+            'group'       => 'Clinical',
+            'parent'      => 'pharmacy',
+            'entitlement' => 'plan',
+            'description' => 'Pharmacy inventory, suppliers, and purchases.',
+            'routes'      => ['inventory.', 'suppliers.', 'purchases.'],
+        ],
+        'pharmacy.catalog' => [
+            'name'        => 'Catalog',
+            'group'       => 'Clinical',
+            'parent'      => 'pharmacy',
+            'entitlement' => 'plan',
+            'description' => 'Medicines, categories, brands, units, and prescription instructions.',
             'routes'      => [
                 'medicines.', 'medicine-categories.', 'medicine-brands.',
-                'prescription-instructions.', 'units.',
-                'inventory.', 'suppliers.', 'purchases.',
-                'prescriptions.', 'pharmacy.pos.',
+                'units.', 'prescription-instructions.',
             ],
         ],
         'laboratory' => [
@@ -353,6 +451,34 @@ class ModuleRegistry
         }
 
         return array_values(array_unique([...$modules, ...self::REPORT_CHILD_SLUGS]));
+    }
+
+    public static function accountingChildSlugs(): array
+    {
+        return self::ACCOUNTING_CHILD_SLUGS;
+    }
+
+    public static function pharmacyChildSlugs(): array
+    {
+        return self::PHARMACY_CHILD_SLUGS;
+    }
+
+    public static function backfillAccountingChildren(array $modules): array
+    {
+        if (! in_array('accounting', $modules, true)) {
+            return array_values($modules);
+        }
+
+        return array_values(array_unique([...$modules, ...self::ACCOUNTING_CHILD_SLUGS]));
+    }
+
+    public static function backfillPharmacyChildren(array $modules): array
+    {
+        if (! in_array('pharmacy', $modules, true)) {
+            return array_values($modules);
+        }
+
+        return array_values(array_unique([...$modules, ...self::PHARMACY_CHILD_SLUGS]));
     }
 
     /**

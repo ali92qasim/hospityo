@@ -5,7 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 
 it('maps pharmacy pos routes to pharmacy module', function () {
-    expect(ModuleRegistry::moduleForRoute('pharmacy.pos.index'))->toBe('pharmacy');
+    expect(ModuleRegistry::moduleForRoute('pharmacy.pos.index'))->toBe('pharmacy.pos');
 });
 
 it('maps departments routes to departments module', function () {
@@ -86,7 +86,7 @@ it('maps each operational report route to its child slug', function () {
         ->and(ModuleRegistry::moduleForRoute('reports.investigations'))->toBe('reports.investigations')
         ->and(ModuleRegistry::parentOf('reports.revenue'))->toBe('reports')
         ->and(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(35)
+        ->and(ModuleRegistry::all())->toHaveCount(44)
         ->and(ModuleRegistry::normalize(['reports.revenue']))->toEqualCanonicalizing(['reports.revenue', 'reports'])
         ->and(ModuleRegistry::normalize(['reports']))->toBe(['reports'])
         ->and(ModuleRegistry::definitions()['reports']['children'])->toBe(ModuleRegistry::REPORT_CHILD_SLUGS);
@@ -94,12 +94,12 @@ it('maps each operational report route to its child slug', function () {
 
 it('registers 20 top-level modules including emergency and settings', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(35);
+        ->and(ModuleRegistry::all())->toHaveCount(44);
 });
 
 it('declares entitlement and child-access flags without changing slug sets', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(35);
+        ->and(ModuleRegistry::all())->toHaveCount(44);
 
     $reports = ModuleRegistry::definitions()['reports'];
     expect($reports['entitlement'] ?? 'plan')->toBe('plan')
@@ -113,4 +113,30 @@ it('declares entitlement and child-access flags without changing slug sets', fun
     $settingsChild = ModuleRegistry::definitions()['settings.hospital-info'];
     expect($settingsChild['entitlement'] ?? 'plan')->toBe('plan')
         ->and(array_key_exists('child_access_requires_explicit_grant', $settingsChild))->toBeFalse();
+});
+
+it('maps accounting statement routes to child slugs and pharmacy surfaces to pharmacy children', function () {
+    expect(ModuleRegistry::moduleForRoute('accounting.profit-loss'))->toBe('accounting.profit-loss')
+        ->and(ModuleRegistry::moduleForRoute('accounting.chart-of-accounts'))->toBe('accounting')
+        ->and(ModuleRegistry::moduleForRoute('accounting.journal-entries'))->toBe('accounting')
+        ->and(ModuleRegistry::moduleForRoute('accounting.fiscal-years'))->toBe('accounting')
+        ->and(ModuleRegistry::moduleForRoute('pharmacy.pos.index'))->toBe('pharmacy.pos')
+        ->and(ModuleRegistry::moduleForRoute('inventory.index'))->toBe('pharmacy.inventory')
+        ->and(ModuleRegistry::moduleForRoute('purchases.index'))->toBe('pharmacy.inventory')
+        ->and(ModuleRegistry::moduleForRoute('suppliers.index'))->toBe('pharmacy.inventory')
+        ->and(ModuleRegistry::moduleForRoute('medicines.index'))->toBe('pharmacy.catalog')
+        ->and(ModuleRegistry::moduleForRoute('prescriptions.index'))->toBe('pharmacy')
+        ->and(ModuleRegistry::parentOf('accounting.employee-ledger'))->toBe('accounting')
+        ->and(ModuleRegistry::parentOf('pharmacy.pos'))->toBe('pharmacy')
+        ->and(ModuleRegistry::definitions()['accounting']['child_access_requires_explicit_grant'])->toBeTrue()
+        ->and(ModuleRegistry::definitions()['pharmacy']['child_access_requires_explicit_grant'])->toBeTrue();
+});
+
+it('backfills accounting and pharmacy children only when the parent is on the plan', function () {
+    expect(ModuleRegistry::backfillAccountingChildren(['patients']))->toBe(['patients'])
+        ->and(ModuleRegistry::backfillPharmacyChildren(['patients']))->toBe(['patients'])
+        ->and(ModuleRegistry::backfillAccountingChildren(['accounting']))
+            ->toEqualCanonicalizing(array_merge(['accounting'], ModuleRegistry::accountingChildSlugs()))
+        ->and(ModuleRegistry::backfillPharmacyChildren(['pharmacy']))
+            ->toEqualCanonicalizing(array_merge(['pharmacy'], ModuleRegistry::pharmacyChildSlugs()));
 });
