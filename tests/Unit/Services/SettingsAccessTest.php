@@ -32,7 +32,7 @@ it('does not let a parent-only role into child sections', function () {
         ->and(SettingsAccess::canAccessSection($user, 'settings.hospital-info', 'GET'))->toBeFalse()
         ->and(SettingsAccess::canAccessSection($user, 'settings.prescription-print', 'GET'))->toBeFalse()
         ->and(SettingsAccess::canAccessSection($user, 'settings', 'GET'))->toBeFalse()
-        ->and(SettingsAccess::canAccessAnySection($user))->toBeTrue();
+        ->and(SettingsAccess::canAccessAnySection($user))->toBeFalse();
 });
 
 it('lets a child-only role into that tab without the parent', function () {
@@ -62,7 +62,7 @@ it('does not let manage settings open child sections', function () {
 
     expect(SettingsAccess::canAccessSection($user, 'settings.hospital-info', 'GET'))->toBeFalse()
         ->and(SettingsAccess::canAccessSection($user, 'settings.prescription-print', 'POST'))->toBeFalse()
-        ->and(SettingsAccess::canAccessAnySection($user))->toBeTrue();
+        ->and(SettingsAccess::canAccessAnySection($user))->toBeFalse();
 });
 
 it('treats legacy view settings as hospital-info GET and edit settings as hospital-info POST', function () {
@@ -75,4 +75,55 @@ it('treats legacy view settings as hospital-info GET and edit settings as hospit
         ->and(SettingsAccess::canAccessSection($editor, 'settings.hospital-info', 'POST'))->toBeTrue()
         ->and(SettingsAccess::canAccessSection($editor, 'settings.hospital-info', 'GET'))->toBeFalse()
         ->and(SettingsAccess::canAccessSection($editor, 'settings.prescription-print', 'GET'))->toBeFalse();
+});
+
+it('handles a ModuleRegistry settings child that SettingsAccess does not name', function () {
+    $slug = 'settings.hypothetical-share';
+    $permission = 'access settings.hypothetical-share';
+
+    $moduleRef = new ReflectionClass(\App\Models\ModuleRegistry::class);
+    $moduleProp = $moduleRef->getProperty('modules');
+    $moduleProp->setAccessible(true);
+    $originalModules = $moduleProp->getValue();
+
+    $permissionRef = new ReflectionClass(\App\Support\PermissionRegistry::class);
+    $permissionProp = $permissionRef->getProperty('modules');
+    $permissionProp->setAccessible(true);
+    $originalPermissions = $permissionProp->getValue();
+
+    try {
+        $modules = $originalModules;
+        $modules[$slug] = [
+            'name' => 'Hypothetical Share',
+            'group' => 'Admin',
+            'parent' => 'settings',
+            'entitlement' => 'plan',
+            'routes' => ['settings.hypothetical-share'],
+        ];
+        $moduleProp->setValue(null, $modules);
+
+        $permissions = $originalPermissions;
+        $permissions[$slug] = [
+            'label' => 'Hypothetical Share',
+            'groups' => [
+                'settings' => [$permission],
+            ],
+        ];
+        $permissionProp->setValue(null, $permissions);
+
+        $allowed = settingsUser([$permission]);
+        $parentOnly = settingsUser(['access settings']);
+
+        expect(SettingsAccess::canAccessSection($allowed, $slug, 'GET'))->toBeTrue()
+            ->and(SettingsAccess::canAccessSection($allowed, $slug, 'POST'))->toBeTrue()
+            ->and(SettingsAccess::canAccessAnySection($allowed))->toBeTrue()
+            ->and(SettingsAccess::canAccessSection($parentOnly, $slug, 'GET'))->toBeFalse()
+            ->and(file_get_contents((new ReflectionClass(SettingsAccess::class))->getFileName()))
+            ->not->toContain($slug)
+            ->not->toContain("'settings.hospital-info'")
+            ->not->toContain("'settings.prescription-print'");
+    } finally {
+        $moduleProp->setValue(null, $originalModules);
+        $permissionProp->setValue(null, $originalPermissions);
+    }
 });

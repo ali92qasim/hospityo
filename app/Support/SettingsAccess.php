@@ -2,45 +2,72 @@
 
 namespace App\Support;
 
+use App\Models\ModuleRegistry;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 final class SettingsAccess
 {
     public static function canAccessSection(Authenticatable $user, string $sectionKey, ?string $httpMethod = null): bool
     {
-        if (SettingsSectionRegistry::get($sectionKey) === null) {
+        $definition = ModuleRegistry::definitions()[$sectionKey] ?? null;
+        if ($definition === null || ($definition['parent'] ?? null) !== 'settings') {
             return false;
         }
 
         $method = strtoupper($httpMethod ?? request()?->method() ?? 'GET');
+        $names = PermissionRegistry::forModule($sectionKey);
 
-        if ($sectionKey === 'settings.hospital-info') {
+        if (! empty($definition['bundled'])) {
+            $hasChild = self::userCanAny($user, $names);
+
             if (in_array($method, ['GET', 'HEAD'], true)) {
-                return $user->can('access settings.hospital-info') || $user->can('view settings');
+                return $hasChild || $user->can('view settings');
             }
 
             if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
-                return $user->can('access settings.hospital-info') || $user->can('edit settings');
+                return $hasChild || $user->can('edit settings');
             }
 
             return false;
         }
 
-        if ($sectionKey === 'settings.prescription-print') {
-            return $user->can('access settings.prescription-print');
+        return self::userCanAny($user, $names);
+    }
+
+    public static function canAccessAnySection(Authenticatable $user): bool
+    {
+        foreach (self::settingsChildSlugs() as $key) {
+            if (self::canAccessSection($user, $key, 'GET')) {
+                return true;
+            }
         }
 
         return false;
     }
 
-    public static function canAccessAnySection(Authenticatable $user): bool
+    /**
+     * @return list<string>
+     */
+    private static function settingsChildSlugs(): array
     {
-        if ($user->can('access settings') || $user->can('manage settings')) {
-            return true;
+        $slugs = [];
+
+        foreach (ModuleRegistry::definitions() as $slug => $definition) {
+            if (($definition['parent'] ?? null) === 'settings') {
+                $slugs[] = $slug;
+            }
         }
 
-        foreach (SettingsSectionRegistry::childKeys() as $key) {
-            if (self::canAccessSection($user, $key, 'GET')) {
+        return $slugs;
+    }
+
+    /**
+     * @param  list<string>  $names
+     */
+    private static function userCanAny(Authenticatable $user, array $names): bool
+    {
+        foreach ($names as $name) {
+            if ($user->can($name)) {
                 return true;
             }
         }
