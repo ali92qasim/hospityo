@@ -368,6 +368,8 @@ class RolePermissionSeeder extends Seeder
             'view users', 'create users', 'edit users', 'delete users',
             'view audit logs',
             'access settings',
+            'access settings.hospital-info',
+            'access settings.prescription-print',
             'manage settings', // DEPRECATED: backward compatibility
             'view settings', 'edit settings',
             'manage backup', // DEPRECATED: backward compatibility
@@ -404,6 +406,8 @@ class RolePermissionSeeder extends Seeder
             'view visits', 'create visits',
             'view bills', 'create bills', 'create payments', 'edit payments',
             'access settings',
+            'access settings.hospital-info',
+            'access settings.prescription-print',
             'manage settings',
         ],
         'Lab Technician' => [

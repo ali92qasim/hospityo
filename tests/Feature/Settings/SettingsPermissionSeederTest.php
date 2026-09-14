@@ -21,6 +21,12 @@ it('seeds access settings permissions into the registry and receptionist parent 
     $hospitalAdmin = Role::findByName('Hospital Administrator', 'web');
     expect($hospitalAdmin->hasPermissionTo('access settings'))->toBeTrue();
 
+    expect($receptionist->hasPermissionTo('access settings.hospital-info'))->toBeTrue()
+        ->and($receptionist->hasPermissionTo('access settings.prescription-print'))->toBeTrue();
+
+    expect($hospitalAdmin->hasPermissionTo('access settings.hospital-info'))->toBeTrue()
+        ->and($hospitalAdmin->hasPermissionTo('access settings.prescription-print'))->toBeTrue();
+
     $superAdminRole = Role::findByName('Super Admin', 'web');
     expect($superAdminRole->hasPermissionTo('access settings'))->toBeTrue()
         ->and($superAdminRole->hasPermissionTo('access settings.hospital-info'))->toBeTrue();
