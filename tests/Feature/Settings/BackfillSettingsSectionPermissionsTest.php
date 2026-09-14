@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 
-function seedLandlordTenantForBackfill(): Tenant
+function seedLandlordConnectionForBackfill(): void
 {
     config([
         'database.connections.landlord' => [
@@ -26,6 +26,11 @@ function seedLandlordTenantForBackfill(): Tenant
         '--path' => 'database/migrations/landlord',
         '--database' => 'landlord',
     ]);
+}
+
+function seedLandlordTenantForBackfill(): Tenant
+{
+    seedLandlordConnectionForBackfill();
 
     return Tenant::create([
         'name' => 'Backfill Clinic',
@@ -34,6 +39,18 @@ function seedLandlordTenantForBackfill(): Tenant
         'database' => ':memory:',
         'status' => 'active',
     ]);
+}
+
+function withNonTestingEnvironment(callable $callback): mixed
+{
+    $previous = app()->environment();
+    app()['env'] = 'production';
+
+    try {
+        return $callback();
+    } finally {
+        app()['env'] = $previous;
+    }
 }
 
 it('grants settings child names to roles that hold parent access and skips others', function () {
@@ -52,7 +69,9 @@ it('grants settings child names to roles that hold parent access and skips other
     $otherRole = \Spatie\Permission\Models\Role::findOrCreate('Clerk', 'web');
     $otherRole->givePermissionTo('view patients');
 
-    $this->artisan('settings:backfill-section-permissions')->assertSuccessful();
+    $this->artisan('settings:backfill-section-permissions')
+        ->expectsOutputToContain('role(s) updated')
+        ->assertSuccessful();
 
     expect($parentRole->fresh()->hasPermissionTo('access settings.hospital-info'))->toBeTrue()
         ->and($parentRole->fresh()->hasPermissionTo('access settings.prescription-print'))->toBeTrue()
@@ -99,7 +118,10 @@ it('scopes and forgets the tenant Spatie cache when a tenant is current', functi
     Cache::put($tenantCacheKey, ['stale' => true], now()->addHour());
 
     try {
-        $this->artisan('settings:backfill-section-permissions')->assertSuccessful();
+        $this->artisan('settings:backfill-section-permissions')
+            ->expectsOutputToContain('1 tenant')
+            ->expectsOutputToContain('role(s) updated')
+            ->assertSuccessful();
 
         expect($registrar->cacheKey)->toBe($tenantCacheKey)
             ->and(Cache::get($tenantCacheKey))->toBeNull();
@@ -117,9 +139,33 @@ it('isolates Spatie cache then forgets current tenant on the all-tenants path', 
     $tenantCacheKey = 'spatie.permission.cache.tenant.'.$tenant->id;
     Cache::put($tenantCacheKey, ['stale' => true], now()->addHour());
 
-    $this->artisan('settings:backfill-section-permissions')->assertSuccessful();
+    $this->artisan('settings:backfill-section-permissions')
+        ->expectsOutputToContain('1 tenant')
+        ->expectsOutputToContain('role(s) updated')
+        ->assertSuccessful();
 
     expect(Tenant::checkCurrent())->toBeFalse()
         ->and($registrar->cacheKey)->toBe($tenantCacheKey)
         ->and(Cache::get($tenantCacheKey))->toBeNull();
+});
+
+it('fails when landlord listing throws outside testing', function () {
+    Tenant::forgetCurrent();
+
+    withNonTestingEnvironment(function () {
+        $this->artisan('settings:backfill-section-permissions')
+            ->expectsOutputToContain('Unable to list tenants')
+            ->assertFailed();
+    });
+});
+
+it('fails when no tenants exist outside testing', function () {
+    seedLandlordConnectionForBackfill();
+    Tenant::forgetCurrent();
+
+    withNonTestingEnvironment(function () {
+        $this->artisan('settings:backfill-section-permissions')
+            ->expectsOutputToContain('No tenants found')
+            ->assertFailed();
+    });
 });

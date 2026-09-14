@@ -31,23 +31,46 @@ class BackfillSettingsSectionPermissions extends Command
     public function handle(): int
     {
         if (Tenant::checkCurrent()) {
-            $this->backfillWithCacheIsolation(Tenant::current());
+            $tenant = Tenant::current();
+            $this->info('Backfilling 1 tenant(s).');
+            $updated = $this->backfillWithCacheIsolation($tenant);
+            $this->info("Backfilled current tenant {$tenant->slug} ({$updated} role(s) updated).");
 
             return self::SUCCESS;
         }
 
-        $tenants = $this->tenantsToBackfill();
+        try {
+            $tenants = $this->tenantsToBackfill();
+        } catch (QueryException) {
+            $this->error('Unable to list tenants from the landlord connection.');
+
+            return self::FAILURE;
+        }
 
         if ($tenants->isEmpty()) {
-            $this->backfillCurrent();
+            if (! $this->allowsCurrentConnectionFallback()) {
+                $this->error('No tenants found.');
+
+                return self::FAILURE;
+            }
+
+            $updated = $this->backfillCurrent();
+            $this->info("Backfilled current connection ({$updated} role(s) updated).");
 
             return self::SUCCESS;
         }
+
+        $this->info("Backfilling {$tenants->count()} tenant(s).");
 
         foreach ($tenants as $tenant) {
             $tenant->makeCurrent();
-            $this->backfillWithCacheIsolation($tenant);
-            Tenant::forgetCurrent();
+
+            try {
+                $updated = $this->backfillWithCacheIsolation($tenant);
+                $this->info("Backfilled tenant {$tenant->slug} ({$updated} role(s) updated).");
+            } finally {
+                Tenant::forgetCurrent();
+            }
         }
 
         return self::SUCCESS;
@@ -60,27 +83,40 @@ class BackfillSettingsSectionPermissions extends Command
     {
         try {
             return Tenant::all();
-        } catch (QueryException) {
+        } catch (QueryException $e) {
+            if (! $this->allowsCurrentConnectionFallback()) {
+                throw $e;
+            }
+
             return collect();
         }
     }
 
-    private function backfillWithCacheIsolation(Tenant $tenant): void
+    private function allowsCurrentConnectionFallback(): bool
+    {
+        return app()->environment('testing');
+    }
+
+    private function backfillWithCacheIsolation(Tenant $tenant): int
     {
         $registrar = app(PermissionRegistrar::class);
         $registrar->cacheKey = 'spatie.permission.cache.tenant.'.$tenant->id;
         $registrar->forgetCachedPermissions();
 
-        $this->backfillCurrent();
-
-        $registrar->forgetCachedPermissions();
+        try {
+            return $this->backfillCurrent();
+        } finally {
+            $registrar->forgetCachedPermissions();
+        }
     }
 
-    private function backfillCurrent(): void
+    private function backfillCurrent(): int
     {
         foreach (self::CHILD_NAMES as $name) {
             Permission::findOrCreate($name, 'web');
         }
+
+        $updated = 0;
 
         foreach (Role::with('permissions')->get() as $role) {
             $hasParent = false;
@@ -94,6 +130,9 @@ class BackfillSettingsSectionPermissions extends Command
                 continue;
             }
             $role->givePermissionTo(self::CHILD_NAMES);
+            $updated++;
         }
+
+        return $updated;
     }
 }
