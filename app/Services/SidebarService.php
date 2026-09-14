@@ -341,7 +341,7 @@ class SidebarService
             && ($user->can('view audit logs') || $user->hasAnyRole(['Super Admin', 'Hospital Administrator']));
         $rbacAccess = $user->canAny(['view roles', 'view permissions', 'manage user roles']);
 
-        if ($this->hasModule($tenant, 'rbac') && ($rbacAccess || $userAccess || $auditAccess)) {
+        if ($this->hasModule($tenant, 'rbac') && ($rbacAccess || $userAccess)) {
             $items = [];
             if ($userAccess) {
                 $items[] = $this->item('Users', 'fa-users', 'users.index', ['users.*']);
@@ -352,12 +352,13 @@ class SidebarService
             if ($user->can('view permissions')) {
                 $items[] = $this->item('Permissions', 'fa-key', 'permissions.index', ['permissions.*']);
             }
-            if ($auditAccess) {
-                $items[] = $this->item('Audit Logs', 'fa-history', 'audit-logs.index', ['audit-logs.*']);
+            if (! empty($items)) {
+                $menu[] = $this->group('access', 'Access Control', $items, ['users.*', 'roles.*', 'permissions.*']);
             }
-            if (!empty($items)) {
-                $menu[] = $this->group('access', 'Access Control', $items, ['users.*', 'roles.*', 'permissions.*', 'audit-logs.*']);
-            }
+        }
+
+        if ($auditAccess) {
+            $menu[] = $this->link('audit', 'Audit Logs', 'fa-history', 'audit-logs.index', ['audit-logs.*']);
         }
 
         // ── Backup & Restore ──────────────────────────────────────────────────
