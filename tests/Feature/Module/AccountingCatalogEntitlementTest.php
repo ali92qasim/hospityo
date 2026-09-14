@@ -67,3 +67,24 @@ it('shows profit and loss for the view accounting alias when the child slug is p
 
     expect(collect($group['items'])->pluck('label')->all())->toBe(['Chart of Accounts', 'Journal Entries', 'Profit & Loss']);
 });
+
+it('forbids profit and loss when the child slug is missing from the plan', function () {
+    accountingCatalogTenant(['accounting']);
+    $this->actingAs(accountingCatalogUser(['view profit and loss', 'view accounting']));
+
+    $this->get(route('accounting.profit-loss'))->assertForbidden();
+});
+
+it('allows chart of accounts on the parent slug without statement children', function () {
+    accountingCatalogTenant(['accounting']);
+    $this->actingAs(accountingCatalogUser(['view chart of accounts']));
+
+    $this->get(route('accounting.chart-of-accounts'))->assertOk();
+});
+
+it('allows profit and loss when parent, child slug, and permission are present', function () {
+    accountingCatalogTenant(['accounting', 'accounting.profit-loss']);
+    $this->actingAs(accountingCatalogUser(['view profit and loss']));
+
+    $this->get(route('accounting.profit-loss'))->assertOk();
+});

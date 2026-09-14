@@ -58,3 +58,17 @@ it('shows pos when pharmacy.pos is entitled even if catalog is not', function ()
     expect($group)->not->toBeNull()
         ->and(collect($group['items'])->pluck('label')->all())->toBe(['POS']);
 });
+
+it('forbids pos when pharmacy.pos is missing from the plan', function () {
+    pharmacyCatalogTenant(['pharmacy']);
+    $this->actingAs(pharmacyCatalogUser(['view pos']));
+
+    $this->get(route('pharmacy.pos.index'))->assertForbidden();
+});
+
+it('allows pos when pharmacy.pos is entitled', function () {
+    pharmacyCatalogTenant(['pharmacy', 'pharmacy.pos']);
+    $this->actingAs(pharmacyCatalogUser(['view pos']));
+
+    $this->get(route('pharmacy.pos.index'))->assertOk();
+});
