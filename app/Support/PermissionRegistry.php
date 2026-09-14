@@ -543,9 +543,19 @@ class PermissionRegistry
                     'view settings',
                     'edit settings',
                 ],
+            ],
+        ],
+        'settings.hospital-info' => [
+            'label' => 'Hospital Info',
+            'groups' => [
                 'hospital info' => [
                     'access settings.hospital-info',
                 ],
+            ],
+        ],
+        'settings.prescription-print' => [
+            'label' => 'Prescription Print Templates',
+            'groups' => [
                 'prescription print' => [
                     'access settings.prescription-print',
                 ],

@@ -41,3 +41,19 @@ it('marks reports as explicit-grant and does not auto-check children in plan for
         ->assertSee("const explicit = parentBox.getAttribute('data-child-access-requires-explicit-grant') === '1';", false)
         ->assertSee('data-module-child-of="reports"', false);
 });
+
+it('marks settings as explicit-grant so print is not parent-implied in plan form js', function () {
+    $plan = Plan::where('slug', 'enterprise')->first();
+
+    $response = $this->actingAs($this->superAdmin, 'super_admin')
+        ->get(route('super-admin.plans.edit', $plan))
+        ->assertOk()
+        ->assertSee('data-module-parent="settings"', false)
+        ->assertSee('data-module-child-of="settings"', false)
+        ->assertSee('name="modules[]" value="settings.prescription-print"', false)
+        ->assertDontSee('name="modules[]" value="settings.hospital-info"', false);
+
+    expect($response->getContent())->toMatch(
+        '/data-module-parent="settings"\s+data-child-access-requires-explicit-grant="1"/'
+    );
+});

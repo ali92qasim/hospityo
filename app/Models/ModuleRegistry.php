@@ -417,7 +417,7 @@ class ModuleRegistry
             'group'       => 'Admin',
             'description' => 'Hospital configuration and print templates.',
             'entitlement' => 'plan',
-            'child_access_requires_explicit_grant' => false,
+            'child_access_requires_explicit_grant' => true,
             'routes'      => ['settings.index'],
             'children'    => ['settings.hospital-info', 'settings.prescription-print'],
         ],

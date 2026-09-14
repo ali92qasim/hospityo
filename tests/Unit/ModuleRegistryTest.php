@@ -149,3 +149,7 @@ it('backfills accounting and pharmacy children only when the parent is on the pl
         ->and(ModuleRegistry::backfillPharmacyChildren(['pharmacy']))
             ->toEqualCanonicalizing(array_merge(['pharmacy'], ModuleRegistry::pharmacyChildSlugs()));
 });
+
+it('marks settings as explicit-grant so print is not parent-implied in plan form js', function () {
+    expect(ModuleRegistry::definitions()['settings']['child_access_requires_explicit_grant'])->toBeTrue();
+});

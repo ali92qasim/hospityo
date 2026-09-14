@@ -47,3 +47,18 @@ it('registers unique permission lists for accounting and pharmacy catalog childr
     $flat = PermissionRegistry::flat();
     expect($flat)->toBe(array_values(array_unique($flat)));
 });
+
+it('splits settings permission registry so parent forModule excludes child names', function () {
+    expect(PermissionRegistry::forModule('settings'))->not->toContain('access settings.prescription-print')
+        ->and(PermissionRegistry::forModule('settings'))->toEqualCanonicalizing([
+            'access settings',
+            'manage settings',
+            'view settings',
+            'edit settings',
+        ])
+        ->and(PermissionRegistry::forModule('settings.prescription-print'))->toBe(['access settings.prescription-print'])
+        ->and(PermissionRegistry::forModule('settings.hospital-info'))->toBe(['access settings.hospital-info']);
+
+    $flat = PermissionRegistry::flat();
+    expect($flat)->toBe(array_values(array_unique($flat)));
+});
