@@ -34,10 +34,16 @@ function gateUser(array $permissions): User
     return $user;
 }
 
-it('allows parent access settings through settings.section middleware', function () {
-    $this->actingAs(gateUser(['access settings']))
+it('allows child hospital-info through settings.section middleware', function () {
+    $this->actingAs(gateUser(['access settings.hospital-info']))
         ->get('/__test/settings-hospital')
         ->assertOk();
+});
+
+it('does not let parent access settings through settings.section for a child', function () {
+    $this->actingAs(gateUser(['access settings']))
+        ->get('/__test/settings-hospital')
+        ->assertForbidden();
 });
 
 it('forbids users without settings access', function () {

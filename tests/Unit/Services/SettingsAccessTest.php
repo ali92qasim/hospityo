@@ -24,14 +24,15 @@ function settingsUser(array $permissions): User
     return $user;
 }
 
-it('lets a parent-only role into every registered child without storing child permissions', function () {
+it('does not let a parent-only role into child sections', function () {
     $user = settingsUser(['access settings']);
 
     expect($user->can('access settings.hospital-info'))->toBeFalse()
         ->and($user->can('access settings.prescription-print'))->toBeFalse()
-        ->and(SettingsAccess::canAccessSection($user, 'settings.hospital-info', 'GET'))->toBeTrue()
-        ->and(SettingsAccess::canAccessSection($user, 'settings.prescription-print', 'GET'))->toBeTrue()
-        ->and(SettingsAccess::canAccessSection($user, 'settings', 'GET'))->toBeTrue();
+        ->and(SettingsAccess::canAccessSection($user, 'settings.hospital-info', 'GET'))->toBeFalse()
+        ->and(SettingsAccess::canAccessSection($user, 'settings.prescription-print', 'GET'))->toBeFalse()
+        ->and(SettingsAccess::canAccessSection($user, 'settings', 'GET'))->toBeFalse()
+        ->and(SettingsAccess::canAccessAnySection($user))->toBeTrue();
 });
 
 it('lets a child-only role into that tab without the parent', function () {
@@ -56,19 +57,22 @@ it('denies users with no settings permissions', function () {
         ->and(SettingsAccess::canAccessSection($user, 'settings.hospital-info', 'GET'))->toBeFalse();
 });
 
-it('treats legacy manage settings as parent access', function () {
+it('does not let manage settings open child sections', function () {
     $user = settingsUser(['manage settings']);
 
-    expect(SettingsAccess::canAccessSection($user, 'settings.hospital-info', 'GET'))->toBeTrue()
-        ->and(SettingsAccess::canAccessSection($user, 'settings.prescription-print', 'POST'))->toBeTrue();
+    expect(SettingsAccess::canAccessSection($user, 'settings.hospital-info', 'GET'))->toBeFalse()
+        ->and(SettingsAccess::canAccessSection($user, 'settings.prescription-print', 'POST'))->toBeFalse()
+        ->and(SettingsAccess::canAccessAnySection($user))->toBeTrue();
 });
 
-it('treats legacy view settings as parent on GET and edit settings as parent on POST', function () {
+it('treats legacy view settings as hospital-info GET and edit settings as hospital-info POST', function () {
     $viewer = settingsUser(['view settings']);
     $editor = settingsUser(['edit settings']);
 
     expect(SettingsAccess::canAccessSection($viewer, 'settings.hospital-info', 'GET'))->toBeTrue()
         ->and(SettingsAccess::canAccessSection($viewer, 'settings.hospital-info', 'POST'))->toBeFalse()
+        ->and(SettingsAccess::canAccessSection($viewer, 'settings.prescription-print', 'GET'))->toBeFalse()
         ->and(SettingsAccess::canAccessSection($editor, 'settings.hospital-info', 'POST'))->toBeTrue()
-        ->and(SettingsAccess::canAccessSection($editor, 'settings.hospital-info', 'GET'))->toBeFalse();
+        ->and(SettingsAccess::canAccessSection($editor, 'settings.hospital-info', 'GET'))->toBeFalse()
+        ->and(SettingsAccess::canAccessSection($editor, 'settings.prescription-print', 'GET'))->toBeFalse();
 });

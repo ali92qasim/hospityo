@@ -122,14 +122,17 @@ it('allows child parent and legacy settings permissions but rejects hospital-onl
     $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
 
     $this->actingAs(printTemplateUser(['access settings']));
-    $this->get(route('settings.prescription-print-templates.index'))->assertOk();
+    $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
 
     $this->actingAs(printTemplateUser(['manage settings']));
-    $this->get(route('settings.prescription-print-templates.index'))->assertOk();
+    $this->get(route('settings.prescription-print-templates.index'))->assertForbidden();
 });
 
-it('renders the index inside the settings shell for parent access', function () {
-    $this->actingAs(printTemplateUser(['access settings']));
+it('renders the index inside the settings shell when the user can access both children', function () {
+    $this->actingAs(printTemplateUser([
+        'access settings.prescription-print',
+        'access settings.hospital-info',
+    ]));
 
     $this->get(route('settings.prescription-print-templates.index'))
         ->assertOk()
