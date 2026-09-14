@@ -73,7 +73,6 @@ it('preserves custom module selections when merging', function () {
         'emergency',
         'settings',
         'settings.hospital-info',
-        'settings.prescription-print',
     ]);
 });
 
@@ -123,6 +122,20 @@ it('adds settings and children when a plan has none', function () {
         'reports',
         'settings',
         'settings.hospital-info',
-        'settings.prescription-print',
     ]);
+});
+
+it('restores hospital info when settings is present without it', function () {
+    $plan = Plan::create([
+        'slug' => 'settings-parent-only',
+        'name' => 'Settings Parent Only',
+        'price' => 10,
+        'billing_cycle' => 'monthly',
+        'modules' => ['settings'],
+    ]);
+
+    $this->artisan('plans:sync-modules')->assertSuccessful();
+
+    expect($plan->fresh()->modules)->toContain('settings', 'settings.hospital-info')
+        ->and($plan->fresh()->modules)->not->toContain('settings.prescription-print');
 });

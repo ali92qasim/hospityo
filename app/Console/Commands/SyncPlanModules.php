@@ -65,13 +65,15 @@ class SyncPlanModules extends Command
             $toAdd[] = 'emergency';
         }
 
-        if (! in_array('settings', $modules, true)
-            && ! in_array('settings.hospital-info', $modules, true)
-            && ! in_array('settings.prescription-print', $modules, true)
-        ) {
+        $hasSettings = in_array('settings', $modules, true);
+        $hasHospitalInfo = in_array('settings.hospital-info', $modules, true);
+        $hasPrint = in_array('settings.prescription-print', $modules, true);
+
+        if (! $hasSettings && ! $hasHospitalInfo && ! $hasPrint) {
             $toAdd[] = 'settings';
             $toAdd[] = 'settings.hospital-info';
-            $toAdd[] = 'settings.prescription-print';
+        } elseif ($hasSettings && ! $hasHospitalInfo) {
+            $toAdd[] = 'settings.hospital-info';
         }
 
         if ($this->needsDepartments($modules)) {

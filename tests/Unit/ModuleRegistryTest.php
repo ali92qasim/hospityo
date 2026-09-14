@@ -70,6 +70,15 @@ it('normalizes selected children by adding their parent slug', function () {
         ->toEqualCanonicalizing(['settings.hospital-info', 'visits', 'settings']);
 });
 
+it('locks hospital info onto any slug list that includes settings', function () {
+    expect(ModuleRegistry::normalize(['settings']))
+        ->toEqualCanonicalizing(['settings', 'settings.hospital-info'])
+        ->and(ModuleRegistry::normalize(['settings.prescription-print']))
+            ->toEqualCanonicalizing(['settings.prescription-print', 'settings', 'settings.hospital-info'])
+        ->and(ModuleRegistry::normalize(['settings', 'settings.hospital-info']))
+            ->not->toContain('settings.prescription-print');
+});
+
 it('backfills all report children only when reports is already on the plan', function () {
     expect(ModuleRegistry::backfillReportChildren(['patients']))->toBe(['patients'])
         ->and(ModuleRegistry::backfillReportChildren(['reports']))

@@ -427,6 +427,7 @@ class ModuleRegistry
             'parent'      => 'settings',
             'description' => 'Hospital name, contact, timezone, and branding.',
             'entitlement' => 'plan',
+            'bundled'     => true,
             'routes'      => ['settings.hospital-info', 'settings.update'],
         ],
         'settings.prescription-print' => [
@@ -580,6 +581,10 @@ class ModuleRegistry
             if ($parent && ! in_array($parent, $normalized, true)) {
                 $normalized[] = $parent;
             }
+        }
+
+        if (in_array('settings', $normalized, true) && ! in_array('settings.hospital-info', $normalized, true)) {
+            $normalized[] = 'settings.hospital-info';
         }
 
         return array_values(array_unique($normalized));

@@ -126,7 +126,7 @@
                 <div class="mt-3 ml-7 space-y-2">
                     @foreach($def['children'] as $childSlug)
                         @php $childDef = $modules[$childSlug] ?? null; @endphp
-                        @if($childDef)
+                        @if($childDef && empty($childDef['bundled']))
                         <label class="flex items-start cursor-pointer">
                             <input type="checkbox" name="modules[]" value="{{ $childSlug }}"
                                    data-module-child-of="{{ $slug }}"
