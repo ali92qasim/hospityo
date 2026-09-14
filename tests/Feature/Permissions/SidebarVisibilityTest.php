@@ -90,7 +90,7 @@ it('hides hr group when user lacks employee permissions even with hr module', fu
 
 it('shows pharmacy group when tenant has pharmacy module and user has pharmacy permissions', function () {
     $user = sidebarUserWithPermissions(['view medicines']);
-    $tenant = sidebarTenantWithModules(['pharmacy']);
+    $tenant = sidebarTenantWithModules(['pharmacy', 'pharmacy.catalog']);
 
     $labels = sidebarMenuLabels($user, $tenant);
 

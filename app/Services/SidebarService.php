@@ -111,32 +111,32 @@ class SidebarService
         // ── Pharmacy ──────────────────────────────────────────────────────────
         if ($this->hasModule($tenant, 'pharmacy')) {
             $items = [];
-            if ($user->can('view pos') || $user->can('dispense pharmacy') || $user->can('manage pharmacy')) {
+            if ($this->hasModule($tenant, 'pharmacy.pos') && ($user->can('view pos') || $user->can('dispense pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('POS', 'fa-cash-register', 'pharmacy.pos.index', ['pharmacy.pos.*'], [], null, true);
             }
-            if ($user->can('view medicine categories') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+            if ($this->hasModule($tenant, 'pharmacy.catalog') && ($user->can('view medicine categories') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('Categories', 'fa-tags', 'medicine-categories.index', ['medicine-categories.*']);
             }
-            if ($user->can('view brands') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+            if ($this->hasModule($tenant, 'pharmacy.catalog') && ($user->can('view brands') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('Brands', 'fa-copyright', 'medicine-brands.index', ['medicine-brands.*']);
             }
-            if ($user->can('view medicines') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+            if ($this->hasModule($tenant, 'pharmacy.catalog') && ($user->can('view medicines') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('Medicines', 'fa-pills', 'medicines.index', ['medicines.*']);
             }
-            if ($user->can('view prescriptions') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+            if ($this->hasModule($tenant, 'pharmacy.catalog') && ($user->can('view prescriptions') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('Instructions', 'fa-file-prescription', 'prescription-instructions.index', ['prescription-instructions.*']);
             }
-            if ($user->can('view units') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+            if ($this->hasModule($tenant, 'pharmacy.catalog') && ($user->can('view units') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('Units', 'fa-balance-scale', 'units.index', ['units.*']);
             }
-            if ($user->can('view inventory') || $user->can('manage inventory') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+            if ($this->hasModule($tenant, 'pharmacy.inventory') && ($user->can('view inventory') || $user->can('manage inventory') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('Inventory', 'fa-boxes', 'inventory.index', ['inventory.*']);
                 $items[] = $this->item('Opening Stock', 'fa-warehouse', 'inventory.opening-stock', ['inventory.opening-stock*']);
             }
-            if ($user->can('view suppliers') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+            if ($this->hasModule($tenant, 'pharmacy.inventory') && ($user->can('view suppliers') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('Suppliers', 'fa-truck', 'suppliers.index', ['suppliers.*']);
             }
-            if ($user->can('view purchases') || $user->can('view pharmacy') || $user->can('manage pharmacy')) {
+            if ($this->hasModule($tenant, 'pharmacy.inventory') && ($user->can('view purchases') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('Purchase Orders', 'fa-shopping-cart', 'purchases.index', ['purchases.*']);
             }
             if ($items !== []) {
@@ -247,19 +247,22 @@ class SidebarService
             if ($user->can('view journal entries') || $user->can('view accounting')) {
                 $items[] = $this->item('Journal Entries', 'fa-book', 'accounting.journal-entries', ['accounting.journal-entries']);
             }
-            if ($user->can('view general ledger') || $user->can('view accounting')) {
+            if ($this->hasModule($tenant, 'accounting.general-ledger') && ($user->can('view general ledger') || $user->can('view accounting'))) {
                 $items[] = $this->item('General Ledger', 'fa-file-alt', 'accounting.general-ledger', ['accounting.general-ledger']);
             }
-            if ($user->can('view patient ledgers') || $user->can('view accounting')) {
+            if ($this->hasModule($tenant, 'accounting.patient-ledger') && ($user->can('view patient ledgers') || $user->can('view accounting'))) {
                 $items[] = $this->item('Patient Ledger', 'fa-user', 'accounting.patient-ledger', ['accounting.patient-ledger']);
             }
-            if ($user->can('view vendor ledgers') || $user->can('view accounting')) {
+            if ($this->hasModule($tenant, 'accounting.vendor-ledger') && ($user->can('view vendor ledgers') || $user->can('view accounting'))) {
                 $items[] = $this->item('Vendor Ledger', 'fa-truck', 'accounting.vendor-ledger', ['accounting.vendor-ledger']);
             }
-            if ($user->can('view profit and loss') || $user->can('view accounting')) {
+            if ($this->hasModule($tenant, 'accounting.employee-ledger') && ($user->can('view employee ledgers') || $user->can('view accounting'))) {
+                $items[] = $this->item('Employee Ledger', 'fa-id-card', 'accounting.employee-ledger', ['accounting.employee-ledger']);
+            }
+            if ($this->hasModule($tenant, 'accounting.profit-loss') && ($user->can('view profit and loss') || $user->can('view accounting'))) {
                 $items[] = $this->item('Profit & Loss', 'fa-chart-line', 'accounting.profit-loss', ['accounting.profit-loss']);
             }
-            if ($user->can('view balance sheet') || $user->can('view accounting')) {
+            if ($this->hasModule($tenant, 'accounting.balance-sheet') && ($user->can('view balance sheet') || $user->can('view accounting'))) {
                 $items[] = $this->item('Balance Sheet', 'fa-balance-scale', 'accounting.balance-sheet', ['accounting.balance-sheet']);
             }
             if (! empty($items)) {
