@@ -101,7 +101,7 @@ it('allows opd visit list when tenant has visits but not emergency', function ()
 
 it('blocks hospital info settings when tenant lacks the settings child module', function () {
     bindTenantWithModules(['settings']);
-    $this->actingAs(moduleGateUser(['access settings']));
+    $this->actingAs(moduleGateUser(['access settings.hospital-info']));
 
     $this->get(route('settings.hospital-info'))
         ->assertForbidden();
@@ -109,7 +109,7 @@ it('blocks hospital info settings when tenant lacks the settings child module', 
 
 it('allows hospital info settings when tenant has settings and the child module', function () {
     bindTenantWithModules(['settings', 'settings.hospital-info']);
-    $this->actingAs(moduleGateUser(['access settings']));
+    $this->actingAs(moduleGateUser(['access settings.hospital-info']));
 
     $this->get(route('settings.hospital-info'))
         ->assertOk();
