@@ -49,3 +49,17 @@ it('includes emergency and settings children in starter plan', function () {
         'settings.prescription-print',
     );
 });
+
+it('includes pharmacy catalog children on professional and accounting children on enterprise', function () {
+    $this->seed(PlanSeeder::class);
+    $pro = Plan::where('slug', 'professional')->first();
+    $enterprise = Plan::where('slug', 'enterprise')->first();
+
+    expect($pro->modules)->toContain('pharmacy', ...\App\Models\ModuleRegistry::PHARMACY_CHILD_SLUGS)
+        ->and($enterprise->modules)->toContain('accounting', ...\App\Models\ModuleRegistry::ACCOUNTING_CHILD_SLUGS)
+        ->and($enterprise->modules)->toContain(...\App\Models\ModuleRegistry::PHARMACY_CHILD_SLUGS);
+
+    $starter = Plan::where('slug', 'starter')->first();
+    expect($starter->modules)->not->toContain('pharmacy')
+        ->and($starter->modules)->not->toContain('accounting');
+});
