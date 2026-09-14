@@ -176,7 +176,7 @@ class SidebarService
         }
 
         // ── Imaging ───────────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'imaging') && $user->can('view radiology results')) {
+        if ($this->hasModule($tenant, 'imaging')) {
             $imagingItems = [];
             if ($user->can('view investigations')) {
                 $imagingItems[] = $this->item('Imaging Studies', 'fa-x-ray', 'imaging.studies.index', [
@@ -188,9 +188,11 @@ class SidebarService
                     'imaging.orders.*',
                 ]);
             }
-            $imagingItems[] = $this->item('Imaging Reports', 'fa-file-image', 'imaging.reports.index', [
-                'imaging.reports.*', 'radiology-results.*',
-            ]);
+            if ($user->can('view radiology results')) {
+                $imagingItems[] = $this->item('Imaging Reports', 'fa-file-image', 'imaging.reports.index', [
+                    'imaging.reports.*', 'radiology-results.*',
+                ]);
+            }
             if ($imagingItems !== []) {
                 $menu[] = $this->group('imaging', 'Imaging', $imagingItems, [
                     'imaging.studies.*', 'imaging.orders.*', 'imaging.reports.*',

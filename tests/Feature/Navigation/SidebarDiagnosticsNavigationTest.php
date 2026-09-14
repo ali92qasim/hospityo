@@ -120,3 +120,48 @@ it('shows only lab results when user lacks radiology permission', function () {
         ->and(collect($lab['items'])->pluck('label'))->toContain('Lab Results')
         ->and($imaging)->toBeNull();
 });
+
+it('shows imaging studies without view radiology results when imaging is on the plan', function () {
+    $user = User::create([
+        'name' => 'Studies Only User',
+        'email' => 'studies-only-'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+        'email_verified_at' => now(),
+    ]);
+    $user->givePermissionTo(['view investigations']);
+
+    $menu = $this->service->build($user, diagnosticsTenant(['imaging']));
+    $imaging = collect($menu)->firstWhere('label', 'Imaging');
+
+    expect($imaging)->not->toBeNull()
+        ->and(collect($imaging['items'])->pluck('label')->all())->toBe(['Imaging Studies']);
+});
+
+it('shows imaging reports only when the user can view radiology results', function () {
+    $user = User::create([
+        'name' => 'Reports Only User',
+        'email' => 'reports-only-'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+        'email_verified_at' => now(),
+    ]);
+    $user->givePermissionTo(['view radiology results']);
+
+    $menu = $this->service->build($user, diagnosticsTenant(['imaging']));
+    $imaging = collect($menu)->firstWhere('label', 'Imaging');
+
+    expect($imaging)->not->toBeNull()
+        ->and(collect($imaging['items'])->pluck('label')->all())->toBe(['Imaging Reports']);
+});
+
+it('hides imaging when the module is on but the user has no imaging item permissions', function () {
+    $user = User::create([
+        'name' => 'No Imaging Perms',
+        'email' => 'no-img-'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+        'email_verified_at' => now(),
+    ]);
+
+    $labels = collect($this->service->build($user, diagnosticsTenant(['imaging'])))->pluck('label');
+
+    expect($labels)->not->toContain('Imaging');
+});
