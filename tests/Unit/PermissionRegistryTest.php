@@ -35,3 +35,15 @@ it('flat list includes every permission from RolePermissionSeeder', function () 
 
     expect(count($seederPermissions))->toBeLessThanOrEqual(count($registryPermissions));
 });
+
+it('registers unique permission lists for accounting and pharmacy catalog children', function () {
+    expect(PermissionRegistry::forModule('accounting.profit-loss'))->toBe(['view profit and loss'])
+        ->and(PermissionRegistry::forModule('pharmacy.pos'))->toEqualCanonicalizing(['view pos', 'dispense pharmacy'])
+        ->and(PermissionRegistry::forModule('accounting'))->toContain('view chart of accounts')
+        ->and(PermissionRegistry::forModule('accounting'))->not->toContain('view profit and loss')
+        ->and(PermissionRegistry::forModule('pharmacy'))->toContain('view prescriptions')
+        ->and(PermissionRegistry::forModule('pharmacy'))->not->toContain('view pos');
+
+    $flat = PermissionRegistry::flat();
+    expect($flat)->toBe(array_values(array_unique($flat)));
+});

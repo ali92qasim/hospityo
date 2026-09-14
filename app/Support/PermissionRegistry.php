@@ -118,6 +118,50 @@ class PermissionRegistry
                     'view pharmacy', // DEPRECATED: use granular pharmacy permissions
                     'manage pharmacy', // bulk import operations
                 ],
+                'prescriptions' => [
+                    'view prescriptions',
+                    'create prescriptions',
+                    'edit prescriptions',
+                    'delete prescriptions',
+                ],
+            ],
+        ],
+        'pharmacy.pos' => [
+            'label' => 'POS',
+            'groups' => [
+                'POS' => [
+                    'view pos',
+                    'dispense pharmacy',
+                ],
+            ],
+        ],
+        'pharmacy.inventory' => [
+            'label' => 'Inventory',
+            'groups' => [
+                'inventory' => [
+                    'view inventory', // DEPRECATED: backward compatibility
+                    'manage inventory', // DEPRECATED: backward compatibility
+                    'create inventory',
+                    'edit inventory',
+                    'delete inventory',
+                ],
+                'purchases' => [
+                    'view purchases',
+                    'create purchases',
+                    'edit purchases',
+                    'delete purchases',
+                ],
+                'suppliers' => [
+                    'view suppliers',
+                    'create suppliers',
+                    'edit suppliers',
+                    'delete suppliers',
+                ],
+            ],
+        ],
+        'pharmacy.catalog' => [
+            'label' => 'Catalog',
+            'groups' => [
                 'medicines' => [
                     'view medicines',
                     'create medicines',
@@ -141,35 +185,6 @@ class PermissionRegistry
                     'create units',
                     'edit units',
                     'delete units',
-                ],
-                'inventory' => [
-                    'view inventory', // DEPRECATED: backward compatibility
-                    'manage inventory', // DEPRECATED: backward compatibility
-                    'create inventory',
-                    'edit inventory',
-                    'delete inventory',
-                ],
-                'purchases' => [
-                    'view purchases',
-                    'create purchases',
-                    'edit purchases',
-                    'delete purchases',
-                ],
-                'suppliers' => [
-                    'view suppliers',
-                    'create suppliers',
-                    'edit suppliers',
-                    'delete suppliers',
-                ],
-                'prescriptions' => [
-                    'view prescriptions',
-                    'create prescriptions',
-                    'edit prescriptions',
-                    'delete prescriptions',
-                ],
-                'POS' => [
-                    'view pos',
-                    'dispense pharmacy',
                 ],
             ],
         ],
@@ -239,30 +254,48 @@ class PermissionRegistry
                     'view transfers',
                     'create transfers',
                 ],
-                'general ledger' => [
-                    'view general ledger',
-                ],
-                'patient ledgers' => [
-                    'view patient ledgers',
-                ],
-                'vendor ledgers' => [
-                    'view vendor ledgers',
-                ],
-                'employee ledgers' => [
-                    'view employee ledgers',
-                ],
-                'profit and loss' => [
-                    'view profit and loss',
-                ],
-                'balance sheet' => [
-                    'view balance sheet',
-                ],
                 'fiscal years' => [
                     'view fiscal years',
                     'create fiscal years',
                     'edit fiscal years',
                     'close fiscal years',
                 ],
+            ],
+        ],
+        'accounting.profit-loss' => [
+            'label' => 'Profit & Loss',
+            'groups' => [
+                'profit and loss' => ['view profit and loss'],
+            ],
+        ],
+        'accounting.balance-sheet' => [
+            'label' => 'Balance Sheet',
+            'groups' => [
+                'balance sheet' => ['view balance sheet'],
+            ],
+        ],
+        'accounting.general-ledger' => [
+            'label' => 'General Ledger',
+            'groups' => [
+                'general ledger' => ['view general ledger'],
+            ],
+        ],
+        'accounting.patient-ledger' => [
+            'label' => 'Patient Ledger',
+            'groups' => [
+                'patient ledgers' => ['view patient ledgers'],
+            ],
+        ],
+        'accounting.vendor-ledger' => [
+            'label' => 'Vendor Ledger',
+            'groups' => [
+                'vendor ledgers' => ['view vendor ledgers'],
+            ],
+        ],
+        'accounting.employee-ledger' => [
+            'label' => 'Employee Ledger',
+            'groups' => [
+                'employee ledgers' => ['view employee ledgers'],
             ],
         ],
         'reports' => [
