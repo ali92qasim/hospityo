@@ -30,19 +30,18 @@ class DoctorShareController extends Controller
             ->groupBy('doctor_id');
 
         $doctors = Doctor::query()
-            ->whereIn('id', $ratesByDoctor->keys())
             ->orderBy('name')
-            ->get()
-            ->keyBy('id');
+            ->get();
+        $doctorsById = $doctors->keyBy('id');
 
         $rateRows = $ratesByDoctor
-            ->filter(fn ($rates, $doctorId) => $doctors->has($doctorId))
-            ->map(function ($rates, $doctorId) use ($categoryOptions, $doctors) {
+            ->filter(fn ($rates, $doctorId) => $doctorsById->has($doctorId))
+            ->map(function ($rates, $doctorId) use ($categoryOptions, $doctorsById) {
                 $ratesByCategory = $rates->keyBy('service_category');
 
                 return [
                     'doctor_id' => (int) $doctorId,
-                    'doctor' => $doctors->get($doctorId),
+                    'doctor' => $doctorsById->get($doctorId),
                     'rates' => collect($categoryOptions)
                         ->mapWithKeys(fn ($label, $category) => [
                             $category => $ratesByCategory->get($category)?->percentage,
@@ -64,6 +63,10 @@ class DoctorShareController extends Controller
      */
     public function ratesSync(Request $request): RedirectResponse
     {
+        if ($request->input('doctors') === null) {
+            $request->merge(['doctors' => []]);
+        }
+
         $entitledCategories = array_keys($this->entitledRateCategoryOptions());
         foreach ((array) $request->input('doctors', []) as $doctor) {
             if (! is_array($doctor)) {
@@ -127,26 +130,11 @@ class DoctorShareController extends Controller
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
-     * List all share rules with optional filters.
-     * Task 4.1
+     * Redirect legacy rule-list links to the rates matrix.
      */
-    public function rulesIndex(Request $request): View
+    public function rulesIndex(): RedirectResponse
     {
-        $query = DoctorShareRule::with(['doctor', 'service', 'services', 'labTest', 'imagingStudy'])
-            ->latest();
-
-        if ($request->filled('doctor_id')) {
-            $query->where('doctor_id', $request->doctor_id);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active' ? 1 : 0);
-        }
-
-        $rules   = $query->paginate(20)->withQueryString();
-        $doctors = Doctor::orderBy('name')->get();
-
-        return view('admin.doctor-share.rules.index', compact('rules', 'doctors'));
+        return redirect()->route('doctor-share.rates.index');
     }
 
     /**

@@ -49,8 +49,8 @@ final class SettingsSectionRegistry
             'icon' => 'fa-user-md',
             'parentKey' => 'settings',
             'order' => 30,
-            'route' => 'doctor-share.rules.index',
-            'view' => 'doctor-share.rules.index',
+            'route' => 'doctor-share.rates.index',
+            'view' => 'doctor-share.rates.index',
         ],
     ];
 

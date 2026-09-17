@@ -2,7 +2,6 @@
 
 use App\Models\Department;
 use App\Models\Doctor;
-use App\Models\DoctorShareRule;
 use App\Models\ImagingStudy;
 use App\Models\LabTest;
 use App\Models\Medicine;
@@ -437,33 +436,7 @@ it('hides unentitled tax applies-to checkboxes', function () {
         ->assertDontSee('value="emergency"', false);
 });
 
-// ── 6. Doctor-share applies_to and report filters ────────────────────────────
-
-it('rejects doctor-share applies_to lab when laboratory is not entitled', function () {
-    bindEntitlementTenant(['settings', 'settings.doctor-share']);
-    $this->actingAs(entitlementUser(['create share rules']));
-
-    $this->post(route('doctor-share.rules.store'), [
-        'investigation_scope' => 'all',
-        'share_type' => 'percentage',
-        'share_value' => 10,
-        'applies_to' => 'lab',
-    ])->assertForbidden();
-
-    expect(DoctorShareRule::count())->toBe(0);
-});
-
-it('allows doctor-share applies_to lab when laboratory is entitled', function () {
-    bindEntitlementTenant(['settings', 'settings.doctor-share', 'laboratory']);
-    $this->actingAs(entitlementUser(['create share rules']));
-
-    $this->post(route('doctor-share.rules.store'), [
-        'investigation_scope' => 'all',
-        'share_type' => 'percentage',
-        'share_value' => 10,
-        'applies_to' => 'lab',
-    ])->assertRedirect()->assertSessionHas('success');
-});
+// ── 6. Doctor-share report filters ───────────────────────────────────────────
 
 it('rejects doctor-share report bill_type emergency when emergency is not entitled', function () {
     bindEntitlementTenant(['settings', 'settings.doctor-share']);
@@ -479,17 +452,6 @@ it('allows doctor-share report bill_type emergency when emergency is entitled', 
 
     $this->get(route('doctor-share.reports.index', ['bill_type' => 'emergency']))
         ->assertOk();
-});
-
-it('hides unentitled doctor-share applies_to options', function () {
-    bindEntitlementTenant(['settings', 'settings.doctor-share']);
-    $this->actingAs(entitlementUser(['create share rules']));
-
-    $this->get(route('doctor-share.rules.create'))
-        ->assertOk()
-        ->assertSee('value="all"', false)
-        ->assertDontSee('value="lab"', false)
-        ->assertDontSee('value="emergency"', false);
 });
 
 // ── 7. Reports investigation test_type ───────────────────────────────────────

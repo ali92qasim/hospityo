@@ -17,7 +17,8 @@ it('registers a settings parent and three children in order', function () {
         ->and($children[2]['key'])->toBe('settings.doctor-share')
         ->and($children[2]['label'])->toBe('Doctor Share')
         ->and($children[2]['order'])->toBe(30)
-        ->and($children[2]['route'])->toBe('doctor-share.rules.index');
+        ->and($children[2]['route'])->toBe('doctor-share.rates.index')
+        ->and($children[2]['view'])->toBe('doctor-share.rates.index');
 });
 
 it('maps catalog keys to access permission names', function () {

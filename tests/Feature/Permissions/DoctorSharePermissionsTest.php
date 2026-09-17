@@ -50,10 +50,10 @@ it('blocks share reports when user only has view share rules', function () {
         ->assertForbidden();
 });
 
-it('allows share rules index with view share rules', function () {
+it('allows share rates index with view share rules', function () {
     bindDoctorShareTenant();
     $this->actingAs(doctorSharePermissionUser(['view share rules']));
 
-    $this->get(route('doctor-share.rules.index'))
+    $this->get(route('doctor-share.rates.index'))
         ->assertOk();
 });

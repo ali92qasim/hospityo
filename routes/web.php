@@ -805,27 +805,9 @@ Route::middleware('auth')->group(function () {
             ->name('rates.sync')
             ->middleware('permission:create share rules|edit share rules|manage doctor shares');
 
-        Route::middleware('permission:view share rules|create share rules|edit share rules|delete share rules|manage doctor shares')->group(function () {
-            Route::get('rules', [DoctorShareController::class, 'rulesIndex'])->name('rules.index');
-            Route::get('rules/create', [DoctorShareController::class, 'rulesCreate'])
-                ->name('rules.create')
-                ->middleware('permission:create share rules|manage doctor shares');
-            Route::post('rules', [DoctorShareController::class, 'rulesStore'])
-                ->name('rules.store')
-                ->middleware('permission:create share rules|manage doctor shares');
-            Route::get('rules/{rule}/edit', [DoctorShareController::class, 'rulesEdit'])
-                ->name('rules.edit')
-                ->middleware('permission:edit share rules|manage doctor shares');
-            Route::put('rules/{rule}', [DoctorShareController::class, 'rulesUpdate'])
-                ->name('rules.update')
-                ->middleware('permission:edit share rules|manage doctor shares');
-            Route::delete('rules/{rule}', [DoctorShareController::class, 'rulesDestroy'])
-                ->name('rules.destroy')
-                ->middleware('permission:delete share rules|manage doctor shares');
-            Route::patch('rules/{rule}/toggle', [DoctorShareController::class, 'toggleRule'])
-                ->name('rules.toggle')
-                ->middleware('permission:edit share rules|manage doctor shares');
-        });
+        Route::get('rules', [DoctorShareController::class, 'rulesIndex'])
+            ->name('rules.index')
+            ->middleware('permission:view share rules|create share rules|edit share rules|manage doctor shares');
 
         Route::get('items', [DoctorShareController::class, 'itemsIndex'])
             ->name('items.index')

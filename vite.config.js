@@ -39,7 +39,7 @@ export default defineConfig({
                 'resources/js/purchases-form.js',
                 'resources/js/investigations-form.js',
                 'resources/js/investigation-orders-form.js',
-                'resources/js/doctor-share-rules-form.js',
+                'resources/js/doctor-share-rates-form.js',
                 'resources/js/bills-form.js',
                 'resources/js/bills-index.js',
                 'resources/js/bills-edit.js',

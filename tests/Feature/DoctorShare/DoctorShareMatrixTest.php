@@ -112,6 +112,21 @@ it('stores numeric zero as an explicit rate', function () {
         ->and($rate->percentage)->toBe('0.00');
 });
 
+it('accepts an empty browser matrix after the last row is removed', function () {
+    bindMatrixTenant(['settings', 'settings.doctor-share', 'visits']);
+    DoctorShareRate::create([
+        'doctor_id' => $this->doctor->id,
+        'service_category' => 'opd',
+        'percentage' => 35,
+    ]);
+
+    $this->put(route('doctor-share.rates.sync'), [
+        'doctors' => '',
+    ])->assertRedirect(route('doctor-share.rates.index'));
+
+    expect(DoctorShareRate::query()->count())->toBe(0);
+});
+
 it('rejects duplicate doctors without changing rates', function () {
     bindMatrixTenant(['settings', 'settings.doctor-share', 'visits']);
     DoctorShareRate::create([
@@ -164,19 +179,32 @@ it('shows only entitled category columns and maps missing rates to null', functi
         'service_category' => 'opd',
         'percentage' => 45,
     ]);
-    matrixDoctor($this->department, 'No Rates');
+    $doctorWithoutRates = matrixDoctor($this->department, 'No Rates');
 
     $this->get(route('doctor-share.rates.index'))
         ->assertOk()
-        ->assertSee('value="opd"', false)
-        ->assertDontSee('value="lab"', false)
+        ->assertSee('General')
+        ->assertSee('OPD')
+        ->assertSee('name="doctors[0][opd]"', false)
+        ->assertSee('data-category="opd"', false)
+        ->assertDontSee('data-category="lab"', false)
+        ->assertDontSee('Create Share Rule')
+        ->assertSee('data-added-ids="['.$this->doctor->id.']"', false)
+        ->assertSee('value="'.$doctorWithoutRates->id.'"', false)
         ->assertViewHas('categoryOptions', fn (array $options) => array_keys($options) === ['general', 'opd'])
+        ->assertViewHas('doctors', fn ($doctors) => $doctors->contains('id', $doctorWithoutRates->id))
         ->assertViewHas('rateRows', function ($rows) {
             return $rows->count() === 1
                 && $rows->first()['doctor_id'] === $this->doctor->id
                 && $rows->first()['rates']['general'] === null
                 && $rows->first()['rates']['opd'] === '45.00';
         });
+});
+
+it('removes the legacy share rule create screen', function () {
+    bindMatrixTenant(['settings', 'settings.doctor-share', 'visits']);
+
+    $this->get('/doctor-share/rules/create')->assertNotFound();
 });
 
 it('deletes rates for doctors omitted from the submitted matrix', function () {
