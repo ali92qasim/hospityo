@@ -32,9 +32,15 @@
                 <p class="text-sm font-medium text-blue-800">{{ $surgery->surgery_number }} — {{ $surgery->procedure_name }}</p>
                 <p class="text-xs text-blue-600">Patient: {{ $surgery->patient?->name }} · Surgeon: Dr. {{ $surgery->doctor?->name }} · {{ $surgery->scheduled_date?->format('d M Y') }}</p>
             </div>
+            @canany(['view surgeries', 'create surgeries', 'edit surgeries', 'delete surgeries'])
             <a href="{{ route('ot.surgeries.show', $surgery) }}" class="text-sm text-blue-700 hover:text-blue-900">
                 <i class="fas fa-arrow-left mr-1"></i>Back to Surgery
             </a>
+            @else
+            <a href="{{ route('ot.checklist.index') }}" class="text-sm text-blue-700 hover:text-blue-900">
+                <i class="fas fa-arrow-left mr-1"></i>Back to Checklist
+            </a>
+            @endcanany
         </div>
     </div>
 

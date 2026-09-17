@@ -83,7 +83,11 @@
         </div>
 
         <div class="flex justify-end space-x-4">
+            @canany(['view surgeries', 'create surgeries', 'edit surgeries', 'delete surgeries'])
             <a href="{{ route('ot.surgeries.show', $surgery) }}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">Cancel</a>
+            @else
+            <a href="{{ route('ot.consumables.index') }}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">Cancel</a>
+            @endcanany
             <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 text-sm">
                 <i class="fas fa-save mr-2"></i>Record Usage
             </button>

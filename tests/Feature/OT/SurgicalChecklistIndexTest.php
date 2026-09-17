@@ -106,3 +106,15 @@ it('shows checklist in the ot sidebar for manage surgical checklists without vie
         ->and(collect($group['items'])->pluck('label')->all())->toBe(['Checklist'])
         ->and(collect($group['items'])->first()['route'])->toBe('ot.checklist.index');
 });
+
+it('does not show a surgeries show link to a nurse on the checklist show page', function () {
+    $nurse = otCatalogUser(['manage surgical checklists']);
+    $creator = otCatalogUser(['view surgeries']);
+    $surgery = makeScheduledSurgery($creator);
+
+    $this->actingAs($nurse)
+        ->get(route('ot.checklist.show', $surgery))
+        ->assertOk()
+        ->assertDontSee(route('ot.surgeries.show', $surgery), false)
+        ->assertSee(route('ot.checklist.index'), false);
+});

@@ -216,7 +216,9 @@
 
     <div class="flex justify-between">
         <a href="{{ route('ot.pac.index') }}" class="text-gray-600 hover:text-gray-800 text-sm">← Back to PAC List</a>
+        @canany(['view surgeries', 'create surgeries', 'edit surgeries', 'delete surgeries'])
         <a href="{{ route('ot.surgeries.show', $pac->surgery_id) }}" class="text-medical-blue hover:text-blue-700 text-sm">View Surgery →</a>
+        @endcanany
     </div>
 </div>
 @endsection

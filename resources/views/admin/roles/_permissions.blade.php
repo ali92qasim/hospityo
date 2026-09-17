@@ -7,6 +7,7 @@
         'permissions',
         isset($role) ? $role->permissions->pluck('name')->all() : []
     );
+    $renderedPermissions = [];
 @endphp
 
 <div class="mb-6" data-role-permissions-form>
@@ -27,6 +28,14 @@
                 </div>
 
                 @foreach($module['groups'] as $groupSlug => $permissions)
+                    @php
+                        $visiblePermissions = array_values(array_filter(
+                            $permissions,
+                            fn (string $permission) => ! isset($renderedPermissions[$permission])
+                        ));
+                    @endphp
+                    @continue($visiblePermissions === [])
+
                     <div class="mb-4 last:mb-0">
                         @if(count($module['groups']) > 1 || $groupSlug !== $moduleSlug)
                             <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
@@ -35,7 +44,8 @@
                         @endif
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                            @foreach($permissions as $permission)
+                            @foreach($visiblePermissions as $permission)
+                                @php $renderedPermissions[$permission] = true; @endphp
                                 <label class="flex items-start">
                                     <input type="checkbox"
                                            name="permissions[]"
