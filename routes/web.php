@@ -798,6 +798,13 @@ Route::middleware('auth')->group(function () {
 
     // Doctor Share Routes
     Route::prefix('doctor-share')->name('doctor-share.')->group(function () {
+        Route::get('rates', [DoctorShareController::class, 'ratesIndex'])
+            ->name('rates.index')
+            ->middleware('permission:view share rules|create share rules|edit share rules|manage doctor shares');
+        Route::put('rates', [DoctorShareController::class, 'ratesSync'])
+            ->name('rates.sync')
+            ->middleware('permission:create share rules|edit share rules|manage doctor shares');
+
         Route::middleware('permission:view share rules|create share rules|edit share rules|delete share rules|manage doctor shares')->group(function () {
             Route::get('rules', [DoctorShareController::class, 'rulesIndex'])->name('rules.index');
             Route::get('rules/create', [DoctorShareController::class, 'rulesCreate'])

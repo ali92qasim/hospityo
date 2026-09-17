@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Doctor;
 use App\Models\DoctorShareItem;
+use App\Models\DoctorShareRate;
 use App\Models\DoctorShareRule;
 use App\Models\DoctorShareSettlement;
 use App\Models\Service;
@@ -18,6 +19,105 @@ use Illuminate\View\View;
 
 class DoctorShareController extends Controller
 {
+    /**
+     * Show rates for doctors that currently have at least one matrix cell.
+     */
+    public function ratesIndex(): View
+    {
+        $categoryOptions = $this->entitledRateCategoryOptions();
+        $ratesByDoctor = DoctorShareRate::query()
+            ->get()
+            ->groupBy('doctor_id');
+
+        $doctors = Doctor::query()
+            ->whereIn('id', $ratesByDoctor->keys())
+            ->orderBy('name')
+            ->get()
+            ->keyBy('id');
+
+        $rateRows = $ratesByDoctor
+            ->filter(fn ($rates, $doctorId) => $doctors->has($doctorId))
+            ->map(function ($rates, $doctorId) use ($categoryOptions, $doctors) {
+                $ratesByCategory = $rates->keyBy('service_category');
+
+                return [
+                    'doctor_id' => (int) $doctorId,
+                    'doctor' => $doctors->get($doctorId),
+                    'rates' => collect($categoryOptions)
+                        ->mapWithKeys(fn ($label, $category) => [
+                            $category => $ratesByCategory->get($category)?->percentage,
+                        ])
+                        ->all(),
+                ];
+            })
+            ->values();
+
+        return view('admin.doctor-share.rates.index', compact(
+            'doctors',
+            'rateRows',
+            'categoryOptions'
+        ));
+    }
+
+    /**
+     * Replace the complete doctor rate matrix.
+     */
+    public function ratesSync(Request $request): RedirectResponse
+    {
+        $categoryRules = collect(DoctorShareRate::CATEGORIES)
+            ->mapWithKeys(fn ($category) => [
+                "doctors.*.{$category}" => ['nullable', 'numeric', 'min:0', 'max:100'],
+            ])
+            ->all();
+
+        $validated = $request->validate([
+            'doctors' => ['present', 'array'],
+            'doctors.*' => ['required', 'array'],
+            'doctors.*.doctor_id' => [
+                'required',
+                'integer',
+                'distinct',
+                Rule::exists(Doctor::class, 'id'),
+            ],
+            ...$categoryRules,
+        ]);
+
+        $entitledCategories = array_keys($this->entitledRateCategoryOptions());
+        foreach ($validated['doctors'] as $doctor) {
+            foreach (DoctorShareRate::CATEGORIES as $category) {
+                if (! in_array($category, $entitledCategories, true)
+                    && array_key_exists($category, $doctor)
+                    && $doctor[$category] !== null
+                    && $doctor[$category] !== '') {
+                    abort(403);
+                }
+            }
+        }
+
+        DB::connection('tenant')->transaction(function () use ($validated, $entitledCategories) {
+            DoctorShareRate::query()->delete();
+
+            foreach ($validated['doctors'] as $doctor) {
+                foreach ($entitledCategories as $category) {
+                    $percentage = $doctor[$category] ?? null;
+
+                    if ($percentage === null || $percentage === '') {
+                        continue;
+                    }
+
+                    DoctorShareRate::create([
+                        'doctor_id' => $doctor['doctor_id'],
+                        'service_category' => $category,
+                        'percentage' => $percentage,
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->route('doctor-share.rates.index')
+            ->with('success', 'Doctor share rates updated successfully.');
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // Share Rules — Tasks 4.1–4.4
     // ──────────────────────────────────────────────────────────────────────────
@@ -649,6 +749,29 @@ class DoctorShareController extends Controller
         }
 
         return $types;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function entitledRateCategoryOptions(): array
+    {
+        $options = ['general' => 'General'];
+
+        foreach ([
+            'opd' => ['visits', 'OPD'],
+            'ipd' => ['ipd', 'IPD'],
+            'emergency' => ['emergency', 'Emergency'],
+            'lab' => ['laboratory', 'Lab'],
+            'imaging' => ['imaging', 'Imaging'],
+            'pharmacy' => ['pharmacy', 'Pharmacy'],
+        ] as $category => [$module, $label]) {
+            if (Tenant::currentHasModule($module)) {
+                $options[$category] = $label;
+            }
+        }
+
+        return $options;
     }
 
     private function abortUnlessReportBillTypeEntitled(string $billType): void
