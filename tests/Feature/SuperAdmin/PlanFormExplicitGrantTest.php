@@ -57,3 +57,21 @@ it('marks settings as explicit-grant so print is not parent-implied in plan form
         '/data-module-parent="settings"\s+data-child-access-requires-explicit-grant="1"/'
     );
 });
+
+it('marks hr as explicit-grant in the plan form', function () {
+    $plan = Plan::where('slug', 'enterprise')->first();
+
+    $this->actingAs($this->superAdmin, 'super_admin')
+        ->get(route('super-admin.plans.edit', $plan))
+        ->assertOk()
+        ->assertSee('data-module-parent="hr"', false)
+        ->assertSee('data-module-child-of="hr"', false)
+        ->assertSee('name="modules[]" value="hr.payroll"', false);
+
+    expect($this->actingAs($this->superAdmin, 'super_admin')
+        ->get(route('super-admin.plans.edit', $plan))
+        ->getContent())->toMatch(
+            '/data-module-parent="hr"\s+data-child-access-requires-explicit-grant="1"/'
+        );
+});
+

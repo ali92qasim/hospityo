@@ -63,3 +63,16 @@ it('includes pharmacy catalog children on professional and accounting children o
     expect($starter->modules)->not->toContain('pharmacy')
         ->and($starter->modules)->not->toContain('accounting');
 });
+
+it('includes hr children on enterprise and not on professional or starter', function () {
+    $this->seed(PlanSeeder::class);
+    $enterprise = Plan::where('slug', 'enterprise')->first();
+    $professional = Plan::where('slug', 'professional')->first();
+    $starter = Plan::where('slug', 'starter')->first();
+
+    expect($enterprise->modules)->toContain(...\App\Models\ModuleRegistry::HR_CHILD_SLUGS)
+        ->and($professional->modules)->not->toContain('hr')
+        ->and($professional->modules)->not->toContain('hr.payroll')
+        ->and($starter->modules)->not->toContain('hr');
+});
+
