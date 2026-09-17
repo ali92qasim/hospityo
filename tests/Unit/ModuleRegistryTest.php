@@ -95,7 +95,7 @@ it('maps each operational report route to its child slug', function () {
         ->and(ModuleRegistry::moduleForRoute('reports.investigations'))->toBe('reports.investigations')
         ->and(ModuleRegistry::parentOf('reports.revenue'))->toBe('reports')
         ->and(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(44)
+        ->and(ModuleRegistry::all())->toHaveCount(48)
         ->and(ModuleRegistry::normalize(['reports.revenue']))->toEqualCanonicalizing(['reports.revenue', 'reports'])
         ->and(ModuleRegistry::normalize(['reports']))->toBe(['reports'])
         ->and(ModuleRegistry::definitions()['reports']['children'])->toBe(ModuleRegistry::REPORT_CHILD_SLUGS);
@@ -103,12 +103,12 @@ it('maps each operational report route to its child slug', function () {
 
 it('registers 20 top-level modules including emergency and settings', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(44);
+        ->and(ModuleRegistry::all())->toHaveCount(48);
 });
 
 it('declares entitlement and child-access flags without changing slug sets', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(44);
+        ->and(ModuleRegistry::all())->toHaveCount(48);
 
     $reports = ModuleRegistry::definitions()['reports'];
     expect($reports['entitlement'] ?? 'plan')->toBe('plan')
@@ -152,4 +152,42 @@ it('backfills accounting and pharmacy children only when the parent is on the pl
 
 it('marks settings as explicit-grant so print is not parent-implied in plan form js', function () {
     expect(ModuleRegistry::definitions()['settings']['child_access_requires_explicit_grant'])->toBeTrue();
+});
+
+it('registers four hr catalog children and maps cluster routes to them', function () {
+    expect(ModuleRegistry::hrChildSlugs())->toBe(ModuleRegistry::HR_CHILD_SLUGS)
+        ->and(ModuleRegistry::HR_CHILD_SLUGS)->toBe([
+            'hr.employees',
+            'hr.attendance-leave',
+            'hr.payroll',
+            'hr.scheduling',
+        ])
+        ->and(ModuleRegistry::definitions()['hr']['child_access_requires_explicit_grant'])->toBeTrue()
+        ->and(ModuleRegistry::definitions()['hr']['children'])->toBe(ModuleRegistry::HR_CHILD_SLUGS)
+        ->and(ModuleRegistry::parentOf('hr.payroll'))->toBe('hr')
+        ->and(ModuleRegistry::moduleForRoute('hr.employees.index'))->toBe('hr.employees')
+        ->and(ModuleRegistry::moduleForRoute('hr.employees.upload-document'))->toBe('hr.employees')
+        ->and(ModuleRegistry::moduleForRoute('hr.designations.index'))->toBe('hr.employees')
+        ->and(ModuleRegistry::moduleForRoute('hr.department-staff.index'))->toBe('hr.employees')
+        ->and(ModuleRegistry::moduleForRoute('hr.documents.index'))->toBe('hr.employees')
+        ->and(ModuleRegistry::moduleForRoute('hr.attendance.index'))->toBe('hr.attendance-leave')
+        ->and(ModuleRegistry::moduleForRoute('hr.leave.index'))->toBe('hr.attendance-leave')
+        ->and(ModuleRegistry::moduleForRoute('hr.leave.balances'))->toBe('hr.attendance-leave')
+        ->and(ModuleRegistry::moduleForRoute('hr.leave-types.index'))->toBe('hr.attendance-leave')
+        ->and(ModuleRegistry::moduleForRoute('hr.payroll.index'))->toBe('hr.payroll')
+        ->and(ModuleRegistry::moduleForRoute('hr.payroll.payslip'))->toBe('hr.payroll')
+        ->and(ModuleRegistry::moduleForRoute('hr.payroll.components'))->toBe('hr.payroll')
+        ->and(ModuleRegistry::moduleForRoute('hr.payroll.employee-salary'))->toBe('hr.payroll')
+        ->and(ModuleRegistry::moduleForRoute('hr.shifts.index'))->toBe('hr.scheduling')
+        ->and(ModuleRegistry::moduleForRoute('hr.shifts.roster'))->toBe('hr.scheduling')
+        ->and(ModuleRegistry::moduleForRoute('hr.shifts.swap-requests'))->toBe('hr.scheduling')
+        ->and(ModuleRegistry::topLevel())->toHaveCount(20)
+        ->and(ModuleRegistry::all())->toHaveCount(48)
+        ->and(ModuleRegistry::normalize(['hr.payroll']))->toEqualCanonicalizing(['hr.payroll', 'hr'])
+        ->and(ModuleRegistry::normalize(['hr']))->toBe(['hr'])
+        ->and(ModuleRegistry::backfillHrChildren(['patients']))->toBe(['patients'])
+        ->and(ModuleRegistry::backfillHrChildren(['hr', 'patients']))->toEqualCanonicalizing(array_merge(
+            ['hr', 'patients'],
+            ModuleRegistry::HR_CHILD_SLUGS
+        ));
 });

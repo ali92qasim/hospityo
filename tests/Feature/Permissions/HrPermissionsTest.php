@@ -17,7 +17,7 @@ function bindHrTenant(): Tenant
     $tenant->id = 1;
     $tenant->status = 'active';
     $tenant->shouldReceive('hasModule')
-        ->andReturnUsing(fn (string $module) => $module === 'hr');
+        ->andReturnUsing(fn (string $module) => $module === 'hr' || str_starts_with($module, 'hr.'));
 
     app()->instance(config('multitenancy.current_tenant_container_key'), $tenant);
 

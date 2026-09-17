@@ -44,6 +44,13 @@ class ModuleRegistry
         'pharmacy.catalog',
     ];
 
+    public const HR_CHILD_SLUGS = [
+        'hr.employees',
+        'hr.attendance-leave',
+        'hr.payroll',
+        'hr.scheduling',
+    ];
+
     /**
      * Module definitions.
      * Key = module slug (stored in plans.modules JSON).
@@ -258,8 +265,46 @@ class ModuleRegistry
             'group'       => 'Operations',
             'description' => 'Staff, attendance, payroll, and rosters.',
             'entitlement' => 'plan',
-            'child_access_requires_explicit_grant' => false,
+            'child_access_requires_explicit_grant' => true,
             'routes'      => ['hr.'],
+            'children'    => [
+                'hr.employees',
+                'hr.attendance-leave',
+                'hr.payroll',
+                'hr.scheduling',
+            ],
+        ],
+        'hr.employees' => [
+            'name'        => 'Employees',
+            'group'       => 'Operations',
+            'parent'      => 'hr',
+            'entitlement' => 'plan',
+            'description' => 'Employees, designations, department staff, and HR documents.',
+            'routes'      => ['hr.employees.', 'hr.designations.', 'hr.department-staff.', 'hr.documents.'],
+        ],
+        'hr.attendance-leave' => [
+            'name'        => 'Attendance & Leave',
+            'group'       => 'Operations',
+            'parent'      => 'hr',
+            'entitlement' => 'plan',
+            'description' => 'Attendance, leave requests, leave balances, and leave types.',
+            'routes'      => ['hr.attendance.', 'hr.leave.', 'hr.leave-types.'],
+        ],
+        'hr.payroll' => [
+            'name'        => 'Payroll',
+            'group'       => 'Operations',
+            'parent'      => 'hr',
+            'entitlement' => 'plan',
+            'description' => 'Payroll runs, payslips, salary components, and employee salary.',
+            'routes'      => ['hr.payroll.'],
+        ],
+        'hr.scheduling' => [
+            'name'        => 'Scheduling',
+            'group'       => 'Operations',
+            'parent'      => 'hr',
+            'entitlement' => 'plan',
+            'description' => 'Shifts, duty roster, and shift swaps.',
+            'routes'      => ['hr.shifts.'],
         ],
         'reports' => [
             'name'        => 'Reports & Analytics',
@@ -480,6 +525,20 @@ class ModuleRegistry
         }
 
         return array_values(array_unique([...$modules, ...self::PHARMACY_CHILD_SLUGS]));
+    }
+
+    public static function hrChildSlugs(): array
+    {
+        return self::HR_CHILD_SLUGS;
+    }
+
+    public static function backfillHrChildren(array $modules): array
+    {
+        if (! in_array('hr', $modules, true)) {
+            return array_values($modules);
+        }
+
+        return array_values(array_unique([...$modules, ...self::HR_CHILD_SLUGS]));
     }
 
     /**
