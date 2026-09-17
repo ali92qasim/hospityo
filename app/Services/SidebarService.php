@@ -305,31 +305,31 @@ class SidebarService
         // ── HR ────────────────────────────────────────────────────────────────
         if ($this->hasModule($tenant, 'hr')) {
             $items = [];
-            if ($user->can('view employees') || $user->can('view hr')) {
+            if ($this->hasModule($tenant, 'hr.employees') && ($user->can('view employees') || $user->can('view hr'))) {
                 $items[] = $this->item('Employees', 'fa-users', 'hr.employees.index', ['hr.employees.*']);
             }
-            if ($user->can('view designations') || $user->can('view hr')) {
+            if ($this->hasModule($tenant, 'hr.employees') && ($user->can('view designations') || $user->can('view hr'))) {
                 $items[] = $this->item('Designations', 'fa-id-badge', 'hr.designations.index', ['hr.designations.*']);
             }
-            if ($user->can('view attendance') || $user->can('view hr')) {
+            if ($this->hasModule($tenant, 'hr.attendance-leave') && ($user->can('view attendance') || $user->can('view hr'))) {
                 $items[] = $this->item('Attendance', 'fa-clipboard-check', 'hr.attendance.index', ['hr.attendance.*']);
             }
-            if ($user->can('view leave requests') || $user->can('view hr')) {
+            if ($this->hasModule($tenant, 'hr.attendance-leave') && ($user->can('view leave requests') || $user->can('view hr'))) {
                 $items[] = $this->item('Leave Requests', 'fa-calendar-minus', 'hr.leave.index', ['hr.leave.*']);
             }
-            if ($user->can('view leave balances') || $user->can('view hr')) {
+            if ($this->hasModule($tenant, 'hr.attendance-leave') && ($user->can('view leave balances') || $user->can('view hr'))) {
                 $items[] = $this->item('Leave Balances', 'fa-balance-scale', 'hr.leave.balances', ['hr.leave.balances']);
             }
-            if ($user->can('view payroll runs') || $user->can('view hr')) {
+            if ($this->hasModule($tenant, 'hr.payroll') && ($user->can('view payroll runs') || $user->can('view hr'))) {
                 $items[] = $this->item('Payroll', 'fa-money-bill-wave', 'hr.payroll.index', ['hr.payroll.*']);
             }
-            if ($user->can('view shifts') || $user->can('view hr')) {
+            if ($this->hasModule($tenant, 'hr.scheduling') && ($user->can('view shifts') || $user->can('view hr'))) {
                 $items[] = $this->item('Shifts', 'fa-clock', 'hr.shifts.index', ['hr.shifts.*']);
             }
-            if ($user->can('view duty roster') || $user->can('view hr')) {
+            if ($this->hasModule($tenant, 'hr.scheduling') && ($user->can('view duty roster') || $user->can('view hr'))) {
                 $items[] = $this->item('Duty Roster', 'fa-calendar-week', 'hr.shifts.roster', ['hr.shifts.roster']);
             }
-            if ($user->can('view department staff') || $user->can('view hr')) {
+            if ($this->hasModule($tenant, 'hr.employees') && ($user->can('view department staff') || $user->can('view hr'))) {
                 $items[] = $this->item('Departments Staff', 'fa-building', 'hr.department-staff.index', ['hr.department-staff.*']);
             }
             if (! empty($items)) {

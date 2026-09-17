@@ -59,7 +59,7 @@ function sidebarMenuLabels(User $user, Tenant $tenant): array
 
 it('shows hr group for hospital administrator with view employees', function () {
     $user = sidebarUserWithPermissions(['view employees'], 'Hospital Administrator');
-    $tenant = sidebarTenantWithModules(['hr']);
+    $tenant = sidebarTenantWithModules(['hr', 'hr.employees']);
 
     $labels = sidebarMenuLabels($user, $tenant);
 
@@ -102,7 +102,7 @@ it('renders hr sidebar link on dashboard for authorized user', function () {
     $tenant->id = 1;
     $tenant->status = 'active';
     $tenant->shouldReceive('hasModule')
-        ->andReturnUsing(fn (string $module) => in_array($module, ['hr', 'patients'], true));
+        ->andReturnUsing(fn (string $module) => in_array($module, ['hr', 'hr.employees', 'patients'], true));
 
     app()->instance(config('multitenancy.current_tenant_container_key'), $tenant);
 
