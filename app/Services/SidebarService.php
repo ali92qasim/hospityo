@@ -231,7 +231,7 @@ class SidebarService
         }
 
         // ── Doctor Share ──────────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'doctor-share')) {
+        if ($this->hasModule($tenant, 'settings.doctor-share')) {
             $items = [];
             if ($user->can('view share rules') || $user->can('manage doctor shares')) {
                 $items[] = $this->item('Share Rules', 'fa-list-alt', 'doctor-share.rules.index', ['doctor-share.rules.*']);

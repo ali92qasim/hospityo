@@ -186,6 +186,38 @@ it('shows only settings children that the tenant plan grants', function () {
         ->and(collect($group['items'])->pluck('label')->all())->toBe(['Hospital Info']);
 });
 
+it('shows operational doctor share for its settings entitlement without granting rules settings access', function () {
+    $user = sidebarUserWithPermissions(['view share items']);
+    $tenant = sidebarTenantWithModules(['settings', 'settings.doctor-share']);
+
+    $menu = collect($this->service->build($user, $tenant));
+    $doctorShare = $menu->firstWhere('id', 'doctor-share');
+
+    expect($doctorShare)->not->toBeNull()
+        ->and(collect($doctorShare['items'])->pluck('label')->all())->toBe(['Share Items'])
+        ->and($menu->pluck('id'))->not->toContain('settings');
+});
+
+it('hides operational and settings doctor share navigation without its child entitlement', function () {
+    $user = sidebarUserWithPermissions(['view share rules']);
+    $tenant = sidebarTenantWithModules(['settings']);
+
+    expect(collect($this->service->build($user, $tenant))->pluck('id'))
+        ->not->toContain('doctor-share', 'settings');
+});
+
+it('shows hospital info without doctor share in settings when only hospital info is entitled', function () {
+    $user = sidebarUserWithPermissions(['access settings.hospital-info', 'view share rules']);
+    $tenant = sidebarTenantWithModules(['settings', 'settings.hospital-info']);
+
+    $menu = collect($this->service->build($user, $tenant));
+    $settings = $menu->firstWhere('id', 'settings');
+
+    expect($settings)->not->toBeNull()
+        ->and(collect($settings['items'])->pluck('label')->all())->toBe(['Hospital Info'])
+        ->and($menu->pluck('id'))->not->toContain('doctor-share');
+});
+
 it('hides emergency when the tenant has visits but not the emergency module', function () {
     $user = sidebarUserWithPermissions(['view visits']);
     $tenant = sidebarTenantWithModules(['visits']);
