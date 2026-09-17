@@ -62,3 +62,17 @@ it('splits settings permission registry so parent forModule excludes child names
     $flat = PermissionRegistry::flat();
     expect($flat)->toBe(array_values(array_unique($flat)));
 });
+
+it('splits hr permissions onto catalog children and keeps view hr on each', function () {
+    expect(PermissionRegistry::forModule('hr'))->toBe(['view hr'])
+        ->and(PermissionRegistry::forModule('hr.employees'))->toContain('view employees', 'view designations', 'view department staff', 'view hr documents', 'view hr')
+        ->and(PermissionRegistry::forModule('hr.employees'))->not->toContain('view payroll runs')
+        ->and(PermissionRegistry::forModule('hr.attendance-leave'))->toContain('view attendance', 'view leave requests', 'view leave types', 'view leave balances', 'view hr')
+        ->and(PermissionRegistry::forModule('hr.payroll'))->toContain('view payroll runs', 'view payslips', 'view salary components', 'view employee salary', 'view hr')
+        ->and(PermissionRegistry::forModule('hr.scheduling'))->toContain('view shifts', 'view duty roster', 'view shift swaps', 'view hr')
+        ->and(PermissionRegistry::forModule('hr.payroll'))->not->toContain('view employees');
+
+    $flat = PermissionRegistry::flat();
+    expect($flat)->toBe(array_values(array_unique($flat)))
+        ->and($flat)->toContain('view hr');
+});

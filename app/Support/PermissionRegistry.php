@@ -390,91 +390,68 @@ class PermissionRegistry
                 'general' => [
                     'view hr', // DEPRECATED: use granular HR submodule permissions
                 ],
+            ],
+        ],
+        'hr.employees' => [
+            'label' => 'Employees',
+            'groups' => [
+                'general' => ['view hr'],
                 'employees' => [
-                    'view employees',
-                    'create employees',
-                    'edit employees',
-                    'delete employees',
+                    'view employees', 'create employees', 'edit employees', 'delete employees',
                 ],
                 'employee documents' => [
-                    'view employee documents',
-                    'create employee documents',
-                    'delete employee documents',
+                    'view employee documents', 'create employee documents', 'delete employee documents',
                 ],
                 'designations' => [
-                    'view designations',
-                    'create designations',
-                    'edit designations',
-                    'delete designations',
-                ],
-                'attendance' => [
-                    'view attendance',
-                    'create attendance',
-                    'edit attendance',
-                ],
-                'leave requests' => [
-                    'view leave requests',
-                    'create leave requests',
-                    'edit leave requests',
-                    'delete leave requests',
-                    'approve leave requests',
-                ],
-                'leave types' => [
-                    'view leave types',
-                    'create leave types',
-                    'edit leave types',
-                    'delete leave types',
-                ],
-                'leave balances' => [
-                    'view leave balances',
-                ],
-                'payroll runs' => [
-                    'view payroll runs',
-                    'create payroll runs',
-                    'edit payroll runs',
-                    'delete payroll runs',
-                    'approve payroll runs',
-                ],
-                'payslips' => [
-                    'view payslips',
-                    'edit payslips',
-                ],
-                'salary components' => [
-                    'view salary components',
-                    'create salary components',
-                    'edit salary components',
-                    'delete salary components',
-                ],
-                'employee salary' => [
-                    'view employee salary',
-                    'edit employee salary',
-                ],
-                'shifts' => [
-                    'view shifts',
-                    'create shifts',
-                    'edit shifts',
-                    'delete shifts',
-                ],
-                'duty roster' => [
-                    'view duty roster',
-                    'create duty roster',
-                    'edit duty roster',
-                ],
-                'shift swaps' => [
-                    'view shift swaps',
-                    'approve shift swaps',
+                    'view designations', 'create designations', 'edit designations', 'delete designations',
                 ],
                 'department staff' => [
-                    'view department staff',
-                    'edit department staff',
+                    'view department staff', 'edit department staff',
                 ],
                 'hr documents' => [
-                    'view hr documents',
-                    'create hr documents',
-                    'edit hr documents',
-                    'delete hr documents',
-                    'verify hr documents',
+                    'view hr documents', 'create hr documents', 'edit hr documents',
+                    'delete hr documents', 'verify hr documents',
                 ],
+            ],
+        ],
+        'hr.attendance-leave' => [
+            'label' => 'Attendance & Leave',
+            'groups' => [
+                'general' => ['view hr'],
+                'attendance' => ['view attendance', 'create attendance', 'edit attendance'],
+                'leave requests' => [
+                    'view leave requests', 'create leave requests', 'edit leave requests',
+                    'delete leave requests', 'approve leave requests',
+                ],
+                'leave types' => [
+                    'view leave types', 'create leave types', 'edit leave types', 'delete leave types',
+                ],
+                'leave balances' => ['view leave balances'],
+            ],
+        ],
+        'hr.payroll' => [
+            'label' => 'Payroll',
+            'groups' => [
+                'general' => ['view hr'],
+                'payroll runs' => [
+                    'view payroll runs', 'create payroll runs', 'edit payroll runs',
+                    'delete payroll runs', 'approve payroll runs',
+                ],
+                'payslips' => ['view payslips', 'edit payslips'],
+                'salary components' => [
+                    'view salary components', 'create salary components',
+                    'edit salary components', 'delete salary components',
+                ],
+                'employee salary' => ['view employee salary', 'edit employee salary'],
+            ],
+        ],
+        'hr.scheduling' => [
+            'label' => 'Scheduling',
+            'groups' => [
+                'general' => ['view hr'],
+                'shifts' => ['view shifts', 'create shifts', 'edit shifts', 'delete shifts'],
+                'duty roster' => ['view duty roster', 'create duty roster', 'edit duty roster'],
+                'shift swaps' => ['view shift swaps', 'approve shift swaps'],
             ],
         ],
         'doctor-share' => [
