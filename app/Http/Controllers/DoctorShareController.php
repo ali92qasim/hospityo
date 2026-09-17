@@ -464,8 +464,8 @@ class DoctorShareController extends Controller
 
         if ($request->filled('bill_type')) {
             $this->abortUnlessReportBillTypeEntitled((string) $request->bill_type);
-            $baseQuery->whereHas('bill', function ($q) use ($request) {
-                $q->where('bill_type', $request->bill_type);
+            $baseQuery->whereHas('billItem', function ($q) use ($request) {
+                $q->where('item_category', $request->bill_type);
             });
         }
 
@@ -635,17 +635,17 @@ class DoctorShareController extends Controller
     {
         $types = [];
 
-        if (Tenant::currentHasModule('visits')) {
-            $types['opd'] = 'OPD';
-        }
-        if (Tenant::currentHasModule('ipd')) {
-            $types['ipd'] = 'IPD';
-        }
-        if (Tenant::currentHasModule('laboratory') || Tenant::currentHasModule('imaging')) {
-            $types['investigation'] = 'Investigation';
-        }
-        if (Tenant::currentHasModule('emergency')) {
-            $types['emergency'] = 'Emergency';
+        foreach ([
+            'opd' => ['visits', 'OPD'],
+            'ipd' => ['ipd', 'IPD'],
+            'emergency' => ['emergency', 'Emergency'],
+            'lab' => ['laboratory', 'Lab'],
+            'imaging' => ['imaging', 'Imaging'],
+            'pharmacy' => ['pharmacy', 'Pharmacy'],
+        ] as $value => [$module, $label]) {
+            if (Tenant::currentHasModule($module)) {
+                $types[$value] = $label;
+            }
         }
 
         return $types;
@@ -653,22 +653,18 @@ class DoctorShareController extends Controller
 
     private function abortUnlessReportBillTypeEntitled(string $billType): void
     {
-        match ($billType) {
-            'opd' => Tenant::abortUnlessCurrentHasModule('visits'),
-            'ipd' => Tenant::abortUnlessCurrentHasModule('ipd'),
-            'emergency' => Tenant::abortUnlessCurrentHasModule('emergency'),
-            'investigation' => $this->abortUnlessDiagnosticsEntitled(),
+        $module = match ($billType) {
+            'opd' => 'visits',
+            'ipd' => 'ipd',
+            'emergency' => 'emergency',
+            'lab' => 'laboratory',
+            'imaging' => 'imaging',
+            'pharmacy' => 'pharmacy',
             default => null,
         };
-    }
 
-    private function abortUnlessDiagnosticsEntitled(): void
-    {
-        if (Tenant::currentHasModule('laboratory') || Tenant::currentHasModule('imaging')) {
-            return;
-        }
-
-        Tenant::abortUnlessCurrentHasModule('laboratory');
+        abort_unless($module !== null, 403);
+        Tenant::abortUnlessCurrentHasModule($module);
     }
 
     private function validateRuleScope(array $validated, ?int $excludeRuleId = null): ?string
