@@ -9,6 +9,7 @@ use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Prescription;
 use App\Services\AccountingService;
+use App\Services\DoctorShareService;
 use App\Services\PharmacyStockDispenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -227,6 +228,13 @@ class PharmacyPosController extends Controller
             ]);
 
             return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        DoctorShareService::calculate($bill);
+
+        $payment = $bill->payments()->latest('id')->first();
+        if ($payment) {
+            DoctorShareService::recordPaymentAllocations($payment);
         }
 
         return redirect()

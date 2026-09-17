@@ -56,12 +56,6 @@ use Illuminate\Support\Facades\Log;
 class DoctorShareService
 {
     /**
-     * Bill types excluded from doctor share by business policy.
-     * Pharmacy margin is not shared with prescribing doctors.
-     */
-    private const EXCLUDED_BILL_TYPES = ['pharmacy'];
-
-    /**
      * Internal bcmath scale. Higher than storage precision to avoid
      * intermediate rounding errors in multi-step calculations.
      */
@@ -277,15 +271,6 @@ class DoctorShareService
     ): void {
         $itemCategory = $item->item_category ?: $bill->bill_type;
 
-        if (self::isExcluded($itemCategory)) {
-            Log::debug('[DoctorShare] Skipped — excluded item category', [
-                'bill_item_id' => $item->id,
-                'item_category' => $itemCategory,
-            ]);
-
-            return;
-        }
-
         $rate = self::resolveRate($doctorId, $itemCategory);
 
         if ($rate === null) {
@@ -445,11 +430,4 @@ class DoctorShareService
         ];
     }
 
-    /**
-     * Whether a revenue/share category is excluded from share calculation.
-     */
-    private static function isExcluded(string $category): bool
-    {
-        return in_array($category, self::EXCLUDED_BILL_TYPES, true);
-    }
 }

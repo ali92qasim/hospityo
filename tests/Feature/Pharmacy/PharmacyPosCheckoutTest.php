@@ -259,7 +259,8 @@ it('rolls back checkout when stock is insufficient', function () {
 
 it('includes walk in pharmacy bill items in medicine sales report stats', function () {
     Permission::findOrCreate('view reports', 'web');
-    $this->user->givePermissionTo('view reports');
+    Permission::findOrCreate('view reports.medicine-sales', 'web');
+    $this->user->givePermissionTo(['view reports', 'view reports.medicine-sales']);
 
     $this->post(route('pharmacy.pos.checkout'), [
         'mode' => 'walk_in',
