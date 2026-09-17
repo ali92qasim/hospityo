@@ -51,6 +51,13 @@ class ModuleRegistry
         'hr.scheduling',
     ];
 
+    public const OT_CHILD_SLUGS = [
+        'ot.pac',
+        'ot.checklist',
+        'ot.consumables',
+        'ot.sterilization',
+    ];
+
     /**
      * Module definitions.
      * Key = module slug (stored in plans.modules JSON).
@@ -249,8 +256,46 @@ class ModuleRegistry
             'group'       => 'Clinical',
             'description' => 'Surgical scheduling and OT workflows.',
             'entitlement' => 'plan',
-            'child_access_requires_explicit_grant' => false,
+            'child_access_requires_explicit_grant' => true,
             'routes'      => ['ot.'],
+            'children'    => [
+                'ot.pac',
+                'ot.checklist',
+                'ot.consumables',
+                'ot.sterilization',
+            ],
+        ],
+        'ot.pac' => [
+            'name'        => 'Pre-Anesthesia Checkup',
+            'group'       => 'Clinical',
+            'parent'      => 'ot',
+            'entitlement' => 'plan',
+            'description' => 'Pre-anesthesia assessment and PAC workflows.',
+            'routes'      => ['ot.pac.'],
+        ],
+        'ot.checklist' => [
+            'name'        => 'OT Checklists',
+            'group'       => 'Clinical',
+            'parent'      => 'ot',
+            'entitlement' => 'plan',
+            'description' => 'Surgical safety and OT checklists.',
+            'routes'      => ['ot.checklist.'],
+        ],
+        'ot.consumables' => [
+            'name'        => 'OT Consumables',
+            'group'       => 'Clinical',
+            'parent'      => 'ot',
+            'entitlement' => 'plan',
+            'description' => 'Consumables tracking and usage in the OT.',
+            'routes'      => ['ot.consumables.'],
+        ],
+        'ot.sterilization' => [
+            'name'        => 'Sterilization',
+            'group'       => 'Clinical',
+            'parent'      => 'ot',
+            'entitlement' => 'plan',
+            'description' => 'Instrument sterilization and autoclave workflows.',
+            'routes'      => ['ot.sterilization.'],
         ],
         'doctor-share' => [
             'name'        => 'Doctor Share',
@@ -539,6 +584,20 @@ class ModuleRegistry
         }
 
         return array_values(array_unique([...$modules, ...self::HR_CHILD_SLUGS]));
+    }
+
+    public static function otChildSlugs(): array
+    {
+        return self::OT_CHILD_SLUGS;
+    }
+
+    public static function backfillOtChildren(array $modules): array
+    {
+        if (! in_array('ot', $modules, true)) {
+            return array_values($modules);
+        }
+
+        return array_values(array_unique([...$modules, ...self::OT_CHILD_SLUGS]));
     }
 
     /**

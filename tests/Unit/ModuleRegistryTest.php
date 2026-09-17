@@ -95,7 +95,7 @@ it('maps each operational report route to its child slug', function () {
         ->and(ModuleRegistry::moduleForRoute('reports.investigations'))->toBe('reports.investigations')
         ->and(ModuleRegistry::parentOf('reports.revenue'))->toBe('reports')
         ->and(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(48)
+        ->and(ModuleRegistry::all())->toHaveCount(52)
         ->and(ModuleRegistry::normalize(['reports.revenue']))->toEqualCanonicalizing(['reports.revenue', 'reports'])
         ->and(ModuleRegistry::normalize(['reports']))->toBe(['reports'])
         ->and(ModuleRegistry::definitions()['reports']['children'])->toBe(ModuleRegistry::REPORT_CHILD_SLUGS);
@@ -103,12 +103,12 @@ it('maps each operational report route to its child slug', function () {
 
 it('registers 20 top-level modules including emergency and settings', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(48);
+        ->and(ModuleRegistry::all())->toHaveCount(52);
 });
 
 it('declares entitlement and child-access flags without changing slug sets', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(48);
+        ->and(ModuleRegistry::all())->toHaveCount(52);
 
     $reports = ModuleRegistry::definitions()['reports'];
     expect($reports['entitlement'] ?? 'plan')->toBe('plan')
@@ -182,7 +182,7 @@ it('registers four hr catalog children and maps cluster routes to them', functio
         ->and(ModuleRegistry::moduleForRoute('hr.shifts.roster'))->toBe('hr.scheduling')
         ->and(ModuleRegistry::moduleForRoute('hr.shifts.swap-requests'))->toBe('hr.scheduling')
         ->and(ModuleRegistry::topLevel())->toHaveCount(20)
-        ->and(ModuleRegistry::all())->toHaveCount(48)
+        ->and(ModuleRegistry::all())->toHaveCount(52)
         ->and(ModuleRegistry::normalize(['hr.payroll']))->toEqualCanonicalizing(['hr.payroll', 'hr'])
         ->and(ModuleRegistry::normalize(['hr']))->toBe(['hr'])
         ->and(ModuleRegistry::backfillHrChildren(['patients']))->toBe(['patients'])
@@ -190,4 +190,27 @@ it('registers four hr catalog children and maps cluster routes to them', functio
             ['hr', 'patients'],
             ModuleRegistry::HR_CHILD_SLUGS
         ));
+});
+
+it('registers four ot catalog children and keeps core surgeries on the parent', function () {
+    expect(ModuleRegistry::OT_CHILD_SLUGS)->toBe([
+            'ot.pac',
+            'ot.checklist',
+            'ot.consumables',
+            'ot.sterilization',
+        ])
+        ->and(ModuleRegistry::definitions()['ot']['child_access_requires_explicit_grant'])->toBeTrue()
+        ->and(ModuleRegistry::moduleForRoute('ot.surgeries.index'))->toBe('ot')
+        ->and(ModuleRegistry::moduleForRoute('ot.theatres'))->toBe('ot')
+        ->and(ModuleRegistry::moduleForRoute('ot.calendar'))->toBe('ot')
+        ->and(ModuleRegistry::moduleForRoute('ot.monitoring.vitals'))->toBe('ot')
+        ->and(ModuleRegistry::moduleForRoute('ot.pac.index'))->toBe('ot.pac')
+        ->and(ModuleRegistry::moduleForRoute('ot.checklist.show'))->toBe('ot.checklist')
+        ->and(ModuleRegistry::moduleForRoute('ot.consumables.index'))->toBe('ot.consumables')
+        ->and(ModuleRegistry::moduleForRoute('ot.consumables.usage'))->toBe('ot.consumables')
+        ->and(ModuleRegistry::moduleForRoute('ot.sterilization.index'))->toBe('ot.sterilization')
+        ->and(ModuleRegistry::normalize(['ot']))->toBe(['ot'])
+        ->and(ModuleRegistry::all())->toHaveCount(52)
+        ->and(ModuleRegistry::backfillOtChildren(['ot', 'hr']))->toContain(...ModuleRegistry::OT_CHILD_SLUGS)
+        ->and(ModuleRegistry::backfillOtChildren(['hr']))->toBe(['hr']);
 });
