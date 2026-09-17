@@ -6,7 +6,7 @@ use App\Models\BillItem;
 use App\Models\Department;
 use App\Models\Doctor;
 use App\Models\DoctorShareItem;
-use App\Models\DoctorShareRule;
+use App\Models\DoctorShareRate;
 use App\Models\ImagingStudy;
 use App\Models\LabTest;
 use App\Models\Patient;
@@ -224,23 +224,17 @@ it('credits imaging revenue to account 4310', function () {
     ]);
 });
 
-it('applies lab share rules to lab lines on OPD bills', function () {
-    DoctorShareRule::create([
+it('applies category share rates to mixed OPD and lab lines', function () {
+    DoctorShareRate::create([
         'doctor_id' => $this->doctor->id,
-        'share_type' => 'percentage',
-        'share_value' => 20,
-        'applies_to' => 'opd',
-        'is_active' => true,
-        'created_by' => $this->user->id,
+        'service_category' => 'opd',
+        'percentage' => 20,
     ]);
 
-    DoctorShareRule::create([
+    DoctorShareRate::create([
         'doctor_id' => $this->doctor->id,
-        'share_type' => 'percentage',
-        'share_value' => 30,
-        'applies_to' => 'lab',
-        'is_active' => true,
-        'created_by' => $this->user->id,
+        'service_category' => 'lab',
+        'percentage' => 30,
     ]);
 
     $bill = Bill::create([
@@ -290,23 +284,17 @@ it('applies lab share rules to lab lines on OPD bills', function () {
         ->and((float) $labShare->share_amount)->toBe(150.0);
 });
 
-it('applies duplicated lab and imaging share rules to matching bill lines', function () {
-    DoctorShareRule::create([
+it('applies lab and imaging share rates to matching bill lines', function () {
+    DoctorShareRate::create([
         'doctor_id' => $this->doctor->id,
-        'share_type' => 'percentage',
-        'share_value' => 30,
-        'applies_to' => 'lab',
-        'is_active' => true,
-        'created_by' => $this->user->id,
+        'service_category' => 'lab',
+        'percentage' => 30,
     ]);
 
-    DoctorShareRule::create([
+    DoctorShareRate::create([
         'doctor_id' => $this->doctor->id,
-        'share_type' => 'percentage',
-        'share_value' => 40,
-        'applies_to' => 'imaging',
-        'is_active' => true,
-        'created_by' => $this->user->id,
+        'service_category' => 'imaging',
+        'percentage' => 40,
     ]);
 
     $bill = Bill::create([
@@ -356,15 +344,11 @@ it('applies duplicated lab and imaging share rules to matching bill lines', func
         ->and((float) $imagingShare->share_amount)->toBe(600.0);
 });
 
-it('applies lab-scoped investigation share rules using OPD applies_to on visit bills', function () {
-    DoctorShareRule::create([
-        'doctor_id'            => $this->doctor->id,
-        'investigation_scope'  => 'lab',
-        'share_type'           => 'percentage',
-        'share_value'          => 25,
-        'applies_to'           => 'opd',
-        'is_active'            => true,
-        'created_by'           => $this->user->id,
+it('applies the lab share rate on visit bills', function () {
+    DoctorShareRate::create([
+        'doctor_id' => $this->doctor->id,
+        'service_category' => 'lab',
+        'percentage' => 25,
     ]);
 
     $bill = Bill::create([

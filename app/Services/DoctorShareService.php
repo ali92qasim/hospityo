@@ -6,7 +6,7 @@ use App\Models\Bill;
 use App\Models\BillItem;
 use App\Models\DoctorShareAllocation;
 use App\Models\DoctorShareItem;
-use App\Models\DoctorShareRule;
+use App\Models\DoctorShareRate;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -94,10 +94,11 @@ class DoctorShareService
 
             if ($doctorId === null) {
                 Log::info('[DoctorShare] Unattributed — no doctor on bill', [
-                    'bill_id'     => $bill->id,
+                    'bill_id' => $bill->id,
                     'bill_number' => $bill->bill_number,
-                    'visit_id'    => $bill->visit_id,
+                    'visit_id' => $bill->visit_id,
                 ]);
+
                 return;
             }
 
@@ -114,15 +115,15 @@ class DoctorShareService
             });
 
             Log::info('[DoctorShare] Calculated', [
-                'bill_id'   => $bill->id,
+                'bill_id' => $bill->id,
                 'doctor_id' => $doctorId,
-                'items'     => $bill->billItems->count(),
+                'items' => $bill->billItems->count(),
             ]);
         } catch (\Throwable $e) {
             Log::error('[DoctorShare] calculate() failed — share not recorded', [
                 'bill_id' => $bill->id,
-                'error'   => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -136,7 +137,7 @@ class DoctorShareService
      * Uses a single bulk UPDATE — atomic, no per-row saves, no partial state.
      *
      * @throws \RuntimeException if settled items exist. The caller must catch
-     *         this, surface the message to the user, and abort the operation.
+     *                           this, surface the message to the user, and abort the operation.
      */
     public static function voidForBill(Bill $bill, string $reason): void
     {
@@ -152,24 +153,24 @@ class DoctorShareService
 
         if ($settledIds->isNotEmpty()) {
             throw new \RuntimeException(
-                "Bill #{$bill->bill_number} has settled doctor share items " .
-                "(IDs: {$settledIds->implode(', ')}). " .
+                "Bill #{$bill->bill_number} has settled doctor share items ".
+                "(IDs: {$settledIds->implode(', ')}). ".
                 'A manual finance adjustment is required before this bill can be modified or deleted.'
             );
         }
 
         DoctorShareItem::whereIn('id', $items->pluck('id'))
             ->update([
-                'status'      => 'voided',
+                'status' => 'voided',
                 'void_reason' => $reason,
-                'voided_at'   => now(),
-                'updated_at'  => now(),
+                'voided_at' => now(),
+                'updated_at' => now(),
             ]);
 
         Log::info('[DoctorShare] Voided', [
             'bill_id' => $bill->id,
-            'reason'  => $reason,
-            'count'   => $items->count(),
+            'reason' => $reason,
+            'count' => $items->count(),
         ]);
     }
 
@@ -198,6 +199,7 @@ class DoctorShareService
                 Log::warning('[DoctorShare] recordPaymentAllocations() — payment has no bill', [
                     'payment_id' => $payment->id,
                 ]);
+
                 return;
             }
 
@@ -232,145 +234,32 @@ class DoctorShareService
             });
 
             Log::info('[DoctorShare] Allocations recorded', [
-                'payment_id'       => $payment->id,
-                'bill_id'          => $bill->id,
+                'payment_id' => $payment->id,
+                'bill_id' => $bill->id,
                 'collection_ratio' => $collectionRatio,
-                'items'            => $activeItems->count(),
+                'items' => $activeItems->count(),
             ]);
         } catch (\Throwable $e) {
             Log::error('[DoctorShare] recordPaymentAllocations() failed', [
                 'payment_id' => $payment->id,
-                'error'      => $e->getMessage(),
-                'trace'      => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
 
     /**
-     * Resolve the most specific active share rule for a given context.
-     *
-     * Public so it can be called from a rule-preview UI or test.
-     *
-     * Priority:
-     *   Level 1: doctor_id + service_id  OR  doctor_id + lab_test_id / imaging_study_id
-     *   Level 2: doctor_id only (doctor default)
-     *   Level 3: global default (no doctor, no service, no catalog item)
-     *
-     * Returns null if no rule matches — the item is skipped (share = 0).
+     * Resolve a doctor's category rate, falling back to their general rate.
      */
-    public static function resolveRule(
-        int $doctorId,
-        ?int $serviceId,
-        ?int $labTestId,
-        ?int $imagingStudyId,
-        string $itemCategory,
-        ?string $billType = null
-    ): ?DoctorShareRule {
-        $billType ??= $itemCategory;
+    public static function resolveRate(int $doctorId, string $itemCategory): ?DoctorShareRate
+    {
+        $rates = DoctorShareRate::query()
+            ->where('doctor_id', $doctorId);
 
-        // Level 1 — most specific
-        if ($serviceId !== null) {
-            $rule = DoctorShareRule::active()
-                ->forBillContext($itemCategory, $billType)
-                ->where('doctor_id', $doctorId)
-                ->whereNull('lab_test_id')
-                ->whereNull('imaging_study_id')
-                ->where(function ($q) use ($serviceId) {
-                    $q->whereHas('services', fn ($sub) => $sub->where('services.id', $serviceId))
-                        ->orWhere('service_id', $serviceId);
-                })
-                ->first();
-
-            if ($rule !== null) {
-                return $rule;
-            }
-        }
-
-        if ($labTestId !== null) {
-            $rule = DoctorShareRule::active()
-                ->forBillContext($itemCategory, $billType)
-                ->where('doctor_id', $doctorId)
-                ->where('lab_test_id', $labTestId)
-                ->whereNull('service_id')
-                ->whereDoesntHave('services')
-                ->first();
-
-            if ($rule !== null) {
-                return $rule;
-            }
-
-            $rule = DoctorShareRule::active()
-                ->forBillContext($itemCategory, $billType)
-                ->where('doctor_id', $doctorId)
-                ->whereNull('lab_test_id')
-                ->whereNull('imaging_study_id')
-                ->where('investigation_scope', 'lab')
-                ->whereNull('service_id')
-                ->whereDoesntHave('services')
-                ->first();
-
-            if ($rule) {
-                return $rule;
-            }
-        }
-
-        if ($imagingStudyId !== null) {
-            $rule = DoctorShareRule::active()
-                ->forBillContext($itemCategory, $billType)
-                ->where('doctor_id', $doctorId)
-                ->where('imaging_study_id', $imagingStudyId)
-                ->whereNull('service_id')
-                ->whereDoesntHave('services')
-                ->first();
-
-            if ($rule !== null) {
-                return $rule;
-            }
-
-            $rule = DoctorShareRule::active()
-                ->forBillContext($itemCategory, $billType)
-                ->where('doctor_id', $doctorId)
-                ->whereNull('lab_test_id')
-                ->whereNull('imaging_study_id')
-                ->where('investigation_scope', 'imaging')
-                ->whereNull('service_id')
-                ->whereDoesntHave('services')
-                ->first();
-
-            if ($rule !== null) {
-                return $rule;
-            }
-        }
-
-        // Level 2 — doctor default
-        $defaultAppliesTo = array_values(array_unique([$itemCategory, $billType, 'all']));
-
-        $rule = DoctorShareRule::active()
-            ->forBillContext($itemCategory, $billType)
-            ->where('doctor_id', $doctorId)
-            ->whereNull('service_id')
-            ->whereNull('lab_test_id')
-            ->whereNull('imaging_study_id')
-            ->where('investigation_scope', 'all')
-            ->whereIn('applies_to', $defaultAppliesTo)
-            ->whereDoesntHave('services')
-            ->orderByRaw('CASE applies_to WHEN ? THEN 0 WHEN \'all\' THEN 1 ELSE 2 END', [$itemCategory])
-            ->first();
-
-        if ($rule !== null) {
-            return $rule;
-        }
-
-        // Level 3 — global default
-        return DoctorShareRule::active()
-            ->forBillContext($itemCategory, $billType)
-            ->whereNull('doctor_id')
-            ->whereNull('service_id')
-            ->whereNull('lab_test_id')
-            ->whereNull('imaging_study_id')
-            ->where('investigation_scope', 'all')
-            ->whereDoesntHave('services')
-            ->first();
+        return (clone $rates)
+            ->where('service_category', $itemCategory)
+            ->first()
+            ?? $rates->where('service_category', 'general')->first();
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -390,28 +279,23 @@ class DoctorShareService
 
         if (self::isExcluded($itemCategory)) {
             Log::debug('[DoctorShare] Skipped — excluded item category', [
-                'bill_item_id'  => $item->id,
+                'bill_item_id' => $item->id,
                 'item_category' => $itemCategory,
             ]);
+
             return;
         }
 
-        $rule = self::resolveRule(
-            $doctorId,
-            $item->service_id,
-            $item->lab_test_id,
-            $item->imaging_study_id,
-            $itemCategory,
-            $bill->bill_type
-        );
+        $rate = self::resolveRate($doctorId, $itemCategory);
 
-        if ($rule === null) {
-            Log::debug('[DoctorShare] No rule — item skipped', [
-                'bill_item_id'      => $item->id,
-                'service_id'        => $item->service_id,
-                'lab_test_id'       => $item->lab_test_id,
-                'imaging_study_id'  => $item->imaging_study_id,
+        if ($rate === null) {
+            Log::debug('[DoctorShare] No rate — item skipped', [
+                'bill_item_id' => $item->id,
+                'service_id' => $item->service_id,
+                'lab_test_id' => $item->lab_test_id,
+                'imaging_study_id' => $item->imaging_study_id,
             ]);
+
             return;
         }
 
@@ -422,24 +306,21 @@ class DoctorShareService
             self::SCALE
         );
 
-        $shareAmount = self::computeShare($rule, $baseAmount);
+        $shareAmount = self::computeShare($rate, $baseAmount);
 
-        // updateOrCreate: unique constraint on bill_item_id prevents duplicates
-        // on retry. The 'status' reset to 'pending' is intentional — if a voided
-        // item is somehow recalculated (should not happen in normal flow), it
-        // becomes active again with fresh amounts.
-        DoctorShareItem::updateOrCreate(
+        // Existing rows are frozen history; retries must never rewrite them.
+        DoctorShareItem::firstOrCreate(
             ['bill_item_id' => $item->id],
             [
-                'bill_id'       => $bill->id,
-                'doctor_id'     => $doctorId,
-                'rule_id'       => $rule->id,
-                'rule_snapshot' => self::snapshot($rule),
-                'base_amount'   => self::store($baseAmount),
-                'share_amount'  => self::store($shareAmount),
-                'status'        => 'pending',
-                'void_reason'   => null,
-                'voided_at'     => null,
+                'bill_id' => $bill->id,
+                'doctor_id' => $doctorId,
+                'rule_id' => null,
+                'rule_snapshot' => self::snapshot($rate, $itemCategory),
+                'base_amount' => self::store($baseAmount),
+                'share_amount' => self::store($shareAmount),
+                'status' => 'pending',
+                'void_reason' => null,
+                'voided_at' => null,
                 'settlement_id' => null,
             ]
         );
@@ -493,30 +374,27 @@ class DoctorShareService
         // already exists, the insert is silently skipped — idempotent by design.
         DB::connection('tenant')->table('doctor_share_allocations')->insertOrIgnore([
             'doctor_share_item_id' => $item->id,
-            'payment_id'           => $payment->id,
-            'bill_id'              => $bill->id,
-            'doctor_id'            => $item->doctor_id,
-            'amount'               => $storedAmount,
-            'type'                 => 'collection',
-            'notes'                => null,
-            'created_at'           => now(),
+            'payment_id' => $payment->id,
+            'bill_id' => $bill->id,
+            'doctor_id' => $item->doctor_id,
+            'amount' => $storedAmount,
+            'type' => 'collection',
+            'notes' => null,
+            'created_at' => now(),
         ]);
     }
 
     /**
-     * Compute share amount from a rule and a base amount.
+     * Compute share amount from a rate and a base amount.
      * Both inputs and output are bcmath strings.
      */
-    private static function computeShare(DoctorShareRule $rule, string $baseAmount): string
+    private static function computeShare(DoctorShareRate $rate, string $baseAmount): string
     {
-        return match ($rule->share_type) {
-            'percentage' => bcdiv(
-                bcmul($baseAmount, (string) $rule->share_value, self::SCALE),
-                '100',
-                self::SCALE
-            ),
-            'fixed' => bcadd((string) $rule->share_value, '0', self::SCALE),
-        };
+        return bcdiv(
+            bcmul($baseAmount, (string) $rate->percentage, self::SCALE),
+            '100',
+            self::SCALE
+        );
     }
 
     /**
@@ -529,6 +407,7 @@ class DoctorShareService
     private static function store(string $value): string
     {
         $rounded = bcadd($value, '0.000005', self::SCALE);
+
         return bcdiv($rounded, '1', 2);
     }
 
@@ -539,44 +418,20 @@ class DoctorShareService
     private static function resolveDoctorId(Bill $bill): ?int
     {
         $bill->loadMissing('visit');
+
         return $bill->visit?->doctor_id;
     }
 
     /**
-     * Build the frozen rule snapshot for audit trail.
-     * Stored as JSON on the share item — survives rule edits and deletions.
+     * Build the frozen rate snapshot for the audit trail.
      */
-    private static function snapshot(DoctorShareRule $rule): array
+    private static function snapshot(DoctorShareRate $rate, string $itemCategory): array
     {
-        $rule->loadMissing('services');
-
-        $level = match (true) {
-            $rule->doctor_id !== null && (
-                $rule->services->isNotEmpty()
-                || $rule->service_id !== null
-                || $rule->lab_test_id !== null
-                || $rule->imaging_study_id !== null
-                || in_array($rule->investigation_scope, ['lab', 'imaging'], true)
-            )
-                => 'doctor_service',
-            $rule->doctor_id !== null
-                => 'doctor_default',
-            default
-                => 'global_default',
-        };
-
         return [
-            'rule_id'          => $rule->id,
-            'level'            => $level,
-            'share_type'       => $rule->share_type,
-            'share_value'      => (string) $rule->share_value,
-            'applies_to'       => $rule->applies_to,
-            'doctor_id'        => $rule->doctor_id,
-            'service_id'       => $rule->service_id,
-            'service_ids'      => $rule->services->pluck('id')->all(),
-            'lab_test_id'         => $rule->lab_test_id,
-            'imaging_study_id'    => $rule->imaging_study_id,
-            'investigation_scope' => $rule->investigation_scope ?? 'all',
+            'doctor_id' => $rate->doctor_id,
+            'service_category' => $rate->service_category,
+            'percentage' => (string) $rate->percentage,
+            'source' => $rate->service_category === $itemCategory ? 'category' : 'general',
         ];
     }
 
