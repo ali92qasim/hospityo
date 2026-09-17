@@ -75,3 +75,20 @@ it('marks hr as explicit-grant in the plan form', function () {
         );
 });
 
+it('marks ot as explicit-grant in the plan form', function () {
+    $plan = Plan::where('slug', 'enterprise')->first();
+
+    $this->actingAs($this->superAdmin, 'super_admin')
+        ->get(route('super-admin.plans.edit', $plan))
+        ->assertOk()
+        ->assertSee('data-module-parent="ot"', false)
+        ->assertSee('data-module-child-of="ot"', false)
+        ->assertSee('name="modules[]" value="ot.pac"', false);
+
+    expect($this->actingAs($this->superAdmin, 'super_admin')
+        ->get(route('super-admin.plans.edit', $plan))
+        ->getContent())->toMatch(
+            '/data-module-parent="ot"\s+data-child-access-requires-explicit-grant="1"/'
+        );
+});
+

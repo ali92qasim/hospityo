@@ -76,3 +76,16 @@ it('includes hr children on enterprise and not on professional or starter', func
         ->and($starter->modules)->not->toContain('hr');
 });
 
+it('includes ot.pac and other OT children on enterprise and not on professional or starter', function () {
+    $this->seed(PlanSeeder::class);
+    $enterprise = Plan::where('slug', 'enterprise')->first();
+    $professional = Plan::where('slug', 'professional')->first();
+    $starter = Plan::where('slug', 'starter')->first();
+
+    expect($enterprise->modules)->toContain(...\App\Models\ModuleRegistry::OT_CHILD_SLUGS)
+        ->and($professional->modules)->not->toContain('ot')
+        ->and($professional->modules)->not->toContain('ot.pac')
+        ->and($starter->modules)->not->toContain('ot')
+        ->and($starter->modules)->not->toContain('ot.pac');
+});
+

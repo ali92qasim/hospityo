@@ -45,3 +45,28 @@ it('backfills hr children onto existing parent plans and leaves others alone', f
     expect($withHr->fresh()->modules)->toContain(...ModuleRegistry::HR_CHILD_SLUGS)
         ->and($without->fresh()->modules)->toBe(['patients']);
 });
+
+it('backfills ot children onto existing parent plans and leaves others alone', function () {
+    $withOt = Plan::create([
+        'slug' => 'has-ot',
+        'name' => 'Has OT',
+        'price' => 1,
+        'billing_cycle' => 'monthly',
+        'modules' => ['ot', 'patients'],
+    ]);
+    $without = Plan::create([
+        'slug' => 'no-ot',
+        'name' => 'No OT',
+        'price' => 1,
+        'billing_cycle' => 'monthly',
+        'modules' => ['patients'],
+    ]);
+
+    $withOt->modules = ModuleRegistry::backfillOtChildren($withOt->modules);
+    $withOt->save();
+    $without->modules = ModuleRegistry::backfillOtChildren($without->modules);
+    $without->save();
+
+    expect($withOt->fresh()->modules)->toContain(...ModuleRegistry::OT_CHILD_SLUGS)
+        ->and($without->fresh()->modules)->toBe(['patients']);
+});
