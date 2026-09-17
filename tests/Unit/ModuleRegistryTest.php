@@ -37,6 +37,8 @@ it('maps settings child routes to their child modules', function () {
         ->and(ModuleRegistry::moduleForRoute('settings.update'))->toBe('settings.hospital-info')
         ->and(ModuleRegistry::moduleForRoute('settings.prescription-print-templates.index'))
         ->toBe('settings.prescription-print')
+        ->and(ModuleRegistry::moduleForRoute('doctor-share.reports.index'))
+        ->toBe('settings.doctor-share')
         ->and(ModuleRegistry::moduleForRoute('settings.index'))->toBe('settings');
 });
 
@@ -58,10 +60,11 @@ it('resolves visit routes to emergency or ipd from visit type', function () {
 });
 
 it('lists settings children under the settings parent and emergency as top-level', function () {
-    expect(ModuleRegistry::all())->toContain('emergency', 'settings', 'settings.hospital-info', 'settings.prescription-print')
+    expect(ModuleRegistry::all())->toContain('emergency', 'settings', 'settings.hospital-info', 'settings.prescription-print', 'settings.doctor-share')
         ->and(ModuleRegistry::topLevel())->toContain('emergency', 'settings')
-        ->and(ModuleRegistry::topLevel())->not->toContain('settings.hospital-info', 'settings.prescription-print')
+        ->and(ModuleRegistry::topLevel())->not->toContain('doctor-share', 'settings.hospital-info', 'settings.prescription-print', 'settings.doctor-share')
         ->and(ModuleRegistry::parentOf('settings.hospital-info'))->toBe('settings')
+        ->and(ModuleRegistry::parentOf('settings.doctor-share'))->toBe('settings')
         ->and(ModuleRegistry::parentOf('emergency'))->toBeNull();
 });
 
@@ -76,7 +79,7 @@ it('locks hospital info onto any slug list that includes settings', function () 
         ->and(ModuleRegistry::normalize(['settings.prescription-print']))
             ->toEqualCanonicalizing(['settings.prescription-print', 'settings', 'settings.hospital-info'])
         ->and(ModuleRegistry::normalize(['settings', 'settings.hospital-info']))
-            ->not->toContain('settings.prescription-print');
+            ->not->toContain('settings.prescription-print', 'settings.doctor-share');
 });
 
 it('backfills all report children only when reports is already on the plan', function () {
@@ -94,20 +97,20 @@ it('maps each operational report route to its child slug', function () {
         ->and(ModuleRegistry::moduleForRoute('reports.lab-tests'))->toBe('reports.investigations')
         ->and(ModuleRegistry::moduleForRoute('reports.investigations'))->toBe('reports.investigations')
         ->and(ModuleRegistry::parentOf('reports.revenue'))->toBe('reports')
-        ->and(ModuleRegistry::topLevel())->toHaveCount(20)
+        ->and(ModuleRegistry::topLevel())->toHaveCount(19)
         ->and(ModuleRegistry::all())->toHaveCount(52)
         ->and(ModuleRegistry::normalize(['reports.revenue']))->toEqualCanonicalizing(['reports.revenue', 'reports'])
         ->and(ModuleRegistry::normalize(['reports']))->toBe(['reports'])
         ->and(ModuleRegistry::definitions()['reports']['children'])->toBe(ModuleRegistry::REPORT_CHILD_SLUGS);
 });
 
-it('registers 20 top-level modules including emergency and settings', function () {
-    expect(ModuleRegistry::topLevel())->toHaveCount(20)
+it('registers 19 top-level modules including emergency and settings', function () {
+    expect(ModuleRegistry::topLevel())->toHaveCount(19)
         ->and(ModuleRegistry::all())->toHaveCount(52);
 });
 
 it('declares entitlement and child-access flags without changing slug sets', function () {
-    expect(ModuleRegistry::topLevel())->toHaveCount(20)
+    expect(ModuleRegistry::topLevel())->toHaveCount(19)
         ->and(ModuleRegistry::all())->toHaveCount(52);
 
     $reports = ModuleRegistry::definitions()['reports'];
@@ -122,6 +125,11 @@ it('declares entitlement and child-access flags without changing slug sets', fun
     $settingsChild = ModuleRegistry::definitions()['settings.hospital-info'];
     expect($settingsChild['entitlement'] ?? 'plan')->toBe('plan')
         ->and(array_key_exists('child_access_requires_explicit_grant', $settingsChild))->toBeFalse();
+
+    $doctorShare = ModuleRegistry::definitions()['settings.doctor-share'];
+    expect($doctorShare['entitlement'] ?? null)->toBe('plan')
+        ->and($doctorShare['parent'] ?? null)->toBe('settings')
+        ->and(array_key_exists('bundled', $doctorShare))->toBeFalse();
 });
 
 it('maps accounting statement routes to child slugs and pharmacy surfaces to pharmacy children', function () {
@@ -181,7 +189,7 @@ it('registers four hr catalog children and maps cluster routes to them', functio
         ->and(ModuleRegistry::moduleForRoute('hr.shifts.index'))->toBe('hr.scheduling')
         ->and(ModuleRegistry::moduleForRoute('hr.shifts.roster'))->toBe('hr.scheduling')
         ->and(ModuleRegistry::moduleForRoute('hr.shifts.swap-requests'))->toBe('hr.scheduling')
-        ->and(ModuleRegistry::topLevel())->toHaveCount(20)
+        ->and(ModuleRegistry::topLevel())->toHaveCount(19)
         ->and(ModuleRegistry::all())->toHaveCount(52)
         ->and(ModuleRegistry::normalize(['hr.payroll']))->toEqualCanonicalizing(['hr.payroll', 'hr'])
         ->and(ModuleRegistry::normalize(['hr']))->toBe(['hr'])

@@ -25,7 +25,7 @@ function bindDoctorShareCollectedColumnTenant(): Tenant
     $tenant->id = 1;
     $tenant->status = 'active';
     $tenant->shouldReceive('hasModule')
-        ->andReturnUsing(fn (string $module) => $module === 'doctor-share');
+        ->andReturnUsing(fn (string $module) => in_array($module, ['settings', 'settings.doctor-share'], true));
 
     app()->instance(config('multitenancy.current_tenant_container_key'), $tenant);
 

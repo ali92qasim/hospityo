@@ -43,6 +43,15 @@ final class SettingsSectionRegistry
             'route' => 'settings.prescription-print-templates.index',
             'view' => 'settings.prescription-print-templates.index',
         ],
+        'settings.doctor-share' => [
+            'key' => 'settings.doctor-share',
+            'label' => 'Doctor Share',
+            'icon' => 'fa-user-md',
+            'parentKey' => 'settings',
+            'order' => 30,
+            'route' => 'doctor-share.rules.index',
+            'view' => 'doctor-share.rules.index',
+        ],
     ];
 
     /** @return array<string, array<string, mixed>> */

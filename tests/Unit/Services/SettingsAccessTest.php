@@ -50,6 +50,14 @@ it('denies a hospital-info-only user the print tab', function () {
         ->and(SettingsAccess::canAccessSection($user, 'settings.prescription-print', 'GET'))->toBeFalse();
 });
 
+it('allows share rules but not share reports into unbundled doctor share settings', function () {
+    $rulesUser = settingsUser(['view share rules']);
+    $reportsUser = settingsUser(['view share reports']);
+
+    expect(SettingsAccess::canAccessSection($rulesUser, 'settings.doctor-share', 'GET'))->toBeTrue()
+        ->and(SettingsAccess::canAccessSection($reportsUser, 'settings.doctor-share', 'GET'))->toBeFalse();
+});
+
 it('denies users with no settings permissions', function () {
     $user = settingsUser([]);
 

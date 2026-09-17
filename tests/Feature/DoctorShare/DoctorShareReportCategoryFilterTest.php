@@ -127,7 +127,7 @@ function createDoctorShareCategoryReportItems(User $user): array
 }
 
 it('filters an opd bill report by each bill line item category', function (string $category) {
-    bindDoctorShareCategoryReportTenant(['doctor-share', 'visits', 'laboratory']);
+    bindDoctorShareCategoryReportTenant(['settings', 'settings.doctor-share', 'visits', 'laboratory']);
     $user = doctorShareCategoryReportUser();
     $this->actingAs($user);
     $itemIds = createDoctorShareCategoryReportItems($user);
@@ -143,7 +143,7 @@ it('filters an opd bill report by each bill line item category', function (strin
 })->with(['lab', 'opd']);
 
 it('rejects and does not list the investigation report token', function () {
-    bindDoctorShareCategoryReportTenant(['doctor-share', 'laboratory', 'imaging']);
+    bindDoctorShareCategoryReportTenant(['settings', 'settings.doctor-share', 'laboratory', 'imaging']);
     $this->actingAs(doctorShareCategoryReportUser());
 
     $this->get(route('doctor-share.reports.index'))
@@ -157,7 +157,7 @@ it('rejects and does not list the investigation report token', function () {
 });
 
 it('rejects unknown report bill type tokens', function () {
-    bindDoctorShareCategoryReportTenant(['doctor-share']);
+    bindDoctorShareCategoryReportTenant(['settings', 'settings.doctor-share']);
     $this->actingAs(doctorShareCategoryReportUser());
 
     $this->get(route('doctor-share.reports.index', ['bill_type' => 'unknown']))
@@ -165,7 +165,7 @@ it('rejects unknown report bill type tokens', function () {
 });
 
 it('gates the pharmacy report option and filter on the pharmacy module', function () {
-    bindDoctorShareCategoryReportTenant(['doctor-share']);
+    bindDoctorShareCategoryReportTenant(['settings', 'settings.doctor-share']);
     $this->actingAs(doctorShareCategoryReportUser());
 
     $this->get(route('doctor-share.reports.index'))
@@ -174,7 +174,7 @@ it('gates the pharmacy report option and filter on the pharmacy module', functio
     $this->get(route('doctor-share.reports.index', ['bill_type' => 'pharmacy']))
         ->assertForbidden();
 
-    bindDoctorShareCategoryReportTenant(['doctor-share', 'pharmacy']);
+    bindDoctorShareCategoryReportTenant(['settings', 'settings.doctor-share', 'pharmacy']);
 
     $this->get(route('doctor-share.reports.index'))
         ->assertOk()

@@ -21,10 +21,11 @@ beforeEach(function () {
     ]);
 });
 
-it('includes ot hr doctor-share accounting in enterprise plan', function () {
+it('includes ot hr settings doctor-share accounting in enterprise plan', function () {
     $this->seed(PlanSeeder::class);
     $enterprise = Plan::where('slug', 'enterprise')->first();
-    expect($enterprise->modules)->toContain('ot', 'hr', 'doctor-share', 'accounting', 'imaging');
+    expect($enterprise->modules)->toContain('ot', 'hr', 'settings.doctor-share', 'accounting', 'imaging')
+        ->and($enterprise->modules)->not->toContain('doctor-share');
 });
 
 it('includes imaging and laboratory in professional plan', function () {
@@ -88,4 +89,3 @@ it('includes ot.pac and other OT children on enterprise and not on professional 
         ->and($starter->modules)->not->toContain('ot')
         ->and($starter->modules)->not->toContain('ot.pac');
 });
-

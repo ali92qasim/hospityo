@@ -457,15 +457,6 @@ class PermissionRegistry
         'doctor-share' => [
             'label' => 'Doctor Share',
             'groups' => [
-                'general' => [
-                    'manage doctor shares',
-                ],
-                'share rules' => [
-                    'view share rules',
-                    'create share rules',
-                    'edit share rules',
-                    'delete share rules',
-                ],
                 'share items' => [
                     'view share items',
                     'create share items',
@@ -558,6 +549,20 @@ class PermissionRegistry
             'groups' => [
                 'prescription print' => [
                     'access settings.prescription-print',
+                ],
+            ],
+        ],
+        'settings.doctor-share' => [
+            'label' => 'Doctor Share',
+            'groups' => [
+                'general' => [
+                    'manage doctor shares',
+                ],
+                'share rules' => [
+                    'view share rules',
+                    'create share rules',
+                    'edit share rules',
+                    'delete share rules',
                 ],
             ],
         ],

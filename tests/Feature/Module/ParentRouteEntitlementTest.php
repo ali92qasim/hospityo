@@ -440,7 +440,7 @@ it('hides unentitled tax applies-to checkboxes', function () {
 // ── 6. Doctor-share applies_to and report filters ────────────────────────────
 
 it('rejects doctor-share applies_to lab when laboratory is not entitled', function () {
-    bindEntitlementTenant(['doctor-share']);
+    bindEntitlementTenant(['settings', 'settings.doctor-share']);
     $this->actingAs(entitlementUser(['create share rules']));
 
     $this->post(route('doctor-share.rules.store'), [
@@ -454,7 +454,7 @@ it('rejects doctor-share applies_to lab when laboratory is not entitled', functi
 });
 
 it('allows doctor-share applies_to lab when laboratory is entitled', function () {
-    bindEntitlementTenant(['doctor-share', 'laboratory']);
+    bindEntitlementTenant(['settings', 'settings.doctor-share', 'laboratory']);
     $this->actingAs(entitlementUser(['create share rules']));
 
     $this->post(route('doctor-share.rules.store'), [
@@ -466,7 +466,7 @@ it('allows doctor-share applies_to lab when laboratory is entitled', function ()
 });
 
 it('rejects doctor-share report bill_type emergency when emergency is not entitled', function () {
-    bindEntitlementTenant(['doctor-share']);
+    bindEntitlementTenant(['settings', 'settings.doctor-share']);
     $this->actingAs(entitlementUser(['view share reports']));
 
     $this->get(route('doctor-share.reports.index', ['bill_type' => 'emergency']))
@@ -474,7 +474,7 @@ it('rejects doctor-share report bill_type emergency when emergency is not entitl
 });
 
 it('allows doctor-share report bill_type emergency when emergency is entitled', function () {
-    bindEntitlementTenant(['doctor-share', 'emergency']);
+    bindEntitlementTenant(['settings', 'settings.doctor-share', 'emergency']);
     $this->actingAs(entitlementUser(['view share reports']));
 
     $this->get(route('doctor-share.reports.index', ['bill_type' => 'emergency']))
@@ -482,7 +482,7 @@ it('allows doctor-share report bill_type emergency when emergency is entitled', 
 });
 
 it('hides unentitled doctor-share applies_to options', function () {
-    bindEntitlementTenant(['doctor-share']);
+    bindEntitlementTenant(['settings', 'settings.doctor-share']);
     $this->actingAs(entitlementUser(['create share rules']));
 
     $this->get(route('doctor-share.rules.create'))

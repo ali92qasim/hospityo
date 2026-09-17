@@ -63,6 +63,44 @@ it('splits settings permission registry so parent forModule excludes child names
     expect($flat)->toBe(array_values(array_unique($flat)));
 });
 
+it('keeps doctor share settings access rules-only without duplicating operational permissions', function () {
+    expect(PermissionRegistry::forModule('settings.doctor-share'))->toEqualCanonicalizing([
+        'manage doctor shares',
+        'view share rules',
+        'create share rules',
+        'edit share rules',
+        'delete share rules',
+    ])
+        ->and(PermissionRegistry::forModule('settings.doctor-share'))->not->toContain(
+            'view share items',
+            'view settlements',
+            'view share reports',
+        )
+        ->and(PermissionRegistry::forModule('doctor-share'))->toContain(
+            'view share items',
+            'view settlements',
+            'view share reports',
+        )
+        ->and(PermissionRegistry::forModule('doctor-share'))->not->toContain(
+            'manage doctor shares',
+            'view share rules',
+        );
+
+    $flat = PermissionRegistry::flat();
+    foreach ([
+        'manage doctor shares',
+        'view share rules',
+        'create share rules',
+        'edit share rules',
+        'delete share rules',
+        'view share items',
+        'view settlements',
+        'view share reports',
+    ] as $permission) {
+        expect(array_count_values($flat)[$permission] ?? 0)->toBe(1);
+    }
+});
+
 it('splits hr permissions onto catalog children and keeps view hr on each', function () {
     expect(PermissionRegistry::forModule('hr'))->toBe(['view hr'])
         ->and(PermissionRegistry::forModule('hr.employees'))->toContain('view employees', 'view designations', 'view department staff', 'view hr documents', 'view hr')

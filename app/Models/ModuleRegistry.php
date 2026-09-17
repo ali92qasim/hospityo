@@ -297,14 +297,6 @@ class ModuleRegistry
             'description' => 'Instrument sterilization and autoclave workflows.',
             'routes'      => ['ot.sterilization.'],
         ],
-        'doctor-share' => [
-            'name'        => 'Doctor Share',
-            'group'       => 'Finance',
-            'description' => 'Doctor revenue sharing and payouts.',
-            'entitlement' => 'plan',
-            'child_access_requires_explicit_grant' => false,
-            'routes'      => ['doctor-share.'],
-        ],
         'hr' => [
             'name'        => 'HR & Payroll',
             'group'       => 'Operations',
@@ -509,7 +501,11 @@ class ModuleRegistry
             'entitlement' => 'plan',
             'child_access_requires_explicit_grant' => true,
             'routes'      => ['settings.index'],
-            'children'    => ['settings.hospital-info', 'settings.prescription-print'],
+            'children'    => [
+                'settings.hospital-info',
+                'settings.prescription-print',
+                'settings.doctor-share',
+            ],
         ],
         'settings.hospital-info' => [
             'name'        => 'Hospital Info',
@@ -527,6 +523,14 @@ class ModuleRegistry
             'description' => 'Prescription print layout templates.',
             'entitlement' => 'plan',
             'routes'      => ['settings.prescription-print-templates.'],
+        ],
+        'settings.doctor-share' => [
+            'name'        => 'Doctor Share',
+            'group'       => 'Admin',
+            'parent'      => 'settings',
+            'description' => 'Doctor revenue sharing and payouts.',
+            'entitlement' => 'plan',
+            'routes'      => ['doctor-share.'],
         ],
     ];
 
