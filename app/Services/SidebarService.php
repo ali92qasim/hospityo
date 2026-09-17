@@ -97,15 +97,24 @@ class SidebarService
         }
 
         // ── Operation Theatre ─────────────────────────────────────────────────
-        if ($this->hasModule($tenant, 'ot') && $user->can('view surgeries')) {
-            $items = [
-                $this->item('Theatres', 'fa-door-open', 'ot.theatres', ['ot.theatres*']),
-                $this->item('Surgeries', 'fa-procedures', 'ot.surgeries.index', ['ot.surgeries.*', 'ot.calendar*']),
-                $this->item('PAC Requests', 'fa-clipboard-check', 'ot.pac.index', ['ot.pac.*']),
-                $this->item('OT Inventory', 'fa-boxes', 'ot.consumables.index', ['ot.consumables.*']),
-                $this->item('Sterilization', 'fa-shield-virus', 'ot.sterilization.index', ['ot.sterilization.*']),
-            ];
-            $menu[] = $this->group('ot', 'Operation Theatre', $items, ['ot.*']);
+        if ($this->hasModule($tenant, 'ot')) {
+            $items = [];
+            if ($user->can('view surgeries')) {
+                $items[] = $this->item('Theatres', 'fa-door-open', 'ot.theatres', ['ot.theatres*']);
+                $items[] = $this->item('Surgeries', 'fa-procedures', 'ot.surgeries.index', ['ot.surgeries.*', 'ot.calendar*']);
+            }
+            if ($this->hasModule($tenant, 'ot.pac') && $user->can('view surgeries')) {
+                $items[] = $this->item('PAC Requests', 'fa-clipboard-check', 'ot.pac.index', ['ot.pac.*']);
+            }
+            if ($this->hasModule($tenant, 'ot.consumables') && $user->can('manage ot consumables')) {
+                $items[] = $this->item('OT Inventory', 'fa-boxes', 'ot.consumables.index', ['ot.consumables.*']);
+            }
+            if ($this->hasModule($tenant, 'ot.sterilization') && $user->can('manage sterilization')) {
+                $items[] = $this->item('Sterilization', 'fa-shield-virus', 'ot.sterilization.index', ['ot.sterilization.*']);
+            }
+            if ($items !== []) {
+                $menu[] = $this->group('ot', 'Operation Theatre', $items, ['ot.*']);
+            }
         }
 
         // ── Pharmacy ──────────────────────────────────────────────────────────

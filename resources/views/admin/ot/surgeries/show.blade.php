@@ -146,9 +146,11 @@
                     @endif
                 </div>
             </div>
+            @can('manage surgical checklists')
             <a href="{{ route('ot.checklist.show', $surgery) }}" class="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 text-sm">
                 <i class="fas fa-clipboard-list mr-1"></i>Open Checklist
             </a>
+            @endcan
         </div>
     </div>
     @endif
@@ -327,9 +329,11 @@
                     <p class="text-xs text-gray-500">{{ $surgery->consumableUsages?->count() ?? 0 }} item(s) recorded</p>
                 </div>
             </div>
+            @can('manage ot consumables')
             <a href="{{ route('ot.consumables.usage', $surgery) }}" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 text-sm">
                 <i class="fas fa-plus-circle mr-1"></i>Record Usage
             </a>
+            @endcan
         </div>
     </div>
 

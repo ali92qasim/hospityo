@@ -902,77 +902,85 @@ Route::middleware('auth')->group(function () {
         ->middleware('role_or_permission:Super Admin|Hospital Administrator|view audit logs');
 
     // Operation Theatre Management
-    Route::prefix('ot')->name('ot.')->middleware('permission:view surgeries|create surgeries|edit surgeries|delete surgeries')->group(function () {
-        // Calendar
-        Route::get('calendar', [OTController::class, 'calendar'])->name('calendar');
-        Route::get('calendar/events', [OTController::class, 'calendarEvents'])->name('calendar.events');
+    Route::prefix('ot')->name('ot.')->group(function () {
+        Route::middleware('permission:view surgeries|create surgeries|edit surgeries|delete surgeries')->group(function () {
+            // Calendar
+            Route::get('calendar', [OTController::class, 'calendar'])->name('calendar');
+            Route::get('calendar/events', [OTController::class, 'calendarEvents'])->name('calendar.events');
 
-        // Conflict detection API
-        Route::get('conflicts', [OTController::class, 'checkConflicts'])->name('check-conflicts');
+            // Conflict detection API
+            Route::get('conflicts', [OTController::class, 'checkConflicts'])->name('check-conflicts');
 
-        // Theatres
-        Route::get('theatres', [OTController::class, 'theatres'])->name('theatres');
-        Route::get('theatres/create', [OTController::class, 'createTheatre'])->name('theatres.create');
-        Route::post('theatres', [OTController::class, 'storeTheatre'])->name('theatres.store');
-        Route::get('theatres/{theatre}/edit', [OTController::class, 'editTheatre'])->name('theatres.edit');
-        Route::put('theatres/{theatre}', [OTController::class, 'updateTheatre'])->name('theatres.update');
+            // Theatres
+            Route::get('theatres', [OTController::class, 'theatres'])->name('theatres');
+            Route::get('theatres/create', [OTController::class, 'createTheatre'])->name('theatres.create');
+            Route::post('theatres', [OTController::class, 'storeTheatre'])->name('theatres.store');
+            Route::get('theatres/{theatre}/edit', [OTController::class, 'editTheatre'])->name('theatres.edit');
+            Route::put('theatres/{theatre}', [OTController::class, 'updateTheatre'])->name('theatres.update');
 
-        // Surgeries
-        Route::get('surgeries', [OTController::class, 'index'])->name('surgeries.index');
-        Route::get('surgeries/create', [OTController::class, 'create'])->name('surgeries.create');
-        Route::post('surgeries', [OTController::class, 'store'])->name('surgeries.store');
-        Route::get('surgeries/{surgery}', [OTController::class, 'show'])->name('surgeries.show');
-        Route::get('surgeries/{surgery}/edit', [OTController::class, 'edit'])->name('surgeries.edit');
-        Route::put('surgeries/{surgery}', [OTController::class, 'update'])->name('surgeries.update');
-        Route::post('surgeries/{surgery}/start', [OTController::class, 'start'])->name('surgeries.start');
-        Route::post('surgeries/{surgery}/complete', [OTController::class, 'complete'])->name('surgeries.complete');
-        Route::post('surgeries/{surgery}/cancel', [OTController::class, 'cancel'])->name('surgeries.cancel');
-        Route::post('surgeries/{surgery}/postpone', [OTController::class, 'postpone'])->name('surgeries.postpone');
+            // Surgeries
+            Route::get('surgeries', [OTController::class, 'index'])->name('surgeries.index');
+            Route::get('surgeries/create', [OTController::class, 'create'])->name('surgeries.create');
+            Route::post('surgeries', [OTController::class, 'store'])->name('surgeries.store');
+            Route::get('surgeries/{surgery}', [OTController::class, 'show'])->name('surgeries.show');
+            Route::get('surgeries/{surgery}/edit', [OTController::class, 'edit'])->name('surgeries.edit');
+            Route::put('surgeries/{surgery}', [OTController::class, 'update'])->name('surgeries.update');
+            Route::post('surgeries/{surgery}/start', [OTController::class, 'start'])->name('surgeries.start');
+            Route::post('surgeries/{surgery}/complete', [OTController::class, 'complete'])->name('surgeries.complete');
+            Route::post('surgeries/{surgery}/cancel', [OTController::class, 'cancel'])->name('surgeries.cancel');
+            Route::post('surgeries/{surgery}/postpone', [OTController::class, 'postpone'])->name('surgeries.postpone');
 
-        // Pre-Anaesthesia Checkup (PAC)
-        Route::get('pac', [PacController::class, 'index'])->name('pac.index');
-        Route::get('pac/create/{surgery}', [PacController::class, 'create'])->name('pac.create');
-        Route::post('pac/{surgery}', [PacController::class, 'store'])->name('pac.store');
-        Route::get('pac/{pac}', [PacController::class, 'show'])->name('pac.show');
-        Route::post('pac/{pac}/clear', [PacController::class, 'clear'])->name('pac.clear');
-        Route::post('pac/{pac}/decline', [PacController::class, 'decline'])->name('pac.decline');
-        Route::post('pac/{pac}/further-eval', [PacController::class, 'requireFurtherEval'])->name('pac.further-eval');
+            // Pre-Anaesthesia Checkup (PAC)
+            Route::get('pac', [PacController::class, 'index'])->name('pac.index');
+            Route::get('pac/create/{surgery}', [PacController::class, 'create'])->name('pac.create');
+            Route::post('pac/{surgery}', [PacController::class, 'store'])->name('pac.store');
+            Route::get('pac/{pac}', [PacController::class, 'show'])->name('pac.show');
+            Route::post('pac/{pac}/clear', [PacController::class, 'clear'])->name('pac.clear');
+            Route::post('pac/{pac}/decline', [PacController::class, 'decline'])->name('pac.decline');
+            Route::post('pac/{pac}/further-eval', [PacController::class, 'requireFurtherEval'])->name('pac.further-eval');
 
-        // Surgical Safety Checklist
-        Route::get('checklist/{surgery}', [SurgicalChecklistController::class, 'show'])->name('checklist.show');
-        Route::post('checklist/item/{item}/toggle', [SurgicalChecklistController::class, 'toggleItem'])->name('checklist.toggle-item');
-        Route::post('checklist/{checklist}/complete-phase', [SurgicalChecklistController::class, 'completePhase'])->name('checklist.complete-phase');
+            // Intra-operative & Post-operative Monitoring
+            Route::get('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'anaesthesiaForm'])->name('monitoring.anaesthesia');
+            Route::post('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'storeAnaesthesia'])->name('monitoring.store-anaesthesia');
+            Route::get('surgeries/{surgery}/vitals', [OperativeMonitoringController::class, 'vitalsForm'])->name('monitoring.vitals');
+            Route::post('surgeries/{surgery}/vitals', [OperativeMonitoringController::class, 'storeVitals'])->name('monitoring.store-vitals');
+            Route::get('surgeries/{surgery}/vitals-data', [OperativeMonitoringController::class, 'vitalsData'])->name('monitoring.vitals-data');
+            Route::get('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'postOpForm'])->name('monitoring.post-op');
+            Route::post('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'storePostOp'])->name('monitoring.store-post-op');
+        });
 
-        // OT Consumables & Inventory
-        Route::get('consumables', [OtConsumableController::class, 'index'])->name('consumables.index');
-        Route::get('consumables/create', [OtConsumableController::class, 'create'])->name('consumables.create');
-        Route::post('consumables', [OtConsumableController::class, 'store'])->name('consumables.store');
-        Route::get('consumables/{consumable}/edit', [OtConsumableController::class, 'edit'])->name('consumables.edit');
-        Route::put('consumables/{consumable}', [OtConsumableController::class, 'update'])->name('consumables.update');
-        Route::get('consumables/{consumable}/stock-in', [OtConsumableController::class, 'stockIn'])->name('consumables.stock-in');
-        Route::post('consumables/{consumable}/stock-in', [OtConsumableController::class, 'processStockIn'])->name('consumables.process-stock-in');
-        Route::get('consumables/reorder-alerts', [OtConsumableController::class, 'reorderAlerts'])->name('consumables.reorder-alerts');
-        Route::get('surgeries/{surgery}/usage', [OtConsumableController::class, 'usageForm'])->name('consumables.usage');
-        Route::post('surgeries/{surgery}/usage', [OtConsumableController::class, 'recordUsage'])->name('consumables.record-usage');
+        Route::middleware('permission:manage surgical checklists')->group(function () {
+            // Surgical Safety Checklist
+            Route::get('checklist/{surgery}', [SurgicalChecklistController::class, 'show'])->name('checklist.show');
+            Route::post('checklist/item/{item}/toggle', [SurgicalChecklistController::class, 'toggleItem'])->name('checklist.toggle-item');
+            Route::post('checklist/{checklist}/complete-phase', [SurgicalChecklistController::class, 'completePhase'])->name('checklist.complete-phase');
+        });
 
-        // Sterilization & Audit Logs
-        Route::get('sterilization', [SterilizationController::class, 'index'])->name('sterilization.index');
-        Route::get('sterilization/create', [SterilizationController::class, 'create'])->name('sterilization.create');
-        Route::post('sterilization', [SterilizationController::class, 'store'])->name('sterilization.store');
-        Route::get('sterilization/{sterilization}', [SterilizationController::class, 'show'])->name('sterilization.show');
-        Route::post('sterilization/{sterilization}/start', [SterilizationController::class, 'start'])->name('sterilization.start');
-        Route::post('sterilization/{sterilization}/complete', [SterilizationController::class, 'complete'])->name('sterilization.complete');
-        Route::post('sterilization/{sterilization}/verify', [SterilizationController::class, 'verify'])->name('sterilization.verify');
-        Route::post('sterilization/{sterilization}/fail', [SterilizationController::class, 'fail'])->name('sterilization.fail');
+        Route::middleware('permission:manage ot consumables')->group(function () {
+            // OT Consumables & Inventory
+            Route::get('consumables', [OtConsumableController::class, 'index'])->name('consumables.index');
+            Route::get('consumables/create', [OtConsumableController::class, 'create'])->name('consumables.create');
+            Route::post('consumables', [OtConsumableController::class, 'store'])->name('consumables.store');
+            Route::get('consumables/{consumable}/edit', [OtConsumableController::class, 'edit'])->name('consumables.edit');
+            Route::put('consumables/{consumable}', [OtConsumableController::class, 'update'])->name('consumables.update');
+            Route::get('consumables/{consumable}/stock-in', [OtConsumableController::class, 'stockIn'])->name('consumables.stock-in');
+            Route::post('consumables/{consumable}/stock-in', [OtConsumableController::class, 'processStockIn'])->name('consumables.process-stock-in');
+            Route::get('consumables/reorder-alerts', [OtConsumableController::class, 'reorderAlerts'])->name('consumables.reorder-alerts');
+            Route::get('surgeries/{surgery}/usage', [OtConsumableController::class, 'usageForm'])->name('consumables.usage');
+            Route::post('surgeries/{surgery}/usage', [OtConsumableController::class, 'recordUsage'])->name('consumables.record-usage');
+        });
 
-        // Intra-operative & Post-operative Monitoring
-        Route::get('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'anaesthesiaForm'])->name('monitoring.anaesthesia');
-        Route::post('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'storeAnaesthesia'])->name('monitoring.store-anaesthesia');
-        Route::get('surgeries/{surgery}/vitals', [OperativeMonitoringController::class, 'vitalsForm'])->name('monitoring.vitals');
-        Route::post('surgeries/{surgery}/vitals', [OperativeMonitoringController::class, 'storeVitals'])->name('monitoring.store-vitals');
-        Route::get('surgeries/{surgery}/vitals-data', [OperativeMonitoringController::class, 'vitalsData'])->name('monitoring.vitals-data');
-        Route::get('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'postOpForm'])->name('monitoring.post-op');
-        Route::post('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'storePostOp'])->name('monitoring.store-post-op');
+        Route::middleware('permission:manage sterilization')->group(function () {
+            // Sterilization & Audit Logs
+            Route::get('sterilization', [SterilizationController::class, 'index'])->name('sterilization.index');
+            Route::get('sterilization/create', [SterilizationController::class, 'create'])->name('sterilization.create');
+            Route::post('sterilization', [SterilizationController::class, 'store'])->name('sterilization.store');
+            Route::get('sterilization/{sterilization}', [SterilizationController::class, 'show'])->name('sterilization.show');
+            Route::post('sterilization/{sterilization}/start', [SterilizationController::class, 'start'])->name('sterilization.start');
+            Route::post('sterilization/{sterilization}/complete', [SterilizationController::class, 'complete'])->name('sterilization.complete');
+            Route::post('sterilization/{sterilization}/verify', [SterilizationController::class, 'verify'])->name('sterilization.verify');
+            Route::post('sterilization/{sterilization}/fail', [SterilizationController::class, 'fail'])->name('sterilization.fail');
+        });
     });
 
     // Backup & Restore Routes
