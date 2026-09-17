@@ -103,6 +103,9 @@ class SidebarService
                 $items[] = $this->item('Theatres', 'fa-door-open', 'ot.theatres', ['ot.theatres*']);
                 $items[] = $this->item('Surgeries', 'fa-procedures', 'ot.surgeries.index', ['ot.surgeries.*', 'ot.calendar*']);
             }
+            if ($this->hasModule($tenant, 'ot.checklist') && $user->can('manage surgical checklists')) {
+                $items[] = $this->item('Checklist', 'fa-clipboard-list', 'ot.checklist.index', ['ot.checklist.*']);
+            }
             if ($this->hasModule($tenant, 'ot.pac') && $user->can('view surgeries')) {
                 $items[] = $this->item('PAC Requests', 'fa-clipboard-check', 'ot.pac.index', ['ot.pac.*']);
             }

@@ -1,45 +1,11 @@
 <?php
 
-use App\Models\Tenant;
-use App\Models\User;
-use Spatie\Permission\Models\Permission;
-
 beforeEach(function () {
     $this->withoutMiddleware([
         \App\Http\Middleware\EnsureTenantActive::class,
         \App\Http\Middleware\SetTenantTimezone::class,
     ]);
 });
-
-function otCatalogTenant(array $modules): Tenant
-{
-    $tenant = Mockery::mock(Tenant::class)->makePartial();
-    $tenant->id = 1;
-    $tenant->status = 'active';
-    $tenant->shouldReceive('hasModule')
-        ->andReturnUsing(fn (string $module) => in_array($module, $modules, true));
-
-    app()->instance(config('multitenancy.current_tenant_container_key'), $tenant);
-
-    return $tenant;
-}
-
-function otCatalogUser(array $permissions): User
-{
-    foreach ($permissions as $permission) {
-        Permission::findOrCreate($permission, 'web');
-    }
-
-    $user = User::create([
-        'name' => 'OT Catalog User',
-        'email' => 'ot-catalog-'.uniqid().'@example.com',
-        'password' => bcrypt('password'),
-        'email_verified_at' => now(),
-    ]);
-    $user->givePermissionTo($permissions);
-
-    return $user;
-}
 
 it('hides the ot group when the module is on but the user has no ot item permissions', function () {
     $labels = collect(app(\App\Services\SidebarService::class)->build(

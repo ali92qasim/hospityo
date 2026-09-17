@@ -11,6 +11,22 @@ use Illuminate\Support\Facades\Log;
 
 class SurgicalChecklistController extends Controller
 {
+    public function index()
+    {
+        $surgeries = Surgery::with(['patient', 'doctor', 'surgicalChecklist'])
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->where(function ($query) {
+                $query->whereDoesntHave('surgicalChecklist')
+                    ->orWhereHas('surgicalChecklist', function ($checklist) {
+                        $checklist->where('status', '!=', 'completed');
+                    });
+            })
+            ->latest('scheduled_date')
+            ->paginate(20);
+
+        return view('admin.ot.checklist.index', compact('surgeries'));
+    }
+
     /**
      * Show checklist for a surgery. Creates one if it doesn't exist.
      */

@@ -951,6 +951,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('permission:manage surgical checklists')->group(function () {
             // Surgical Safety Checklist
+            Route::get('checklist', [SurgicalChecklistController::class, 'index'])->name('checklist.index');
             Route::get('checklist/{surgery}', [SurgicalChecklistController::class, 'show'])->name('checklist.show');
             Route::post('checklist/item/{item}/toggle', [SurgicalChecklistController::class, 'toggleItem'])->name('checklist.toggle-item');
             Route::post('checklist/{checklist}/complete-phase', [SurgicalChecklistController::class, 'completePhase'])->name('checklist.complete-phase');
