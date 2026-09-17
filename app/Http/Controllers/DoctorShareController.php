@@ -481,12 +481,15 @@ class DoctorShareController extends Controller
             ->get();
 
         // Attach total_collected from allocations for each doctor in the summary
-        $summary = $summaryRows->map(function ($row) {
+        $summary = $summaryRows->map(function ($row) use ($baseQuery) {
             $collected = DB::connection('tenant')
                 ->table('doctor_share_allocations')
                 ->whereIn(
                     'doctor_share_item_id',
-                    DoctorShareItem::where('doctor_id', $row->doctor_id)->select('id')
+                    (clone $baseQuery)
+                        ->reorder()
+                        ->where('doctor_id', $row->doctor_id)
+                        ->select('doctor_share_items.id')
                 )
                 ->sum('amount');
 
