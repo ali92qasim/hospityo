@@ -499,9 +499,11 @@ class DoctorShareController extends Controller
         });
 
         // Detail list
+        $detailQuery = (clone $baseQuery)->withSum('allocations', 'amount');
+
         $details = $paginate
-            ? (clone $baseQuery)->paginate(25)->withQueryString()
-            : (clone $baseQuery)->get();
+            ? $detailQuery->paginate(25)->withQueryString()
+            : $detailQuery->get();
 
         return [$summary, $details, $doctors];
     }
