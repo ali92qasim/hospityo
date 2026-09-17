@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\DoctorShareRateMigrator;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -22,6 +23,8 @@ return new class extends Migration
                 'dsr_rates_doctor_category_unique'
             );
         });
+
+        DoctorShareRateMigrator::copyFromLegacyRules();
     }
 
     public function down(): void
