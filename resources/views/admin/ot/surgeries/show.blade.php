@@ -107,6 +107,7 @@
                     @endif
                 </div>
             </div>
+            @can('manage pac')
             <div>
                 @if($surgery->pacCheckup)
                     <a href="{{ route('ot.pac.show', $surgery->pacCheckup) }}" class="text-sm text-medical-blue hover:text-blue-700">
@@ -118,6 +119,7 @@
                     </a>
                 @endif
             </div>
+            @endcan
         </div>
     </div>
 

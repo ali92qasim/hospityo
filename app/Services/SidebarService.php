@@ -106,7 +106,7 @@ class SidebarService
             if ($this->hasModule($tenant, 'ot.checklist') && $user->can('manage surgical checklists')) {
                 $items[] = $this->item('Checklist', 'fa-clipboard-list', 'ot.checklist.index', ['ot.checklist.*']);
             }
-            if ($this->hasModule($tenant, 'ot.pac') && $user->can('view surgeries')) {
+            if ($this->hasModule($tenant, 'ot.pac') && $user->can('manage pac')) {
                 $items[] = $this->item('PAC Requests', 'fa-clipboard-check', 'ot.pac.index', ['ot.pac.*']);
             }
             if ($this->hasModule($tenant, 'ot.consumables') && $user->can('manage ot consumables')) {

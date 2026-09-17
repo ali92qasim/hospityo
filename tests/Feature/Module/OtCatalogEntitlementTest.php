@@ -32,7 +32,7 @@ it('shows theatres without showing inventory when user only has view surgeries',
         otCatalogTenant(['ot', ...\App\Models\ModuleRegistry::OT_CHILD_SLUGS])
     ))->firstWhere('id', 'ot');
 
-    expect(collect($group['items'])->pluck('label')->all())->toBe(['Theatres', 'Surgeries', 'PAC Requests']);
+    expect(collect($group['items'])->pluck('label')->all())->toBe(['Theatres', 'Surgeries']);
 });
 
 it('forbids consumables index without manage ot consumables even with view surgeries', function () {
@@ -56,9 +56,25 @@ it('allows sterilization index with manage sterilization without view surgeries'
     $this->get(route('ot.sterilization.index'))->assertOk();
 });
 
-it('still allows pac index with view surgeries before the pac route split', function () {
+it('forbids pac index with only view surgeries after the pac route split', function () {
     otCatalogTenant(['ot', 'ot.pac']);
     $this->actingAs(otCatalogUser(['view surgeries']));
 
+    $this->get(route('ot.pac.index'))->assertForbidden();
+});
+
+it('allows pac index with manage pac and the child slug', function () {
+    otCatalogTenant(['ot', 'ot.pac']);
+    $this->actingAs(otCatalogUser(['manage pac']));
+
     $this->get(route('ot.pac.index'))->assertOk();
+});
+
+it('hides pac requests from the sidebar when the user only has view surgeries', function () {
+    $group = collect(app(\App\Services\SidebarService::class)->build(
+        otCatalogUser(['view surgeries']),
+        otCatalogTenant(['ot', ...\App\Models\ModuleRegistry::OT_CHILD_SLUGS])
+    ))->firstWhere('id', 'ot');
+
+    expect(collect($group['items'])->pluck('label')->all())->toBe(['Theatres', 'Surgeries']);
 });

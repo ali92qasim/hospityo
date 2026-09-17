@@ -930,15 +930,6 @@ Route::middleware('auth')->group(function () {
             Route::post('surgeries/{surgery}/cancel', [OTController::class, 'cancel'])->name('surgeries.cancel');
             Route::post('surgeries/{surgery}/postpone', [OTController::class, 'postpone'])->name('surgeries.postpone');
 
-            // Pre-Anaesthesia Checkup (PAC)
-            Route::get('pac', [PacController::class, 'index'])->name('pac.index');
-            Route::get('pac/create/{surgery}', [PacController::class, 'create'])->name('pac.create');
-            Route::post('pac/{surgery}', [PacController::class, 'store'])->name('pac.store');
-            Route::get('pac/{pac}', [PacController::class, 'show'])->name('pac.show');
-            Route::post('pac/{pac}/clear', [PacController::class, 'clear'])->name('pac.clear');
-            Route::post('pac/{pac}/decline', [PacController::class, 'decline'])->name('pac.decline');
-            Route::post('pac/{pac}/further-eval', [PacController::class, 'requireFurtherEval'])->name('pac.further-eval');
-
             // Intra-operative & Post-operative Monitoring
             Route::get('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'anaesthesiaForm'])->name('monitoring.anaesthesia');
             Route::post('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'storeAnaesthesia'])->name('monitoring.store-anaesthesia');
@@ -947,6 +938,17 @@ Route::middleware('auth')->group(function () {
             Route::get('surgeries/{surgery}/vitals-data', [OperativeMonitoringController::class, 'vitalsData'])->name('monitoring.vitals-data');
             Route::get('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'postOpForm'])->name('monitoring.post-op');
             Route::post('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'storePostOp'])->name('monitoring.store-post-op');
+        });
+
+        Route::middleware('permission:manage pac')->group(function () {
+            // Pre-Anaesthesia Checkup (PAC)
+            Route::get('pac', [PacController::class, 'index'])->name('pac.index');
+            Route::get('pac/create/{surgery}', [PacController::class, 'create'])->name('pac.create');
+            Route::post('pac/{surgery}', [PacController::class, 'store'])->name('pac.store');
+            Route::get('pac/{pac}', [PacController::class, 'show'])->name('pac.show');
+            Route::post('pac/{pac}/clear', [PacController::class, 'clear'])->name('pac.clear');
+            Route::post('pac/{pac}/decline', [PacController::class, 'decline'])->name('pac.decline');
+            Route::post('pac/{pac}/further-eval', [PacController::class, 'requireFurtherEval'])->name('pac.further-eval');
         });
 
         Route::middleware('permission:manage surgical checklists')->group(function () {
