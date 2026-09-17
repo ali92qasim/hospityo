@@ -254,6 +254,7 @@ class RolePermissionSeeder extends Seeder
         'create surgeries',
         'edit surgeries',
         'delete surgeries',
+        'manage pac',
 
         // ── Audit ─────────────────────────────────────────────────────────────
         'view audit logs',
@@ -377,6 +378,7 @@ class RolePermissionSeeder extends Seeder
             'manage surgical checklists',
             'manage ot consumables',
             'manage sterilization',
+            'manage pac',
         ],
         'Doctor' => [
             'view patients', 'edit patients',

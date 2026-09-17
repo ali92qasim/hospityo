@@ -492,12 +492,35 @@ class PermissionRegistry
                     'edit surgeries',
                     'delete surgeries',
                 ],
+            ],
+        ],
+        'ot.pac' => [
+            'label' => 'Pre-Anesthesia Checkup',
+            'groups' => [
+                'pac' => [
+                    'manage pac',
+                ],
+            ],
+        ],
+        'ot.checklist' => [
+            'label' => 'OT Checklists',
+            'groups' => [
                 'surgical checklists' => [
                     'manage surgical checklists',
                 ],
+            ],
+        ],
+        'ot.consumables' => [
+            'label' => 'OT Consumables',
+            'groups' => [
                 'ot consumables' => [
                     'manage ot consumables',
                 ],
+            ],
+        ],
+        'ot.sterilization' => [
+            'label' => 'Sterilization',
+            'groups' => [
                 'sterilization' => [
                     'manage sterilization',
                 ],

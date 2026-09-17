@@ -76,3 +76,16 @@ it('splits hr permissions onto catalog children and keeps view hr on each', func
     expect($flat)->toBe(array_values(array_unique($flat)))
         ->and($flat)->toContain('view hr');
 });
+
+it('splits ot permissions onto catalog children including manage pac', function () {
+    expect(PermissionRegistry::forModule('ot'))->toEqualCanonicalizing([
+            'view surgeries', 'create surgeries', 'edit surgeries', 'delete surgeries',
+        ])
+        ->and(PermissionRegistry::forModule('ot.pac'))->toBe(['manage pac'])
+        ->and(PermissionRegistry::forModule('ot.checklist'))->toBe(['manage surgical checklists'])
+        ->and(PermissionRegistry::forModule('ot.consumables'))->toBe(['manage ot consumables'])
+        ->and(PermissionRegistry::forModule('ot.sterilization'))->toBe(['manage sterilization']);
+
+    expect(PermissionRegistry::flat())->toContain('manage pac')
+        ->and(PermissionRegistry::flat())->toBe(array_values(array_unique(PermissionRegistry::flat())));
+});
