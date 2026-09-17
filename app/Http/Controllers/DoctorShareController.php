@@ -64,6 +64,22 @@ class DoctorShareController extends Controller
      */
     public function ratesSync(Request $request): RedirectResponse
     {
+        $entitledCategories = array_keys($this->entitledRateCategoryOptions());
+        foreach ((array) $request->input('doctors', []) as $doctor) {
+            if (! is_array($doctor)) {
+                continue;
+            }
+
+            foreach (DoctorShareRate::CATEGORIES as $category) {
+                if (! in_array($category, $entitledCategories, true)
+                    && array_key_exists($category, $doctor)
+                    && $doctor[$category] !== null
+                    && $doctor[$category] !== '') {
+                    abort(403);
+                }
+            }
+        }
+
         $categoryRules = collect(DoctorShareRate::CATEGORIES)
             ->mapWithKeys(fn ($category) => [
                 "doctors.*.{$category}" => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -81,18 +97,6 @@ class DoctorShareController extends Controller
             ],
             ...$categoryRules,
         ]);
-
-        $entitledCategories = array_keys($this->entitledRateCategoryOptions());
-        foreach ($validated['doctors'] as $doctor) {
-            foreach (DoctorShareRate::CATEGORIES as $category) {
-                if (! in_array($category, $entitledCategories, true)
-                    && array_key_exists($category, $doctor)
-                    && $doctor[$category] !== null
-                    && $doctor[$category] !== '') {
-                    abort(403);
-                }
-            }
-        }
 
         DB::connection('tenant')->transaction(function () use ($validated, $entitledCategories) {
             DoctorShareRate::query()->delete();

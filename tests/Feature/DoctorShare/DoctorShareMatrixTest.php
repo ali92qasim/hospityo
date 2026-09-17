@@ -144,6 +144,19 @@ it('rejects a value for an unentitled category', function () {
     expect(DoctorShareRate::query()->count())->toBe(0);
 });
 
+it('rejects a non-numeric value for an unentitled category before validation', function () {
+    bindMatrixTenant(['settings', 'settings.doctor-share']);
+
+    $this->putJson(route('doctor-share.rates.sync'), [
+        'doctors' => [[
+            'doctor_id' => $this->doctor->id,
+            'lab' => 'abc',
+        ]],
+    ])->assertForbidden();
+
+    expect(DoctorShareRate::query()->count())->toBe(0);
+});
+
 it('shows only entitled category columns and maps missing rates to null', function () {
     bindMatrixTenant(['settings', 'settings.doctor-share', 'visits']);
     DoctorShareRate::create([
