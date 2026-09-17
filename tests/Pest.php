@@ -31,7 +31,7 @@ uses()
             '--database' => 'tenant',
         ]);
     })
-        ->in('Feature/Accounting', 'Feature/HR', 'Feature/OT', 'Feature/Billing', 'Feature/Lab', 'Feature/Imaging', 'Feature/Pharmacy', 'Feature/Visits', 'Feature/Doctors', 'Feature/Patients', 'Feature/Appointments', 'Feature/Navigation', 'Feature/Module', 'Feature/Permissions', 'Feature/Commands', 'Feature/Backup', 'Feature/Settings', 'Feature/Flash', 'Unit/Services');
+        ->in('Feature/Accounting', 'Feature/DoctorShare', 'Feature/HR', 'Feature/OT', 'Feature/Billing', 'Feature/Lab', 'Feature/Imaging', 'Feature/Pharmacy', 'Feature/Visits', 'Feature/Doctors', 'Feature/Patients', 'Feature/Appointments', 'Feature/Navigation', 'Feature/Module', 'Feature/Permissions', 'Feature/Commands', 'Feature/Backup', 'Feature/Settings', 'Feature/Flash', 'Unit/Services');
 
 /*
 |--------------------------------------------------------------------------
@@ -74,6 +74,26 @@ function otCatalogTenant(array $modules): Tenant
     app()->instance(config('multitenancy.current_tenant_container_key'), $tenant);
 
     return $tenant;
+}
+
+function fingerprintDoctorShareHistory(): string
+{
+    $tables = [
+        'doctor_share_items',
+        'doctor_share_allocations',
+        'doctor_share_settlements',
+        'doctor_share_rules',
+        'doctor_share_rule_service',
+    ];
+
+    $payload = [];
+    foreach ($tables as $table) {
+        $payload[$table] = Illuminate\Support\Facades\DB::connection('tenant')->table($table)->orderBy('id')->get()
+            ->map(fn ($row) => (array) $row)
+            ->all();
+    }
+
+    return hash('sha256', json_encode($payload));
 }
 
 function otCatalogUser(array $permissions): User
