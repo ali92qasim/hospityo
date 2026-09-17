@@ -145,6 +145,7 @@
                                   class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent text-sm">{{ old('message') }}</textarea>
                         @error('message')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
+                    @include('partials.recaptcha')
                     <button type="submit" class="w-full bg-medical-blue text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                         <i class="fas fa-paper-plane mr-2"></i>Send Message
                     </button>

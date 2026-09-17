@@ -227,6 +227,7 @@ class BackupService
                 'email' => $row['email'],
                 'tenant_id' => $current->id,
                 'login_token' => $row['login_token'] ?? null,
+                'login_remember' => (bool) ($row['login_remember'] ?? false),
             ]);
         }
 

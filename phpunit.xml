@@ -33,5 +33,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="RECAPTCHA_SITE_KEY" value="test-site-key"/>
+        <env name="RECAPTCHA_SECRET_KEY" value="test-secret-key"/>
     </php>
 </phpunit>

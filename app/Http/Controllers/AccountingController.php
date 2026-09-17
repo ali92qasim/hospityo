@@ -109,7 +109,7 @@ class AccountingController extends Controller
         if ($accountId) {
             $account = Account::find($accountId);
             $entries = \App\Models\JournalEntryLine::where('account_id', $accountId)
-                ->whereHas('journalEntry', fn($q) => $q->whereBetween('entry_date', [$from, $to]))
+                ->whereHas('journalEntry', fn ($q) => $q->whereDate('entry_date', '>=', $from)->whereDate('entry_date', '<=', $to))
                 ->with('journalEntry')
                 ->orderBy('created_at')
                 ->get();
@@ -355,28 +355,37 @@ class AccountingController extends Controller
             'description'     => 'required|string|max:500',
         ]);
 
+        $fromAccount = Account::findOrFail($request->from_account_id);
+        $toAccount = Account::findOrFail($request->to_account_id);
+        $isExpenseReclass = $fromAccount->type === 'expense' && $toAccount->type === 'expense';
+
         try {
-            \Illuminate\Support\Facades\DB::connection('tenant')->transaction(function () use ($request) {
+            \Illuminate\Support\Facades\DB::connection('tenant')->transaction(function () use ($request, $fromAccount, $toAccount, $isExpenseReclass) {
                 $entry = JournalEntry::create([
-                    'entry_date'  => $request->date,
-                    'description' => $request->description,
-                    'created_by'  => auth()->id(),
-                    'is_auto'     => false,
-                    'entry_type'  => 'original',
+                    'entry_date'     => $request->date,
+                    'description'    => $request->description,
+                    'reference_type' => $isExpenseReclass ? 'ExpenseReclassification' : 'Transfer',
+                    'created_by'     => auth()->id(),
+                    'is_auto'        => false,
+                    'entry_type'     => 'original',
                 ]);
 
                 $entry->lines()->create([
-                    'account_id' => $request->to_account_id,
+                    'account_id' => $toAccount->id,
                     'debit'      => $request->amount,
                     'credit'     => 0,
-                    'narration'  => 'Funds received (transfer)',
+                    'narration'  => $isExpenseReclass
+                        ? 'Reclassified from '.$fromAccount->name
+                        : 'Funds received (transfer)',
                 ]);
 
                 $entry->lines()->create([
-                    'account_id' => $request->from_account_id,
+                    'account_id' => $fromAccount->id,
                     'debit'      => 0,
                     'credit'     => $request->amount,
-                    'narration'  => 'Funds sent (transfer)',
+                    'narration'  => $isExpenseReclass
+                        ? 'Reclassified to '.$toAccount->name
+                        : 'Funds sent (transfer)',
                 ]);
             });
         } catch (\Throwable $e) {

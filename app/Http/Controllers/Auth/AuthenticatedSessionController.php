@@ -49,8 +49,12 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'Invalid or expired login link.']);
         }
 
-        // Clear the token (one-time use)
-        $mapping->update(['login_token' => null]);
+        $remember = (bool) $mapping->login_remember;
+
+        $mapping->update([
+            'login_token' => null,
+            'login_remember' => false,
+        ]);
 
         // Find and authenticate the user
         $user = \App\Models\User::where('email', $email)->first();
@@ -58,7 +62,7 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'User not found.']);
         }
 
-        Auth::login($user, true);
+        Auth::login($user, $remember);
         $request->session()->regenerate();
         $request->session()->put('tenant_id', $tenant->id);
 

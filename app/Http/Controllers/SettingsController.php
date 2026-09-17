@@ -44,13 +44,14 @@ class SettingsController extends Controller
         // Store other settings — persisted in DB, cached for performance
         $settingKeys = [
             'hospital_name', 'hospital_address', 'hospital_phone',
-            'hospital_email', 'currency', 'timezone',
+            'hospital_email', 'phc_registration_number', 'currency', 'timezone',
             'date_format', 'time_format',
         ];
 
         foreach ($settingKeys as $key) {
-            if ($request->has($key)) {
-                Setting::set($key, $request->input($key));
+            if ($request->exists($key)) {
+                $value = $request->input($key);
+                Setting::set($key, $value === '' || $value === null ? null : $value);
             }
         }
 

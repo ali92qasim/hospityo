@@ -41,6 +41,13 @@ function shouldEnhanceInput(input) {
         return false;
     }
 
+    // FilePond inserts a named file input into .filepond--data so the form can
+    // submit the selected file. Re-enhancing that input nests a second pond and
+    // the original field is submitted empty.
+    if (input.closest('.filepond--root')) {
+        return false;
+    }
+
     if (input.hasAttribute('data-native-file-input') || input.hasAttribute('onchange')) {
         return false;
     }

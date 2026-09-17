@@ -10,7 +10,7 @@
         : (($visit->prescriptions->isNotEmpty() ?? false) ? 'done' : ($initialSection === 'prescription' ? 'next' : 'idle'));
     $testsState = ! ($workflowData['can_order_labs'] ?? false)
         ? 'locked'
-        : ($initialSection === 'tests' ? 'next' : 'idle');
+        : (in_array($initialSection, ['tests', 'lab', 'imaging'], true) ? 'next' : 'idle');
 @endphp
 
 <div id="visit-workflow" data-workflow-layout="opd" data-landmark="opd-workflow-layout" class="max-w-4xl mx-auto">
@@ -60,18 +60,33 @@
             </x-workflow-accordion-section>
             @endif
 
-            @if($workflowData['show_investigations'])
+            @if($workflowData['show_lab_investigations'] ?? false)
                 <x-workflow-accordion-section
-                    id="tests"
-                    title="Order Investigations"
+                    id="lab"
+                    title="Lab Tests"
                     icon="fa-flask"
                     icon-color="text-teal-600"
                     :state="$testsState"
                     state-label="Assign doctor first"
-                    :open="$initialSection === 'tests'"
+                    :open="in_array($initialSection, ['tests', 'lab'], true)"
                     :disabled="! ($workflowData['can_order_labs'] ?? false)"
                 >
-                    @include('admin.visits.workflow.opd._investigations')
+                    @include('admin.visits.workflow.opd._investigations', ['catalog' => 'lab'])
+                </x-workflow-accordion-section>
+            @endif
+
+            @if($workflowData['show_imaging_investigations'] ?? false)
+                <x-workflow-accordion-section
+                    id="imaging"
+                    title="Imaging"
+                    icon="fa-x-ray"
+                    icon-color="text-indigo-500"
+                    :state="$testsState"
+                    state-label="Assign doctor first"
+                    :open="$initialSection === 'imaging'"
+                    :disabled="! ($workflowData['can_order_labs'] ?? false)"
+                >
+                    @include('admin.visits.workflow.opd._investigations', ['catalog' => 'imaging'])
                 </x-workflow-accordion-section>
             @endif
         </div>

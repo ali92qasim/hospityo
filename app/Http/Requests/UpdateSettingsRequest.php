@@ -18,6 +18,7 @@ class UpdateSettingsRequest extends FormRequest
             'hospital_address' => 'required|string',
             'hospital_phone' => 'required|string|max:20',
             'hospital_email' => 'required|email|max:255',
+            'phc_registration_number' => 'nullable|string|max:100',
             'hospital_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'currency' => 'required|string|max:10',
             'timezone' => 'required|timezone',

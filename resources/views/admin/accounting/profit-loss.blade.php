@@ -32,7 +32,11 @@
                 <tbody>
                     @foreach($revenue as $item)
                     <tr class="hover:bg-gray-50">
-                        <td class="py-2 text-sm text-gray-700 pl-4">{{ $item['account']->code }} — {{ $item['account']->name }}</td>
+                        <td class="py-2 text-sm text-gray-700 pl-4">
+                            <a href="{{ route('accounting.general-ledger', ['account_id' => $item['account']->id, 'from' => $from, 'to' => $to]) }}" class="text-medical-blue hover:underline">
+                                {{ $item['account']->code }} — {{ $item['account']->name }}
+                            </a>
+                        </td>
                         <td class="py-2 text-sm text-right text-gray-900 pr-4">{{ format_currency($item['balance']) }}</td>
                     </tr>
                     @endforeach
@@ -53,7 +57,11 @@
                 <tbody>
                     @foreach($expenses as $item)
                     <tr class="hover:bg-gray-50">
-                        <td class="py-2 text-sm text-gray-700 pl-4">{{ $item['account']->code }} — {{ $item['account']->name }}</td>
+                        <td class="py-2 text-sm text-gray-700 pl-4">
+                            <a href="{{ route('accounting.general-ledger', ['account_id' => $item['account']->id, 'from' => $from, 'to' => $to]) }}" class="text-medical-blue hover:underline">
+                                {{ $item['account']->code }} — {{ $item['account']->name }}
+                            </a>
+                        </td>
                         <td class="py-2 text-sm text-right text-gray-900 pr-4">{{ format_currency($item['balance']) }}</td>
                     </tr>
                     @endforeach

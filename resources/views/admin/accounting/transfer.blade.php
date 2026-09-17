@@ -8,7 +8,7 @@
     <div class="bg-white rounded-lg shadow-sm">
         <div class="p-4 sm:p-6 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-800">Funds Transfer</h3>
-            <p class="text-sm text-gray-500 mt-1">Transfer funds between two accounts.</p>
+            <p class="text-sm text-gray-500 mt-1">Move amounts between two accounts. Expense-to-expense moves reclassify costs; they do not change cash.</p>
         </div>
 
         @if(session('error'))

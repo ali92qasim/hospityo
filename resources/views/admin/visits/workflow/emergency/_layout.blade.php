@@ -11,6 +11,11 @@
     $prescriptionState = $careDisabled || ! ($workflowData['can_prescribe'] ?? false)
         ? 'locked'
         : ($initialSection === 'prescription' ? 'next' : 'idle');
+    $testsState = $careDisabled || ! ($workflowData['can_order_labs'] ?? false)
+        ? 'locked'
+        : (in_array($initialSection, ['tests', 'lab', 'imaging'], true) ? 'next' : 'idle');
+    $labsLockLabel = $careDisabled ? 'Complete triage first' : 'Assign doctor first';
+    $labsDisabled = $careDisabled || ! ($workflowData['can_order_labs'] ?? false);
 @endphp
 
 <div id="visit-workflow" data-workflow-layout="emergency" data-landmark="emergency-workflow-layout" class="max-w-4xl mx-auto">
@@ -65,6 +70,36 @@
             >
                 @include('admin.visits.workflow._shared._prescription-panel')
             </x-workflow-accordion-section>
+            @endif
+
+            @if($workflowData['show_lab_investigations'] ?? false)
+                <x-workflow-accordion-section
+                    id="lab"
+                    title="Lab Tests"
+                    icon="fa-flask"
+                    icon-color="text-teal-600"
+                    :state="$testsState"
+                    :state-label="$labsLockLabel"
+                    :open="! $careDisabled && in_array($initialSection, ['tests', 'lab'], true)"
+                    :disabled="$labsDisabled"
+                >
+                    @include('admin.visits.workflow.opd._investigations', ['catalog' => 'lab'])
+                </x-workflow-accordion-section>
+            @endif
+
+            @if($workflowData['show_imaging_investigations'] ?? false)
+                <x-workflow-accordion-section
+                    id="imaging"
+                    title="Imaging"
+                    icon="fa-x-ray"
+                    icon-color="text-indigo-500"
+                    :state="$testsState"
+                    :state-label="$labsLockLabel"
+                    :open="! $careDisabled && $initialSection === 'imaging'"
+                    :disabled="$labsDisabled"
+                >
+                    @include('admin.visits.workflow.opd._investigations', ['catalog' => 'imaging'])
+                </x-workflow-accordion-section>
             @endif
         </div>
 

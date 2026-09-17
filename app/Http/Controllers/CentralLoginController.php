@@ -26,6 +26,7 @@ class CentralLoginController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'remember' => 'sometimes|boolean',
         ]);
 
         $email = strtolower($request->email);
@@ -61,7 +62,11 @@ class CentralLoginController extends Controller
             DB::connection('landlord')->table('tenant_users')
                 ->where('email', $email)
                 ->where('tenant_id', $tenant->id)
-                ->update(['login_token' => $token, 'updated_at' => now()]);
+                ->update([
+                    'login_token' => $token,
+                    'login_remember' => $request->boolean('remember'),
+                    'updated_at' => now(),
+                ]);
 
             return redirect($tenantUrl . '?token=' . $token . '&email=' . urlencode($email));
 

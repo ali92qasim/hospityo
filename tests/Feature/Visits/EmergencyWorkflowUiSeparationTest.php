@@ -103,6 +103,75 @@ it('renders emergency workflow with handler-driven ui flags', function () {
         ->assertDontSee('Back to OPD', false);
 });
 
+it('splits emergency investigations into lab tests and imaging tabs with results below each form', function () {
+    config(['visits.dual_write_enabled' => false, 'visits.read_from_child.emergency' => true]);
+
+    $department = Department::create(['name' => 'Emergency', 'code' => 'EMR-LAB', 'status' => 'active']);
+
+    $doctor = Doctor::create([
+        'name' => 'Dr. EMR Lab',
+        'doctor_no' => 'DOC-EMR-LAB',
+        'department_id' => $department->id,
+        'specialization' => 'Emergency Medicine',
+        'qualification' => 'MBBS',
+        'phone' => '03006660024',
+        'email' => 'dr-emr-lab@example.com',
+        'gender' => 'male',
+        'experience_years' => 10,
+        'consultation_fee' => 2500,
+        'shift_start' => '08:00:00',
+        'shift_end' => '20:00:00',
+        'status' => 'active',
+    ]);
+
+    $visit = Visit::create([
+        'patient_id' => $this->patient->id,
+        'visit_type' => 'emergency',
+        'visit_datetime' => now(),
+        'status' => 'triaged',
+        'doctor_id' => $doctor->id,
+    ]);
+
+    EmergencyVisit::create(['visit_id' => $visit->id]);
+
+    Triage::create([
+        'visit_id' => $visit->id,
+        'priority_level' => 'critical',
+        'chief_complaint' => 'Severe trauma',
+        'pain_scale' => 9,
+        'triaged_by' => $this->user->id,
+        'triaged_at' => now(),
+    ]);
+
+    $html = $this->get(route('visits.workflow', $visit))->assertOk()->getContent();
+
+    expect($html)
+        ->toContain('data-workflow-section="lab"')
+        ->toContain('data-workflow-section="imaging"')
+        ->toContain('Lab Tests')
+        ->toContain('id="lab-tests-form"')
+        ->toContain('id="imaging-tests-form"')
+        ->toContain('Ordered lab tests')
+        ->toContain('Ordered imaging')
+        ->not->toContain('Order Investigations')
+        ->not->toContain('data-workflow-section="tests"')
+        ->not->toContain('Ordered Investigations');
+
+    $labContent = strpos($html, 'id="lab-content"');
+    $labForm = strpos($html, 'id="lab-tests-form"');
+    $labResults = strpos($html, 'Ordered lab tests');
+    $imagingContent = strpos($html, 'id="imaging-content"');
+    $imagingForm = strpos($html, 'id="imaging-tests-form"');
+    $imagingResults = strpos($html, 'Ordered imaging');
+
+    expect($labContent)->not->toBeFalse()
+        ->and($labForm)->toBeGreaterThan($labContent)
+        ->and($labResults)->toBeGreaterThan($labForm)
+        ->and($imagingContent)->toBeGreaterThan($labResults)
+        ->and($imagingForm)->toBeGreaterThan($imagingContent)
+        ->and($imagingResults)->toBeGreaterThan($imagingForm);
+});
+
 it('emergency handler exposes show_emergency_ui and triage flags', function () {
     config(['visits.dual_write_enabled' => false, 'visits.read_from_child.emergency' => true]);
 
@@ -119,7 +188,9 @@ it('emergency handler exposes show_emergency_ui and triage flags', function () {
     $data = $handler->workflowData($visit->fresh(['emergencyDetails', 'triage']));
 
     expect($data['show_emergency_ui'])->toBeTrue()
-        ->and($data['show_investigations'])->toBeFalse()
+        ->and($data['show_lab_investigations'])->toBeTrue()
+        ->and($data['show_imaging_investigations'])->toBeTrue()
+        ->and($data['show_investigations'])->toBeTrue()
         ->and($data['triage_completed'])->toBeFalse()
         ->and($handler->resolveInitialTab($visit))->toBe('triage');
 });

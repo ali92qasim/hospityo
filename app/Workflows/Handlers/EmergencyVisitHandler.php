@@ -46,9 +46,9 @@ class EmergencyVisitHandler implements VisitTypeHandler
         return [
             'steps' => $this->workflowSteps(),
             'default_tab' => 'triage',
-            'show_investigations' => false,
-            'show_lab_investigations' => false,
-            'show_imaging_investigations' => false,
+            'show_lab_investigations' => Tenant::currentHasModule('laboratory'),
+            'show_imaging_investigations' => Tenant::currentHasModule('imaging'),
+            'show_investigations' => Tenant::currentHasModule('laboratory') || Tenant::currentHasModule('imaging'),
             'show_prescriptions' => Tenant::currentHasModule('pharmacy'),
             'consultation_label' => 'Emergency Care',
             'show_opd_ui' => false,

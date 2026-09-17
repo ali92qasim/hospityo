@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Recaptcha;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RegisterTenantRequest extends FormRequest
@@ -21,6 +22,7 @@ class RegisterTenantRequest extends FormRequest
             'admin_name'     => ['required', 'string', 'max:255'],
             'admin_email'    => ['required', 'email', 'max:255'],
             'admin_password' => ['required', 'confirmed', 'min:8'],
+            'g-recaptcha-response' => ['required', new Recaptcha],
             'plan'           => [
                 'nullable',
                 'string',
@@ -41,6 +43,7 @@ class RegisterTenantRequest extends FormRequest
         return [
             'slug.regex'  => 'Subdomain must contain only lowercase letters, numbers, and hyphens.',
             'slug.unique' => 'This subdomain is already taken.',
+            'g-recaptcha-response.required' => 'Please confirm you are not a robot.',
         ];
     }
 }

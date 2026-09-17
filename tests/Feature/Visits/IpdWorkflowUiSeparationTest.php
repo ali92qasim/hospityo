@@ -3,6 +3,8 @@
 use App\Models\Admission;
 use App\Models\Bed;
 use App\Models\Department;
+use App\Models\Doctor;
+use App\Models\IpdCareTeam;
 use App\Models\IpdVisit;
 use App\Models\Patient;
 use App\Models\Ward;
@@ -183,22 +185,64 @@ it('splits ipd investigations into lab and imaging tabs after admission', functi
     ]);
 
     $visit = makeAdmittedIpdVisit('LABIMG');
+    $department = Department::where('code', 'MED-LABIMG')->first();
+    $doctor = Doctor::create([
+        'name' => 'Dr. IPD Lab',
+        'doctor_no' => 'DOC-IPD-LAB',
+        'department_id' => $department->id,
+        'specialization' => 'General',
+        'qualification' => 'MBBS',
+        'phone' => '03008881111',
+        'email' => 'dr-ipd-lab@example.com',
+        'gender' => 'male',
+        'experience_years' => 5,
+        'consultation_fee' => 1500,
+        'shift_start' => '09:00:00',
+        'shift_end' => '17:00:00',
+        'status' => 'active',
+    ]);
+    IpdCareTeam::create([
+        'visit_id' => $visit->id,
+        'doctor_id' => $doctor->id,
+        'is_primary' => true,
+        'added_at' => now(),
+        'added_by' => $this->user->id,
+    ]);
 
-    $html = $this->get(route('visits.workflow', $visit))->assertOk()->getContent();
+    $html = $this->get(route('visits.workflow', $visit->fresh()))->assertOk()->getContent();
 
     expect($html)
         ->toContain('data-workflow-section="lab"')
         ->toContain('data-workflow-section="imaging"')
         ->toContain('data-workflow-panel="lab"')
         ->toContain('data-workflow-panel="imaging"')
+        ->toContain('Lab Tests')
         ->toContain('id="gpe-content"')
         ->toContain('id="lab-tab"')
         ->toContain('id="imaging-tab"')
+        ->toContain('id="lab-tests-form"')
+        ->toContain('id="imaging-tests-form"')
+        ->toContain('Ordered lab tests')
+        ->toContain('Ordered imaging')
         ->not->toContain('Order Investigations')
         ->not->toContain('data-workflow-section="tests"')
         ->not->toContain('id="gpe-tab-content"')
         ->not->toContain('aria-label="Admission workflow"')
         ->not->toContain('role="tablist"');
+
+    $labContent = strpos($html, 'id="lab-content"');
+    $labForm = strpos($html, 'id="lab-tests-form"');
+    $labResults = strpos($html, 'Ordered lab tests');
+    $imagingContent = strpos($html, 'id="imaging-content"');
+    $imagingForm = strpos($html, 'id="imaging-tests-form"');
+    $imagingResults = strpos($html, 'Ordered imaging');
+
+    expect($labContent)->not->toBeFalse()
+        ->and($labForm)->toBeGreaterThan($labContent)
+        ->and($labResults)->toBeGreaterThan($labForm)
+        ->and($imagingContent)->toBeGreaterThan($labResults)
+        ->and($imagingForm)->toBeGreaterThan($imagingContent)
+        ->and($imagingResults)->toBeGreaterThan($imagingForm);
 
     expect(substr_count($html, "showTab('care-team')"))->toBe(1)
         ->and(substr_count($html, 'Manage Care Team'))->toBe(1);

@@ -342,13 +342,21 @@ it('gates opd and ipd investigation flags on laboratory and imaging modules', fu
         ->and($opdOn['show_investigations'])->toBeTrue();
 });
 
-it('keeps emergency investigations hidden even when laboratory is entitled', function () {
-    bindEntitlementTenant(['emergency', 'laboratory', 'imaging']);
+it('gates emergency investigation flags on laboratory and imaging modules', function () {
+    bindEntitlementTenant(['emergency']);
     $visit = entitlementOpdVisit(entitlementPatient());
     $visit->update(['visit_type' => 'emergency']);
 
     $data = (new EmergencyVisitHandler)->workflowData($visit);
-    expect($data['show_investigations'])->toBeFalse();
+    expect($data['show_lab_investigations'])->toBeFalse()
+        ->and($data['show_imaging_investigations'])->toBeFalse()
+        ->and($data['show_investigations'])->toBeFalse();
+
+    bindEntitlementTenant(['emergency', 'laboratory', 'imaging']);
+    $on = (new EmergencyVisitHandler)->workflowData($visit);
+    expect($on['show_lab_investigations'])->toBeTrue()
+        ->and($on['show_imaging_investigations'])->toBeTrue()
+        ->and($on['show_investigations'])->toBeTrue();
 });
 
 // ── 4. Visit prescriptions ───────────────────────────────────────────────────

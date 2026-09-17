@@ -17,8 +17,10 @@
         <input type="password" id="password" name="password"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent" required>
     </div>
-    <label class="flex items-center mb-6">
-        <input type="checkbox" name="remember" class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue">
+    <label for="remember" class="flex items-center mb-6">
+        <input type="checkbox" name="remember" id="remember" value="1"
+               class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue"
+               @checked(old('remember'))>
         <span class="ml-2 text-sm text-gray-600">Remember me</span>
     </label>
     <button type="submit" class="w-full bg-gray-900 text-white py-2.5 px-4 rounded-lg hover:bg-gray-800 transition-colors">

@@ -226,6 +226,8 @@
                     </label>
                 </div>
 
+                @include('partials.recaptcha')
+
                 <div class="flex gap-3">
                     <button type="button" onclick="goToStep(2)"
                             class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
@@ -340,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
         goToStep(1);
     @elseif($errors->has('hospital_name') || $errors->has('email'))
         goToStep(2);
-    @elseif($errors->has('plan'))
+    @elseif($errors->has('plan') || $errors->has('g-recaptcha-response'))
         goToStep(3);
     @endif
 });

@@ -47,6 +47,20 @@ class JournalEntry extends Model
         return round($this->lines->sum('debit'), 2) === round($this->lines->sum('credit'), 2);
     }
 
+    /**
+     * True when every line is an expense account (a reclassification, not cash movement).
+     */
+    public function isExpenseReclassification(): bool
+    {
+        $this->loadMissing('lines.account');
+
+        $types = $this->lines
+            ->map(fn (JournalEntryLine $line) => $line->account?->type)
+            ->filter();
+
+        return $types->count() >= 2 && $types->every(fn (?string $type) => $type === 'expense');
+    }
+
     protected static function boot(): void
     {
         parent::boot();

@@ -72,7 +72,7 @@
             @if($workflowData['show_lab_investigations'] ?? false)
                 <x-workflow-accordion-section
                     id="lab"
-                    title="Lab"
+                    title="Lab Tests"
                     icon="fa-flask"
                     icon-color="text-teal-600"
                     :state="$testsState"

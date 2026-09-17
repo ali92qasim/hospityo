@@ -75,6 +75,15 @@
                     </div>
                 </div>
 
+                <div class="mt-4">
+                    <label for="remember" class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="remember" id="remember" value="1"
+                               class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue"
+                               @checked(old('remember'))>
+                        <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                    </label>
+                </div>
+
                 <button type="submit"
                         class="w-full mt-6 bg-medical-blue text-white py-3 rounded-xl hover:bg-blue-700 transition-colors text-sm font-semibold shadow-lg shadow-blue-200/50">
                     <i class="fas fa-sign-in-alt mr-2"></i>Sign In

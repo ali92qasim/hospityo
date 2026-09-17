@@ -96,7 +96,7 @@
         @if($workflowData['show_lab_investigations'] ?? false)
             @include('admin.visits.workflow.ipd._nav-button', [
                 'id' => 'lab',
-                'label' => 'Lab',
+                'label' => 'Lab Tests',
                 'icon' => 'fa-flask',
                 'iconColor' => 'text-teal-600',
                 'access' => $workflowData['tab_access']['lab'] ?? ['unlocked' => false, 'lock_reason' => 'Complete the previous step first.'],

@@ -1,5 +1,11 @@
 .filepond--root {
     font-family: inherit;
+    width: 100%;
+    min-width: 12rem;
+    /* FilePond copies native input utility classes onto its root. */
+    padding: 0;
+    border: 0;
+    background: transparent;
 }
 
 .filepond--panel-root {

@@ -10,7 +10,7 @@
 
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">Hospital Logo</label>
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center gap-6">
                 <div class="shrink-0">
                     @if(setting('hospital_logo', ''))
                         <img class="h-16 w-16 object-cover rounded-lg" src="{{ asset('storage/' . setting('hospital_logo', '')) }}" alt="Hospital Logo">
@@ -20,11 +20,9 @@
                         </div>
                     @endif
                 </div>
-                <label class="block">
-                    <span class="sr-only">Choose logo</span>
-                    <input type="file" name="hospital_logo" accept="image/*"
-                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-medical-blue file:text-white hover:file:bg-blue-700">
-                </label>
+                <div class="min-w-0 flex-1">
+                    <input type="file" name="hospital_logo" accept="image/*" aria-label="Hospital logo">
+                </div>
             </div>
             @error('hospital_logo')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -39,6 +37,22 @@
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                        required>
                 @error('hospital_name')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="md:col-span-2">
+                <label for="phc_registration_number" class="block text-sm font-medium text-gray-700 mb-2">
+                    PHC Registration Number
+                    <span class="ml-1 text-xs font-normal text-gray-500">optional</span>
+                </label>
+                <input type="text" id="phc_registration_number" name="phc_registration_number"
+                       value="{{ old('phc_registration_number', setting('phc_registration_number', '')) }}"
+                       maxlength="100"
+                       autocomplete="off"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                <p class="mt-1 text-xs text-gray-500">Punjab Healthcare Commission. Leave blank if the hospital is not registered.</p>
+                @error('phc_registration_number')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>

@@ -38,8 +38,10 @@
     </div>
 
     <div class="flex items-center justify-between mb-6">
-        <label class="flex items-center">
-            <input type="checkbox" name="remember" class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue">
+    <label for="remember" class="flex items-center">
+            <input type="checkbox" name="remember" id="remember" value="1"
+                   class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue"
+                   @checked(old('remember'))>
             <span class="ml-2 text-sm text-gray-600">Remember me</span>
         </label>
         <a href="{{ route('password.request') }}" class="text-sm text-medical-blue hover:text-blue-700">

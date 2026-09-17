@@ -49,8 +49,12 @@ class Account extends Model
     public function getBalance(?string $from = null, ?string $to = null): float
     {
         $query = $this->journalLines();
-        if ($from) $query->whereHas('journalEntry', fn($q) => $q->where('entry_date', '>=', $from));
-        if ($to) $query->whereHas('journalEntry', fn($q) => $q->where('entry_date', '<=', $to));
+        if ($from) {
+            $query->whereHas('journalEntry', fn ($q) => $q->whereDate('entry_date', '>=', $from));
+        }
+        if ($to) {
+            $query->whereHas('journalEntry', fn ($q) => $q->whereDate('entry_date', '<=', $to));
+        }
 
         $totals = (clone $query)->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')->first();
 

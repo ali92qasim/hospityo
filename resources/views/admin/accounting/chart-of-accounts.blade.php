@@ -49,7 +49,11 @@
                         @foreach($grouped[$type] as $account)
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 lg:px-6 py-3 text-sm font-mono text-gray-900">{{ $account->code }}</td>
-                            <td class="px-4 lg:px-6 py-3 text-sm text-gray-900">{{ $account->name }}</td>
+                            <td class="px-4 lg:px-6 py-3 text-sm text-gray-900">
+                                <a href="{{ route('accounting.general-ledger', ['account_id' => $account->id]) }}" class="text-medical-blue hover:underline">
+                                    {{ $account->name }}
+                                </a>
+                            </td>
                             <td class="px-4 lg:px-6 py-3 text-sm text-gray-500">{{ $account->parent?->name ?? '—' }}</td>
                             <td class="px-4 lg:px-6 py-3 text-sm text-right text-gray-900">
                                 @php

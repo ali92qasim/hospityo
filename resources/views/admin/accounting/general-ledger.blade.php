@@ -66,7 +66,12 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 lg:px-6 py-3 text-sm text-gray-900">{{ $line->journalEntry->entry_date->format('Y-m-d') }}</td>
                             <td class="px-4 lg:px-6 py-3 text-sm text-medical-blue font-medium">{{ $line->journalEntry->entry_number }}</td>
-                            <td class="px-4 lg:px-6 py-3 text-sm text-gray-700">{{ $line->journalEntry->description ?? $line->narration ?? '—' }}</td>
+                            <td class="px-4 lg:px-6 py-3 text-sm text-gray-700">
+                                {{ $line->journalEntry->description ?? '—' }}
+                                @if($line->narration)
+                                    <div class="text-xs text-gray-500 mt-0.5">{{ $line->narration }}</div>
+                                @endif
+                            </td>
                             <td class="px-4 lg:px-6 py-3 text-sm text-right text-gray-900">{{ $line->debit > 0 ? format_currency($line->debit) : '' }}</td>
                             <td class="px-4 lg:px-6 py-3 text-sm text-right text-gray-900">{{ $line->credit > 0 ? format_currency($line->credit) : '' }}</td>
                             <td class="px-4 lg:px-6 py-3 text-sm text-right font-medium {{ $runningBalance >= 0 ? 'text-green-700' : 'text-red-600' }}">

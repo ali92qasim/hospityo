@@ -9,7 +9,14 @@ class TenantUser extends Model
 {
     protected $connection = 'landlord';
 
-    protected $fillable = ['email', 'tenant_id'];
+    protected $fillable = ['email', 'tenant_id', 'login_token', 'login_remember'];
+
+    protected function casts(): array
+    {
+        return [
+            'login_remember' => 'boolean',
+        ];
+    }
 
     public function tenant(): BelongsTo
     {

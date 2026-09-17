@@ -86,11 +86,7 @@ it('renders opd workflow with handler-driven ui flags', function () {
         ->assertSee('data-landmark="workflow-back-to-list"', false)
         ->assertSee('Back to OPD', false)
         ->assertSee('Record Vital Signs')
-        ->assertSee('Doctor Assignment')
-        ->assertSee('Lab tests')
-        ->assertSee('Imaging')
-        ->assertSee('Order lab tests')
-        ->assertSee('Order imaging');
+        ->assertSee('Doctor Assignment');
 
     $html = $this->get(route('visits.workflow', $visit))->getContent();
     $gpePos = strpos($html, 'id="gpe-content"');
@@ -104,6 +100,66 @@ it('renders opd workflow with handler-driven ui flags', function () {
         ->and($imagingPos)->not->toBeFalse()
         ->and($gpePos)->toBeLessThan($nextVisitPos)
         ->and($nextVisitPos)->toBeLessThan($imagingPos);
+});
+
+it('splits opd investigations into lab tests and imaging tabs with results below each form', function () {
+    config(['visits.dual_write_enabled' => false, 'visits.read_from_child.opd' => true]);
+
+    $department = Department::create(['name' => 'Medicine', 'code' => 'MED-OPD-LAB', 'status' => 'active']);
+
+    $doctor = Doctor::create([
+        'name' => 'Dr. OPD Lab',
+        'doctor_no' => 'DOC-OPD-LAB',
+        'department_id' => $department->id,
+        'specialization' => 'General',
+        'qualification' => 'MBBS',
+        'phone' => '03001234568',
+        'email' => 'dr-opd-lab@example.com',
+        'gender' => 'male',
+        'experience_years' => 5,
+        'consultation_fee' => 1500,
+        'shift_start' => '09:00:00',
+        'shift_end' => '17:00:00',
+        'status' => 'active',
+    ]);
+
+    $visit = Visit::create([
+        'patient_id' => $this->patient->id,
+        'visit_type' => 'opd',
+        'visit_datetime' => now(),
+        'status' => 'registered',
+        'doctor_id' => $doctor->id,
+    ]);
+
+    OpdVisit::create(['visit_id' => $visit->id, 'queue_priority' => 'high']);
+
+    $html = $this->get(route('visits.workflow', $visit))->assertOk()->getContent();
+
+    expect($html)
+        ->toContain('data-workflow-section="lab"')
+        ->toContain('data-workflow-section="imaging"')
+        ->toContain('Lab Tests')
+        ->toContain('id="lab-tests-form"')
+        ->toContain('id="imaging-tests-form"')
+        ->toContain('Ordered lab tests')
+        ->toContain('Ordered imaging')
+        ->not->toContain('Order Investigations')
+        ->not->toContain('data-workflow-section="tests"')
+        ->not->toContain('Ordered Investigations');
+
+    $labContent = strpos($html, 'id="lab-content"');
+    $labForm = strpos($html, 'id="lab-tests-form"');
+    $labResults = strpos($html, 'Ordered lab tests');
+    $imagingContent = strpos($html, 'id="imaging-content"');
+    $imagingForm = strpos($html, 'id="imaging-tests-form"');
+    $imagingResults = strpos($html, 'Ordered imaging');
+
+    expect($labContent)->not->toBeFalse()
+        ->and($labForm)->toBeGreaterThan($labContent)
+        ->and($labResults)->toBeGreaterThan($labForm)
+        ->and($imagingContent)->toBeGreaterThan($labResults)
+        ->and($imagingForm)->toBeGreaterThan($imagingContent)
+        ->and($imagingResults)->toBeGreaterThan($imagingForm);
 });
 
 it('opd handler exposes show_opd_ui and child queue priority', function () {

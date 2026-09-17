@@ -52,9 +52,11 @@ class ReportController extends Controller
 
         $outflowLines = \App\Models\JournalEntryLine::whereIn('account_id', $expenseAccountIds)
             ->where('debit', '>', 0)
-            ->whereHas('journalEntry', fn($q) => $q->whereBetween('entry_date', [$startDate, $endDate]))
-            ->with(['journalEntry', 'account'])
-            ->get();
+            ->whereHas('journalEntry', fn ($q) => $q->whereDate('entry_date', '>=', $startDate)->whereDate('entry_date', '<=', $endDate))
+            ->with(['journalEntry.lines.account', 'account'])
+            ->get()
+            ->reject(fn ($line) => $line->journalEntry?->isExpenseReclassification())
+            ->values();
 
         $totalOutflows = (float) $outflowLines->sum('debit');
 

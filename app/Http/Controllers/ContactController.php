@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ContactMessage;
 use App\Models\SiteSetting;
+use App\Rules\Recaptcha;
 use Illuminate\Http\Request;
 
 class ContactController extends Controller
@@ -23,7 +24,10 @@ class ContactController extends Controller
             'phone' => 'nullable|string|max:50',
             'subject' => 'required|string|max:255',
             'message' => 'required|string|max:5000',
+            'g-recaptcha-response' => ['required', new Recaptcha],
         ]);
+
+        unset($validated['g-recaptcha-response']);
 
         ContactMessage::create($validated);
 
