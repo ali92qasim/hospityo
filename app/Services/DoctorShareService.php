@@ -417,9 +417,19 @@ class DoctorShareService
      */
     private static function resolveDoctorId(Bill $bill): ?int
     {
-        $bill->loadMissing('visit');
+        $bill->loadMissing(['visit.primaryDoctor']);
 
-        return $bill->visit?->doctor_id;
+        $visit = $bill->visit;
+
+        if ($visit === null) {
+            return null;
+        }
+
+        if ($visit->visit_type === 'ipd') {
+            return $visit->primaryDoctor?->doctor_id;
+        }
+
+        return $visit->doctor_id;
     }
 
     /**
