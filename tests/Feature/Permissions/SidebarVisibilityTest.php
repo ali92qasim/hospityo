@@ -198,6 +198,31 @@ it('shows operational doctor share for its settings entitlement without granting
         ->and($menu->pluck('id'))->not->toContain('settings');
 });
 
+it('keeps doctor share rates in settings and rules out of operational navigation', function () {
+    $user = sidebarUserWithPermissions([
+        'view share rules',
+        'view share items',
+        'view settlements',
+        'view share reports',
+    ]);
+    $tenant = sidebarTenantWithModules(['settings', 'settings.doctor-share']);
+
+    $menu = collect($this->service->build($user, $tenant));
+    $settings = $menu->firstWhere('id', 'settings');
+    $doctorShare = $menu->firstWhere('id', 'doctor-share');
+    $settingsDoctorShare = collect($settings['items'])->firstWhere('label', 'Doctor Share');
+    $operationalItems = collect($doctorShare['items']);
+
+    expect($settingsDoctorShare['route'])->toBe('doctor-share.rates.index')
+        ->and($operationalItems->pluck('label')->all())->toBe([
+            'Share Items',
+            'Settlements',
+            'Share Reports',
+        ])
+        ->and($operationalItems->pluck('label'))->not->toContain('Share Rules')
+        ->and($operationalItems->pluck('route'))->not->toContain('doctor-share.rules.index');
+});
+
 it('hides operational and settings doctor share navigation without its child entitlement', function () {
     $user = sidebarUserWithPermissions(['view share rules']);
     $tenant = sidebarTenantWithModules(['settings']);

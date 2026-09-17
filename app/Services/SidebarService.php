@@ -233,9 +233,6 @@ class SidebarService
         // ── Doctor Share ──────────────────────────────────────────────────────
         if ($this->hasModule($tenant, 'settings.doctor-share')) {
             $items = [];
-            if ($user->can('view share rules') || $user->can('manage doctor shares')) {
-                $items[] = $this->item('Share Rates', 'fa-percentage', 'doctor-share.rates.index', ['doctor-share.rates.*']);
-            }
             if ($user->can('view share items') || $user->can('manage doctor shares')) {
                 $items[] = $this->item('Share Items', 'fa-hand-holding-usd', 'doctor-share.items.index', ['doctor-share.items.*']);
             }
