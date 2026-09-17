@@ -139,3 +139,21 @@ it('restores hospital info when settings is present without it', function () {
     expect($plan->fresh()->modules)->toContain('settings', 'settings.hospital-info')
         ->and($plan->fresh()->modules)->not->toContain('settings.prescription-print');
 });
+
+it('does not add doctor share to a settings-only plan', function () {
+    $plan = Plan::create([
+        'slug' => 'settings-without-doctor-share',
+        'name' => 'Settings Without Doctor Share',
+        'price' => 10,
+        'billing_cycle' => 'monthly',
+        'modules' => [
+            'settings',
+            'settings.hospital-info',
+            'settings.prescription-print',
+        ],
+    ]);
+
+    $this->artisan('plans:sync-modules')->assertSuccessful();
+
+    expect($plan->fresh()->modules)->not->toContain('settings.doctor-share');
+});

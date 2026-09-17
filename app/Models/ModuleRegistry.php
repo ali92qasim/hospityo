@@ -590,6 +590,20 @@ class ModuleRegistry
         return array_values(array_unique([...$modules, ...self::HR_CHILD_SLUGS]));
     }
 
+    public static function backfillSettingsDoctorShare(array $modules): array
+    {
+        if (! in_array('doctor-share', $modules, true)) {
+            return $modules;
+        }
+
+        $modules = array_filter(
+            $modules,
+            fn (string $module) => $module !== 'doctor-share'
+        );
+
+        return array_values(array_unique([...$modules, 'settings.doctor-share']));
+    }
+
     public static function otChildSlugs(): array
     {
         return self::OT_CHILD_SLUGS;
