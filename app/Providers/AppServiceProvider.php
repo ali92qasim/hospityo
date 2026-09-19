@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Support\Release\ProcessReleaseGit;
+use App\Support\Release\ReleaseGit;
 use App\Support\SettingsAccess;
 use App\Support\SettingsSectionRegistry;
 use App\Models\Tenant;
@@ -19,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(ReleaseGit::class, ProcessReleaseGit::class);
+
         $importTemplateHelper = app_path('Helpers/ImportTemplateHelper.php');
 
         if (is_file($importTemplateHelper)) {
