@@ -123,5 +123,9 @@
             });
         })();
     </script>
+
+    @auth
+        @include('partials.version-footer', ['whatsNewUrl' => route('whats-new.index')])
+    @endauth
 </body>
 </html>

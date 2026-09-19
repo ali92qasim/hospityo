@@ -46,5 +46,9 @@
         }, 250); });
     })();
     </script>
+
+    @if(auth('super_admin')->check())
+        @include('partials.version-footer', ['whatsNewUrl' => route('super-admin.whats-new.index')])
+    @endif
 </body>
 </html>
