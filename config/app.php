@@ -15,6 +15,8 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'version' => \App\Support\AppVersion::read(),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
