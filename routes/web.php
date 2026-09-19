@@ -14,6 +14,8 @@ use App\Http\Controllers\CentralLoginController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WhatsNewController;
+use App\Http\Controllers\SuperAdmin\WhatsNewController as SuperAdminWhatsNewController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\HomeController;
@@ -143,6 +145,8 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
     Route::middleware('super_admin')->group(function () {
         Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
+        Route::get('/whats-new', [SuperAdminWhatsNewController::class, 'index'])->name('whats-new.index');
+
         // Profile
         Route::get('/profile', [SuperAdminProfileController::class, 'edit'])->name('profile');
         Route::patch('/profile', [SuperAdminProfileController::class, 'update'])->name('profile.update');
@@ -209,6 +213,8 @@ Route::middleware('tenant')->group(function () {
 Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/whats-new', [WhatsNewController::class, 'index'])->name('whats-new.index');
 
     Route::get('/doctor/assignments', [DoctorController::class, 'assignments'])->name('doctor.assignments');
 
