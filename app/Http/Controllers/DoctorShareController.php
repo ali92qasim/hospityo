@@ -6,11 +6,8 @@ use App\Models\AuditLog;
 use App\Models\Doctor;
 use App\Models\DoctorShareItem;
 use App\Models\DoctorShareRate;
-use App\Models\DoctorShareRule;
 use App\Models\DoctorShareSettlement;
-use App\Models\Service;
 use App\Models\Tenant;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +56,7 @@ class DoctorShareController extends Controller
     }
 
     /**
-     * Replace the complete doctor rate matrix.
+     * Replace rates for the doctors present in the submitted matrix.
      */
     public function ratesSync(Request $request): RedirectResponse
     {
@@ -102,7 +99,16 @@ class DoctorShareController extends Controller
         ]);
 
         DB::connection('tenant')->transaction(function () use ($validated, $entitledCategories) {
-            DoctorShareRate::query()->delete();
+            $doctorIds = collect($validated['doctors'])
+                ->pluck('doctor_id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($doctorIds !== []) {
+                DoctorShareRate::query()->whereIn('doctor_id', $doctorIds)->delete();
+            }
 
             foreach ($validated['doctors'] as $doctor) {
                 foreach ($entitledCategories as $category) {
@@ -125,141 +131,12 @@ class DoctorShareController extends Controller
             ->with('success', 'Doctor share rates updated successfully.');
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Share Rules — Tasks 4.1–4.4
-    // ──────────────────────────────────────────────────────────────────────────
-
     /**
      * Redirect legacy rule-list links to the rates matrix.
      */
     public function rulesIndex(): RedirectResponse
     {
         return redirect()->route('doctor-share.rates.index');
-    }
-
-    /**
-     * Show the create rule form.
-     * Task 4.2
-     */
-    public function rulesCreate(): View
-    {
-        $doctors        = Doctor::orderBy('name')->get();
-        $services       = Service::orderBy('name')->get();
-        $appliesToOptions = $this->entitledAppliesToOptions();
-        $investigationScopeOptions = $this->entitledInvestigationScopeOptions();
-
-        return view('admin.doctor-share.rules.create', compact('doctors', 'services', 'appliesToOptions', 'investigationScopeOptions'));
-    }
-
-    /**
-     * Validate and persist a new share rule.
-     * Task 4.2
-     */
-    public function rulesStore(Request $request): RedirectResponse
-    {
-        $validated = $this->validateRuleRequest($request);
-
-        if ($error = $this->validateRuleScope($validated)) {
-            return back()->withInput()->withErrors(['doctor_id' => $error]);
-        }
-
-        $serviceIds = $validated['service_ids'];
-        unset($validated['service_ids']);
-        $validated['service_id'] = null;
-        $validated['created_by'] = auth()->id();
-
-        $rule = DoctorShareRule::create($validated);
-        $rule->services()->sync($serviceIds);
-
-        return redirect()->route('doctor-share.rules.index')
-            ->with('success', 'Share rule created successfully.');
-    }
-
-    /**
-     * Show the edit rule form.
-     * Task 4.3
-     */
-    public function rulesEdit(DoctorShareRule $rule): View
-    {
-        $rule->load(['doctor', 'service', 'services', 'labTest', 'imagingStudy']);
-
-        $doctors        = Doctor::orderBy('name')->get();
-        $services       = Service::orderBy('name')->get();
-
-        $hasPendingItems = $rule->shareItems()->where('status', 'pending')->exists();
-        $appliesToOptions = $this->entitledAppliesToOptions($rule->applies_to);
-        $investigationScopeOptions = $this->entitledInvestigationScopeOptions($rule->investigation_scope);
-
-        return view('admin.doctor-share.rules.edit', compact(
-            'rule',
-            'doctors',
-            'services',
-            'hasPendingItems',
-            'appliesToOptions',
-            'investigationScopeOptions'
-        ));
-    }
-
-    /**
-     * Validate and update an existing share rule.
-     * Task 4.3
-     */
-    public function rulesUpdate(Request $request, DoctorShareRule $rule): RedirectResponse
-    {
-        $validated = $this->validateRuleRequest($request);
-
-        if ($error = $this->validateRuleScope($validated, $rule->id)) {
-            return back()->withInput()->withErrors(['doctor_id' => $error]);
-        }
-
-        $serviceIds = $validated['service_ids'];
-        unset($validated['service_ids']);
-        $validated['service_id'] = null;
-
-        $rule->update($validated);
-        $rule->services()->sync($serviceIds);
-
-        return redirect()->route('doctor-share.rules.index')
-            ->with('success', 'Share rule updated successfully.');
-    }
-
-    /**
-     * Delete a share rule (blocked if it has associated share history).
-     * Task 4.4
-     */
-    public function rulesDestroy(DoctorShareRule $rule): RedirectResponse
-    {
-        if ($rule->shareItems()->exists()) {
-            return back()->withErrors([
-                'error' => 'This rule has associated share history and must be deactivated instead of deleted.',
-            ]);
-        }
-
-        // DoctorShareRule uses the Auditable trait — audit log is written automatically
-        $rule->delete();
-
-        return redirect()->route('doctor-share.rules.index')
-            ->with('success', 'Share rule deleted successfully.');
-    }
-
-    /**
-     * Toggle the active/inactive state of a share rule.
-     * Task 4.4
-     */
-    public function toggleRule(Request $request, DoctorShareRule $rule): JsonResponse|RedirectResponse
-    {
-        $rule->is_active = ! $rule->is_active;
-        $rule->save();
-
-        // DoctorShareRule uses the Auditable trait — audit log is written automatically on save
-
-        if ($request->expectsJson()) {
-            return response()->json(['active' => $rule->is_active]);
-        }
-
-        $status = $rule->is_active ? 'activated' : 'deactivated';
-
-        return redirect()->back()->with('success', "Share rule {$status} successfully.");
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -600,126 +477,6 @@ class DoctorShareController extends Controller
         return [$summary, $details, $doctors];
     }
 
-    private function validateRuleRequest(Request $request): array
-    {
-        $validated = $request->validate([
-            'doctor_id'        => ['nullable', Rule::exists(Doctor::class, 'id')],
-            'service_ids'      => ['nullable', 'array'],
-            'service_ids.*'    => [Rule::exists(Service::class, 'id')],
-            'investigation_scope' => ['required', 'in:all,lab,imaging'],
-            'share_type'       => ['required', 'in:percentage,fixed'],
-            'share_value'      => ['required', 'numeric', 'min:0.01'],
-            'applies_to'       => ['required', 'in:opd,ipd,lab,imaging,emergency,all'],
-            'notes'            => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        if ($validated['share_type'] === 'percentage' && $validated['share_value'] > 100) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'share_value' => 'Share value cannot exceed 100 for percentage type.',
-            ]);
-        }
-
-        $validated['service_ids'] = collect($validated['service_ids'] ?? [])
-            ->filter()
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
-
-        if ($validated['service_ids'] !== []) {
-            $validated['investigation_scope'] = 'all';
-        }
-
-        $validated['doctor_id'] = $validated['doctor_id'] ?? null;
-        $validated['lab_test_id'] = null;
-        $validated['imaging_study_id'] = null;
-
-        $this->abortUnlessAppliesToEntitled($validated['applies_to']);
-        $this->abortUnlessInvestigationScopeEntitled($validated['investigation_scope']);
-
-        return $validated;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function entitledAppliesToOptions(?string $alwaysInclude = null): array
-    {
-        $options = ['all' => 'All'];
-
-        foreach ([
-            'opd' => ['visits', 'Opd'],
-            'ipd' => ['ipd', 'Ipd'],
-            'lab' => ['laboratory', 'Lab'],
-            'imaging' => ['imaging', 'Imaging'],
-            'emergency' => ['emergency', 'Emergency'],
-        ] as $value => [$module, $label]) {
-            if (Tenant::currentHasModule($module)) {
-                $options[$value] = $label;
-            }
-        }
-
-        if ($alwaysInclude && ! isset($options[$alwaysInclude])) {
-            $options[$alwaysInclude] = ucfirst($alwaysInclude);
-        }
-
-        return $options;
-    }
-
-    private function abortUnlessAppliesToEntitled(string $appliesTo): void
-    {
-        $module = match ($appliesTo) {
-            'opd' => 'visits',
-            'ipd' => 'ipd',
-            'lab' => 'laboratory',
-            'imaging' => 'imaging',
-            'emergency' => 'emergency',
-            default => null,
-        };
-
-        if ($module) {
-            Tenant::abortUnlessCurrentHasModule($module);
-        }
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function entitledInvestigationScopeOptions(?string $alwaysInclude = null): array
-    {
-        $options = ['all' => 'All Investigations'];
-
-        if (Tenant::currentHasModule('laboratory')) {
-            $options['lab'] = 'Lab Tests Only';
-        }
-        if (Tenant::currentHasModule('imaging')) {
-            $options['imaging'] = 'Imaging Only';
-        }
-
-        if ($alwaysInclude && ! isset($options[$alwaysInclude])) {
-            $options[$alwaysInclude] = match ($alwaysInclude) {
-                'lab' => 'Lab Tests Only',
-                'imaging' => 'Imaging Only',
-                default => ucfirst($alwaysInclude),
-            };
-        }
-
-        return $options;
-    }
-
-    private function abortUnlessInvestigationScopeEntitled(string $scope): void
-    {
-        $module = match ($scope) {
-            'lab' => 'laboratory',
-            'imaging' => 'imaging',
-            default => null,
-        };
-
-        if ($module) {
-            Tenant::abortUnlessCurrentHasModule($module);
-        }
-    }
-
     /**
      * @return array<string, string>
      */
@@ -780,46 +537,5 @@ class DoctorShareController extends Controller
 
         abort_unless($module !== null, 403);
         Tenant::abortUnlessCurrentHasModule($module);
-    }
-
-    private function validateRuleScope(array $validated, ?int $excludeRuleId = null): ?string
-    {
-        $doctorId = $validated['doctor_id'] ?? null;
-        $investigationScope = $validated['investigation_scope'] ?? 'all';
-        $serviceIds = $validated['service_ids'];
-        $appliesTo = $validated['applies_to'];
-
-        if ($serviceIds === []) {
-            $exists = DoctorShareRule::query()
-                ->where('doctor_id', $doctorId)
-                ->whereNull('lab_test_id')
-                ->whereNull('imaging_study_id')
-                ->where('investigation_scope', $investigationScope)
-                ->where('applies_to', $appliesTo)
-                ->whereDoesntHave('services')
-                ->when($excludeRuleId, fn ($query) => $query->where('id', '!=', $excludeRuleId))
-                ->exists();
-
-            if ($exists) {
-                return 'A rule with this doctor, bill type, and investigation scope already exists.';
-            }
-
-            return null;
-        }
-
-        $overlap = DoctorShareRule::query()
-            ->where('doctor_id', $doctorId)
-            ->where('applies_to', $appliesTo)
-            ->whereNull('lab_test_id')
-            ->whereNull('imaging_study_id')
-            ->when($excludeRuleId, fn ($query) => $query->where('id', '!=', $excludeRuleId))
-            ->whereHas('services', fn ($query) => $query->whereIn('services.id', $serviceIds))
-            ->exists();
-
-        if ($overlap) {
-            return 'One or more selected services already belong to another rule for this doctor and bill type.';
-        }
-
-        return null;
     }
 }

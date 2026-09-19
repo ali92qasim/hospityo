@@ -112,7 +112,7 @@ it('stores numeric zero as an explicit rate', function () {
         ->and($rate->percentage)->toBe('0.00');
 });
 
-it('accepts an empty browser matrix after the last row is removed', function () {
+it('accepts an empty browser matrix without deleting existing rates', function () {
     bindMatrixTenant(['settings', 'settings.doctor-share', 'visits']);
     DoctorShareRate::create([
         'doctor_id' => $this->doctor->id,
@@ -124,7 +124,7 @@ it('accepts an empty browser matrix after the last row is removed', function () 
         'doctors' => '',
     ])->assertRedirect(route('doctor-share.rates.index'));
 
-    expect(DoctorShareRate::query()->count())->toBe(0);
+    expect(DoctorShareRate::query()->sole()->percentage)->toBe('35.00');
 });
 
 it('rejects duplicate doctors without changing rates', function () {
@@ -172,6 +172,42 @@ it('rejects a non-numeric value for an unentitled category before validation', f
     expect(DoctorShareRate::query()->count())->toBe(0);
 });
 
+it('hydrates every existing category rate into the matrix form', function () {
+    bindMatrixTenant(['settings', 'settings.doctor-share', 'visits', 'ipd', 'laboratory', 'imaging']);
+
+    foreach ([
+        'opd' => '70.00',
+        'ipd' => '40.00',
+        'lab' => '20.00',
+        'imaging' => '20.00',
+    ] as $category => $percentage) {
+        DoctorShareRate::create([
+            'doctor_id' => $this->doctor->id,
+            'service_category' => $category,
+            'percentage' => $percentage,
+        ]);
+    }
+
+    $html = $this->get(route('doctor-share.rates.index'))
+        ->assertOk()
+        ->assertViewHas('rateRows', function ($rows) {
+            $rates = $rows->first()['rates'] ?? [];
+
+            return $rows->count() === 1
+                && ($rates['opd'] ?? null) === '70.00'
+                && ($rates['ipd'] ?? null) === '40.00'
+                && ($rates['lab'] ?? null) === '20.00'
+                && ($rates['imaging'] ?? null) === '20.00';
+        })
+        ->getContent();
+
+    expect($html)
+        ->toMatch('/name="doctors\[0\]\[opd\]"[^>]*value="70.00"/')
+        ->toMatch('/name="doctors\[0\]\[ipd\]"[^>]*value="40.00"/')
+        ->toMatch('/name="doctors\[0\]\[lab\]"[^>]*value="20.00"/')
+        ->toMatch('/name="doctors\[0\]\[imaging\]"[^>]*value="20.00"/');
+});
+
 it('shows only entitled category columns and maps missing rates to null', function () {
     bindMatrixTenant(['settings', 'settings.doctor-share', 'visits']);
     DoctorShareRate::create([
@@ -207,26 +243,33 @@ it('removes the legacy share rule create screen', function () {
     $this->get('/doctor-share/rules/create')->assertNotFound();
 });
 
-it('deletes rates for doctors omitted from the submitted matrix', function () {
-    bindMatrixTenant(['settings', 'settings.doctor-share', 'visits']);
-    $omittedDoctor = matrixDoctor($this->department, 'Omitted');
-    foreach ([$this->doctor, $omittedDoctor] as $doctor) {
-        DoctorShareRate::create([
-            'doctor_id' => $doctor->id,
-            'service_category' => 'opd',
-            'percentage' => 20,
-        ]);
-    }
+it('does not change another doctor\'s rates when one doctor is saved', function () {
+    bindMatrixTenant(['settings', 'settings.doctor-share', 'visits', 'laboratory']);
+    $otherDoctor = matrixDoctor($this->department, 'Other');
+
+    DoctorShareRate::create([
+        'doctor_id' => $this->doctor->id,
+        'service_category' => 'opd',
+        'percentage' => 70,
+    ]);
+    DoctorShareRate::create([
+        'doctor_id' => $otherDoctor->id,
+        'service_category' => 'lab',
+        'percentage' => 20,
+    ]);
 
     $this->put(route('doctor-share.rates.sync'), [
         'doctors' => [[
             'doctor_id' => $this->doctor->id,
-            'opd' => 30,
+            'opd' => 55,
         ]],
     ])->assertRedirect(route('doctor-share.rates.index'));
 
-    expect(DoctorShareRate::where('doctor_id', $omittedDoctor->id)->exists())->toBeFalse()
-        ->and(DoctorShareRate::where('doctor_id', $this->doctor->id)->sole()->percentage)->toBe('30.00');
+    expect(DoctorShareRate::where('doctor_id', $this->doctor->id)->sole()->percentage)->toBe('55.00')
+        ->and(DoctorShareRate::where('doctor_id', $otherDoctor->id)->get())
+        ->toHaveCount(1)
+        ->and(DoctorShareRate::where('doctor_id', $otherDoctor->id)->sole()->service_category)->toBe('lab')
+        ->and(DoctorShareRate::where('doctor_id', $otherDoctor->id)->sole()->percentage)->toBe('20.00');
 });
 
 it('leaves doctor share history unchanged after sync', function () {
