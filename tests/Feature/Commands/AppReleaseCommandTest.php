@@ -59,6 +59,20 @@ it('aborts when no tags exist and --initial was not passed', function () {
         ->and(trim((string) file_get_contents(AppVersion::path())))->toBe(trim($this->versionBackup));
 });
 
+it('aborts --initial when a release tag already exists', function () {
+    $this->git->clean = true;
+    $this->git->latestTag = 'v1.0.0';
+
+    $this->artisan('app:release', ['--initial' => true])
+        ->expectsOutput('Already has a release tag; omit --initial.')
+        ->assertFailed();
+
+    expect(Release::count())->toBe(0)
+        ->and(\App\Models\ChangelogEntry::count())->toBe(0)
+        ->and($this->git->tagged)->toBe([])
+        ->and(trim((string) file_get_contents(AppVersion::path())))->toBe(trim($this->versionBackup));
+});
+
 it('aborts when the working tree is dirty', function () {
     $this->git->clean = false;
     $this->git->latestTag = null;
