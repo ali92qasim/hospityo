@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Central registry of all SaaS modules.
@@ -780,15 +781,35 @@ class ModuleRegistry
     private static function visitTypeFromRequest(Request $request): ?string
     {
         $route = $request->route();
-        $visit = $route && $route->hasParameters() ? $route->parameter('visit') : null;
+        $whitelist = ['opd', 'ipd', 'emergency'];
 
+        $visit = $route && $route->hasParameter('visit') ? $route->parameter('visit') : null;
         if (is_object($visit) && isset($visit->visit_type)) {
-            return $visit->visit_type;
+            $type = $visit->visit_type;
+            if (is_string($type) && in_array($type, $whitelist, true)) {
+                return $type;
+            }
+            throw new HttpException(403, 'Unable to resolve visit type for this request.');
+        }
+
+        $testOrder = $route && $route->hasParameter('testOrder') ? $route->parameter('testOrder') : null;
+        if ($testOrder !== null) {
+            if (is_numeric($testOrder)) {
+                $testOrder = \App\Models\TestOrder::query()->find($testOrder);
+            }
+            if (! is_object($testOrder)) {
+                throw new HttpException(403, 'Unable to resolve visit type for this request.');
+            }
+            $ownedVisit = $testOrder->visit ?? null;
+            $type = is_object($ownedVisit) ? ($ownedVisit->visit_type ?? null) : null;
+            if (is_string($type) && in_array($type, $whitelist, true)) {
+                return $type;
+            }
+            throw new HttpException(403, 'Unable to resolve visit type for this request.');
         }
 
         $type = $request->query('visit_type') ?? $request->input('visit_type');
-
-        if (is_string($type) && in_array($type, ['opd', 'ipd', 'emergency'], true)) {
+        if (is_string($type) && in_array($type, $whitelist, true)) {
             return $type;
         }
 

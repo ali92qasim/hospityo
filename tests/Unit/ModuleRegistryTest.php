@@ -1,8 +1,11 @@
 <?php
 
 use App\Models\ModuleRegistry;
+use App\Models\TestOrder;
+use App\Models\Visit;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 it('maps pharmacy pos routes to pharmacy module', function () {
     expect(ModuleRegistry::moduleForRoute('pharmacy.pos.index'))->toBe('pharmacy.pos');
@@ -221,4 +224,107 @@ it('registers four ot catalog children and keeps core surgeries on the parent', 
         ->and(ModuleRegistry::all())->toHaveCount(52)
         ->and(ModuleRegistry::backfillOtChildren(['ot', 'hr']))->toContain(...ModuleRegistry::OT_CHILD_SLUGS)
         ->and(ModuleRegistry::backfillOtChildren(['hr']))->toBe(['hr']);
+});
+
+it('resolves test-orders module from the bound TestOrder visit type', function () {
+    $visit = new Visit(['visit_type' => 'ipd']);
+    $order = new TestOrder();
+    $order->setRelation('visit', $visit);
+
+    $request = Request::create('/test-orders/1', 'DELETE');
+    $request->setRouteResolver(function () use ($order, $request) {
+        $route = new Route(['DELETE'], '/test-orders/{testOrder}', [
+            'as' => 'test-orders.remove',
+            'uses' => fn () => null,
+        ]);
+        $route->bind($request);
+        $route->setParameter('testOrder', $order);
+
+        return $route;
+    });
+
+    expect(ModuleRegistry::moduleForRequest($request))->toBe('ipd');
+});
+
+it('resolves emergency-owned test orders to the emergency module', function () {
+    $visit = new Visit(['visit_type' => 'emergency']);
+    $order = new TestOrder();
+    $order->setRelation('visit', $visit);
+
+    $request = Request::create('/test-orders/1/result', 'POST');
+    $request->setRouteResolver(function () use ($order, $request) {
+        $route = new Route(['POST'], '/test-orders/{testOrder}/result', [
+            'as' => 'test-orders.result',
+            'uses' => fn () => null,
+        ]);
+        $route->bind($request);
+        $route->setParameter('testOrder', $order);
+
+        return $route;
+    });
+
+    expect(ModuleRegistry::moduleForRequest($request))->toBe('emergency');
+});
+
+it('aborts when a bound TestOrder has no visit', function () {
+    $order = new TestOrder();
+    $order->setRelation('visit', null);
+
+    $request = Request::create('/test-orders/1', 'DELETE');
+    $request->setRouteResolver(function () use ($order, $request) {
+        $route = new Route(['DELETE'], '/test-orders/{testOrder}', [
+            'as' => 'test-orders.remove',
+            'uses' => fn () => null,
+        ]);
+        $route->bind($request);
+        $route->setParameter('testOrder', $order);
+
+        return $route;
+    });
+
+    try {
+        ModuleRegistry::moduleForRequest($request);
+        expect(false)->toBeTrue();
+    } catch (HttpException $e) {
+        expect($e->getStatusCode())->toBe(403)
+            ->and($e->getMessage())->toBe('Unable to resolve visit type for this request.');
+    }
+});
+
+it('aborts when a bound Visit has a non-whitelisted visit_type', function () {
+    $visit = new Visit(['visit_type' => 'bogus']);
+
+    $request = Request::create('/visits/1/workflow', 'GET');
+    $request->setRouteResolver(function () use ($visit, $request) {
+        $route = new Route(['GET'], '/visits/{visit}/workflow', [
+            'as' => 'visits.workflow',
+            'uses' => fn () => null,
+        ]);
+        $route->bind($request);
+        $route->setParameter('visit', $visit);
+
+        return $route;
+    });
+
+    try {
+        ModuleRegistry::moduleForRequest($request);
+        expect(false)->toBeTrue();
+    } catch (HttpException $e) {
+        expect($e->getStatusCode())->toBe(403)
+            ->and($e->getMessage())->toBe('Unable to resolve visit type for this request.');
+    }
+});
+
+it('still maps query visit_type for visits.index without a bound model', function () {
+    $named = fn (string $query) => tap(Request::create('/visits?'.$query, 'GET'), function (Request $request) {
+        $request->setRouteResolver(fn () => new Route(['GET'], '/visits', [
+            'as' => 'visits.index',
+            'uses' => fn () => null,
+        ]));
+    });
+
+    expect(ModuleRegistry::moduleForRequest($named('visit_type=opd')))->toBe('visits')
+        ->and(ModuleRegistry::moduleForRequest($named('visit_type=emergency')))->toBe('emergency')
+        ->and(ModuleRegistry::moduleForRequest($named('visit_type=ipd')))->toBe('ipd')
+        ->and(ModuleRegistry::moduleForRequest($named('')))->toBe('visits');
 });
