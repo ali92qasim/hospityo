@@ -48,8 +48,15 @@ it('includes emergency and settings children in starter plan', function () {
         'settings',
         'settings.hospital-info',
         'settings.prescription-print',
-        'settings.lab-report-print',
-    );
+    )->and($starter->modules)->not->toContain('settings.lab-report-print');
+});
+
+it('does not entitle any seeded plan to settings.lab-report-print by default', function () {
+    $this->seed(PlanSeeder::class);
+
+    foreach (Plan::all() as $plan) {
+        expect($plan->modules)->not->toContain('settings.lab-report-print');
+    }
 });
 
 it('includes pharmacy catalog children on professional and accounting children on enterprise', function () {
