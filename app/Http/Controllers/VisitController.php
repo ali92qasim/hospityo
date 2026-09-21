@@ -54,6 +54,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\VisitAdminViewService;
 use App\Services\VisitWorkflowService;
+use App\Support\VisitTypeGuard;
 use App\Services\MedicinePricing;
 use App\Workflows\VisitHandlerFactory;
 use Yajra\DataTables\Facades\DataTables;
@@ -546,6 +547,8 @@ class VisitController extends Controller
     // IPD Methods
     public function admitPatient(AdmitPatientRequest $request, Visit $visit)
     {
+        VisitTypeGuard::assert($visit, 'ipd');
+
         try {
             DB::connection('tenant')->transaction(function () use ($request, $visit) {
                 $bed = Bed::findOrFail($request->bed_id);
@@ -667,6 +670,8 @@ class VisitController extends Controller
     // Emergency Methods
     public function triagePatient(TriagePatientRequest $request, Visit $visit)
     {
+        VisitTypeGuard::assert($visit, 'emergency');
+
         try {
             $visit->triage()->create([
                 ...$request->only(['priority_level', 'chief_complaint', 'pain_scale', 'triage_notes']),
