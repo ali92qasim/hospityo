@@ -114,3 +114,27 @@ it('allows hospital info settings when tenant has settings and the child module'
     $this->get(route('settings.hospital-info'))
         ->assertOk();
 });
+
+it('allows ipd visit list when tenant has the ipd module only', function () {
+    bindTenantWithModules(['ipd']);
+    $this->actingAs(moduleGateUser(['view visits']));
+
+    $this->get(route('visits.index', ['visit_type' => 'ipd']))
+        ->assertOk();
+});
+
+it('blocks ipd visit list when tenant has visits but not ipd', function () {
+    bindTenantWithModules(['visits']);
+    $this->actingAs(moduleGateUser(['view visits']));
+
+    $this->get(route('visits.index', ['visit_type' => 'ipd']))
+        ->assertForbidden();
+});
+
+it('blocks opd visit list when tenant has ipd but not visits', function () {
+    bindTenantWithModules(['ipd']);
+    $this->actingAs(moduleGateUser(['view visits']));
+
+    $this->get(route('visits.index', ['visit_type' => 'opd']))
+        ->assertForbidden();
+});
