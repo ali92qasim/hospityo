@@ -41,6 +41,8 @@
                                 </label>
                             @endforeach
                         </div>
+                    @else
+                        <p class="mb-3 text-left text-sm text-gray-500">No consultants configured in Lab Report Print settings</p>
                     @endif
                     <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-confirm="Verify and finalize this result? This action cannot be undone." data-confirm-title="Verify result" data-confirm-text="Verify" data-confirm-variant="success">
                         <i class="fas fa-check-circle mr-2"></i>Verify & Finalize

@@ -40,6 +40,7 @@ export default defineConfig({
                 'resources/js/investigations-form.js',
                 'resources/js/investigation-orders-form.js',
                 'resources/js/doctor-share-rates-form.js',
+                'resources/js/lab-report-roster-form.js',
                 'resources/js/bills-form.js',
                 'resources/js/bills-index.js',
                 'resources/js/bills-edit.js',

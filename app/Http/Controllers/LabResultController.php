@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateLabResultRequest;
 use App\Models\LabOrder;
 use App\Models\LabOrderItem;
+use App\Models\LabReportRosterDoctor;
 use App\Models\LabResult;
 use App\Services\LabReportBuilder;
 use Illuminate\Http\Request;
@@ -316,7 +317,12 @@ class LabResultController extends Controller
         }
 
         // Task 4: load LabReportRosterDoctor ordered doctors
-        $rosterDoctors = collect();
+        $rosterDoctors = LabReportRosterDoctor::query()
+            ->with('doctor')
+            ->orderBy('sort_order')
+            ->get()
+            ->pluck('doctor')
+            ->filter();
 
         return view('admin.lab.results.show', compact('labResult', 'rosterDoctors'));
     }
@@ -336,13 +342,14 @@ class LabResultController extends Controller
 
     public function verify(Request $request, LabResult $labResult)
     {
+        $rosterIds = LabReportRosterDoctor::query()->pluck('doctor_id')->map(fn ($id) => (int) $id)->all();
+
         $ids = collect($request->input('reviewer_doctor_ids', []))
             ->map(fn ($id) => (int) $id)
             ->filter()
             ->unique()
+            ->filter(fn (int $id) => in_array($id, $rosterIds, true))
             ->values();
-
-        // Task 4: intersect with LabReportRosterDoctor::query()->pluck('doctor_id')
 
         $sync = [];
         foreach ($ids as $i => $doctorId) {

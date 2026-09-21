@@ -3,6 +3,7 @@
 use App\Models\Department;
 use App\Models\Doctor;
 use App\Models\LabOrder;
+use App\Models\LabReportRosterDoctor;
 use App\Models\LabResult;
 use App\Models\Patient;
 use App\Models\User;
@@ -106,6 +107,9 @@ beforeEach(function () {
 });
 
 it('stores selected reviewer doctors on verify and keeps pathologist as acting user', function () {
+    LabReportRosterDoctor::create(['doctor_id' => $this->doctorA->id, 'sort_order' => 0]);
+    LabReportRosterDoctor::create(['doctor_id' => $this->doctorB->id, 'sort_order' => 1]);
+
     $this->post(route('lab-results.verify', $this->labResult), [
         'reviewer_doctor_ids' => [$this->doctorA->id, $this->doctorB->id],
     ])->assertRedirect();
@@ -145,12 +149,31 @@ it('leaves reviewers empty so report chrome can omit consultant footer', functio
     expect($this->labResult->fresh()->reviewers)->toHaveCount(0);
 });
 
-it('accepts any existing doctor id until roster restriction', function () {
-    // Task 4 will restrict to roster
+it('ignores non-roster doctor ids on verify', function () {
+    // Prefer silent filter: sync intersection only (not 422).
+    LabReportRosterDoctor::create(['doctor_id' => $this->doctorA->id, 'sort_order' => 0]);
+
     $this->post(route('lab-results.verify', $this->labResult), [
-        'reviewer_doctor_ids' => [$this->doctorA->id],
+        'reviewer_doctor_ids' => [$this->doctorA->id, $this->doctorB->id],
     ])->assertRedirect();
 
     expect($this->labResult->fresh()->reviewers()->pluck('doctors.id')->all())
         ->toBe([$this->doctorA->id]);
+});
+
+it('shows roster doctors on verify form and empty-roster message when none configured', function () {
+    LabReportRosterDoctor::create(['doctor_id' => $this->doctorA->id, 'sort_order' => 0]);
+
+    $this->get(route('lab-results.show', $this->labResult))
+        ->assertOk()
+        ->assertSee('name="reviewer_doctor_ids[]"', false)
+        ->assertSee((string) $this->doctorA->id, false)
+        ->assertDontSee('No consultants configured in Lab Report Print settings', false);
+
+    LabReportRosterDoctor::query()->delete();
+
+    $this->get(route('lab-results.show', $this->labResult))
+        ->assertOk()
+        ->assertSee('No consultants configured in Lab Report Print settings', false)
+        ->assertDontSee('name="reviewer_doctor_ids[]"', false);
 });

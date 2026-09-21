@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Department;
+use App\Models\Doctor;
+use App\Models\LabReportRosterDoctor;
 use App\Models\ModuleRegistry;
 use App\Models\Setting;
 use App\Models\Tenant;
@@ -14,6 +17,7 @@ beforeEach(function () {
         \App\Http\Middleware\EnsureTenantActive::class,
         \App\Http\Middleware\SetTenantTimezone::class,
     ]);
+    $this->withoutVite();
 
     Cache::flush();
 });
@@ -129,4 +133,73 @@ it('renders and saves lab report print toggles', function () {
         'show_reviewers' => false,
         'show_page_numbers' => true,
     ])->and(Setting::get('lab_report_print'))->not->toBeNull();
+});
+
+it('persists ordered consultant roster from settings', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    $department = Department::create([
+        'name' => 'Roster Dept',
+        'code' => 'RST'.uniqid(),
+        'status' => 'active',
+    ]);
+
+    $doctorA = Doctor::create([
+        'name' => 'Dr Roster A',
+        'specialization' => 'Pathology',
+        'qualification' => 'MBBS',
+        'phone' => '03001110001',
+        'email' => 'roster-a-'.uniqid().'@example.com',
+        'gender' => 'male',
+        'experience_years' => 5,
+        'consultation_fee' => 1000,
+        'shift_start' => '09:00:00',
+        'shift_end' => '17:00:00',
+        'status' => 'active',
+        'department_id' => $department->id,
+    ]);
+
+    $doctorB = Doctor::create([
+        'name' => 'Dr Roster B',
+        'specialization' => 'Hematology',
+        'qualification' => 'FCPS',
+        'phone' => '03001110002',
+        'email' => 'roster-b-'.uniqid().'@example.com',
+        'gender' => 'female',
+        'experience_years' => 7,
+        'consultation_fee' => 1200,
+        'shift_start' => '09:00:00',
+        'shift_end' => '17:00:00',
+        'status' => 'active',
+        'department_id' => $department->id,
+    ]);
+
+    $this->get(route('settings.lab-report-print.edit'))
+        ->assertOk()
+        ->assertSee('Consultant roster')
+        ->assertSee('id="lab-report-roster-form"', false);
+
+    $this->put(route('settings.lab-report-print.roster'), [
+        'doctor_ids' => [$doctorB->id, $doctorA->id],
+    ])->assertRedirect(route('settings.lab-report-print.edit'))
+        ->assertSessionHas('success');
+
+    expect(
+        LabReportRosterDoctor::query()->orderBy('sort_order')->pluck('doctor_id')->all()
+    )->toBe([$doctorB->id, $doctorA->id]);
+
+    $this->put(route('settings.lab-report-print.roster'), [
+        'doctor_ids' => [$doctorA->id],
+    ])->assertRedirect(route('settings.lab-report-print.edit'));
+
+    expect(
+        LabReportRosterDoctor::query()->orderBy('sort_order')->pluck('doctor_id')->all()
+    )->toBe([$doctorA->id]);
+
+    $this->put(route('settings.lab-report-print.roster'), [
+        'doctor_ids' => [],
+    ])->assertRedirect(route('settings.lab-report-print.edit'));
+
+    expect(LabReportRosterDoctor::query()->count())->toBe(0);
 });

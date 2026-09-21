@@ -263,6 +263,8 @@ Route::middleware('auth')->group(function () {
             ->name('settings.lab-report-print.edit');
         Route::put('/settings/lab-report-print', [LabReportPrintController::class, 'update'])
             ->name('settings.lab-report-print.update');
+        Route::put('/settings/lab-report-print/roster', [LabReportPrintController::class, 'updateRoster'])
+            ->name('settings.lab-report-print.roster');
     });
 
     // Billing & Subscription Routes
