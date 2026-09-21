@@ -358,17 +358,6 @@ class LabResultController extends Controller
         return view('admin.lab.results.report', compact('report'));
     }
 
-    public function publicReport(LabResult $labResult)
-    {
-        $labResult->load('labOrder');
-
-        if ($labResult->labOrder) {
-            return redirect()->route('lab-report.show', $labResult->labOrder->ensureShareToken());
-        }
-
-        abort(404);
-    }
-
     public function shareWhatsApp(Request $request, LabResult $labResult)
     {
         $labResult->load('labOrder.patient');

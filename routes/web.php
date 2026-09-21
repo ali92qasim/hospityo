@@ -1001,12 +1001,6 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// Legacy signed URL — redirects into the verify-gate flow (numeric id only)
-Route::get('lab-report/{labResult}', [LabResultController::class, 'publicReport'])
-    ->name('lab-results.public-report')
-    ->middleware('signed')
-    ->whereNumber('labResult');
-
 // Public lab report access — verify with patient number + mobile (no auth)
 Route::get('lab-report/{shareToken}', [PublicLabReportController::class, 'show'])
     ->name('lab-report.show')
