@@ -50,6 +50,7 @@ it('registers unique permission lists for accounting and pharmacy catalog childr
 
 it('splits settings permission registry so parent forModule excludes child names', function () {
     expect(PermissionRegistry::forModule('settings'))->not->toContain('access settings.prescription-print')
+        ->and(PermissionRegistry::forModule('settings'))->not->toContain('access settings.lab-report-print')
         ->and(PermissionRegistry::forModule('settings'))->toEqualCanonicalizing([
             'access settings',
             'manage settings',
@@ -57,6 +58,7 @@ it('splits settings permission registry so parent forModule excludes child names
             'edit settings',
         ])
         ->and(PermissionRegistry::forModule('settings.prescription-print'))->toBe(['access settings.prescription-print'])
+        ->and(PermissionRegistry::forModule('settings.lab-report-print'))->toBe(['access settings.lab-report-print'])
         ->and(PermissionRegistry::forModule('settings.hospital-info'))->toBe(['access settings.hospital-info']);
 
     $flat = PermissionRegistry::flat();

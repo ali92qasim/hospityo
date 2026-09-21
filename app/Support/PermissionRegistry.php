@@ -552,6 +552,14 @@ class PermissionRegistry
                 ],
             ],
         ],
+        'settings.lab-report-print' => [
+            'label' => 'Lab Report Print',
+            'groups' => [
+                'lab report print' => [
+                    'access settings.lab-report-print',
+                ],
+            ],
+        ],
         'settings.doctor-share' => [
             'label' => 'Doctor Share',
             'groups' => [

@@ -40,6 +40,8 @@ it('maps settings child routes to their child modules', function () {
         ->and(ModuleRegistry::moduleForRoute('settings.update'))->toBe('settings.hospital-info')
         ->and(ModuleRegistry::moduleForRoute('settings.prescription-print-templates.index'))
         ->toBe('settings.prescription-print')
+        ->and(ModuleRegistry::moduleForRoute('settings.lab-report-print.edit'))
+        ->toBe('settings.lab-report-print')
         ->and(ModuleRegistry::moduleForRoute('doctor-share.reports.index'))
         ->toBe('settings.doctor-share')
         ->and(ModuleRegistry::moduleForRoute('settings.index'))->toBe('settings');
@@ -63,10 +65,11 @@ it('resolves visit routes to emergency or ipd from visit type', function () {
 });
 
 it('lists settings children under the settings parent and emergency as top-level', function () {
-    expect(ModuleRegistry::all())->toContain('emergency', 'settings', 'settings.hospital-info', 'settings.prescription-print', 'settings.doctor-share')
+    expect(ModuleRegistry::all())->toContain('emergency', 'settings', 'settings.hospital-info', 'settings.prescription-print', 'settings.lab-report-print', 'settings.doctor-share')
         ->and(ModuleRegistry::topLevel())->toContain('emergency', 'settings')
-        ->and(ModuleRegistry::topLevel())->not->toContain('doctor-share', 'settings.hospital-info', 'settings.prescription-print', 'settings.doctor-share')
+        ->and(ModuleRegistry::topLevel())->not->toContain('doctor-share', 'settings.hospital-info', 'settings.prescription-print', 'settings.lab-report-print', 'settings.doctor-share')
         ->and(ModuleRegistry::parentOf('settings.hospital-info'))->toBe('settings')
+        ->and(ModuleRegistry::parentOf('settings.lab-report-print'))->toBe('settings')
         ->and(ModuleRegistry::parentOf('settings.doctor-share'))->toBe('settings')
         ->and(ModuleRegistry::parentOf('emergency'))->toBeNull();
 });
@@ -82,7 +85,7 @@ it('locks hospital info onto any slug list that includes settings', function () 
         ->and(ModuleRegistry::normalize(['settings.prescription-print']))
             ->toEqualCanonicalizing(['settings.prescription-print', 'settings', 'settings.hospital-info'])
         ->and(ModuleRegistry::normalize(['settings', 'settings.hospital-info']))
-            ->not->toContain('settings.prescription-print', 'settings.doctor-share');
+            ->not->toContain('settings.prescription-print', 'settings.lab-report-print', 'settings.doctor-share');
 });
 
 it('backfills all report children only when reports is already on the plan', function () {
@@ -101,7 +104,7 @@ it('maps each operational report route to its child slug', function () {
         ->and(ModuleRegistry::moduleForRoute('reports.investigations'))->toBe('reports.investigations')
         ->and(ModuleRegistry::parentOf('reports.revenue'))->toBe('reports')
         ->and(ModuleRegistry::topLevel())->toHaveCount(19)
-        ->and(ModuleRegistry::all())->toHaveCount(52)
+        ->and(ModuleRegistry::all())->toHaveCount(53)
         ->and(ModuleRegistry::normalize(['reports.revenue']))->toEqualCanonicalizing(['reports.revenue', 'reports'])
         ->and(ModuleRegistry::normalize(['reports']))->toBe(['reports'])
         ->and(ModuleRegistry::definitions()['reports']['children'])->toBe(ModuleRegistry::REPORT_CHILD_SLUGS);
@@ -109,12 +112,12 @@ it('maps each operational report route to its child slug', function () {
 
 it('registers 19 top-level modules including emergency and settings', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(19)
-        ->and(ModuleRegistry::all())->toHaveCount(52);
+        ->and(ModuleRegistry::all())->toHaveCount(53);
 });
 
 it('declares entitlement and child-access flags without changing slug sets', function () {
     expect(ModuleRegistry::topLevel())->toHaveCount(19)
-        ->and(ModuleRegistry::all())->toHaveCount(52);
+        ->and(ModuleRegistry::all())->toHaveCount(53);
 
     $reports = ModuleRegistry::definitions()['reports'];
     expect($reports['entitlement'] ?? 'plan')->toBe('plan')
@@ -193,7 +196,7 @@ it('registers four hr catalog children and maps cluster routes to them', functio
         ->and(ModuleRegistry::moduleForRoute('hr.shifts.roster'))->toBe('hr.scheduling')
         ->and(ModuleRegistry::moduleForRoute('hr.shifts.swap-requests'))->toBe('hr.scheduling')
         ->and(ModuleRegistry::topLevel())->toHaveCount(19)
-        ->and(ModuleRegistry::all())->toHaveCount(52)
+        ->and(ModuleRegistry::all())->toHaveCount(53)
         ->and(ModuleRegistry::normalize(['hr.payroll']))->toEqualCanonicalizing(['hr.payroll', 'hr'])
         ->and(ModuleRegistry::normalize(['hr']))->toBe(['hr'])
         ->and(ModuleRegistry::backfillHrChildren(['patients']))->toBe(['patients'])
@@ -221,7 +224,7 @@ it('registers four ot catalog children and keeps core surgeries on the parent', 
         ->and(ModuleRegistry::moduleForRoute('ot.consumables.usage'))->toBe('ot.consumables')
         ->and(ModuleRegistry::moduleForRoute('ot.sterilization.index'))->toBe('ot.sterilization')
         ->and(ModuleRegistry::normalize(['ot']))->toBe(['ot'])
-        ->and(ModuleRegistry::all())->toHaveCount(52)
+        ->and(ModuleRegistry::all())->toHaveCount(53)
         ->and(ModuleRegistry::backfillOtChildren(['ot', 'hr']))->toContain(...ModuleRegistry::OT_CHILD_SLUGS)
         ->and(ModuleRegistry::backfillOtChildren(['hr']))->toBe(['hr']);
 });

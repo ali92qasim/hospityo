@@ -505,6 +505,7 @@ class ModuleRegistry
             'children'    => [
                 'settings.hospital-info',
                 'settings.prescription-print',
+                'settings.lab-report-print',
                 'settings.doctor-share',
             ],
         ],
@@ -524,6 +525,14 @@ class ModuleRegistry
             'description' => 'Prescription print layout templates.',
             'entitlement' => 'plan',
             'routes'      => ['settings.prescription-print-templates.'],
+        ],
+        'settings.lab-report-print' => [
+            'name'        => 'Lab Report Print',
+            'group'       => 'Admin',
+            'parent'      => 'settings',
+            'description' => 'Laboratory report print header, footer, and chrome toggles.',
+            'entitlement' => 'plan',
+            'routes'      => ['settings.lab-report-print.'],
         ],
         'settings.doctor-share' => [
             'name'        => 'Doctor Share',

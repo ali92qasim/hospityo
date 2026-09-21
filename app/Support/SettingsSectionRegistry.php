@@ -43,6 +43,15 @@ final class SettingsSectionRegistry
             'route' => 'settings.prescription-print-templates.index',
             'view' => 'settings.prescription-print-templates.index',
         ],
+        'settings.lab-report-print' => [
+            'key' => 'settings.lab-report-print',
+            'label' => 'Lab Report Print',
+            'icon' => 'fa-flask',
+            'parentKey' => 'settings',
+            'order' => 25,
+            'route' => 'settings.lab-report-print.edit',
+            'view' => 'settings.lab-report-print.edit',
+        ],
         'settings.doctor-share' => [
             'key' => 'settings.doctor-share',
             'label' => 'Doctor Share',

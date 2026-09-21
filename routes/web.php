@@ -35,6 +35,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PrescriptionPrintTemplateController;
+use App\Http\Controllers\Settings\LabReportPrintController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\UserController;
@@ -255,6 +256,13 @@ Route::middleware('auth')->group(function () {
             ->name('settings.prescription-print-templates.deactivate');
         Route::get('/settings/prescription-print-templates/{prescription_print_template}/calibration', [PrescriptionPrintTemplateController::class, 'calibration'])
             ->name('settings.prescription-print-templates.calibration');
+    });
+
+    Route::middleware('settings.section:settings.lab-report-print')->group(function () {
+        Route::get('/settings/lab-report-print', [LabReportPrintController::class, 'edit'])
+            ->name('settings.lab-report-print.edit');
+        Route::put('/settings/lab-report-print', [LabReportPrintController::class, 'update'])
+            ->name('settings.lab-report-print.update');
     });
 
     // Billing & Subscription Routes

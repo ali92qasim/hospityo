@@ -20,7 +20,7 @@ class PlanSeeder extends Seeder
                 'trial_days'    => 14,
                 'modules'       => [
                     'patients', 'doctors', 'departments', 'appointments', 'visits', 'emergency', 'billing',
-                    'settings', 'settings.hospital-info', 'settings.prescription-print',
+                    'settings', 'settings.hospital-info', 'settings.prescription-print', 'settings.lab-report-print',
                 ],
                 'limits'        => [
                     'max_users'    => 3,
@@ -39,7 +39,7 @@ class PlanSeeder extends Seeder
                 'modules'       => array_merge([
                     'patients', 'doctors', 'departments', 'appointments', 'visits', 'emergency', 'billing',
                     'pharmacy', 'laboratory', 'imaging', 'ipd', 'reports', 'rbac',
-                    'settings', 'settings.hospital-info', 'settings.prescription-print',
+                    'settings', 'settings.hospital-info', 'settings.prescription-print', 'settings.lab-report-print',
                 ], ModuleRegistry::REPORT_CHILD_SLUGS, ModuleRegistry::PHARMACY_CHILD_SLUGS),
                 'limits'        => [
                     'max_users'    => 25,
@@ -59,7 +59,7 @@ class PlanSeeder extends Seeder
                     'patients', 'doctors', 'departments', 'appointments', 'visits', 'emergency', 'billing',
                     'pharmacy', 'laboratory', 'imaging', 'ipd', 'reports', 'rbac',
                     'ot', 'hr', 'settings.doctor-share', 'accounting', 'audit', 'backup',
-                    'settings', 'settings.hospital-info', 'settings.prescription-print',
+                    'settings', 'settings.hospital-info', 'settings.prescription-print', 'settings.lab-report-print',
                 ], ModuleRegistry::REPORT_CHILD_SLUGS, ModuleRegistry::PHARMACY_CHILD_SLUGS, ModuleRegistry::ACCOUNTING_CHILD_SLUGS, ModuleRegistry::HR_CHILD_SLUGS, ModuleRegistry::OT_CHILD_SLUGS),
                 'limits'        => [
                     'max_users'    => null, // unlimited

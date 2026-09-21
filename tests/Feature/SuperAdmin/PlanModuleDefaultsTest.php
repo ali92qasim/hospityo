@@ -48,6 +48,7 @@ it('includes emergency and settings children in starter plan', function () {
         'settings',
         'settings.hospital-info',
         'settings.prescription-print',
+        'settings.lab-report-print',
     );
 });
 

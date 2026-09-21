@@ -263,6 +263,7 @@ class RolePermissionSeeder extends Seeder
         'access settings',
         'access settings.hospital-info',
         'access settings.prescription-print',
+        'access settings.lab-report-print',
         'manage settings', // DEPRECATED: use granular settings permissions below
         'view settings',
         'edit settings',
@@ -371,6 +372,7 @@ class RolePermissionSeeder extends Seeder
             'access settings',
             'access settings.hospital-info',
             'access settings.prescription-print',
+            'access settings.lab-report-print',
             'manage settings', // DEPRECATED: backward compatibility
             'view settings', 'edit settings',
             'manage backup', // DEPRECATED: backward compatibility
@@ -410,6 +412,7 @@ class RolePermissionSeeder extends Seeder
             'access settings',
             'access settings.hospital-info',
             'access settings.prescription-print',
+            'access settings.lab-report-print',
             'manage settings',
         ],
         'Lab Technician' => [
