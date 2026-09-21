@@ -81,9 +81,9 @@ class SidebarService
             $menu[] = $this->link('appointments', 'Appointments', 'fa-calendar-check', 'appointments.index', ['appointments.*']);
         }
 
-        // ── IPD Management (ipd module + visit list requires visits module too) ─
+        // ── IPD Management (visit list gated like Emergency: clinical module + view visits) ─
         $ipdItems = [];
-        if ($this->hasModule($tenant, 'ipd') && $this->hasModule($tenant, 'visits') && $user->can('view visits')) {
+        if ($this->hasModule($tenant, 'ipd') && $user->can('view visits')) {
             $ipdItems[] = $this->item('Admitted Patients', 'fa-procedures', 'visits.index', ['visits.index'], ['visit_type' => 'ipd'], 'ipd');
         }
         if ($this->hasModule($tenant, 'ipd') && $user->can('view wards')) {

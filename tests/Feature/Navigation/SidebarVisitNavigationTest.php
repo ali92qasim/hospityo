@@ -130,7 +130,7 @@ it('ipd management has one visit list child not two register links', function ()
 
     $user = makeSidebarUser(['view visits', 'view wards', 'view beds']);
 
-    $tenant = makeTenantWithModules(['visits', 'ipd']);
+    $tenant = makeTenantWithModules(['ipd']);
 
     $menu = $this->service->build($user, $tenant);
 
@@ -146,21 +146,59 @@ it('ipd management has one visit list child not two register links', function ()
 
 
 
-it('gates ipd visit links behind both ipd and visits modules', function () {
+it('shows Admitted Patients when tenant has ipd only', function () {
+
+    $user = makeSidebarUser(['view visits', 'view wards', 'view beds']);
+
+    $tenant = makeTenantWithModules(['ipd']);
+
+    $menu = $this->service->build($user, $tenant);
+
+    $ipd = collect($menu)->firstWhere('label', 'IPD Management');
+
+    expect($ipd)->not->toBeNull();
+
+    $admitted = collect($ipd['items'])->firstWhere('label', 'Admitted Patients');
+
+    expect($admitted)->not->toBeNull()
+
+        ->and($admitted['route_params']['visit_type'])->toBe('ipd');
+
+});
+
+
+
+it('hides IPD Management visit list when tenant lacks ipd even if visits is present', function () {
 
     $user = makeSidebarUser();
 
     $tenant = makeTenantWithModules(['visits']);
 
-
-
     $menu = $this->service->build($user, $tenant);
-
-
 
     expect(collect($menu)->pluck('label'))->toContain('OPD')
 
-        ->and(collect($menu)->pluck('label'))->not->toContain('Emergency', 'IPD Management');
+        ->and(collect($menu)->pluck('label'))->not->toContain('IPD Management');
+
+});
+
+
+
+it('keeps OPD and Emergency sidebar gates unchanged', function () {
+
+    $user = makeSidebarUser(['view visits']);
+
+    $opdMenu = $this->service->build($user, makeTenantWithModules(['visits']));
+
+    expect(collect($opdMenu)->pluck('label'))->toContain('OPD')
+
+        ->and(collect($opdMenu)->pluck('label'))->not->toContain('Emergency');
+
+    $erMenu = $this->service->build($user, makeTenantWithModules(['emergency']));
+
+    expect(collect($erMenu)->pluck('label'))->toContain('Emergency')
+
+        ->and(collect($erMenu)->pluck('label'))->not->toContain('OPD');
 
 });
 
