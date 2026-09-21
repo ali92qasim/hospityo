@@ -308,13 +308,17 @@ class LabResultController extends Controller
             'technician',
             'pathologist',
             'resultItems.parameter',
+            'reviewers',
         ]);
 
         if ($labResult->relationLoaded('labOrder')) {
             $labResult->setRelation('investigationOrder', $labResult->labOrder);
         }
 
-        return view('admin.lab.results.show', compact('labResult'));
+        // Task 4: load LabReportRosterDoctor ordered doctors
+        $rosterDoctors = collect();
+
+        return view('admin.lab.results.show', compact('labResult', 'rosterDoctors'));
     }
 
     public function edit(LabResult $labResult)
@@ -330,14 +334,28 @@ class LabResultController extends Controller
             ->with('success', 'Results updated successfully.');
     }
 
-    public function verify(LabResult $labResult)
+    public function verify(Request $request, LabResult $labResult)
     {
+        $ids = collect($request->input('reviewer_doctor_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        // Task 4: intersect with LabReportRosterDoctor::query()->pluck('doctor_id')
+
+        $sync = [];
+        foreach ($ids as $i => $doctorId) {
+            $sync[$doctorId] = ['sort_order' => $i];
+        }
+
         $labResult->update([
-            'status'         => 'final',
+            'status' => 'final',
             'pathologist_id' => auth()->id(),
-            'verified_at'    => now(),
-            'reported_at'    => now(),
+            'verified_at' => now(),
+            'reported_at' => now(),
         ]);
+        $labResult->reviewers()->sync($sync);
 
         return back()->with('success', 'Results verified and finalized.');
     }

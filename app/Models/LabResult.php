@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
@@ -43,6 +44,13 @@ class LabResult extends Model
     public function pathologist(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pathologist_id');
+    }
+
+    public function reviewers(): BelongsToMany
+    {
+        return $this->belongsToMany(Doctor::class, 'lab_result_reviewers')
+            ->withPivot('sort_order')
+            ->orderByPivot('sort_order');
     }
 
     public function resultItems(): HasMany

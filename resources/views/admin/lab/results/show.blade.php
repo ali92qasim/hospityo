@@ -28,6 +28,20 @@
             @if($labResult->status === 'preliminary')
                 <form action="{{ route('lab-results.verify', $labResult) }}" method="POST" class="inline" id="verify-result-form">
                     @csrf
+                    @if($rosterDoctors->isNotEmpty())
+                        <div class="mb-3 text-left space-y-2">
+                            <p class="text-sm font-medium text-gray-700">Reviewing consultants (optional)</p>
+                            @foreach($rosterDoctors as $doctor)
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox"
+                                           name="reviewer_doctor_ids[]"
+                                           value="{{ $doctor->id }}"
+                                           class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue">
+                                    <span>{{ $doctor->name }}@if($doctor->qualification) — {{ $doctor->qualification }}@endif</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
                     <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-confirm="Verify and finalize this result? This action cannot be undone." data-confirm-title="Verify result" data-confirm-text="Verify" data-confirm-variant="success">
                         <i class="fas fa-check-circle mr-2"></i>Verify & Finalize
                     </button>
