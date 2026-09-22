@@ -14,6 +14,7 @@
             'hospital_address' => setting('hospital_address', ''),
             'hospital_phone' => setting('hospital_phone', ''),
             'hospital_email' => setting('hospital_email', ''),
+            'hospital_website' => setting('hospital_website', ''),
             'hospital_logo' => setting('hospital_logo', null),
         ];
         $visitType = $order->visit->visit_type ?? null;
@@ -249,6 +250,9 @@
                         @endif
                         @if($settings['hospital_email'])
                             <div class="hospital-address">Email: {{ $settings['hospital_email'] }}</div>
+                        @endif
+                        @if($settings['hospital_website'])
+                            <div class="hospital-address">Website: {{ $settings['hospital_website'] }}</div>
                         @endif
                         <div class="report-title">LAB REPORT</div>
                     </div>

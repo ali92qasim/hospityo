@@ -88,6 +88,22 @@
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+
+            <div>
+                <label for="hospital_website" class="block text-sm font-medium text-gray-700 mb-2">
+                    Website
+                    <span class="ml-1 text-xs font-normal text-gray-500">optional</span>
+                </label>
+                <input type="text" id="hospital_website" name="hospital_website"
+                       value="{{ old('hospital_website', setting('hospital_website', '')) }}"
+                       maxlength="255"
+                       placeholder="https://www.example.com"
+                       autocomplete="url"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                @error('hospital_website')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
         </div>
 
         <h3 class="text-md font-semibold text-gray-800 mt-8 mb-4">

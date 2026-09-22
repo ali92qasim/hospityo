@@ -192,3 +192,19 @@ it('omits consultant and note lines when empty', function () {
         ->assertDontSee('<span class="patient-label">Note:</span>', false)
         ->assertDontSee('>Pending</span>', false);
 });
+
+it('shows hospital website in letterhead when set and omits when empty', function () {
+    Setting::set('hospital_website', 'https://www.chrome-hospital.test');
+
+    $this->get(route('investigation-orders.report', $this->order))
+        ->assertOk()
+        ->assertSee('https://www.chrome-hospital.test', false);
+
+    Setting::set('hospital_website', null);
+    Cache::flush();
+
+    $this->get(route('investigation-orders.report', $this->order))
+        ->assertOk()
+        ->assertDontSee('https://www.chrome-hospital.test', false)
+        ->assertDontSee('Website:', false);
+});

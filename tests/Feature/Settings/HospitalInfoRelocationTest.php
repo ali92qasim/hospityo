@@ -49,6 +49,8 @@ it('renders hospital information fields inside the settings shell', function () 
         ->assertSee('name="phc_registration_number"', false)
         ->assertSee('PHC Registration Number')
         ->assertSee('optional', false)
+        ->assertSee('name="hospital_email"', false)
+        ->assertSee('name="hospital_website"', false)
         ->assertSee('name="currency"', false)
         ->assertSee('name="timezone"', false)
         ->assertSee('name="date_format"', false)
@@ -125,6 +127,30 @@ it('clears a previously saved phc registration number when the field is emptied'
         ->assertSessionDoesntHaveErrors();
 
     expect(Setting::get('phc_registration_number'))->toBeNull();
+});
+
+it('saves an optional hospital website with hospital information', function () {
+    $payload = hospitalInfoPayload([
+        'hospital_website' => 'https://www.chrome-hospital.test',
+    ]);
+
+    $this->post(route('settings.update'), $payload)
+        ->assertRedirect(route('settings.index'))
+        ->assertSessionDoesntHaveErrors();
+
+    expect(Setting::get('hospital_website'))->toBe('https://www.chrome-hospital.test');
+});
+
+it('allows hospital information to be saved without a website and clears a previous value', function () {
+    Setting::set('hospital_website', 'https://old.example.test');
+
+    $this->post(route('settings.update'), hospitalInfoPayload([
+        'hospital_website' => '',
+    ]))
+        ->assertRedirect(route('settings.index'))
+        ->assertSessionDoesntHaveErrors();
+
+    expect(Setting::get('hospital_website'))->toBeNull();
 });
 
 it('rejects a missing hospital name without clearing the existing setting', function () {
