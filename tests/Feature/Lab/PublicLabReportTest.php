@@ -146,6 +146,9 @@ it('rejects incorrect patient credentials', function () {
 });
 
 it('unlocks the report after matching patient number and mobile', function () {
+    \App\Models\Setting::set('hospital_name', 'Public View Hospital');
+    \App\Models\Setting::set('hospital_address', '12 Share Street');
+
     $this->post(route('lab-report.verify', $this->order->share_token), [
         'patient_no' => $this->patient->patient_no,
         'phone' => '03001112222',
@@ -154,7 +157,11 @@ it('unlocks the report after matching patient number and mobile', function () {
     $this->get(route('lab-report.view', $this->order->share_token))
         ->assertOk()
         ->assertSee('Uric Acid')
-        ->assertSee('5.2');
+        ->assertSee('5.2')
+        ->assertSee('Registration Location:', false)
+        ->assertSee('Public View Hospital', false)
+        ->assertSee('Case #:', false)
+        ->assertDontSee('Order #:', false);
 });
 
 it('accepts pakistan country-code style mobile numbers', function () {

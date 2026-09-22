@@ -6,6 +6,7 @@ use App\Models\LabOrder;
 use App\Models\LabResult;
 use App\Models\LabTest;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class LabReportBuilder
 {
@@ -21,6 +22,9 @@ class LabReportBuilder
     /** Estimated rows for section bottom padding. */
     public const SECTION_FOOTER_ROWS = 1;
 
+    /** Max characters for clinical notes in the patient detail band. */
+    public const PATIENT_BAND_NOTE_LIMIT = 120;
+
     /**
      * Build a multi-test report for an investigation order.
      *
@@ -28,7 +32,8 @@ class LabReportBuilder
      *     order: LabOrder,
      *     pages: array<int, array{sections: array<int, array<string, mixed>>, row_cost: int}>,
      *     primaryResult: ?LabResult,
-     *     comments: array<int, string>
+     *     comments: array<int, string>,
+     *     patient_band: array<string, mixed>
      * }
      */
     public static function build(LabOrder $order): array
@@ -37,7 +42,7 @@ class LabReportBuilder
 
         $labResults = LabResult::query()
             ->where('lab_order_id', $order->id)
-            ->with(['resultItems.parameter.labTest', 'technician', 'pathologist'])
+            ->with(['resultItems.parameter.labTest', 'technician', 'pathologist', 'reviewers'])
             ->orderBy('id')
             ->get();
 
@@ -54,6 +59,69 @@ class LabReportBuilder
                 ->unique()
                 ->values()
                 ->all(),
+            'patient_band' => static::buildPatientBand($order, $labResults, $sections),
+        ];
+    }
+
+    /**
+     * @param  Collection<int, LabResult>  $labResults
+     * @param  array<int, array<string, mixed>>  $sections
+     * @return array{
+     *     registration_location: string,
+     *     registration_date: mixed,
+     *     case_number: ?string,
+     *     note: ?string,
+     *     department: ?string,
+     *     consultant: ?string
+     * }
+     */
+    public static function buildPatientBand(LabOrder $order, Collection $labResults, array $sections): array
+    {
+        $hospitalName = trim((string) setting('hospital_name', config('app.name', 'Hospital Management System')));
+        $hospitalAddress = trim((string) setting('hospital_address', ''));
+        $registrationLocation = $hospitalName;
+        if ($hospitalAddress !== '') {
+            $registrationLocation .= ', '.$hospitalAddress;
+        }
+
+        $registrationDate = $order->visit?->visit_datetime ?? $order->ordered_at;
+
+        $note = filled($order->clinical_notes)
+            ? Str::limit(trim((string) $order->clinical_notes), self::PATIENT_BAND_NOTE_LIMIT)
+            : null;
+
+        $department = collect($sections)
+            ->map(fn (array $section) => $section['investigation']->category ?? null)
+            ->filter()
+            ->unique()
+            ->map(fn (string $category) => Str::title(str_replace(['_', '-'], ' ', $category)))
+            ->values()
+            ->implode(', ');
+
+        $consultant = $labResults
+            ->flatMap(function (LabResult $result) {
+                return $result->reviewers->map(fn ($doctor) => [
+                    'id' => $doctor->id,
+                    'name' => $doctor->name,
+                    'result_id' => $result->id,
+                    'sort_order' => (int) ($doctor->pivot->sort_order ?? 0),
+                ]);
+            })
+            ->sortBy([
+                ['result_id', 'asc'],
+                ['sort_order', 'asc'],
+            ])
+            ->unique('id')
+            ->pluck('name')
+            ->first();
+
+        return [
+            'registration_location' => $registrationLocation,
+            'registration_date' => $registrationDate,
+            'case_number' => $order->order_number,
+            'note' => $note,
+            'department' => $department !== '' ? $department : null,
+            'consultant' => $consultant ? (string) $consultant : null,
         ];
     }
 
@@ -68,7 +136,7 @@ class LabReportBuilder
             ->groupBy(function ($item) {
                 $investigationId = $item->parameter?->lab_test_id;
 
-                return $investigationId ?: 'unassigned-' . $item->id;
+                return $investigationId ?: 'unassigned-'.$item->id;
             });
 
         $investigationOrder = $order->items
@@ -92,7 +160,6 @@ class LabReportBuilder
             $itemsByInvestigation->forget($investigation->id);
         }
 
-        // Any remaining groups not matched to an order item (legacy data).
         foreach ($itemsByInvestigation as $group) {
             $firstItem = $group->first();
             $investigation = $firstItem->parameter?->labTest;

@@ -8,6 +8,7 @@
         $pages = $report['pages'];
         $primaryResult = $report['primaryResult'];
         $comments = $report['comments'] ?? [];
+        $patientBand = $report['patient_band'] ?? [];
         $settings = [
             'hospital_name' => setting('hospital_name', config('app.name', 'Hospital Management System')),
             'hospital_address' => setting('hospital_address', ''),
@@ -264,6 +265,14 @@
                             <span>{{ $order->patient->age }} Years / {{ ucfirst($order->patient->gender) }}</span>
                         </div>
                         <div class="patient-item">
+                            <span class="patient-label">Registration Location:</span>
+                            <span>{{ $patientBand['registration_location'] ?? $settings['hospital_name'] }}</span>
+                        </div>
+                        <div class="patient-item">
+                            <span class="patient-label">Registration Date:</span>
+                            <span>{{ ($patientBand['registration_date'] ?? null)?->format('d M Y, h:i A') ?? '—' }}</span>
+                        </div>
+                        <div class="patient-item">
                             <span class="patient-label">Referred By:</span>
                             <span>Dr. {{ $order->doctor->name ?? 'N/A' }}</span>
                         </div>
@@ -272,9 +281,15 @@
                             <span>{{ $order->patient->patient_no }}</span>
                         </div>
                         <div class="patient-item">
-                            <span class="patient-label">Order #:</span>
-                            <span>{{ $order->order_number }}</span>
+                            <span class="patient-label">Case #:</span>
+                            <span>{{ $patientBand['case_number'] ?? $order->order_number }}</span>
                         </div>
+                        @if(!empty($patientBand['department']))
+                            <div class="patient-item">
+                                <span class="patient-label">Department:</span>
+                                <span>{{ $patientBand['department'] }}</span>
+                            </div>
+                        @endif
                         <div class="patient-item">
                             <span class="patient-label">Collection:</span>
                             <span>{{ $order->sample_collected_at ? $order->sample_collected_at->format('d M Y, h:i A') : 'Not recorded' }}</span>
@@ -283,10 +298,18 @@
                             <span class="patient-label">Reporting:</span>
                             <span>{{ $primaryResult?->reported_at?->format('d M Y, h:i A') ?? now()->format('d M Y, h:i A') }}</span>
                         </div>
-                        <div class="patient-item">
-                            <span class="patient-label">Consultant:</span>
-                            <span>{{ $primaryResult?->pathologist?->name ?? 'Pending' }}</span>
-                        </div>
+                        @if(!empty($patientBand['consultant']))
+                            <div class="patient-item">
+                                <span class="patient-label">Consultant:</span>
+                                <span>{{ $patientBand['consultant'] }}</span>
+                            </div>
+                        @endif
+                        @if(!empty($patientBand['note']))
+                            <div class="patient-item">
+                                <span class="patient-label">Note:</span>
+                                <span>{{ $patientBand['note'] }}</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif
