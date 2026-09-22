@@ -208,3 +208,37 @@ it('shows hospital website in letterhead when set and omits when empty', functio
         ->assertDontSee('https://www.chrome-hospital.test', false)
         ->assertDontSee('Website:', false);
 });
+
+it('embeds a qr for publicReportUrl when show_qr is enabled', function () {
+    $shareUrl = $this->order->publicReportUrl();
+
+    $html = $this->get(route('investigation-orders.report', $this->order))
+        ->assertOk()
+        ->assertSee('data-qr-url="'.$shareUrl.'"', false)
+        ->assertSee('<svg', false)
+        ->getContent();
+
+    expect($shareUrl)->toContain('/lab-report/')
+        ->and($shareUrl)->toContain($this->order->ensureShareToken())
+        ->and($html)->toContain('data-qr-url="'.$shareUrl.'"');
+
+    // Scanning the encoded URL must land on the verify challenge, not the unlocked report.
+    $this->get($shareUrl)
+        ->assertOk()
+        ->assertSee('Laboratory Report Access')
+        ->assertSee('Patient Number')
+        ->assertSee('Mobile Number')
+        ->assertDontSee('Hemoglobin');
+});
+
+it('omits the qr when show_qr is disabled', function () {
+    \App\Support\LabReportPrintSettings::put([
+        ...\App\Support\LabReportPrintSettings::DEFAULTS,
+        'show_qr' => false,
+    ]);
+
+    $this->get(route('investigation-orders.report', $this->order))
+        ->assertOk()
+        ->assertDontSee('data-qr-url=', false)
+        ->assertDontSee('class="report-qr"', false);
+});

@@ -9,6 +9,11 @@
         $primaryResult = $report['primaryResult'];
         $comments = $report['comments'] ?? [];
         $patientBand = $report['patient_band'] ?? [];
+        $printToggles = \App\Support\LabReportPrintSettings::get();
+        $shareUrl = $order->publicReportUrl();
+        $qrSvg = ($printToggles['show_qr'] ?? true)
+            ? \App\Services\LabReportQrCode::svg($shareUrl)
+            : null;
         $settings = [
             'hospital_name' => setting('hospital_name', config('app.name', 'Hospital Management System')),
             'hospital_address' => setting('hospital_address', ''),
@@ -67,15 +72,19 @@
             break-after: auto;
         }
 
-        /* Old-style header: logo left, hospital title/details centered */
+        /* Header: logo left, hospital title center, QR right */
         .header {
             display: grid;
-            grid-template-columns: 100px 1fr;
+            grid-template-columns: 100px 1fr 100px;
             gap: 20px;
             align-items: start;
             border-bottom: 2px solid #000;
             padding-bottom: 15px;
             margin-bottom: 20px;
+        }
+
+        .header.header-no-qr {
+            grid-template-columns: 100px 1fr;
         }
 
         .logo {
@@ -87,6 +96,20 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+        }
+
+        .report-qr {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+        }
+
+        .report-qr svg {
+            width: 90px;
+            height: 90px;
+            display: block;
         }
 
         .hospital-header {
@@ -234,28 +257,33 @@
     @forelse($pages as $pageIndex => $page)
         <section class="report-page">
             @if($pageIndex === 0)
-                <div class="header">
+                <div class="header {{ $qrSvg ? '' : 'header-no-qr' }}">
                     <div class="logo">
-                        @if($settings['hospital_logo'])
+                        @if(($printToggles['show_logo'] ?? true) && $settings['hospital_logo'])
                             <img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Hospital Logo">
                         @endif
                     </div>
                     <div class="hospital-header">
                         <div class="hospital-name">{{ $settings['hospital_name'] }}</div>
-                        @if($settings['hospital_address'])
+                        @if(($printToggles['show_hospital_address'] ?? true) && $settings['hospital_address'])
                             <div class="hospital-address">{{ $settings['hospital_address'] }}</div>
                         @endif
-                        @if($settings['hospital_phone'])
+                        @if(($printToggles['show_hospital_phone'] ?? true) && $settings['hospital_phone'])
                             <div class="hospital-address">Phone: {{ $settings['hospital_phone'] }}</div>
                         @endif
-                        @if($settings['hospital_email'])
+                        @if(($printToggles['show_hospital_email'] ?? true) && $settings['hospital_email'])
                             <div class="hospital-address">Email: {{ $settings['hospital_email'] }}</div>
                         @endif
-                        @if($settings['hospital_website'])
+                        @if(($printToggles['show_hospital_website'] ?? true) && $settings['hospital_website'])
                             <div class="hospital-address">Website: {{ $settings['hospital_website'] }}</div>
                         @endif
                         <div class="report-title">LAB REPORT</div>
                     </div>
+                    @if($qrSvg)
+                        <div class="report-qr" data-qr-url="{{ $shareUrl }}">
+                            {!! $qrSvg !!}
+                        </div>
+                    @endif
                 </div>
 
                 <div class="patient-box">
