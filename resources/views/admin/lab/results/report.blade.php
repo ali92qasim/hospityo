@@ -9,6 +9,8 @@
         $primaryResult = $report['primaryResult'];
         $comments = $report['comments'] ?? [];
         $patientBand = $report['patient_band'] ?? [];
+        $reviewers = $report['reviewers'] ?? [];
+        $pageCount = count($pages);
         $printToggles = \App\Support\LabReportPrintSettings::get();
         $shareUrl = $order->publicReportUrl();
         $qrSvg = ($printToggles['show_qr'] ?? true)
@@ -24,6 +26,19 @@
         ];
         $visitType = $order->visit->visit_type ?? null;
         $visitLabel = $visitType === 'ipd' ? 'IPD' : ($visitType === 'opd' ? 'OPD' : 'Lab');
+        $contactParts = [];
+        if (($printToggles['show_hospital_phone'] ?? true) && filled($settings['hospital_phone'])) {
+            $contactParts[] = $settings['hospital_phone'];
+        }
+        if (($printToggles['show_hospital_email'] ?? true) && filled($settings['hospital_email'])) {
+            $contactParts[] = $settings['hospital_email'];
+        }
+        if (($printToggles['show_hospital_address'] ?? true) && filled($settings['hospital_address'])) {
+            $contactParts[] = $settings['hospital_address'];
+        }
+        if (($printToggles['show_hospital_website'] ?? true) && filled($settings['hospital_website'])) {
+            $contactParts[] = $settings['hospital_website'];
+        }
     @endphp
     <title>Lab Report - {{ $order->order_number }}</title>
     @include('partials.favicon')
@@ -215,6 +230,40 @@
             font-size: 9.5pt;
         }
 
+        .reviewer-blocks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 28px;
+            margin-top: 20px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .reviewer-block {
+            min-width: 140px;
+            max-width: 200px;
+            font-size: 9.5pt;
+            line-height: 1.35;
+        }
+
+        .reviewer-block .reviewer-name {
+            font-weight: 700;
+        }
+
+        .report-contact {
+            margin-top: 14px;
+            font-size: 9pt;
+            text-align: center;
+            color: #222;
+        }
+
+        .page-number {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 9pt;
+            color: #333;
+        }
+
         .empty-state {
             border: 1px solid #111;
             padding: 24px;
@@ -286,6 +335,7 @@
                     @endif
                 </div>
 
+                @if($printToggles['show_patient_band'] ?? true)
                 <div class="patient-box">
                     <div class="patient-grid">
                         <div class="patient-item">
@@ -344,6 +394,7 @@
                         @endif
                     </div>
                 </div>
+                @endif
             @endif
 
             @foreach($page['sections'] as $section)
@@ -389,6 +440,22 @@
                     </div>
                 @endif
 
+                @if(($printToggles['show_reviewers'] ?? true) && count($reviewers) > 0)
+                    <div class="reviewer-blocks">
+                        @foreach($reviewers as $reviewer)
+                            <div class="reviewer-block">
+                                <div class="reviewer-name">Dr. {{ $reviewer['name'] }}</div>
+                                @if(!empty($reviewer['qualification']))
+                                    <div>{{ $reviewer['qualification'] }}</div>
+                                @endif
+                                @if(!empty($reviewer['specialization']))
+                                    <div>{{ $reviewer['specialization'] }}</div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
                 <div class="signatures">
                     <div>
                         <div class="signature-line">
@@ -400,13 +467,21 @@
                     </div>
                     <div>
                         <div class="signature-line">
-                            <strong>Pathologist / Consultant</strong>
+                            <strong>Verified By</strong>
                             @if($primaryResult?->pathologist)
                                 <div>{{ $primaryResult->pathologist->name }}</div>
                             @endif
                         </div>
                     </div>
                 </div>
+
+                @if(count($contactParts) > 0)
+                    <div class="report-contact">{{ implode(' · ', $contactParts) }}</div>
+                @endif
+            @endif
+
+            @if($printToggles['show_page_numbers'] ?? true)
+                <div class="page-number">Page {{ $pageIndex + 1 }} of {{ $pageCount }}</div>
             @endif
         </section>
     @empty

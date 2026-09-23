@@ -48,6 +48,7 @@ class LabReportBuilder
 
         $sections = static::buildSections($order, $labResults);
         $pages = static::packIntoPages($sections);
+        $reviewers = static::orderedReviewers($labResults);
 
         return [
             'order' => $order,
@@ -59,13 +60,46 @@ class LabReportBuilder
                 ->unique()
                 ->values()
                 ->all(),
-            'patient_band' => static::buildPatientBand($order, $labResults, $sections),
+            'patient_band' => static::buildPatientBand($order, $labResults, $sections, $reviewers),
+            'reviewers' => $reviewers,
         ];
     }
 
     /**
      * @param  Collection<int, LabResult>  $labResults
+     * @return list<array{name: string, qualification: ?string, specialization: ?string}>
+     */
+    public static function orderedReviewers(Collection $labResults): array
+    {
+        return $labResults
+            ->flatMap(function (LabResult $result) {
+                return $result->reviewers->map(fn ($doctor) => [
+                    'id' => $doctor->id,
+                    'name' => trim((string) $doctor->name),
+                    'qualification' => filled($doctor->qualification) ? trim((string) $doctor->qualification) : null,
+                    'specialization' => filled($doctor->specialization) ? trim((string) $doctor->specialization) : null,
+                    'result_id' => $result->id,
+                    'sort_order' => (int) ($doctor->pivot->sort_order ?? 0),
+                ]);
+            })
+            ->sortBy([
+                ['result_id', 'asc'],
+                ['sort_order', 'asc'],
+            ])
+            ->unique('id')
+            ->map(fn (array $row) => [
+                'name' => $row['name'],
+                'qualification' => $row['qualification'],
+                'specialization' => $row['specialization'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  Collection<int, LabResult>  $labResults
      * @param  array<int, array<string, mixed>>  $sections
+     * @param  list<array{name: string, qualification: ?string, specialization: ?string}>  $reviewers
      * @return array{
      *     registration_location: string,
      *     registration_date: mixed,
@@ -75,7 +109,7 @@ class LabReportBuilder
      *     consultant: ?string
      * }
      */
-    public static function buildPatientBand(LabOrder $order, Collection $labResults, array $sections): array
+    public static function buildPatientBand(LabOrder $order, Collection $labResults, array $sections, ?array $reviewers = null): array
     {
         $hospitalName = trim((string) setting('hospital_name', config('app.name', 'Hospital Management System')));
         $hospitalAddress = trim((string) setting('hospital_address', ''));
@@ -98,22 +132,8 @@ class LabReportBuilder
             ->values()
             ->implode(', ');
 
-        $consultant = $labResults
-            ->flatMap(function (LabResult $result) {
-                return $result->reviewers->map(fn ($doctor) => [
-                    'id' => $doctor->id,
-                    'name' => $doctor->name,
-                    'result_id' => $result->id,
-                    'sort_order' => (int) ($doctor->pivot->sort_order ?? 0),
-                ]);
-            })
-            ->sortBy([
-                ['result_id', 'asc'],
-                ['sort_order', 'asc'],
-            ])
-            ->unique('id')
-            ->pluck('name')
-            ->first();
+        $reviewers ??= static::orderedReviewers($labResults);
+        $consultant = $reviewers[0]['name'] ?? null;
 
         return [
             'registration_location' => $registrationLocation,

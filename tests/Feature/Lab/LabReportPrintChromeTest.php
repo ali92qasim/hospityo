@@ -242,3 +242,127 @@ it('omits the qr when show_qr is disabled', function () {
         ->assertDontSee('data-qr-url=', false)
         ->assertDontSee('class="report-qr"', false);
 });
+
+function chromeLabTestWithResult(LabOrder $order, User $user, string $code, string $name, string $category = 'biochemistry'): void
+{
+    $labTest = LabTest::create([
+        'code' => $code,
+        'name' => $name,
+        'category' => $category,
+        'sample_type' => 'blood',
+        'price' => 500,
+        'is_active' => true,
+    ]);
+
+    $parameter = LabTestParameter::create([
+        'lab_test_id' => $labTest->id,
+        'parameter_name' => "{$name} Param",
+        'unit' => 'mg/dL',
+        'data_type' => 'numeric',
+        'reference_ranges' => ['normal' => '1-10'],
+        'display_order' => 1,
+        'is_active' => true,
+    ]);
+
+    LabOrderItem::create([
+        'lab_order_id' => $order->id,
+        'lab_test_id' => $labTest->id,
+        'quantity' => 1,
+        'priority' => 'routine',
+        'status' => 'reported',
+    ]);
+
+    $result = LabResult::create([
+        'lab_order_id' => $order->id,
+        'results' => [],
+        'status' => 'final',
+        'technician_id' => $user->id,
+        'tested_at' => now(),
+        'reported_at' => now(),
+    ]);
+
+    LabResultItem::create([
+        'lab_result_id' => $result->id,
+        'lab_test_parameter_id' => $parameter->id,
+        'value' => '1.0',
+        'unit' => 'mg/dL',
+        'flag' => 'N',
+        'entered_by' => $user->id,
+        'entered_at' => now(),
+    ]);
+}
+
+it('prints page N of M across packed logical pages', function () {
+    chromeLabTestWithResult($this->order, $this->user, 'ALP', 'Alpha Panel');
+    chromeLabTestWithResult($this->order, $this->user, 'BET', 'Beta Panel');
+    // Existing CBC (1 param) + Alpha + Beta = three cost-4 sections → page 2 under budget 8.
+
+    $html = $this->get(route('investigation-orders.report', $this->order->fresh()))
+        ->assertOk()
+        ->assertSee('Page 1 of 2', false)
+        ->assertSee('Page 2 of 2', false)
+        ->getContent();
+
+    expect(substr_count($html, 'Page 1 of 2'))->toBe(1)
+        ->and(substr_count($html, 'Page 2 of 2'))->toBe(1);
+});
+
+it('renders horizontal reviewer credential blocks for each reviewing doctor', function () {
+    $departmentId = $this->doctor->department_id;
+
+    $reviewerB = Doctor::create([
+        'name' => 'Second Reviewer',
+        'specialization' => 'Hematology',
+        'qualification' => 'MBBS, FCPS',
+        'phone' => '03005553333',
+        'email' => 'review-b-'.uniqid().'@example.com',
+        'gender' => 'male',
+        'experience_years' => 7,
+        'consultation_fee' => 1400,
+        'shift_start' => '09:00:00',
+        'shift_end' => '17:00:00',
+        'status' => 'active',
+        'department_id' => $departmentId,
+    ]);
+
+    LabReportRosterDoctor::create([
+        'doctor_id' => $reviewerB->id,
+        'sort_order' => 1,
+    ]);
+
+    $this->labResult->reviewers()->sync([
+        $this->reviewer->id => ['sort_order' => 0],
+        $reviewerB->id => ['sort_order' => 1],
+    ]);
+
+    Setting::set('hospital_phone', '555-0100');
+    Setting::set('hospital_email', 'lab@chrome.test');
+    Setting::set('hospital_website', 'https://www.chrome-hospital.test');
+
+    $html = $this->get(route('investigation-orders.report', $this->order))
+        ->assertOk()
+        ->assertSee('class="reviewer-blocks"', false)
+        ->assertSee('class="reviewer-block"', false)
+        ->assertSee('Dr. Dr Review Chrome', false)
+        ->assertSee('FCPS', false)
+        ->assertSee('Pathology', false)
+        ->assertSee('Dr. Second Reviewer', false)
+        ->assertSee('MBBS, FCPS', false)
+        ->assertSee('Hematology', false)
+        ->assertSee('class="report-contact"', false)
+        ->assertSee('555-0100', false)
+        ->assertSee('lab@chrome.test', false)
+        ->assertSee('https://www.chrome-hospital.test', false)
+        ->getContent();
+
+    expect(substr_count($html, 'class="reviewer-block"'))->toBe(2);
+});
+
+it('omits reviewer footer blocks when there are no reviewers', function () {
+    $this->labResult->reviewers()->sync([]);
+
+    $this->get(route('investigation-orders.report', $this->order))
+        ->assertOk()
+        ->assertDontSee('class="reviewer-blocks"', false)
+        ->assertDontSee('class="reviewer-block"', false);
+});
