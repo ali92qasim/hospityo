@@ -131,17 +131,42 @@ function createResultForLabTest(LabOrder $order, LabTest $labTest, User $user): 
 
 it('groups multiple small tests onto the first page', function () {
     $uricAcid = createLabTestWithParams('Uric Acid', 1);
-    $bloodSugar = createLabTestWithParams('Blood Sugar', 2);
+    $bloodSugar = createLabTestWithParams('Blood Sugar', 1);
 
     createResultForLabTest($this->order, $uricAcid, $this->user);
     createResultForLabTest($this->order, $bloodSugar, $this->user);
 
     $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
 
-    expect($report['pages'])->toHaveCount(1)
+    // Each 1-param section costs 4 (header 2 + rows 1 + footer 1). Budget 8 fits both.
+    expect(LabReportBuilder::FIRST_PAGE_ROW_BUDGET)->toBe(8)
+        ->and($report['pages'])->toHaveCount(1)
         ->and($report['pages'][0]['sections'])->toHaveCount(2)
+        ->and($report['pages'][0]['row_cost'])->toBe(8)
         ->and(collect($report['pages'][0]['sections'])->pluck('investigation.name')->all())
         ->toBe(['Blood Sugar', 'Uric Acid']);
+});
+
+it('spills a third small section onto a continuation page under the first-page budget of 8', function () {
+    expect(LabReportBuilder::FIRST_PAGE_ROW_BUDGET)->toBe(8);
+
+    $alpha = createLabTestWithParams('Alpha Panel', 1);
+    $beta = createLabTestWithParams('Beta Panel', 1);
+    $gamma = createLabTestWithParams('Gamma Panel', 1);
+
+    createResultForLabTest($this->order, $alpha, $this->user);
+    createResultForLabTest($this->order, $beta, $this->user);
+    createResultForLabTest($this->order, $gamma, $this->user);
+
+    $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
+
+    expect($report['pages'])->toHaveCount(2)
+        ->and($report['pages'][0]['sections'])->toHaveCount(2)
+        ->and($report['pages'][0]['row_cost'])->toBe(8)
+        ->and(collect($report['pages'][0]['sections'])->pluck('investigation.name')->all())
+        ->toBe(['Alpha Panel', 'Beta Panel'])
+        ->and($report['pages'][1]['sections'])->toHaveCount(1)
+        ->and($report['pages'][1]['sections'][0]['investigation']->name)->toBe('Gamma Panel');
 });
 
 it('keeps oversized tests on their own continuation page', function () {
