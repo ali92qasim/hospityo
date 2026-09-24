@@ -236,3 +236,76 @@ it('issues a single history query regardless of parameter count (no N+1)', funct
 
     expect($historyQueries->count())->toBe(1);
 });
+
+it('costs one extra row per attached previous value', function () {
+    $test = prevValuesCreateLabTestWithParams('Sodium', 1);
+
+    $older = makePriorOrderForPatient($this->patient, $this->visit, $this->doctor);
+    $olderResult = prevValuesCreateResultForLabTest($older, $test, $this->user);
+    $olderResult->update(['status' => 'final', 'tested_at' => now()->subDays(10)]);
+    LabResultItem::where('lab_result_id', $olderResult->id)->update(['value' => '140']);
+
+    $mid = makePriorOrderForPatient($this->patient, $this->visit, $this->doctor);
+    $midResult = prevValuesCreateResultForLabTest($mid, $test, $this->user);
+    $midResult->update(['status' => 'reported', 'tested_at' => now()->subDays(3)]);
+    LabResultItem::where('lab_result_id', $midResult->id)->update(['value' => '138']);
+
+    prevValuesCreateResultForLabTest($this->order, $test, $this->user);
+
+    $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
+
+    expect($report['pages'][0]['sections'][0]['row_cost'])->toBe(6)
+        ->and($report['pages'][0]['sections'][0]['items'][0]->previous_values)->toHaveCount(2);
+});
+
+it('does not inflate cost when previous_values is empty', function () {
+    $a = prevValuesCreateLabTestWithParams('Alpha', 1);
+    $b = prevValuesCreateLabTestWithParams('Beta', 1);
+    prevValuesCreateResultForLabTest($this->order, $a, $this->user);
+    prevValuesCreateResultForLabTest($this->order, $b, $this->user);
+
+    $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
+
+    expect($report['pages'])->toHaveCount(1)
+        ->and($report['pages'][0]['row_cost'])->toBe(8);
+});
+
+it('packs fewer first-page sections when priors make a section exceed remaining budget', function () {
+    $alpha = prevValuesCreateLabTestWithParams('Alpha Pack', 1);
+    $beta = prevValuesCreateLabTestWithParams('Beta Pack', 1);
+
+    foreach ([10, 7, 4] as $daysAgo) {
+        $priorOrder = makePriorOrderForPatient($this->patient, $this->visit, $this->doctor);
+        $alphaResult = prevValuesCreateResultForLabTest($priorOrder, $alpha, $this->user);
+        $alphaResult->update(['status' => 'final', 'tested_at' => now()->subDays($daysAgo)]);
+        $betaResult = prevValuesCreateResultForLabTest($priorOrder, $beta, $this->user);
+        $betaResult->update(['status' => 'final', 'tested_at' => now()->subDays($daysAgo)]);
+    }
+
+    prevValuesCreateResultForLabTest($this->order, $alpha, $this->user);
+    prevValuesCreateResultForLabTest($this->order, $beta, $this->user);
+
+    $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
+
+    expect($report['pages'][0]['sections'])->toHaveCount(1)
+        ->and($report['pages'][0]['sections'][0]['row_cost'])->toBe(7)
+        ->and($report['pages'])->toHaveCount(2)
+        ->and($report['pages'][1]['sections'])->toHaveCount(1)
+        ->and($report['pages'][1]['sections'][0]['row_cost'])->toBe(7);
+});
+
+it('uses actual prior count not worst-case N when history is partial', function () {
+    $test = prevValuesCreateLabTestWithParams('Partial Hist', 1);
+
+    $priorOrder = makePriorOrderForPatient($this->patient, $this->visit, $this->doctor);
+    $prior = prevValuesCreateResultForLabTest($priorOrder, $test, $this->user);
+    $prior->update(['status' => 'final', 'tested_at' => now()->subDays(5)]);
+
+    prevValuesCreateResultForLabTest($this->order, $test, $this->user);
+
+    $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
+
+    // N default 3 but only 1 prior → cost 2+(1+1)+1 = 5, not 2+(1+3)+1 = 7
+    expect($report['pages'][0]['sections'][0]['items'][0]->previous_values)->toHaveCount(1)
+        ->and($report['pages'][0]['sections'][0]['row_cost'])->toBe(5);
+});

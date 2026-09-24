@@ -284,8 +284,16 @@ class LabReportBuilder
      */
     public static function makeSection(LabTest $investigation, array $resultItems): array
     {
+        $itemRows = 0;
+        foreach ($resultItems as $item) {
+            $priorCount = is_array($item->previous_values ?? null)
+                ? count($item->previous_values)
+                : 0;
+            $itemRows += 1 + (static::PREVIOUS_VALUE_ROW_COST * $priorCount);
+        }
+
         $rowCost = static::SECTION_HEADER_ROWS
-            + count($resultItems)
+            + $itemRows
             + static::SECTION_FOOTER_ROWS;
 
         return [
