@@ -366,3 +366,51 @@ it('omits reviewer footer blocks when there are no reviewers', function () {
         ->assertDontSee('class="reviewer-blocks"', false)
         ->assertDontSee('class="reviewer-block"', false);
 });
+
+it('still shows reviewer blocks and page numbers when previous values are present', function () {
+    $parameterId = LabResultItem::where('lab_result_id', $this->labResult->id)->value('lab_test_parameter_id');
+
+    $priorOrder = LabOrder::create([
+        'patient_id' => $this->patient->id,
+        'visit_id' => $this->visit->id,
+        'doctor_id' => $this->doctor->id,
+        'priority' => 'routine',
+        'status' => 'reported',
+        'ordered_at' => now()->subDays(10),
+        'sample_collected_at' => now()->subDays(10),
+        'completed_at' => now()->subDays(10),
+    ]);
+
+    $priorResult = LabResult::create([
+        'lab_order_id' => $priorOrder->id,
+        'results' => [],
+        'status' => 'final',
+        'technician_id' => $this->user->id,
+        'tested_at' => \Illuminate\Support\Carbon::parse('2026-01-20 08:00:00'),
+        'reported_at' => now()->subDays(10),
+    ]);
+
+    LabResultItem::create([
+        'lab_result_id' => $priorResult->id,
+        'lab_test_parameter_id' => $parameterId,
+        'value' => '12.8',
+        'unit' => 'g/dL',
+        'flag' => 'N',
+        'entered_by' => $this->user->id,
+        'entered_at' => now()->subDays(10),
+    ]);
+
+    $html = $this->get(route('investigation-orders.report', $this->order->fresh()))
+        ->assertOk()
+        ->assertSee('<tr class="previous-result">', false)
+        ->assertSee('12.8')
+        ->assertSee('20 Jan 2026')
+        ->assertSee('class="reviewer-blocks"', false)
+        ->assertSee('Dr. Dr Review Chrome', false)
+        ->assertSee('Page 1 of', false)
+        ->getContent();
+
+    expect($html)->toContain('class="reviewer-block"')
+        ->and($html)->toContain('<tr class="previous-result">')
+        ->and($html)->toContain('Page 1 of');
+});
