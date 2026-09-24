@@ -79,6 +79,7 @@ it('defaults all lab report print toggles to true', function () {
         'show_patient_band' => true,
         'show_reviewers' => true,
         'show_page_numbers' => true,
+        'previous_values_count' => 3,
     ]);
 });
 

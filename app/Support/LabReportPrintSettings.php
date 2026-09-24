@@ -8,7 +8,7 @@ final class LabReportPrintSettings
 {
     public const SETTING_KEY = 'lab_report_print';
 
-    /** @var array<string, bool> */
+    /** @var array<string, bool|int> */
     public const DEFAULTS = [
         'show_logo' => true,
         'show_qr' => true,
@@ -19,9 +19,10 @@ final class LabReportPrintSettings
         'show_patient_band' => true,
         'show_reviewers' => true,
         'show_page_numbers' => true,
+        'previous_values_count' => 3,
     ];
 
-    /** @return array<string, bool> */
+    /** @return array<string, bool|int> */
     public static function get(): array
     {
         $raw = Setting::get(self::SETTING_KEY);
@@ -32,9 +33,16 @@ final class LabReportPrintSettings
 
         $toggles = self::DEFAULTS;
         foreach (self::DEFAULTS as $key => $default) {
-            if (array_key_exists($key, $decoded)) {
-                $toggles[$key] = (bool) $decoded[$key];
+            if (! array_key_exists($key, $decoded)) {
+                continue;
             }
+
+            if ($key === 'previous_values_count') {
+                $toggles[$key] = max(1, min(5, (int) $decoded[$key]));
+                continue;
+            }
+
+            $toggles[$key] = (bool) $decoded[$key];
         }
 
         return $toggles;
@@ -45,6 +53,13 @@ final class LabReportPrintSettings
     {
         $normalized = [];
         foreach (self::DEFAULTS as $key => $default) {
+            if ($key === 'previous_values_count') {
+                $normalized[$key] = array_key_exists($key, $toggles)
+                    ? max(1, min(5, (int) $toggles[$key]))
+                    : (int) $default;
+                continue;
+            }
+
             $normalized[$key] = array_key_exists($key, $toggles)
                 ? filter_var($toggles[$key], FILTER_VALIDATE_BOOLEAN)
                 : false;

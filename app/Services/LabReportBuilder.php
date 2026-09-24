@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\LabOrder;
 use App\Models\LabResult;
+use App\Models\LabResultItem;
 use App\Models\LabTest;
+use App\Support\LabReportPrintSettings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -21,6 +23,9 @@ class LabReportBuilder
 
     /** Estimated rows for section bottom padding. */
     public const SECTION_FOOTER_ROWS = 1;
+
+    /** Estimated rows for one previous-value line under a parameter. */
+    public const PREVIOUS_VALUE_ROW_COST = 1;
 
     /** Max characters for clinical notes in the patient detail band. */
     public const PATIENT_BAND_NOTE_LIMIT = 120;
@@ -45,6 +50,8 @@ class LabReportBuilder
             ->with(['resultItems.parameter.labTest', 'technician', 'pathologist', 'reviewers'])
             ->orderBy('id')
             ->get();
+
+        static::attachPreviousValues($order, $labResults);
 
         $sections = static::buildSections($order, $labResults);
         $pages = static::packIntoPages($sections);
@@ -143,6 +150,83 @@ class LabReportBuilder
             'department' => $department !== '' ? $department : null,
             'consultant' => $consultant ? (string) $consultant : null,
         ];
+    }
+
+    /**
+     * @param  Collection<int, LabResult>  $labResults
+     */
+    public static function attachPreviousValues(LabOrder $order, Collection $labResults): void
+    {
+        $map = static::loadPreviousValuesByParameterId($order, $labResults);
+
+        foreach ($labResults as $result) {
+            foreach ($result->resultItems as $item) {
+                $parameterId = (int) $item->lab_test_parameter_id;
+                $item->previous_values = $map[$parameterId] ?? [];
+            }
+        }
+    }
+
+    /**
+     * @param  Collection<int, LabResult>  $labResults
+     * @return array<int, list<array{value: string, unit: ?string, flag: ?string, tested_at: mixed}>>
+     */
+    public static function loadPreviousValuesByParameterId(LabOrder $order, Collection $labResults): array
+    {
+        $parameterIds = $labResults
+            ->flatMap(fn (LabResult $result) => $result->resultItems)
+            ->pluck('lab_test_parameter_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($parameterIds === []) {
+            return [];
+        }
+
+        $n = max(1, min(5, (int) (LabReportPrintSettings::get()['previous_values_count'] ?? 3)));
+
+        $rows = LabResultItem::query()
+            ->select([
+                'lab_result_items.id',
+                'lab_result_items.lab_result_id',
+                'lab_result_items.lab_test_parameter_id',
+                'lab_result_items.value',
+                'lab_result_items.unit',
+                'lab_result_items.flag',
+                'lab_results.tested_at as prior_tested_at',
+            ])
+            ->join('lab_results', 'lab_results.id', '=', 'lab_result_items.lab_result_id')
+            ->join('lab_orders', 'lab_orders.id', '=', 'lab_results.lab_order_id')
+            ->where('lab_orders.patient_id', $order->patient_id)
+            ->where('lab_orders.id', '!=', $order->id)
+            ->whereIn('lab_result_items.lab_test_parameter_id', $parameterIds)
+            ->whereIn('lab_results.status', ['reported', 'final'])
+            ->orderByDesc('lab_results.tested_at')
+            ->orderByDesc('lab_results.id')
+            ->get();
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $parameterId = (int) $row->lab_test_parameter_id;
+            if (! isset($grouped[$parameterId])) {
+                $grouped[$parameterId] = [];
+            }
+            if (count($grouped[$parameterId]) >= $n) {
+                continue;
+            }
+
+            $grouped[$parameterId][] = [
+                'value' => (string) $row->value,
+                'unit' => $row->unit,
+                'flag' => $row->flag,
+                'tested_at' => $row->prior_tested_at,
+            ];
+        }
+
+        return $grouped;
     }
 
     /**

@@ -17,6 +17,10 @@ class UpdateLabReportPrintSettingsRequest extends FormRequest
     {
         $rules = [];
         foreach (array_keys(LabReportPrintSettings::DEFAULTS) as $key) {
+            if ($key === 'previous_values_count') {
+                // Full integer validation lands in Task 3; skip bool coercion for now.
+                continue;
+            }
             $rules[$key] = ['sometimes', 'boolean'];
         }
 
@@ -27,6 +31,9 @@ class UpdateLabReportPrintSettingsRequest extends FormRequest
     {
         $payload = [];
         foreach (array_keys(LabReportPrintSettings::DEFAULTS) as $key) {
+            if ($key === 'previous_values_count') {
+                continue;
+            }
             $payload[$key] = $this->boolean($key);
         }
 
