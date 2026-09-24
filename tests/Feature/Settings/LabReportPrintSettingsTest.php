@@ -83,6 +83,13 @@ it('defaults all lab report print toggles to true', function () {
     ]);
 });
 
+it('defaults previous_values_count to 3 for new tenants', function () {
+    expect(LabReportPrintSettings::get())->toMatchArray([
+        'previous_values_count' => 3,
+        'show_logo' => true,
+    ]);
+});
+
 it('forbids lab report print settings without the child module', function () {
     bindLabReportPrintTenant(['settings']);
     $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
@@ -120,6 +127,7 @@ it('renders and saves lab report print toggles', function () {
         'show_patient_band' => '1',
         'show_reviewers' => '0',
         'show_page_numbers' => '1',
+        'previous_values_count' => '3',
     ])->assertRedirect(route('settings.lab-report-print.edit'))
         ->assertSessionHas('success');
 
@@ -133,7 +141,53 @@ it('renders and saves lab report print toggles', function () {
         'show_patient_band' => true,
         'show_reviewers' => false,
         'show_page_numbers' => true,
+        'previous_values_count' => 3,
     ])->and(Setting::get('lab_report_print'))->not->toBeNull();
+});
+
+it('saves previous_values_count from radio selection', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    $this->get(route('settings.lab-report-print.edit'))
+        ->assertOk()
+        ->assertSee('name="previous_values_count"', false)
+        ->assertSee('Previous results per parameter', false);
+
+    $this->put(route('settings.lab-report-print.update'), [
+        'show_logo' => '1',
+        'show_qr' => '1',
+        'show_hospital_address' => '1',
+        'show_hospital_phone' => '1',
+        'show_hospital_email' => '1',
+        'show_hospital_website' => '1',
+        'show_patient_band' => '1',
+        'show_reviewers' => '1',
+        'show_page_numbers' => '1',
+        'previous_values_count' => '5',
+    ])->assertRedirect();
+
+    expect(LabReportPrintSettings::get()['previous_values_count'])->toBe(5);
+});
+
+it('rejects previous_values_count outside 1-5', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    $this->from(route('settings.lab-report-print.edit'))
+        ->put(route('settings.lab-report-print.update'), [
+            'show_logo' => '1',
+            'show_qr' => '1',
+            'show_hospital_address' => '1',
+            'show_hospital_phone' => '1',
+            'show_hospital_email' => '1',
+            'show_hospital_website' => '1',
+            'show_patient_band' => '1',
+            'show_reviewers' => '1',
+            'show_page_numbers' => '1',
+            'previous_values_count' => '9',
+        ])
+        ->assertSessionHasErrors('previous_values_count');
 });
 
 it('persists ordered consultant roster from settings', function () {

@@ -18,7 +18,7 @@ class UpdateLabReportPrintSettingsRequest extends FormRequest
         $rules = [];
         foreach (array_keys(LabReportPrintSettings::DEFAULTS) as $key) {
             if ($key === 'previous_values_count') {
-                // Full integer validation lands in Task 3; skip bool coercion for now.
+                $rules[$key] = ['required', 'integer', 'min:1', 'max:5'];
                 continue;
             }
             $rules[$key] = ['sometimes', 'boolean'];

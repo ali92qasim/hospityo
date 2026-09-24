@@ -309,3 +309,32 @@ it('uses actual prior count not worst-case N when history is partial', function 
     expect($report['pages'][0]['sections'][0]['items'][0]->previous_values)->toHaveCount(1)
         ->and($report['pages'][0]['sections'][0]['row_cost'])->toBe(5);
 });
+
+it('respects saved previous_values_count when capping priors', function () {
+    LabReportPrintSettings::put([
+        'show_logo' => true,
+        'show_qr' => true,
+        'show_hospital_address' => true,
+        'show_hospital_phone' => true,
+        'show_hospital_email' => true,
+        'show_hospital_website' => true,
+        'show_patient_band' => true,
+        'show_reviewers' => true,
+        'show_page_numbers' => true,
+        'previous_values_count' => 1,
+    ]);
+
+    $test = prevValuesCreateLabTestWithParams('Capped N', 1);
+
+    foreach ([10, 7, 4] as $daysAgo) {
+        $priorOrder = makePriorOrderForPatient($this->patient, $this->visit, $this->doctor);
+        $prior = prevValuesCreateResultForLabTest($priorOrder, $test, $this->user);
+        $prior->update(['status' => 'final', 'tested_at' => now()->subDays($daysAgo)]);
+    }
+
+    prevValuesCreateResultForLabTest($this->order, $test, $this->user);
+
+    $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
+
+    expect($report['pages'][0]['sections'][0]['items'][0]->previous_values)->toHaveCount(1);
+});

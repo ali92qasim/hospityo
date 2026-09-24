@@ -40,6 +40,29 @@
                 @endforeach
             </div>
 
+            <div class="mb-6 pt-4 border-t border-gray-100">
+                <p class="text-sm font-medium text-gray-800 mb-1">Previous results per parameter</p>
+                <p class="text-xs text-gray-500 mb-3">How many prior values (with dates) to show under each parameter on the printed report.</p>
+                @php
+                    $previousCount = (int) old('previous_values_count', $toggles['previous_values_count'] ?? 3);
+                @endphp
+                <div class="flex flex-wrap gap-4">
+                    @foreach(range(1, 5) as $count)
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                            <input type="radio"
+                                   name="previous_values_count"
+                                   value="{{ $count }}"
+                                   class="border-gray-300 text-medical-blue focus:ring-medical-blue"
+                                   @checked($previousCount === $count)>
+                            <span>{{ $count }}</span>
+                        </label>
+                    @endforeach
+                </div>
+                @error('previous_values_count')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             <button type="submit"
                     class="inline-flex items-center px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
                 Save print settings
