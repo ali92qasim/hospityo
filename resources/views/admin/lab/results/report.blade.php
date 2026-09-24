@@ -202,6 +202,16 @@
 
         .result-abnormal { font-weight: 700; }
 
+        tr.previous-result td {
+            color: #6b7280;
+            font-size: 0.85em;
+        }
+
+        .result-abnormal-muted {
+            color: #c2410c;
+            font-weight: 600;
+        }
+
         .comments-box,
         .signatures {
             margin-top: 14px;
@@ -424,6 +434,20 @@
                                     <td>{{ $item->unit ?? ($parameter?->unit ?? '-') }}</td>
                                     <td>{{ $referenceRange }}</td>
                                 </tr>
+                                @foreach(($item->previous_values ?? []) as $prior)
+                                    @php
+                                        $priorAbnormal = ! empty($prior['flag']) && $prior['flag'] !== 'N';
+                                        $priorDate = ! empty($prior['tested_at'])
+                                            ? \Illuminate\Support\Carbon::parse($prior['tested_at'])->format('d M Y')
+                                            : '';
+                                    @endphp
+                                    <tr class="previous-result">
+                                        <td></td>
+                                        <td class="{{ $priorAbnormal ? 'result-abnormal-muted' : '' }}">{{ $prior['value'] }}</td>
+                                        <td>{{ $prior['unit'] ?? '—' }}</td>
+                                        <td>{{ $priorDate }}</td>
+                                    </tr>
+                                @endforeach
                             @endforeach
                         </tbody>
                     </table>

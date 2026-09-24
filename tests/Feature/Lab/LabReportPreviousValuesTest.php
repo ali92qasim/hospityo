@@ -338,3 +338,89 @@ it('respects saved previous_values_count when capping priors', function () {
 
     expect($report['pages'][0]['sections'][0]['items'][0]->previous_values)->toHaveCount(1);
 });
+
+it('renders sibling previous-result rows with date-only tested_at and muted flag styling', function () {
+    $this->withoutMiddleware([
+        \App\Http\Middleware\EnsureTenantActive::class,
+        \App\Http\Middleware\SetTenantTimezone::class,
+        \App\Http\Middleware\CheckModule::class,
+    ]);
+    $this->withoutVite();
+
+    \Spatie\Permission\Models\Permission::findOrCreate('view lab results', 'web');
+    $this->user->givePermissionTo('view lab results');
+    $this->actingAs($this->user);
+
+    $test = prevValuesCreateLabTestWithParams('Glucose Print', 1);
+    $priorOrder = makePriorOrderForPatient($this->patient, $this->visit, $this->doctor);
+    $prior = prevValuesCreateResultForLabTest($priorOrder, $test, $this->user);
+    $prior->update([
+        'status' => 'final',
+        'tested_at' => \Illuminate\Support\Carbon::parse('2026-01-15 10:00:00'),
+    ]);
+    LabResultItem::where('lab_result_id', $prior->id)->update([
+        'value' => '88',
+        'flag' => 'H',
+    ]);
+
+    prevValuesCreateResultForLabTest($this->order, $test, $this->user);
+
+    $this->get(route('investigation-orders.report', $this->order))
+        ->assertOk()
+        ->assertSee('<tr class="previous-result">', false)
+        ->assertSee('result-abnormal-muted', false)
+        ->assertSee('88')
+        ->assertSee('15 Jan 2026')
+        ->assertDontSee('No previous');
+});
+
+it('omits previous-result markup when the patient has no prior history', function () {
+    $this->withoutMiddleware([
+        \App\Http\Middleware\EnsureTenantActive::class,
+        \App\Http\Middleware\SetTenantTimezone::class,
+        \App\Http\Middleware\CheckModule::class,
+    ]);
+    $this->withoutVite();
+
+    \Spatie\Permission\Models\Permission::findOrCreate('view lab results', 'web');
+    $this->user->givePermissionTo('view lab results');
+    $this->actingAs($this->user);
+
+    $test = prevValuesCreateLabTestWithParams('Uric Print', 1);
+    prevValuesCreateResultForLabTest($this->order, $test, $this->user);
+
+    $this->get(route('investigation-orders.report', $this->order))
+        ->assertOk()
+        ->assertDontSee('<tr class="previous-result">', false);
+});
+
+it('shows previous-result rows on the public unlocked report when history exists', function () {
+    $this->withoutMiddleware([
+        \App\Http\Middleware\EnsureTenantActive::class,
+        \App\Http\Middleware\SetTenantTimezone::class,
+        \App\Http\Middleware\CheckModule::class,
+    ]);
+
+    $test = prevValuesCreateLabTestWithParams('Public Glucose', 1);
+    $priorOrder = makePriorOrderForPatient($this->patient, $this->visit, $this->doctor);
+    $prior = prevValuesCreateResultForLabTest($priorOrder, $test, $this->user);
+    $prior->update([
+        'status' => 'final',
+        'tested_at' => \Illuminate\Support\Carbon::parse('2026-02-01 09:00:00'),
+    ]);
+    LabResultItem::where('lab_result_id', $prior->id)->update(['value' => '91']);
+
+    prevValuesCreateResultForLabTest($this->order, $test, $this->user);
+    $this->order->ensureShareToken();
+
+    $this->post(route('lab-report.verify', $this->order->share_token), [
+        'patient_no' => $this->patient->patient_no,
+        'phone' => '03001112222',
+    ])->assertRedirect(route('lab-report.view', $this->order->share_token));
+
+    $this->get(route('lab-report.view', $this->order->share_token))
+        ->assertOk()
+        ->assertSee('<tr class="previous-result">', false)
+        ->assertSee('91')
+        ->assertSee('01 Feb 2026');
+});
