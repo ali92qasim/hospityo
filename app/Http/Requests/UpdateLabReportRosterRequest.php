@@ -17,7 +17,7 @@ class UpdateLabReportRosterRequest extends FormRequest
     {
         return [
             'doctor_ids' => ['nullable', 'array'],
-            'doctor_ids.*' => ['integer', Rule::exists('doctors', 'id')],
+            'doctor_ids.*' => ['integer', Rule::exists('tenant.doctors', 'id')],
         ];
     }
 

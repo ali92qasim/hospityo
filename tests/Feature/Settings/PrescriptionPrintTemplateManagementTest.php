@@ -19,6 +19,13 @@ beforeEach(function () {
     ]);
 });
 
+it('scopes prescription print template doctor_id exists rule to tenant.doctors', function () {
+    $rules = (new \App\Http\Requests\StorePrescriptionPrintTemplateRequest)->rules()['doctor_id'];
+
+    expect($rules)->toContain('exists:tenant.doctors,id')
+        ->and($rules)->not->toContain('exists:doctors,id');
+});
+
 function printTemplateUser(array $permissions = []): User
 {
     $user = User::create([
@@ -161,6 +168,26 @@ it('stores a template and one field for every catalog key', function () {
     expect($template->fields)->toHaveCount(count(PrescriptionPrintFieldCatalog::keys()))
         ->and($template->fields->pluck('field_key')->sort()->values()->all())
         ->toBe(collect(PrescriptionPrintFieldCatalog::keys())->sort()->values()->all());
+});
+
+it('accepts a real tenant doctor_id when storing a prescription print template', function () {
+    $this->actingAs(printTemplateUser(['access settings.prescription-print']));
+    $doctor = printTemplateDoctor();
+
+    $response = $this->post(
+        route('settings.prescription-print-templates.store'),
+        printTemplatePayload([
+            'name' => 'Doctor scoped template',
+            'doctor_id' => $doctor->id,
+        ])
+    );
+
+    $template = PrescriptionPrintTemplate::where('name', 'Doctor scoped template')->firstOrFail();
+
+    $response->assertRedirect(route('settings.prescription-print-templates.edit', $template))
+        ->assertSessionDoesntHaveErrors();
+
+    expect($template->doctor_id)->toBe($doctor->id);
 });
 
 it('refuses to activate an incomplete template and leaves it inactive', function () {

@@ -23,7 +23,7 @@ class StorePrescriptionPrintTemplateRequest extends FormRequest
             'mode' => ['required', Rule::in(['overlay_physical', 'digitized_background'])],
             'paper_size' => ['required', Rule::in(['A4', 'Letter'])],
             'orientation' => ['required', Rule::in(['portrait', 'landscape'])],
-            'doctor_id' => ['nullable', 'integer', 'exists:doctors,id'],
+            'doctor_id' => ['nullable', 'integer', 'exists:tenant.doctors,id'],
             'rx_start_y' => ['required', 'numeric', 'min:0'],
             'rx_row_height' => ['required', 'numeric', 'gt:0'],
             'rx_max_rows' => ['required', 'integer', 'min:1'],

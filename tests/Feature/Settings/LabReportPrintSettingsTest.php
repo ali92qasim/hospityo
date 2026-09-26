@@ -190,6 +190,48 @@ it('rejects previous_values_count outside 1-5', function () {
         ->assertSessionHasErrors('previous_values_count');
 });
 
+it('scopes roster doctor_ids exists rule to tenant.doctors', function () {
+    $existsRule = collect((new \App\Http\Requests\UpdateLabReportRosterRequest)->rules()['doctor_ids.*'])
+        ->first(fn ($rule) => $rule instanceof \Illuminate\Validation\Rules\Exists);
+
+    expect($existsRule)->not->toBeNull()
+        ->and((string) $existsRule)->toBe('exists:tenant.doctors,id');
+});
+
+it('accepts a real tenant doctor id when saving the lab report consultant roster', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    $department = Department::create([
+        'name' => 'Roster Tenant Dept',
+        'code' => 'RTD'.uniqid(),
+        'status' => 'active',
+    ]);
+
+    $doctor = Doctor::create([
+        'name' => 'Dr Tenant Roster',
+        'specialization' => 'Pathology',
+        'qualification' => 'MBBS',
+        'phone' => '03001119999',
+        'email' => 'roster-tenant-'.uniqid().'@example.com',
+        'gender' => 'male',
+        'experience_years' => 5,
+        'consultation_fee' => 1000,
+        'shift_start' => '09:00:00',
+        'shift_end' => '17:00:00',
+        'status' => 'active',
+        'department_id' => $department->id,
+    ]);
+
+    $this->put(route('settings.lab-report-print.roster'), [
+        'doctor_ids' => [$doctor->id],
+    ])->assertRedirect(route('settings.lab-report-print.edit'))
+        ->assertSessionHas('success')
+        ->assertSessionDoesntHaveErrors();
+
+    expect(LabReportRosterDoctor::query()->pluck('doctor_id')->all())->toBe([$doctor->id]);
+});
+
 it('persists ordered consultant roster from settings', function () {
     $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
     $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
