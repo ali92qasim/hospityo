@@ -160,7 +160,9 @@ it('unlocks the report after matching patient number and mobile', function () {
         ->assertSee('5.2')
         ->assertSee('Registration Location:', false)
         ->assertSee('Public View Hospital', false)
-        ->assertSee('Case #:', false)
+        ->assertSee('Patient No.:', false)
+        ->assertSee($this->patient->patient_no, false)
+        ->assertDontSee('Case #:', false)
         ->assertDontSee('Order #:', false);
 });
 

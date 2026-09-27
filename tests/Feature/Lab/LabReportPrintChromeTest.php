@@ -169,8 +169,9 @@ it('shows registration location from hospital info and not visit_type', function
         ->assertOk()
         ->assertSee('Registration Location:', false)
         ->assertSee('Chrome City Hospital, 99 Lab Avenue', false)
-        ->assertSee('Case #:', false)
-        ->assertSee($this->order->order_number, false)
+        ->assertSee('Patient No.:', false)
+        ->assertSee($this->order->patient->patient_no, false)
+        ->assertDontSee('Case #:', false)
         ->assertDontSee('Order #:', false)
         ->assertSee('Suspected anemia with fatigue', false)
         ->assertSee('Hematology', false)
@@ -182,15 +183,32 @@ it('shows registration location from hospital info and not visit_type', function
                             <span>OPD</span>', false);
 });
 
-it('omits consultant and note lines when empty', function () {
+it('omits consultant, note, registration date, and verified-by when empty', function () {
     $this->labResult->reviewers()->sync([]);
+    $this->labResult->update(['pathologist_id' => null]);
     $this->order->update(['clinical_notes' => null]);
 
+    $report = \App\Services\LabReportBuilder::build($this->order->fresh(['items.labTest', 'patient', 'doctor', 'visit']));
+    $report['patient_band']['registration_date'] = null;
+    $report['primaryResult']->unsetRelation('pathologist');
+    $report['primaryResult']->pathologist_id = null;
+
+    $html = view('admin.lab.results.report', ['report' => $report])->render();
+
+    expect($html)->not->toContain('<span class="patient-label">Consultant:</span>')
+        ->and($html)->not->toContain('<span class="patient-label">Note:</span>')
+        ->and($html)->not->toContain('<span class="patient-label">Registration Date:</span>')
+        ->and($html)->not->toContain('Verified By')
+        ->and($html)->not->toMatch('/Registration Date:[\s\S]{0,80}[—\-]/')
+        ->and($html)->not->toMatch('/Verified By[\s\S]{0,120}[—\-]/');
+});
+
+it('shows verified by and registration date when present', function () {
     $this->get(route('investigation-orders.report', $this->order))
         ->assertOk()
-        ->assertDontSee('<span class="patient-label">Consultant:</span>', false)
-        ->assertDontSee('<span class="patient-label">Note:</span>', false)
-        ->assertDontSee('>Pending</span>', false);
+        ->assertSee('Verified By', false)
+        ->assertSee($this->user->name, false)
+        ->assertSee('Registration Date:', false);
 });
 
 it('shows hospital website in letterhead when set and omits when empty', function () {
@@ -295,7 +313,8 @@ function chromeLabTestWithResult(LabOrder $order, User $user, string $code, stri
 it('prints page N of M across packed logical pages', function () {
     chromeLabTestWithResult($this->order, $this->user, 'ALP', 'Alpha Panel');
     chromeLabTestWithResult($this->order, $this->user, 'BET', 'Beta Panel');
-    // Existing CBC (1 param) + Alpha + Beta = three cost-4 sections → page 2 under budget 8.
+    chromeLabTestWithResult($this->order, $this->user, 'GAM', 'Gamma Panel');
+    // Existing CBC (1 param) + Alpha + Beta + Gamma = four cost-4 sections → page 2 under budget 12.
 
     $html = $this->get(route('investigation-orders.report', $this->order->fresh()))
         ->assertOk()
@@ -305,6 +324,26 @@ it('prints page N of M across packed logical pages', function () {
 
     expect(substr_count($html, 'Page 1 of 2'))->toBe(1)
         ->and(substr_count($html, 'Page 2 of 2'))->toBe(1);
+});
+
+it('packs three 1-param sections onto one logical first page under budget 12', function () {
+    chromeLabTestWithResult($this->order, $this->user, 'ALP', 'Alpha Panel');
+    chromeLabTestWithResult($this->order, $this->user, 'BET', 'Beta Panel');
+    // Existing CBC + Alpha + Beta = three cost-4 sections = 12.
+
+    $html = $this->get(route('investigation-orders.report', $this->order->fresh()))
+        ->assertOk()
+        ->assertSee('Page 1 of 1', false)
+        ->assertDontSee('Page 2 of', false)
+        ->getContent();
+
+    expect(substr_count($html, 'class="report-page"'))->toBe(1)
+        ->and(substr_count($html, 'class="test-panel"'))->toBe(3);
+
+    file_put_contents(
+        storage_path('app/lab-report-a4-budget-check.html'),
+        $html
+    );
 });
 
 it('renders horizontal reviewer credential blocks for each reviewing doctor', function () {
@@ -339,6 +378,13 @@ it('renders horizontal reviewer credential blocks for each reviewing doctor', fu
     Setting::set('hospital_email', 'lab@chrome.test');
     Setting::set('hospital_website', 'https://www.chrome-hospital.test');
 
+    \App\Support\LabReportPrintSettings::put([
+        ...\App\Support\LabReportPrintSettings::DEFAULTS,
+        'show_footer_phone' => true,
+        'show_footer_email' => true,
+        'show_footer_website' => true,
+    ]);
+
     $html = $this->get(route('investigation-orders.report', $this->order))
         ->assertOk()
         ->assertSee('class="reviewer-blocks"', false)
@@ -355,7 +401,35 @@ it('renders horizontal reviewer credential blocks for each reviewing doctor', fu
         ->assertSee('https://www.chrome-hospital.test', false)
         ->getContent();
 
-    expect(substr_count($html, 'class="reviewer-block"'))->toBe(2);
+    expect(substr_count($html, 'class="reviewer-block"'))->toBe(2)
+        ->and($html)->toMatch('/\.reviewer-block\s*\{[^}]*border:\s*1px solid #111/')
+        ->and($html)->not->toMatch('/\.patient-item\s*\{[^}]*border:/')
+        ->and($html)->not->toMatch('/\.signature-line\s*\{[^}]*border:/');
+});
+
+it('omits footer contact by default while header contact toggles still show', function () {
+    Setting::set('hospital_phone', '555-0199');
+    Setting::set('hospital_email', 'header@chrome.test');
+    Setting::set('hospital_address', '99 Lab Avenue');
+    Setting::set('hospital_website', 'https://header-only.chrome.test');
+
+    Cache::flush();
+
+    $html = $this->get(route('investigation-orders.report', $this->order))
+        ->assertOk()
+        ->assertSee('Phone: 555-0199', false)
+        ->assertSee('Email: header@chrome.test', false)
+        ->assertSee('Website: https://header-only.chrome.test', false)
+        ->assertDontSee('class="report-contact"', false)
+        ->getContent();
+
+    expect(\App\Support\LabReportPrintSettings::get())->toMatchArray([
+        'show_hospital_phone' => true,
+        'show_footer_phone' => false,
+        'show_footer_email' => false,
+        'show_footer_address' => false,
+        'show_footer_website' => false,
+    ]);
 });
 
 it('omits reviewer footer blocks when there are no reviewers', function () {

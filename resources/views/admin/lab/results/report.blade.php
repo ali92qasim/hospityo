@@ -27,16 +27,16 @@
         $visitType = $order->visit->visit_type ?? null;
         $visitLabel = $visitType === 'ipd' ? 'IPD' : ($visitType === 'opd' ? 'OPD' : 'Lab');
         $contactParts = [];
-        if (($printToggles['show_hospital_phone'] ?? true) && filled($settings['hospital_phone'])) {
+        if (($printToggles['show_footer_phone'] ?? false) && filled($settings['hospital_phone'])) {
             $contactParts[] = $settings['hospital_phone'];
         }
-        if (($printToggles['show_hospital_email'] ?? true) && filled($settings['hospital_email'])) {
+        if (($printToggles['show_footer_email'] ?? false) && filled($settings['hospital_email'])) {
             $contactParts[] = $settings['hospital_email'];
         }
-        if (($printToggles['show_hospital_address'] ?? true) && filled($settings['hospital_address'])) {
+        if (($printToggles['show_footer_address'] ?? false) && filled($settings['hospital_address'])) {
             $contactParts[] = $settings['hospital_address'];
         }
-        if (($printToggles['show_hospital_website'] ?? true) && filled($settings['hospital_website'])) {
+        if (($printToggles['show_footer_website'] ?? false) && filled($settings['hospital_website'])) {
             $contactParts[] = $settings['hospital_website'];
         }
     @endphp
@@ -254,6 +254,8 @@
             max-width: 200px;
             font-size: 9.5pt;
             line-height: 1.35;
+            border: 1px solid #111;
+            padding: 8px 10px;
         }
 
         .reviewer-block .reviewer-name {
@@ -360,10 +362,12 @@
                             <span class="patient-label">Registration Location:</span>
                             <span>{{ $patientBand['registration_location'] ?? $settings['hospital_name'] }}</span>
                         </div>
-                        <div class="patient-item">
-                            <span class="patient-label">Registration Date:</span>
-                            <span>{{ ($patientBand['registration_date'] ?? null)?->format('d M Y, h:i A') ?? '—' }}</span>
-                        </div>
+                        @if(!empty($patientBand['registration_date']))
+                            <div class="patient-item">
+                                <span class="patient-label">Registration Date:</span>
+                                <span>{{ $patientBand['registration_date']->format('d M Y, h:i A') }}</span>
+                            </div>
+                        @endif
                         <div class="patient-item">
                             <span class="patient-label">Referred By:</span>
                             <span>Dr. {{ $order->doctor->name ?? 'N/A' }}</span>
@@ -373,8 +377,8 @@
                             <span>{{ $order->patient->patient_no }}</span>
                         </div>
                         <div class="patient-item">
-                            <span class="patient-label">Case #:</span>
-                            <span>{{ $patientBand['case_number'] ?? $order->order_number }}</span>
+                            <span class="patient-label">Patient No.:</span>
+                            <span>{{ $order->patient->patient_no }}</span>
                         </div>
                         @if(!empty($patientBand['department']))
                             <div class="patient-item">
@@ -489,14 +493,14 @@
                             @endif
                         </div>
                     </div>
-                    <div>
-                        <div class="signature-line">
-                            <strong>Verified By</strong>
-                            @if($primaryResult?->pathologist)
+                    @if($primaryResult?->pathologist)
+                        <div>
+                            <div class="signature-line">
+                                <strong>Verified By</strong>
                                 <div>{{ $primaryResult->pathologist->name }}</div>
-                            @endif
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
 
                 @if(count($contactParts) > 0)

@@ -16,8 +16,17 @@ class UpdateLabReportRosterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'doctor_ids' => ['nullable', 'array'],
+            'doctor_ids' => ['required', 'array', 'min:1'],
             'doctor_ids.*' => ['integer', Rule::exists('tenant.doctors', 'id')],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'doctor_ids.required' => 'Add at least one consultant to the roster.',
+            'doctor_ids.min' => 'Add at least one consultant to the roster.',
         ];
     }
 

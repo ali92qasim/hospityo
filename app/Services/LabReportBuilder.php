@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 class LabReportBuilder
 {
     /** Rows available for test panels on the first page (after letterhead + patient box). */
-    public const FIRST_PAGE_ROW_BUDGET = 8;
+    public const FIRST_PAGE_ROW_BUDGET = 12;
 
     /** Rows available for test panels on continuation pages. */
     public const PAGE_ROW_BUDGET = 30;

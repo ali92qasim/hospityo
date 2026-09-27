@@ -68,7 +68,7 @@ it('registers settings.lab-report-print in module and section catalogs', functio
         ->toContain('settings.lab-report-print');
 });
 
-it('defaults all lab report print toggles to true', function () {
+it('defaults header toggles to true and footer contact toggles to false', function () {
     expect(LabReportPrintSettings::get())->toBe([
         'show_logo' => true,
         'show_qr' => true,
@@ -76,6 +76,10 @@ it('defaults all lab report print toggles to true', function () {
         'show_hospital_phone' => true,
         'show_hospital_email' => true,
         'show_hospital_website' => true,
+        'show_footer_address' => false,
+        'show_footer_phone' => false,
+        'show_footer_email' => false,
+        'show_footer_website' => false,
         'show_patient_band' => true,
         'show_reviewers' => true,
         'show_page_numbers' => true,
@@ -87,6 +91,29 @@ it('defaults previous_values_count to 3 for new tenants', function () {
     expect(LabReportPrintSettings::get())->toMatchArray([
         'previous_values_count' => 3,
         'show_logo' => true,
+    ]);
+});
+
+it('defaults footer contact toggles to false for existing saved settings missing those keys', function () {
+    Setting::set('lab_report_print', json_encode([
+        'show_logo' => true,
+        'show_qr' => true,
+        'show_hospital_address' => true,
+        'show_hospital_phone' => true,
+        'show_hospital_email' => true,
+        'show_hospital_website' => true,
+        'show_patient_band' => true,
+        'show_reviewers' => true,
+        'show_page_numbers' => true,
+        'previous_values_count' => 3,
+    ]));
+
+    expect(LabReportPrintSettings::get())->toMatchArray([
+        'show_hospital_phone' => true,
+        'show_footer_phone' => false,
+        'show_footer_email' => false,
+        'show_footer_address' => false,
+        'show_footer_website' => false,
     ]);
 });
 
@@ -115,7 +142,10 @@ it('renders and saves lab report print toggles', function () {
         ->assertSee('Lab Report Print')
         ->assertSee('name="show_logo"', false)
         ->assertSee('name="show_qr"', false)
-        ->assertSee('name="show_page_numbers"', false);
+        ->assertSee('name="show_page_numbers"', false)
+        ->assertSee('name="show_footer_phone"', false)
+        ->assertSee('Footer contact line', false)
+        ->assertSee('(header)', false);
 
     $this->put(route('settings.lab-report-print.update'), [
         'show_logo' => '1',
@@ -124,6 +154,10 @@ it('renders and saves lab report print toggles', function () {
         'show_hospital_phone' => '0',
         'show_hospital_email' => '1',
         'show_hospital_website' => '0',
+        'show_footer_address' => '0',
+        'show_footer_phone' => '1',
+        'show_footer_email' => '0',
+        'show_footer_website' => '1',
         'show_patient_band' => '1',
         'show_reviewers' => '0',
         'show_page_numbers' => '1',
@@ -138,6 +172,10 @@ it('renders and saves lab report print toggles', function () {
         'show_hospital_phone' => false,
         'show_hospital_email' => true,
         'show_hospital_website' => false,
+        'show_footer_address' => false,
+        'show_footer_phone' => true,
+        'show_footer_email' => false,
+        'show_footer_website' => true,
         'show_patient_band' => true,
         'show_reviewers' => false,
         'show_page_numbers' => true,
@@ -293,10 +331,41 @@ it('persists ordered consultant roster from settings', function () {
     expect(
         LabReportRosterDoctor::query()->orderBy('sort_order')->pluck('doctor_id')->all()
     )->toBe([$doctorA->id]);
+});
 
-    $this->put(route('settings.lab-report-print.roster'), [
-        'doctor_ids' => [],
-    ])->assertRedirect(route('settings.lab-report-print.edit'));
+it('rejects saving an empty consultant roster', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
 
-    expect(LabReportRosterDoctor::query()->count())->toBe(0);
+    $department = Department::create([
+        'name' => 'Roster Empty Dept',
+        'code' => 'RED'.uniqid(),
+        'status' => 'active',
+    ]);
+
+    $doctor = Doctor::create([
+        'name' => 'Dr Keep Roster',
+        'specialization' => 'Pathology',
+        'qualification' => 'MBBS',
+        'phone' => '03001110009',
+        'email' => 'roster-keep-'.uniqid().'@example.com',
+        'gender' => 'male',
+        'experience_years' => 5,
+        'consultation_fee' => 1000,
+        'shift_start' => '09:00:00',
+        'shift_end' => '17:00:00',
+        'status' => 'active',
+        'department_id' => $department->id,
+    ]);
+
+    LabReportRosterDoctor::create(['doctor_id' => $doctor->id, 'sort_order' => 0]);
+
+    $this->from(route('settings.lab-report-print.edit'))
+        ->put(route('settings.lab-report-print.roster'), [
+            'doctor_ids' => [],
+        ])
+        ->assertRedirect(route('settings.lab-report-print.edit'))
+        ->assertSessionHasErrors(['doctor_ids' => 'Add at least one consultant to the roster.']);
+
+    expect(LabReportRosterDoctor::query()->count())->toBe(1);
 });

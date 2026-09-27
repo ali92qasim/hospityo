@@ -14,20 +14,41 @@
 
             <div class="space-y-3 mb-6">
                 @php
-                    $labels = [
+                    $headerLabels = [
                         'show_logo' => 'Show hospital logo',
                         'show_qr' => 'Show public report QR code',
-                        'show_hospital_address' => 'Show hospital address',
-                        'show_hospital_phone' => 'Show hospital phone',
-                        'show_hospital_email' => 'Show hospital email',
-                        'show_hospital_website' => 'Show hospital website',
+                        'show_hospital_address' => 'Show hospital address (header)',
+                        'show_hospital_phone' => 'Show hospital phone (header)',
+                        'show_hospital_email' => 'Show hospital email (header)',
+                        'show_hospital_website' => 'Show hospital website (header)',
                         'show_patient_band' => 'Show patient detail band',
                         'show_reviewers' => 'Show reviewing consultants',
                         'show_page_numbers' => 'Show page numbers',
                     ];
+                    $footerLabels = [
+                        'show_footer_address' => 'Show hospital address (footer contact line)',
+                        'show_footer_phone' => 'Show hospital phone (footer contact line)',
+                        'show_footer_email' => 'Show hospital email (footer contact line)',
+                        'show_footer_website' => 'Show hospital website (footer contact line)',
+                    ];
                 @endphp
 
-                @foreach($labels as $key => $label)
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Header &amp; body</p>
+                @foreach($headerLabels as $key => $label)
+                    <label class="flex items-center gap-3 text-sm text-gray-700">
+                        <input type="hidden" name="{{ $key }}" value="0">
+                        <input type="checkbox"
+                               name="{{ $key }}"
+                               value="1"
+                               class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue"
+                               @checked(old($key, $toggles[$key] ?? false))>
+                        <span>{{ $label }}</span>
+                    </label>
+                @endforeach
+
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-500 pt-3">Footer contact line</p>
+                <p class="text-xs text-gray-500 -mt-1 mb-1">Off by default — header already shows this info when its toggles are on.</p>
+                @foreach($footerLabels as $key => $label)
                     <label class="flex items-center gap-3 text-sm text-gray-700">
                         <input type="hidden" name="{{ $key }}" value="0">
                         <input type="checkbox"

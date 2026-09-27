@@ -138,8 +138,8 @@ it('groups multiple small tests onto the first page', function () {
 
     $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
 
-    // Each 1-param section costs 4 (header 2 + rows 1 + footer 1). Budget 8 fits both.
-    expect(LabReportBuilder::FIRST_PAGE_ROW_BUDGET)->toBe(8)
+    // Each 1-param section costs 4 (header 2 + rows 1 + footer 1). Budget 12 fits both.
+    expect(LabReportBuilder::FIRST_PAGE_ROW_BUDGET)->toBe(12)
         ->and($report['pages'])->toHaveCount(1)
         ->and($report['pages'][0]['sections'])->toHaveCount(2)
         ->and($report['pages'][0]['row_cost'])->toBe(8)
@@ -147,8 +147,8 @@ it('groups multiple small tests onto the first page', function () {
         ->toBe(['Blood Sugar', 'Uric Acid']);
 });
 
-it('spills a third small section onto a continuation page under the first-page budget of 8', function () {
-    expect(LabReportBuilder::FIRST_PAGE_ROW_BUDGET)->toBe(8);
+it('fits three small sections on the first page under the first-page budget of 12', function () {
+    expect(LabReportBuilder::FIRST_PAGE_ROW_BUDGET)->toBe(12);
 
     $alpha = createLabTestWithParams('Alpha Panel', 1);
     $beta = createLabTestWithParams('Beta Panel', 1);
@@ -160,13 +160,29 @@ it('spills a third small section onto a continuation page under the first-page b
 
     $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
 
-    expect($report['pages'])->toHaveCount(2)
-        ->and($report['pages'][0]['sections'])->toHaveCount(2)
-        ->and($report['pages'][0]['row_cost'])->toBe(8)
+    expect($report['pages'])->toHaveCount(1)
+        ->and($report['pages'][0]['sections'])->toHaveCount(3)
+        ->and($report['pages'][0]['row_cost'])->toBe(12)
         ->and(collect($report['pages'][0]['sections'])->pluck('investigation.name')->all())
-        ->toBe(['Alpha Panel', 'Beta Panel'])
+        ->toBe(['Alpha Panel', 'Beta Panel', 'Gamma Panel']);
+});
+
+it('spills a fourth small section onto a continuation page under the first-page budget of 12', function () {
+    expect(LabReportBuilder::FIRST_PAGE_ROW_BUDGET)->toBe(12);
+
+    foreach (['A Panel', 'B Panel', 'C Panel', 'D Panel'] as $name) {
+        createResultForLabTest($this->order, createLabTestWithParams($name, 1), $this->user);
+    }
+
+    $report = LabReportBuilder::build($this->order->fresh(['items.labTest']));
+
+    expect($report['pages'])->toHaveCount(2)
+        ->and($report['pages'][0]['sections'])->toHaveCount(3)
+        ->and($report['pages'][0]['row_cost'])->toBe(12)
+        ->and(collect($report['pages'][0]['sections'])->pluck('investigation.name')->all())
+        ->toBe(['A Panel', 'B Panel', 'C Panel'])
         ->and($report['pages'][1]['sections'])->toHaveCount(1)
-        ->and($report['pages'][1]['sections'][0]['investigation']->name)->toBe('Gamma Panel');
+        ->and($report['pages'][1]['sections'][0]['investigation']->name)->toBe('D Panel');
 });
 
 it('keeps oversized tests on their own continuation page', function () {
