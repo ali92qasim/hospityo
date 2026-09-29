@@ -199,6 +199,7 @@ it('omits consultant, note, registration date, and verified-by when empty', func
         ->and($html)->not->toContain('<span class="patient-label">Note:</span>')
         ->and($html)->not->toContain('<span class="patient-label">Registration Date:</span>')
         ->and($html)->not->toContain('Verified By')
+        ->and($html)->not->toContain('Lab Technician')
         ->and($html)->not->toMatch('/Registration Date:[\s\S]{0,80}[—\-]/')
         ->and($html)->not->toMatch('/Verified By[\s\S]{0,120}[—\-]/');
 });
@@ -208,7 +209,8 @@ it('shows verified by and registration date when present', function () {
         ->assertOk()
         ->assertSee('Verified By', false)
         ->assertSee($this->user->name, false)
-        ->assertSee('Registration Date:', false);
+        ->assertSee('Registration Date:', false)
+        ->assertDontSee('Lab Technician', false);
 });
 
 it('shows hospital website in letterhead when set and omits when empty', function () {
@@ -399,6 +401,7 @@ it('renders horizontal reviewer credential blocks for each reviewing doctor', fu
         ->assertSee('555-0100', false)
         ->assertSee('lab@chrome.test', false)
         ->assertSee('https://www.chrome-hospital.test', false)
+        ->assertDontSee('Lab Technician', false)
         ->getContent();
 
     expect(substr_count($html, 'class="reviewer-block"'))->toBe(2)

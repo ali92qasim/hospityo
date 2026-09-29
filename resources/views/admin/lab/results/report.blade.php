@@ -227,8 +227,9 @@
 
         .signatures {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
+            grid-template-columns: 1fr;
+            max-width: 280px;
+            margin-left: auto;
             margin-top: 28px;
         }
 
@@ -484,24 +485,16 @@
                     </div>
                 @endif
 
-                <div class="signatures">
-                    <div>
-                        <div class="signature-line">
-                            <strong>Lab Technician</strong>
-                            @if($primaryResult?->technician)
-                                <div>{{ $primaryResult->technician->name }}</div>
-                            @endif
-                        </div>
-                    </div>
-                    @if($primaryResult?->pathologist)
+                @if($primaryResult?->pathologist)
+                    <div class="signatures">
                         <div>
                             <div class="signature-line">
                                 <strong>Verified By</strong>
                                 <div>{{ $primaryResult->pathologist->name }}</div>
                             </div>
                         </div>
-                    @endif
-                </div>
+                    </div>
+                @endif
 
                 @if(count($contactParts) > 0)
                     <div class="report-contact">{{ implode(' · ', $contactParts) }}</div>
