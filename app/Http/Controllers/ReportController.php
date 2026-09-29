@@ -10,6 +10,7 @@ use App\Models\Doctor;
 use App\Models\BillItem;
 use App\Models\Service;
 use App\Models\LabOrder;
+use App\Models\InvestigationOrder;
 use App\Models\ImagingOrder;
 use App\Models\LabResult;
 use App\Models\Prescription;

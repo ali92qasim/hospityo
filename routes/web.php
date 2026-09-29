@@ -34,6 +34,7 @@ use App\Http\Controllers\VisitController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\PrescriptionPrintTemplateController;
 use App\Http\Controllers\Settings\LabReportPrintController;
 use App\Http\Controllers\SubscriptionController;
@@ -697,12 +698,20 @@ Route::middleware('auth')->group(function () {
     Route::post('lab-results/store-batch', [LabResultController::class, 'storeBatch'])->name('lab-results.store-batch')->middleware('permission:create lab results');
     Route::get('lab-orders/{orderItem}/results/create', [LabResultController::class, 'create'])->name('lab-orders.results.create')->middleware('permission:create lab results');
     Route::post('lab-orders/{orderItem}/results', [LabResultController::class, 'store'])->name('lab-orders.results.store')->middleware('permission:create lab results');
+    // Bare /lab-results/create is unused by the UI (entry is order-item or batch). Redirect instead of 500.
+    Route::get('lab-results/create', function () {
+        return redirect()
+            ->route('lab.results.index')
+            ->with('info', 'Open a lab order item to enter results, or use batch entry from Lab Results.');
+    })->name('lab-results.create')->middleware('permission:create lab results');
     Route::post('lab-results/{labResult}/verify', [LabResultController::class, 'verify'])->name('lab-results.verify')->middleware('permission:edit lab results');
     Route::get('lab-results/{labResult}/report', [LabResultController::class, 'report'])->name('lab-results.report')->middleware('permission:view lab results');
     Route::get('lab-results/{labResult}/share-whatsapp', [LabResultController::class, 'shareWhatsApp'])->name('lab-results.share-whatsapp')->middleware('permission:view lab results');
     Route::get('investigation-orders/{investigationOrder}/share-whatsapp', [LabResultController::class, 'shareOrderWhatsApp'])->name('investigation-orders.share-whatsapp')->middleware('permission:view lab results');
 
-    Route::resource('lab-results', LabResultController::class)->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
+    Route::resource('lab-results', LabResultController::class)
+        ->except(['create', 'store'])
+        ->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
 
     // Radiology Results Routes
     Route::get('imaging-orders/{imagingOrder}/radiology-results/create', [RadiologyResultController::class, 'create'])->name('radiology-results.create')->middleware('permission:create radiology results');

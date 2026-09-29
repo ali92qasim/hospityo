@@ -11,11 +11,15 @@ use zfhassaan\Payfast\PayFast;
 
 class BillingService
 {
-    protected PayFast $payfast;
+    protected ?PayFast $payfast = null;
 
-    public function __construct()
+    /**
+     * Resolve PayFast only when a checkout action needs the gateway client.
+     * Index/success/cancel/webhook paths must not construct it eagerly.
+     */
+    protected function payfast(): PayFast
     {
-        $this->payfast = new PayFast();
+        return $this->payfast ??= app(PayFast::class);
     }
 
     /**
@@ -28,14 +32,14 @@ class BillingService
     {
         try {
             // Get auth token from PayFast
-            $tokenResponse = $this->payfast->getToken();
+            $tokenResponse = $this->payfast()->getToken();
             $tokenData = json_decode($tokenResponse->getContent(), true);
 
             if (! isset($tokenData['token'])) {
                 throw new \RuntimeException('Failed to obtain PayFast auth token: ' . ($tokenData['message'] ?? 'Unknown error'));
             }
 
-            $this->payfast->setAuthToken($tokenData['token']);
+            $this->payfast()->setAuthToken($tokenData['token']);
 
             // Create local subscription record
             $subscription = Subscription::create([
