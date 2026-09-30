@@ -405,7 +405,7 @@ it('renders horizontal reviewer credential blocks for each reviewing doctor', fu
         ->getContent();
 
     expect(substr_count($html, 'class="reviewer-block"'))->toBe(2)
-        ->and($html)->toMatch('/\.reviewer-block\s*\{[^}]*border:\s*1px solid #111/')
+        ->and($html)->toMatch('/\.reviewer-block\s*\{[^}]*border:\s*1px solid var\(--lab-report-accent\)/')
         ->and($html)->not->toMatch('/\.patient-item\s*\{[^}]*border:/')
         ->and($html)->not->toMatch('/\.signature-line\s*\{[^}]*border:/');
 });

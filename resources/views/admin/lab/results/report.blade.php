@@ -12,6 +12,11 @@
         $reviewers = $report['reviewers'] ?? [];
         $pageCount = count($pages);
         $printToggles = \App\Support\LabReportPrintSettings::get();
+        $accentColor = $printToggles['accent_color'] ?? \App\Support\LabReportPrintSettings::DEFAULTS['accent_color'];
+        $queryAccent = request()->query('accent');
+        if (is_string($queryAccent) && preg_match('/^#[0-9A-Fa-f]{6}$/', $queryAccent)) {
+            $accentColor = strtoupper($queryAccent);
+        }
         $shareUrl = $order->publicReportUrl();
         $qrSvg = ($printToggles['show_qr'] ?? true)
             ? \App\Services\LabReportQrCode::svg($shareUrl)
@@ -42,6 +47,9 @@
     @endphp
     <title>Lab Report - {{ $order->order_number }}</title>
     @include('partials.favicon')
+    <style>
+        :root { --lab-report-accent: {{ $accentColor }}; }
+    </style>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -93,7 +101,7 @@
             grid-template-columns: 100px 1fr 100px;
             gap: 20px;
             align-items: start;
-            border-bottom: 2px solid #000;
+            border-bottom: 2px solid var(--lab-report-accent);
             padding-bottom: 15px;
             margin-bottom: 20px;
         }
@@ -150,7 +158,7 @@
         }
 
         .patient-box {
-            border: 1px solid #111;
+            border: 1px solid var(--lab-report-accent);
             padding: 8px 10px;
             margin-bottom: 12px;
         }
@@ -165,15 +173,16 @@
         .patient-label { font-weight: 700; display: inline-block; min-width: 128px; }
 
         .test-panel {
-            border: 1px solid #111;
+            border: 1px solid var(--lab-report-accent);
             margin-bottom: 10px;
             break-inside: avoid;
             page-break-inside: avoid;
         }
 
         .test-panel-header {
-            background: #f3f4f6;
-            border-bottom: 1px solid #111;
+            background: var(--lab-report-accent);
+            color: #fff;
+            border-bottom: 1px solid var(--lab-report-accent);
             padding: 6px 8px;
             font-size: 10.5pt;
             font-weight: 700;
@@ -220,7 +229,7 @@
         }
 
         .comments-box {
-            border: 1px solid #111;
+            border: 1px solid var(--lab-report-accent);
             padding: 8px 10px;
             font-size: 9.5pt;
         }
@@ -234,7 +243,7 @@
         }
 
         .signature-line {
-            border-top: 1px solid #111;
+            border-top: 1px solid var(--lab-report-accent);
             padding-top: 4px;
             margin-top: 42px;
             text-align: center;
@@ -255,7 +264,7 @@
             max-width: 200px;
             font-size: 9.5pt;
             line-height: 1.35;
-            border: 1px solid #111;
+            border: 1px solid var(--lab-report-accent);
             padding: 8px 10px;
         }
 
