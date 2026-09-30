@@ -8,7 +8,7 @@ final class LabReportPrintSettings
 {
     public const SETTING_KEY = 'lab_report_print';
 
-    /** @var array<string, bool|int> */
+    /** @var array<string, bool|int|string> */
     public const DEFAULTS = [
         'show_logo' => true,
         'show_qr' => true,
@@ -24,9 +24,10 @@ final class LabReportPrintSettings
         'show_reviewers' => true,
         'show_page_numbers' => true,
         'previous_values_count' => 3,
+        'accent_color' => '#0F766E',
     ];
 
-    /** @return array<string, bool|int> */
+    /** @return array<string, bool|int|string> */
     public static function get(): array
     {
         $raw = Setting::get(self::SETTING_KEY);
@@ -43,6 +44,11 @@ final class LabReportPrintSettings
 
             if ($key === 'previous_values_count') {
                 $toggles[$key] = max(1, min(5, (int) $decoded[$key]));
+                continue;
+            }
+
+            if ($key === 'accent_color') {
+                $toggles[$key] = self::normalizeAccentColor($decoded[$key]);
                 continue;
             }
 
@@ -64,11 +70,32 @@ final class LabReportPrintSettings
                 continue;
             }
 
+            if ($key === 'accent_color') {
+                $normalized[$key] = array_key_exists($key, $toggles)
+                    ? self::normalizeAccentColor($toggles[$key])
+                    : (string) $default;
+                continue;
+            }
+
             $normalized[$key] = array_key_exists($key, $toggles)
                 ? filter_var($toggles[$key], FILTER_VALIDATE_BOOLEAN)
                 : false;
         }
 
         Setting::set(self::SETTING_KEY, json_encode($normalized));
+    }
+
+    private static function normalizeAccentColor(mixed $value): string
+    {
+        if (! is_string($value)) {
+            return (string) self::DEFAULTS['accent_color'];
+        }
+
+        $value = strtoupper(trim($value));
+        if (! preg_match('/^#[0-9A-F]{6}$/', $value)) {
+            return (string) self::DEFAULTS['accent_color'];
+        }
+
+        return $value;
     }
 }

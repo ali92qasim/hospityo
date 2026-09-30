@@ -21,6 +21,12 @@ class UpdateLabReportPrintSettingsRequest extends FormRequest
                 $rules[$key] = ['required', 'integer', 'min:1', 'max:5'];
                 continue;
             }
+
+            if ($key === 'accent_color') {
+                $rules[$key] = ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'];
+                continue;
+            }
+
             $rules[$key] = ['sometimes', 'boolean'];
         }
 
@@ -31,10 +37,14 @@ class UpdateLabReportPrintSettingsRequest extends FormRequest
     {
         $payload = [];
         foreach (array_keys(LabReportPrintSettings::DEFAULTS) as $key) {
-            if ($key === 'previous_values_count') {
+            if ($key === 'previous_values_count' || $key === 'accent_color') {
                 continue;
             }
             $payload[$key] = $this->boolean($key);
+        }
+
+        if ($this->has('accent_color') && is_string($this->input('accent_color'))) {
+            $payload['accent_color'] = trim($this->input('accent_color'));
         }
 
         $this->merge($payload);
