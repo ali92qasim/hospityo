@@ -84,6 +84,56 @@
                 @enderror
             </div>
 
+            @php
+                $accent = old('accent_color', $toggles['accent_color'] ?? '#0F766E');
+                $accentFails = \App\Support\LabReportAccentContrast::failsMinimum($accent);
+                $accentRatio = round(\App\Support\LabReportAccentContrast::ratioAgainstWhite($accent), 1);
+            @endphp
+            <div class="mb-6 pt-4 border-t border-gray-100" data-lab-report-accent-settings>
+                <p class="text-sm font-medium text-gray-800 mb-1">Report accent color</p>
+                <p class="text-xs text-gray-500 mb-3">
+                    Colors the header rule, section bars, box borders, and signature line on printed lab reports.
+                    Section bar labels stay white. Results table and abnormal flags are not affected.
+                </p>
+                <div class="flex flex-wrap items-center gap-3 mb-3">
+                    <label for="lab-report-accent-picker" class="text-sm font-medium text-gray-700">Picker</label>
+                    <input
+                        type="color"
+                        id="lab-report-accent-picker"
+                        value="{{ $accent }}"
+                        class="h-9 w-12 cursor-pointer rounded border border-gray-300 bg-white p-0.5"
+                        aria-label="Accent color picker"
+                    >
+                    <label for="lab-report-accent-hex" class="text-sm font-medium text-gray-700">Hex</label>
+                    <input
+                        type="text"
+                        name="accent_color"
+                        id="lab-report-accent-hex"
+                        value="{{ $accent }}"
+                        pattern="^#[0-9A-Fa-f]{6}$"
+                        maxlength="7"
+                        spellcheck="false"
+                        class="w-28 rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-medical-blue"
+                    >
+                </div>
+                <div
+                    id="lab-report-accent-contrast"
+                    class="rounded-lg border px-3 py-2 text-xs {{ $accentFails ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-emerald-300 bg-emerald-50 text-emerald-900' }}"
+                    data-ok-class="border-emerald-300 bg-emerald-50 text-emerald-900"
+                    data-warn-class="border-amber-300 bg-amber-50 text-amber-900"
+                    role="status"
+                >
+                    @if ($accentFails)
+                        Contrast vs white page: {{ $accentRatio }}:1 — this accent may be nearly invisible on screen and as a pale gray when printed in black &amp; white. Consider a darker color. You can still save.
+                    @else
+                        Contrast vs white page: {{ $accentRatio }}:1 — OK for chrome (UI graphics threshold ≈ 3:1).
+                    @endif
+                </div>
+                @error('accent_color')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             <button type="submit"
                     class="inline-flex items-center px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
                 Save print settings
@@ -186,5 +236,5 @@
     </tr>
 </template>
 
-@vite(['resources/js/lab-report-roster-form.js'])
+@vite(['resources/js/lab-report-roster-form.js', 'resources/js/lab-report-accent-settings.js'])
 @endsection

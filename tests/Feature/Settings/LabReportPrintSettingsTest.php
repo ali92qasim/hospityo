@@ -7,6 +7,7 @@ use App\Models\ModuleRegistry;
 use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\LabReportAccentContrast;
 use App\Support\LabReportPrintSettings;
 use App\Support\SettingsSectionRegistry;
 use Illuminate\Support\Facades\Cache;
@@ -262,6 +263,47 @@ it('falls back to default when stored accent_color is corrupt', function () {
     ]));
 
     expect(LabReportPrintSettings::get()['accent_color'])->toBe('#0F766E');
+});
+
+it('shows accent color controls on the lab report print settings screen', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    $this->get(route('settings.lab-report-print.edit'))
+        ->assertOk()
+        ->assertSee('Report accent color', false)
+        ->assertSee('name="accent_color"', false)
+        ->assertSee('type="color"', false)
+        ->assertSee('id="lab-report-accent-hex"', false)
+        ->assertSee('id="lab-report-accent-contrast"', false);
+});
+
+it('still saves when accent_color contrast is below 3:1', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    $this->put(route('settings.lab-report-print.update'), [
+        'show_logo' => '1',
+        'show_qr' => '1',
+        'show_hospital_address' => '1',
+        'show_hospital_phone' => '1',
+        'show_hospital_email' => '1',
+        'show_hospital_website' => '1',
+        'show_footer_address' => '0',
+        'show_footer_phone' => '0',
+        'show_footer_email' => '0',
+        'show_footer_website' => '0',
+        'show_patient_band' => '1',
+        'show_reviewers' => '1',
+        'show_page_numbers' => '1',
+        'previous_values_count' => '3',
+        'accent_color' => '#FDE68A',
+    ])->assertRedirect(route('settings.lab-report-print.edit'))
+        ->assertSessionHas('success')
+        ->assertSessionMissing('errors');
+
+    expect(LabReportPrintSettings::get()['accent_color'])->toBe('#FDE68A')
+        ->and(LabReportAccentContrast::failsMinimum('#FDE68A'))->toBeTrue();
 });
 
 it('saves previous_values_count from radio selection', function () {
