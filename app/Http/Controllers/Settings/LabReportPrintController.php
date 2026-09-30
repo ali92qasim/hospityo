@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateLabReportPrintSettingsRequest;
 use App\Http\Requests\UpdateLabReportRosterRequest;
 use App\Models\Doctor;
+use App\Models\LabOrder;
 use App\Models\LabReportRosterDoctor;
+use App\Services\LabReportBuilder;
+use App\Services\LabReportPreviewFixture;
 use App\Support\LabReportPrintSettings;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class LabReportPrintController extends Controller
@@ -28,6 +32,26 @@ class LabReportPrintController extends Controller
             'toggles' => LabReportPrintSettings::get(),
             'rosterRows' => $rosterRows,
             'doctors' => $doctors,
+        ]);
+    }
+
+    public function preview(Request $request)
+    {
+        $order = LabOrder::query()
+            ->whereHas('results', function ($query) {
+                $query->whereHas('resultItems');
+            })
+            ->latest('id')
+            ->first();
+
+        $report = $order
+            ? LabReportBuilder::build($order)
+            : LabReportPreviewFixture::report();
+
+        return view('admin.lab.results.report', [
+            'report' => $report,
+            'isPublic' => true,
+            'embed' => true,
         ]);
     }
 

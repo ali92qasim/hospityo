@@ -132,6 +132,31 @@
                 @error('accent_color')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
+
+                <div
+                    class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+                    id="lab-report-accent-previews"
+                    data-preview-url="{{ route('settings.lab-report-print.preview') }}"
+                >
+                    <div>
+                        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Color print preview</p>
+                        <iframe
+                            id="lab-report-accent-preview-color"
+                            class="h-96 w-full rounded-lg border border-gray-200 bg-white"
+                            title="Color lab report preview"
+                        ></iframe>
+                    </div>
+                    <div>
+                        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Black &amp; white (printer)</p>
+                        <div style="filter: grayscale(100%)">
+                            <iframe
+                                id="lab-report-accent-preview-bw"
+                                class="h-96 w-full rounded-lg border border-gray-200 bg-white"
+                                title="Grayscale lab report preview"
+                            ></iframe>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <button type="submit"

@@ -66,6 +66,10 @@
             margin: 15px 0;
         }
 
+        body.embed-preview .no-print {
+            display: none !important;
+        }
+
         .print-btn, .close-btn {
             border: none;
             padding: 10px 25px;
@@ -317,7 +321,7 @@
     </style>
     @vite(['resources/js/lab-report-print.js'])
 </head>
-<body>
+<body @class(['embed-preview' => ! empty($embed)])>
     <div class="no-print">
         <button type="button" id="lab-report-print-btn" class="print-btn">Print / Save as PDF</button>
         @unless($isPublic ?? false)

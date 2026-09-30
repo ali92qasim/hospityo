@@ -262,6 +262,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('settings.section:settings.lab-report-print')->group(function () {
         Route::get('/settings/lab-report-print', [LabReportPrintController::class, 'edit'])
             ->name('settings.lab-report-print.edit');
+        Route::get('/settings/lab-report-print/preview', [LabReportPrintController::class, 'preview'])
+            ->name('settings.lab-report-print.preview');
         Route::put('/settings/lab-report-print', [LabReportPrintController::class, 'update'])
             ->name('settings.lab-report-print.update');
         Route::put('/settings/lab-report-print/roster', [LabReportPrintController::class, 'updateRoster'])

@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const picker = document.getElementById('lab-report-accent-picker');
     const hexInput = document.getElementById('lab-report-accent-hex');
     const banner = document.getElementById('lab-report-accent-contrast');
+    const previews = document.getElementById('lab-report-accent-previews');
+    const colorFrame = document.getElementById('lab-report-accent-preview-color');
+    const bwFrame = document.getElementById('lab-report-accent-preview-bw');
 
     if (!picker || !hexInput || !banner) {
         return;
@@ -14,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
     const MIN_RATIO = 3.0;
+    const PREVIEW_DEBOUNCE_MS = 250;
+    let previewTimer = null;
 
     function channel(c) {
         return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
@@ -63,10 +68,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function previewUrlFor(hex) {
+        const base = previews?.dataset.previewUrl;
+        if (!base) {
+            return null;
+        }
+
+        const url = new URL(base, window.location.origin);
+        url.searchParams.set('accent', hex);
+        url.searchParams.set('embed', '1');
+
+        return url.toString();
+    }
+
+    function loadPreviews(hex) {
+        if (!HEX_RE.test(hex) || !colorFrame || !bwFrame) {
+            return;
+        }
+
+        const src = previewUrlFor(hex);
+        if (!src) {
+            return;
+        }
+
+        colorFrame.src = src;
+        bwFrame.src = src;
+    }
+
+    function schedulePreviews(hex) {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(() => loadPreviews(hex), PREVIEW_DEBOUNCE_MS);
+    }
+
     function syncFromPicker() {
         const hex = normalizeHex(picker.value);
         hexInput.value = hex;
         applyBanner(hex);
+        schedulePreviews(hex);
     }
 
     function syncFromHex() {
@@ -78,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hexInput.value = hex;
         picker.value = hex.toLowerCase();
         applyBanner(hex);
+        schedulePreviews(hex);
     }
 
     picker.addEventListener('input', syncFromPicker);
@@ -85,5 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hexInput.addEventListener('input', syncFromHex);
     hexInput.addEventListener('change', syncFromHex);
 
-    applyBanner(normalizeHex(hexInput.value || picker.value));
+    const initialHex = normalizeHex(hexInput.value || picker.value);
+    applyBanner(initialHex);
+    loadPreviews(initialHex);
 });
