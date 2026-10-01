@@ -358,3 +358,112 @@ it('renders the QR inside the band only when the patient band is off (OQ-6), exa
     LabReportPrintSettings::put([...LabReportPrintSettings::DEFAULTS, 'show_qr' => false]);
     expect(bandedChromeReportHtml($this))->not->toContain('data-qr-url=');
 });
+
+/** Slice of $html from the first occurrence of $start up to (not including) $end. */
+function bandedChromeBetween(string $html, string $start, string $end): string
+{
+    $from = strpos($html, $start);
+    expect($from)->not->toBeFalse("missing start anchor {$start}");
+    $to = strpos($html, $end, $from);
+    expect($to)->not->toBeFalse("missing end anchor {$end}");
+
+    return substr($html, $from, $to - $from);
+}
+
+it('renders the patient strip in three columns with every confirmed field', function () {
+    $html = bandedChromeReportHtml($this);
+    $left = bandedChromeBetween($html, 'patient-strip-col patient-strip-left', '</div><!-- /left -->');
+    $middle = bandedChromeBetween($html, 'patient-strip-col patient-strip-middle', '</div><!-- /middle -->');
+
+    foreach (['Patient Name:', 'Age / Sex:', 'Referred By:', 'Patient No.:', 'Department:', 'Consultant:'] as $label) {
+        expect($left)->toContain($label);
+    }
+    foreach (['Registration Location:', 'Registration Date:', 'Collection:', 'Reporting:'] as $label) {
+        expect($middle)->toContain($label)
+            ->and($left)->not->toContain($label);
+    }
+    foreach (['Patient Name:', 'Age / Sex:', 'Referred By:', 'Patient No.:', 'Department:', 'Consultant:'] as $label) {
+        expect($middle)->not->toContain($label);
+    }
+
+    $note = bandedChromeBetween($html, 'class="patient-strip-note"', '</div>');
+
+    expect($html)->toContain('class="patient-strip"')
+        ->and($note)->toContain('Note:')
+        ->and($left)->not->toContain('Note:')
+        ->and($middle)->not->toContain('Note:')
+        ->and($html)->toContain('Accent chrome fixture note.')
+        ->and($html)->toContain($this->patient->fresh()->patient_no)
+        ->and($html)->toContain('Accent City Hospital, 11 Accent Avenue')
+        ->and($html)->not->toContain('class="patient-box"')
+        ->and($html)->not->toContain('patient-grid')
+        ->and($html)->toMatch('/\.patient-strip\s*\{[^}]*grid-template-columns:\s*1fr 1fr 26mm/s')
+        ->and($html)->toMatch('/\.patient-strip\.no-qr\s*\{[^}]*grid-template-columns:\s*1fr 1fr;/s')
+        ->and($html)->toMatch('/\.patient-strip-note\s*\{[^}]*grid-column:\s*1 \/ 3/s')
+        ->and($html)->toMatch('/\.patient-item\s*\{[^}]*font-size:\s*9\.5pt/s');
+});
+
+it('places the QR in the strip right column and not in the band when the strip is shown', function () {
+    $html = bandedChromeReportHtml($this);
+    $strip = bandedChromeBetween($html, 'class="patient-strip"', '<!-- /patient-strip -->');
+
+    expect(substr_count($html, 'data-qr-url='))->toBe(1)
+        ->and($strip)->toContain('class="patient-strip-qr report-qr" data-qr-url=')
+        ->and(bandedChromeBandMarkup($html))->not->toContain('report-band-qr')
+        ->and($html)->not->toContain('.patient-box > .report-qr')
+        ->and($html)->not->toContain('.patient-box::after');
+});
+
+it('relocates the QR to the band right edge when the patient band is off (OQ-6)', function () {
+    LabReportPrintSettings::put([...LabReportPrintSettings::DEFAULTS, 'show_patient_band' => false]);
+
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->not->toContain('class="patient-strip')
+        ->and($html)->not->toContain('patient-strip-qr report-qr')
+        ->and(bandedChromeBandMarkup($html))->toContain('class="report-band-qr report-qr" data-qr-url=')
+        ->and(substr_count($html, 'data-qr-url='))->toBe(1);
+});
+
+it('omits the QR everywhere when show_qr is off', function () {
+    LabReportPrintSettings::put([...LabReportPrintSettings::DEFAULTS, 'show_qr' => false]);
+
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->not->toContain('data-qr-url=')
+        ->and($html)->toContain('class="patient-strip no-qr"')
+        ->and($html)->not->toContain('class="patient-strip-qr');
+});
+
+it('draws a 1px accent divider at the bottom of the patient strip (OQ-7)', function () {
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->toMatch('/\.patient-strip\s*\{[^}]*border-bottom:\s*1px solid var\(--lab-report-accent\)/s');
+});
+
+it('separates the band from the first panel bar when the patient strip is off', function () {
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->toMatch('/\.report-band\s*\{[^}]*margin-bottom:\s*3mm/s')
+        ->and($html)->toMatch('/\.patient-strip\s*\{[^}]*padding:\s*0 0 2\.5mm/s');
+});
+
+it('omits empty optional fields exactly as the old band did', function () {
+    $this->order->update(['clinical_notes' => null]);
+    $this->labResult->reviewers()->sync([]);
+
+    $html = bandedChromeReportHtml($this);
+    $left = bandedChromeBetween($html, 'patient-strip-col patient-strip-left', '</div><!-- /left -->');
+    $middle = bandedChromeBetween($html, 'patient-strip-col patient-strip-middle', '</div><!-- /middle -->');
+
+    // Registration Date falls back to ordered_at (NOT NULL) and Department to the test category
+    // (required enum), so both stay present by data logic; Note and Consultant can go empty.
+    expect($html)->toContain('class="patient-strip"')
+        ->and($html)->not->toContain('Note:')
+        ->and($html)->not->toContain('class="patient-strip-note"')
+        ->and($html)->not->toContain('Consultant:')
+        ->and($middle)->toContain('Registration Date:')
+        ->and($left)->toContain('Patient No.:')
+        ->and($middle)->toContain('Collection:')
+        ->and($middle)->toContain('Reporting:');
+});

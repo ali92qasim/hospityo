@@ -391,7 +391,7 @@ it('writes V4: V2 data with every boolean toggle off except show_qr, and an all-
     $html = a4FixtureRender($this, 1, 'v4-toggles-off.html');
     expect($html)->toContain('class="report-band-qr report-qr"')
         ->and(substr_count($html, 'data-qr-url='))->toBe(1)
-        ->and($html)->not->toContain('class="patient-box"');
+        ->and($html)->not->toContain('class="patient-strip');
 
     LabReportPrintSettings::put([...LabReportPrintSettings::DEFAULTS, ...$allOff]);
     Cache::flush();
@@ -399,7 +399,7 @@ it('writes V4: V2 data with every boolean toggle off except show_qr, and an all-
 
     $html = a4FixtureRender($this, 1, 'v4-all-off.html');
     expect($html)->not->toContain('data-qr-url=')
-        ->and($html)->not->toContain('class="patient-box"');
+        ->and($html)->not->toContain('class="patient-strip');
 });
 
 it('writes V5: V2 data on the default accent and on a borderline 4.5:1 accent', function () {

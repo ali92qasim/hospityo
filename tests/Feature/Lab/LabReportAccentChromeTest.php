@@ -179,7 +179,7 @@ it('emits --lab-report-accent from saved settings on the report', function () {
         ->and($html)->toMatch('/\.report-band\s*\{[^}]*background:\s*var\(--lab-report-accent\)/s')
         ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*background:\s*var\(--lab-report-accent\)/s')
         ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*color:\s*#fff/s')
-        ->and($html)->toMatch('/\.patient-box\s*\{[^}]*border:\s*1px solid var\(--lab-report-accent\)/s')
+        ->and($html)->toMatch('/\.patient-strip\s*\{[^}]*border-bottom:\s*1px solid var\(--lab-report-accent\)/s')
         ->and($html)->toMatch('/\.test-panel\s*\{[^}]*border:\s*1px solid var\(--lab-report-accent\)/s')
         ->and($html)->toMatch('/\.comments-box\s*\{[^}]*border:\s*1px solid var\(--lab-report-accent\)/s')
         ->and($html)->toMatch('/\.reviewer-block\s*\{[^}]*border:\s*1px solid var\(--lab-report-accent\)/s')
@@ -227,7 +227,10 @@ it('locks clinical text sizes and table metrics', function () {
         ->and($html)->toMatch('/\.signature-line\s*\{[^}]*padding-top:\s*4px/s')
         ->and($html)->toMatch('/\.signature-line\s*\{[^}]*margin-top:\s*42px/s')
         ->and($html)->toMatch('/\.results-table th,\s*\.results-table td\s*\{[^}]*padding:\s*5px 8px/s')
-        ->and($html)->toMatch('/\.results-table th,\s*\.results-table td\s*\{[^}]*font-size:\s*9\.5pt/s');
+        ->and($html)->toMatch('/\.results-table th,\s*\.results-table td\s*\{[^}]*font-size:\s*9\.5pt/s')
+        ->and($html)->toContain('class="patient-strip"')
+        ->and($html)->toContain('<div class="patient-item">')
+        ->and($html)->toMatch('/\.patient-item\s*\{[^}]*font-size:\s*9\.5pt/s');
 });
 
 it('honors ?accent= override without persisting settings', function () {

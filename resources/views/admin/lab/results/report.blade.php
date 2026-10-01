@@ -130,6 +130,7 @@
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
             padding: 4mm 5mm;
+            margin-bottom: 3mm;
         }
 
         .report-band-brand {
@@ -196,32 +197,24 @@
             display: block;
         }
 
-        /* Interim (until the patient strip lands): QR floats top-right inside the patient box */
-        .patient-box > .report-qr {
-            float: right;
-            margin-left: 12px;
-        }
-
-        .patient-box::after {
-            content: "";
-            display: block;
-            clear: both;
-        }
-
-        .patient-box {
-            border: 1px solid var(--lab-report-accent);
-            padding: 8px 10px;
-            margin-bottom: 12px;
-        }
-
-        .patient-grid {
+        /* Page-1 patient strip: who | when / where | QR, closed by a 1px accent divider (OQ-7) */
+        .patient-strip {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 6px 16px;
+            grid-template-columns: 1fr 1fr 26mm;
+            gap: 2px 14px;
+            padding: 0 0 2.5mm;
+            margin-bottom: 4mm;
+            border-bottom: 1px solid var(--lab-report-accent);
         }
+
+        .patient-strip.no-qr { grid-template-columns: 1fr 1fr; }
+        .patient-strip-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .patient-strip-qr { grid-row: span 2; display: flex; justify-content: flex-end; width: auto; height: auto; }
+        .patient-strip-qr svg { width: 90px; height: 90px; display: block; }
+        .patient-strip-note { grid-column: 1 / 3; }
 
         .patient-item { font-size: 9.5pt; }
-        .patient-label { font-weight: 700; display: inline-block; min-width: 128px; }
+        .patient-label { font-weight: 700; display: inline-block; min-width: 27mm; }
 
         .test-panel {
             border: 1px solid var(--lab-report-accent);
@@ -423,14 +416,8 @@
                 </header>
 
                 @if($printToggles['show_patient_band'] ?? true)
-                <div class="patient-box">
-                    {{-- Interim QR placement; the patient strip (next task) replaces this --}}
-                    @if($qrSvg)
-                        <div class="report-qr" data-qr-url="{{ $shareUrl }}">
-                            {!! $qrSvg !!}
-                        </div>
-                    @endif
-                    <div class="patient-grid">
+                <div @class(['patient-strip', 'no-qr' => ! $qrSvg])>
+                    <div class="patient-strip-col patient-strip-left">
                         <div class="patient-item">
                             <span class="patient-label">Patient Name:</span>
                             <span>{{ $order->patient->name }}</span>
@@ -439,16 +426,6 @@
                             <span class="patient-label">Age / Sex:</span>
                             <span>{{ $order->patient->age }} Years / {{ ucfirst($order->patient->gender) }}</span>
                         </div>
-                        <div class="patient-item">
-                            <span class="patient-label">Registration Location:</span>
-                            <span>{{ $patientBand['registration_location'] ?? $settings['hospital_name'] }}</span>
-                        </div>
-                        @if(!empty($patientBand['registration_date']))
-                            <div class="patient-item">
-                                <span class="patient-label">Registration Date:</span>
-                                <span>{{ $patientBand['registration_date']->format('d M Y, h:i A') }}</span>
-                            </div>
-                        @endif
                         <div class="patient-item">
                             <span class="patient-label">Referred By:</span>
                             <span>Dr. {{ $order->doctor->name ?? 'N/A' }}</span>
@@ -463,6 +440,24 @@
                                 <span>{{ $patientBand['department'] }}</span>
                             </div>
                         @endif
+                        @if(!empty($patientBand['consultant']))
+                            <div class="patient-item">
+                                <span class="patient-label">Consultant:</span>
+                                <span>{{ $patientBand['consultant'] }}</span>
+                            </div>
+                        @endif
+                    </div><!-- /left -->
+                    <div class="patient-strip-col patient-strip-middle">
+                        <div class="patient-item">
+                            <span class="patient-label">Registration Location:</span>
+                            <span>{{ $patientBand['registration_location'] ?? $settings['hospital_name'] }}</span>
+                        </div>
+                        @if(!empty($patientBand['registration_date']))
+                            <div class="patient-item">
+                                <span class="patient-label">Registration Date:</span>
+                                <span>{{ $patientBand['registration_date']->format('d M Y, h:i A') }}</span>
+                            </div>
+                        @endif
                         <div class="patient-item">
                             <span class="patient-label">Collection:</span>
                             <span>{{ $order->sample_collected_at ? $order->sample_collected_at->format('d M Y, h:i A') : 'Not recorded' }}</span>
@@ -471,20 +466,19 @@
                             <span class="patient-label">Reporting:</span>
                             <span>{{ $primaryResult?->reported_at?->format('d M Y, h:i A') ?? now()->format('d M Y, h:i A') }}</span>
                         </div>
-                        @if(!empty($patientBand['consultant']))
-                            <div class="patient-item">
-                                <span class="patient-label">Consultant:</span>
-                                <span>{{ $patientBand['consultant'] }}</span>
-                            </div>
-                        @endif
-                        @if(!empty($patientBand['note']))
+                    </div><!-- /middle -->
+                    @if($qrSvg)
+                        <div class="patient-strip-qr report-qr" data-qr-url="{{ $shareUrl }}">{!! $qrSvg !!}</div>
+                    @endif
+                    @if(!empty($patientBand['note']))
+                        <div class="patient-strip-note">
                             <div class="patient-item">
                                 <span class="patient-label">Note:</span>
                                 <span>{{ $patientBand['note'] }}</span>
                             </div>
-                        @endif
-                    </div>
-                </div>
+                        </div>
+                    @endif
+                </div><!-- /patient-strip -->
                 @endif
             @endif
 
