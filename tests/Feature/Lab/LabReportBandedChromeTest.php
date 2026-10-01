@@ -467,3 +467,75 @@ it('omits empty optional fields exactly as the old band did', function () {
         ->and($middle)->toContain('Collection:')
         ->and($middle)->toContain('Reporting:');
 });
+
+/** Adds enough single-parameter panels to the order to spill onto three logical pages. */
+function bandedChromeThreePageOrder(object $test): void
+{
+    // 4 rows per one-parameter panel: page 1 (12) holds 3, page 2 (30) holds 7, page 3 takes the rest.
+    foreach (range(1, 12) as $i) {
+        bandedChromeLabTestWithResult($test->order, $test->user, 'RH'.$i, "Running Panel {$i}");
+    }
+}
+
+it('shows a slim running header with patient identification on every continuation page only', function () {
+    bandedChromeThreePageOrder($this);
+
+    $html = bandedChromeReportHtml($this);
+    $running = bandedChromeBetween($html, 'class="running-header"', '</div><!-- /running-header -->');
+    $patientNo = $this->patient->fresh()->patient_no;
+
+    expect($html)->toContain('Page 3 of 3')
+        ->and(substr_count($html, 'class="running-header"'))->toBe(2)
+        ->and(substr_count($html, 'class="report-band"'))->toBe(1)
+        ->and(substr_count($html, '</div><!-- /running-header -->'))->toBe(2)
+        ->and($running)->toContain('<strong>Accent City Hospital</strong> · LAB REPORT')
+        ->and($running)->toContain('Accent Patient')
+        ->and($running)->toContain('Patient No. '.$patientNo)
+        ->and($running)->not->toContain($this->order->fresh()->order_number)
+        ->and($running)->not->toContain('<img')
+        ->and($running)->not->toContain('data-qr-url=')
+        ->and(strpos($html, 'class="running-header"'))->toBeGreaterThan(strpos($html, 'Page 1 of 3'));
+});
+
+it('keeps the running header on continuation pages even with every header toggle off', function () {
+    bandedChromeThreePageOrder($this);
+    LabReportPrintSettings::put([
+        ...LabReportPrintSettings::DEFAULTS,
+        'show_logo' => false,
+        'show_hospital_address' => false,
+        'show_patient_band' => false,
+        'show_qr' => false,
+    ]);
+
+    expect(substr_count(bandedChromeReportHtml($this), 'class="running-header"'))->toBe(2);
+});
+
+it('does not render a running header on a single-page report', function () {
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->toContain('Page 1 of 1')
+        ->and($html)->not->toContain('class="running-header"');
+});
+
+it('styles the running header as a slim accent fill with forced background printing', function () {
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->toMatch('/\.running-header\s*\{[^}]*background:\s*var\(--lab-report-accent\)/s')
+        ->and($html)->toMatch('/\.running-header\s*\{[^}]*color:\s*#fff/s')
+        ->and($html)->toMatch('/\.running-header\s*\{[^}]*-webkit-print-color-adjust:\s*exact/s')
+        ->and($html)->toMatch('/\.running-header\s*\{[^}]*[^-]print-color-adjust:\s*exact/s')
+        ->and($html)->toMatch('/\.running-header\s*\{[^}]*padding:\s*2mm 4mm/s')
+        ->and($html)->toMatch('/\.running-header\s*\{[^}]*margin-bottom:\s*4mm/s')
+        ->and($html)->toMatch('/\.running-header\s*\{[^}]*font-size:\s*9pt/s');
+});
+
+it('widens middle-column patient labels so all four middle values share one start edge', function () {
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->toMatch('/\.patient-label\s*\{[^}]*min-width:\s*27mm/s')
+        ->and($html)->toMatch('/\.patient-strip-middle \.patient-label\s*\{[^}]*min-width:\s*\d+(\.\d+)?mm/s')
+        ->and($html)->toMatch('/\.patient-item\s*\{[^}]*font-size:\s*9\.5pt/s');
+
+    preg_match('/\.patient-strip-middle \.patient-label\s*\{[^}]*min-width:\s*(\d+(?:\.\d+)?)mm/s', $html, $m);
+    expect((float) $m[1])->toBeGreaterThan(27.0);
+});

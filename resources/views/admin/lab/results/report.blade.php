@@ -215,6 +215,25 @@
 
         .patient-item { font-size: 9.5pt; }
         .patient-label { font-weight: 700; display: inline-block; min-width: 27mm; }
+        /* Middle-column labels ("Registration Location:" ~35.5mm at 9.5pt bold) need a wider shared column. */
+        .patient-strip-middle .patient-label { min-width: 38mm; }
+
+        /* Continuation pages (2..M): slim accent strip identifying hospital + patient (OQ-1, no Order #). */
+        .running-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: var(--lab-report-accent);
+            color: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            padding: 2mm 4mm;
+            margin-bottom: 4mm;
+            font-size: 9pt;
+        }
+
+        .running-header strong { font-weight: 700; }
 
         .test-panel {
             border: 1px solid var(--lab-report-accent);
@@ -480,6 +499,11 @@
                     @endif
                 </div><!-- /patient-strip -->
                 @endif
+            @else
+                <div class="running-header">
+                    <div><strong>{{ $settings['hospital_name'] }}</strong> · LAB REPORT</div>
+                    <div>{{ $order->patient->name }} · Patient No. {{ $order->patient->patient_no }}</div>
+                </div><!-- /running-header -->
             @endif
 
             @foreach($page['sections'] as $section)
