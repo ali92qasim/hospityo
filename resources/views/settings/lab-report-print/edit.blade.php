@@ -21,6 +21,7 @@
                         'show_hospital_phone' => 'Show hospital phone (header)',
                         'show_hospital_email' => 'Show hospital email (header)',
                         'show_hospital_website' => 'Show hospital website (header)',
+                        'show_phc_registration' => 'Show PHC registration number (header)',
                         'show_patient_band' => 'Show patient detail band',
                         'show_reviewers' => 'Show reviewing consultants',
                         'show_page_numbers' => 'Show page numbers',

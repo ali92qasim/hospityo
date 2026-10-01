@@ -77,6 +77,7 @@ it('defaults header toggles to true and footer contact toggles to false', functi
         'show_hospital_phone' => true,
         'show_hospital_email' => true,
         'show_hospital_website' => true,
+        'show_phc_registration' => true,
         'show_footer_address' => false,
         'show_footer_phone' => false,
         'show_footer_email' => false,
@@ -138,6 +139,63 @@ it('defaults footer contact toggles to false for existing saved settings missing
         'show_footer_address' => false,
         'show_footer_website' => false,
     ]);
+});
+
+it('defaults show_phc_registration on, including for tenants whose saved JSON predates it', function () {
+    expect(LabReportPrintSettings::get()['show_phc_registration'])->toBeTrue();
+
+    Setting::set('lab_report_print', json_encode([
+        'show_logo' => true,
+        'show_qr' => true,
+        'show_hospital_address' => true,
+        'show_hospital_phone' => true,
+        'show_hospital_email' => true,
+        'show_hospital_website' => true,
+        'show_patient_band' => true,
+        'show_reviewers' => true,
+        'show_page_numbers' => true,
+        'previous_values_count' => 3,
+        'accent_color' => '#0F766E',
+    ]));
+
+    expect(LabReportPrintSettings::get()['show_phc_registration'])->toBeTrue();
+});
+
+it('persists show_phc_registration off from the settings form', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    $this->put(route('settings.lab-report-print.update'), [
+        'show_logo' => '1',
+        'show_qr' => '1',
+        'show_hospital_address' => '1',
+        'show_hospital_phone' => '1',
+        'show_hospital_email' => '1',
+        'show_hospital_website' => '1',
+        'show_phc_registration' => '0',
+        'show_footer_address' => '0',
+        'show_footer_phone' => '0',
+        'show_footer_email' => '0',
+        'show_footer_website' => '0',
+        'show_patient_band' => '1',
+        'show_reviewers' => '1',
+        'show_page_numbers' => '1',
+        'previous_values_count' => '3',
+        'accent_color' => '#0F766E',
+    ])->assertRedirect(route('settings.lab-report-print.edit'))
+        ->assertSessionHas('success');
+
+    expect(LabReportPrintSettings::get()['show_phc_registration'])->toBeFalse();
+});
+
+it('lists the PHC toggle among header toggles on the settings page', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    $this->get(route('settings.lab-report-print.edit'))
+        ->assertOk()
+        ->assertSee('name="show_phc_registration"', false)
+        ->assertSee('Show PHC registration number (header)');
 });
 
 it('forbids lab report print settings without the child module', function () {

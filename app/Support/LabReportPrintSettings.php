@@ -16,6 +16,7 @@ final class LabReportPrintSettings
         'show_hospital_phone' => true,
         'show_hospital_email' => true,
         'show_hospital_website' => true,
+        'show_phc_registration' => true,
         'show_footer_address' => false,
         'show_footer_phone' => false,
         'show_footer_email' => false,
