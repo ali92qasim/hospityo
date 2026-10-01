@@ -29,8 +29,6 @@
             'hospital_website' => setting('hospital_website', ''),
             'hospital_logo' => setting('hospital_logo', null),
         ];
-        $visitType = $order->visit->visit_type ?? null;
-        $visitLabel = $visitType === 'ipd' ? 'IPD' : ($visitType === 'opd' ? 'OPD' : 'Lab');
         $contactParts = [];
         if (($printToggles['show_footer_phone'] ?? false) && filled($settings['hospital_phone'])) {
             $contactParts[] = $settings['hospital_phone'];
@@ -385,10 +383,6 @@
                         <div class="patient-item">
                             <span class="patient-label">Referred By:</span>
                             <span>Dr. {{ $order->doctor->name ?? 'N/A' }}</span>
-                        </div>
-                        <div class="patient-item">
-                            <span class="patient-label">{{ $visitLabel }} #:</span>
-                            <span>{{ $order->patient->patient_no }}</span>
                         </div>
                         <div class="patient-item">
                             <span class="patient-label">Patient No.:</span>
