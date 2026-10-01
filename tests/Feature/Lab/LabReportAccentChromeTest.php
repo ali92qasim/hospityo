@@ -176,7 +176,7 @@ it('emits --lab-report-accent from saved settings on the report', function () {
         ->getContent();
 
     expect($html)->toContain('--lab-report-accent: #123456')
-        ->and($html)->toMatch('/\.header\s*\{[^}]*border-bottom:\s*2px solid var\(--lab-report-accent\)/s')
+        ->and($html)->toMatch('/\.report-band\s*\{[^}]*background:\s*var\(--lab-report-accent\)/s')
         ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*background:\s*var\(--lab-report-accent\)/s')
         ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*color:\s*#fff/s')
         ->and($html)->toMatch('/\.patient-box\s*\{[^}]*border:\s*1px solid var\(--lab-report-accent\)/s')
@@ -203,6 +203,7 @@ it('forces background printing on every accent-filled element', function () {
     preg_match_all('/([^{}]+)\{([^{}]*background:\s*var\(--lab-report-accent\)[^{}]*)\}/s', $html, $rules, PREG_SET_ORDER);
 
     expect($rules)->not->toBeEmpty()
+        ->and(collect($rules)->map(fn ($rule) => trim($rule[1]))->all())->toContain('.report-band')
         ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*-webkit-print-color-adjust:\s*exact/s')
         ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*[^-]print-color-adjust:\s*exact/s');
 
@@ -212,19 +213,16 @@ it('forces background printing on every accent-filled element', function () {
     }
 });
 
-it('keeps structural size metrics identical to pre-accent chrome (pure-color lock)', function () {
+it('locks clinical text sizes and table metrics', function () {
     $html = $this->get(route('investigation-orders.report', $this->order))->assertOk()->getContent();
 
-    expect($html)->toMatch('/\.header\s*\{[^}]*border-bottom:\s*2px solid/s')
-        ->and($html)->toMatch('/\.header\s*\{[^}]*padding-bottom:\s*15px/s')
-        ->and($html)->toMatch('/\.header\s*\{[^}]*margin-bottom:\s*20px/s')
-        ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*padding:\s*6px 8px/s')
+    expect($html)->toMatch('/\.test-panel-header\s*\{[^}]*padding:\s*6px 8px/s')
         ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*font-size:\s*10\.5pt/s')
-        ->and($html)->toMatch('/\.patient-box\s*\{[^}]*padding:\s*8px 10px/s')
-        ->and($html)->toMatch('/\.patient-box\s*\{[^}]*border:\s*1px solid/s')
         ->and($html)->toMatch('/\.test-panel\s*\{[^}]*border:\s*1px solid/s')
         ->and($html)->toMatch('/\.comments-box\s*\{[^}]*padding:\s*8px 10px/s')
+        ->and($html)->toMatch('/\.comments-box\s*\{[^}]*font-size:\s*9\.5pt/s')
         ->and($html)->toMatch('/\.reviewer-block\s*\{[^}]*padding:\s*8px 10px/s')
+        ->and($html)->toMatch('/\.reviewer-block\s*\{[^}]*font-size:\s*9\.5pt/s')
         ->and($html)->toMatch('/\.signature-line\s*\{[^}]*border-top:\s*1px solid/s')
         ->and($html)->toMatch('/\.signature-line\s*\{[^}]*padding-top:\s*4px/s')
         ->and($html)->toMatch('/\.signature-line\s*\{[^}]*margin-top:\s*42px/s')

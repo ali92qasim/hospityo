@@ -420,11 +420,16 @@ it('omits footer contact by default while header contact toggles still show', fu
 
     $html = $this->get(route('investigation-orders.report', $this->order))
         ->assertOk()
-        ->assertSee('Phone: 555-0199', false)
-        ->assertSee('Email: header@chrome.test', false)
-        ->assertSee('Website: https://header-only.chrome.test', false)
         ->assertDontSee('class="report-contact"', false)
         ->getContent();
+
+    $contactStart = strpos($html, 'class="report-band-contact"');
+    expect($contactStart)->not->toBeFalse();
+    $bandContact = substr($html, $contactStart, strpos($html, '</header>', $contactStart) - $contactStart);
+
+    expect($bandContact)->toContain('555-0199')
+        ->and($bandContact)->toContain('header@chrome.test')
+        ->and($bandContact)->toContain('https://header-only.chrome.test');
 
     expect(\App\Support\LabReportPrintSettings::get())->toMatchArray([
         'show_hospital_phone' => true,

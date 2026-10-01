@@ -97,32 +97,6 @@
             break-after: auto;
         }
 
-        /* Header: logo left, hospital title center, QR right */
-        .header {
-            display: grid;
-            grid-template-columns: 100px 1fr 100px;
-            gap: 20px;
-            align-items: start;
-            border-bottom: 2px solid var(--lab-report-accent);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-
-        .header.header-no-qr {
-            grid-template-columns: 100px 1fr;
-        }
-
-        .logo {
-            width: 100px;
-            height: 100px;
-        }
-
-        .logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
         .report-qr {
             width: 100px;
             height: 100px;
@@ -137,26 +111,101 @@
             display: block;
         }
 
-        .hospital-header {
-            text-align: center;
+        /* Page-1 chrome: PHC registration line above a full-width accent band */
+        .report-reg-line {
+            text-align: right;
+            font-size: 8pt;
+            color: #555;
+            margin-bottom: 1.5mm;
         }
 
-        .hospital-name {
-            font-size: 18pt;
-            font-weight: bold;
-            margin-bottom: 5px;
+        .report-band {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            background: var(--lab-report-accent);
+            color: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            padding: 4mm 5mm;
         }
 
-        .hospital-address {
+        .report-band-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .report-logo-tile {
+            background: #fff;
+            border-radius: 6px;
+            padding: 4px;
+            flex: none;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .report-logo-tile img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .band-hospital-name { font-size: 18pt; font-weight: bold; line-height: 1.15; }
+        .band-hospital-address { font-size: 9pt; margin-top: 2px; }
+        .band-report-caption { font-size: 9pt; font-weight: 700; letter-spacing: 0.12em; margin-top: 3px; }
+
+        .report-band-contact {
             font-size: 9pt;
-            margin-bottom: 3px;
+            text-align: right;
+            flex: none;
         }
 
-        .report-title {
-            font-size: 16pt;
-            font-weight: bold;
-            margin-top: 10px;
-            text-decoration: underline;
+        .report-band-contact div {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+
+        .band-icon {
+            width: 3.5mm;
+            height: 3.5mm;
+            fill: currentColor;
+            flex: none;
+        }
+
+        .report-band-qr {
+            background: #fff;
+            padding: 3px;
+            border-radius: 4px;
+            flex: none;
+            width: auto;
+            height: auto;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .report-band-qr svg {
+            width: 72px;
+            height: 72px;
+            display: block;
+        }
+
+        /* Interim (until the patient strip lands): QR floats top-right inside the patient box */
+        .patient-box > .report-qr {
+            float: right;
+            margin-left: 12px;
+        }
+
+        .patient-box::after {
+            content: "";
+            display: block;
+            clear: both;
         }
 
         .patient-box {
@@ -332,37 +381,55 @@
     @forelse($pages as $pageIndex => $page)
         <section class="report-page">
             @if($pageIndex === 0)
-                <div class="header {{ $qrSvg ? '' : 'header-no-qr' }}">
-                    <div class="logo">
+                @php $phcNumber = trim((string) setting('phc_registration_number', '')); @endphp
+                @if(($printToggles['show_phc_registration'] ?? true) && $phcNumber !== '')
+                    <div class="report-reg-line">PHC Reg. No. {{ $phcNumber }}</div>
+                @endif
+                <header class="report-band">
+                    <div class="report-band-brand">
                         @if(($printToggles['show_logo'] ?? true) && $settings['hospital_logo'])
-                            <img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Hospital Logo">
+                            <div class="report-logo-tile"><img src="{{ asset('storage/' . $settings['hospital_logo']) }}" alt="Hospital Logo"></div>
                         @endif
+                        <div>
+                            <div class="band-hospital-name">{{ $settings['hospital_name'] }}</div>
+                            @if(($printToggles['show_hospital_address'] ?? true) && $settings['hospital_address'])
+                                <div class="band-hospital-address">{{ $settings['hospital_address'] }}</div>
+                            @endif
+                            <div class="band-report-caption">LAB REPORT</div>
+                        </div>
                     </div>
-                    <div class="hospital-header">
-                        <div class="hospital-name">{{ $settings['hospital_name'] }}</div>
-                        @if(($printToggles['show_hospital_address'] ?? true) && $settings['hospital_address'])
-                            <div class="hospital-address">{{ $settings['hospital_address'] }}</div>
-                        @endif
-                        @if(($printToggles['show_hospital_phone'] ?? true) && $settings['hospital_phone'])
-                            <div class="hospital-address">Phone: {{ $settings['hospital_phone'] }}</div>
-                        @endif
-                        @if(($printToggles['show_hospital_email'] ?? true) && $settings['hospital_email'])
-                            <div class="hospital-address">Email: {{ $settings['hospital_email'] }}</div>
-                        @endif
-                        @if(($printToggles['show_hospital_website'] ?? true) && $settings['hospital_website'])
-                            <div class="hospital-address">Website: {{ $settings['hospital_website'] }}</div>
-                        @endif
-                        <div class="report-title">LAB REPORT</div>
-                    </div>
+                    @php
+                        $bandPhone = ($printToggles['show_hospital_phone'] ?? true) && $settings['hospital_phone'];
+                        $bandEmail = ($printToggles['show_hospital_email'] ?? true) && $settings['hospital_email'];
+                        $bandWebsite = ($printToggles['show_hospital_website'] ?? true) && $settings['hospital_website'];
+                    @endphp
+                    @if($bandPhone || $bandEmail || $bandWebsite)
+                        <div class="report-band-contact">
+                            @if($bandPhone)
+                                <div><svg class="band-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2z"/></svg><span>{{ $settings['hospital_phone'] }}</span></div>
+                            @endif
+                            @if($bandEmail)
+                                <div><svg class="band-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg><span>{{ $settings['hospital_email'] }}</span></div>
+                            @endif
+                            @if($bandWebsite)
+                                <div><svg class="band-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a8.2 8.2 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26zm.81 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.99 7.99 0 0 1 5.07 16zm2.95-8H5.07a7.99 7.99 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.02 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66a14.7 14.7 0 0 1 0-4h4.68a14.7 14.7 0 0 1 0 4zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14a16.5 16.5 0 0 0 0-4h3.38a8.2 8.2 0 0 1 0 4h-3.38z"/></svg><span>{{ $settings['hospital_website'] }}</span></div>
+                            @endif
+                        </div>
+                    @endif
+                    {{-- OQ-6: QR sits on the band's right edge only when the patient band is hidden --}}
+                    @if($qrSvg && ! ($printToggles['show_patient_band'] ?? true))
+                        <div class="report-band-qr report-qr" data-qr-url="{{ $shareUrl }}">{!! $qrSvg !!}</div>
+                    @endif
+                </header>
+
+                @if($printToggles['show_patient_band'] ?? true)
+                <div class="patient-box">
+                    {{-- Interim QR placement; the patient strip (next task) replaces this --}}
                     @if($qrSvg)
                         <div class="report-qr" data-qr-url="{{ $shareUrl }}">
                             {!! $qrSvg !!}
                         </div>
                     @endif
-                </div>
-
-                @if($printToggles['show_patient_band'] ?? true)
-                <div class="patient-box">
                     <div class="patient-grid">
                         <div class="patient-item">
                             <span class="patient-label">Patient Name:</span>
