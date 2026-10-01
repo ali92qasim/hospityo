@@ -125,9 +125,9 @@
                     role="status"
                 >
                     @if ($accentFails)
-                        Contrast vs white page: {{ $accentRatio }}:1 — this accent may be nearly invisible on screen and as a pale gray when printed in black &amp; white. Consider a darker color. You can still save.
+                        Contrast vs white: {{ $accentRatio }}:1 — below 4.5:1, so white header, footer and section-bar text may be hard to read, especially in black &amp; white. Consider a darker color. You can still save.
                     @else
-                        Contrast vs white page: {{ $accentRatio }}:1 — OK for chrome (UI graphics threshold ≈ 3:1).
+                        Contrast vs white: {{ $accentRatio }}:1 — OK for white header/footer text (needs 4.5:1).
                     @endif
                 </div>
                 @error('accent_color')

@@ -336,7 +336,7 @@ it('shows accent color controls on the lab report print settings screen', functi
         ->assertSee('id="lab-report-accent-contrast"', false);
 });
 
-it('still saves when accent_color contrast is below 3:1', function () {
+it('still saves when accent_color contrast is below 4.5:1', function () {
     $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
     $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
 
@@ -362,6 +362,66 @@ it('still saves when accent_color contrast is below 3:1', function () {
 
     expect(LabReportPrintSettings::get()['accent_color'])->toBe('#FDE68A')
         ->and(LabReportAccentContrast::failsMinimum('#FDE68A'))->toBeTrue();
+});
+
+it('shows the amber warn banner for a saved accent between 3:1 and 4.5:1', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    Setting::set('lab_report_print', json_encode([
+        'accent_color' => '#33847E',
+        'previous_values_count' => 3,
+    ]));
+
+    $this->get(route('settings.lab-report-print.edit'))
+        ->assertOk()
+        ->assertSee('rounded-lg border px-3 py-2 text-xs border-amber-300 bg-amber-50 text-amber-900', false)
+        ->assertSee('Contrast vs white: 4.4:1 — below 4.5:1, so white header, footer and section-bar text may be hard to read, especially in black & white. Consider a darker color. You can still save.')
+        ->assertDontSee('OK for white header/footer text');
+});
+
+it('shows the OK banner copy for an accent that meets 4.5:1', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    Setting::set('lab_report_print', json_encode([
+        'accent_color' => '#0F766E',
+        'previous_values_count' => 3,
+    ]));
+
+    $this->get(route('settings.lab-report-print.edit'))
+        ->assertOk()
+        ->assertSee('rounded-lg border px-3 py-2 text-xs border-emerald-300 bg-emerald-50 text-emerald-900', false)
+        ->assertSee('Contrast vs white: 5.5:1 — OK for white header/footer text (needs 4.5:1).')
+        ->assertDontSee('You can still save.');
+});
+
+it('still saves an accent between 3:1 and 4.5:1 (warn-only)', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    $this->put(route('settings.lab-report-print.update'), [
+        'show_logo' => '1',
+        'show_qr' => '1',
+        'show_hospital_address' => '1',
+        'show_hospital_phone' => '1',
+        'show_hospital_email' => '1',
+        'show_hospital_website' => '1',
+        'show_footer_address' => '0',
+        'show_footer_phone' => '0',
+        'show_footer_email' => '0',
+        'show_footer_website' => '0',
+        'show_patient_band' => '1',
+        'show_reviewers' => '1',
+        'show_page_numbers' => '1',
+        'previous_values_count' => '3',
+        'accent_color' => '#33847E',
+    ])->assertRedirect(route('settings.lab-report-print.edit'))
+        ->assertSessionHas('success')
+        ->assertSessionMissing('errors');
+
+    expect(LabReportPrintSettings::get()['accent_color'])->toBe('#33847E')
+        ->and(LabReportAccentContrast::failsMinimum('#33847E'))->toBeTrue();
 });
 
 it('saves previous_values_count from radio selection', function () {

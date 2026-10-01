@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
-    const MIN_RATIO = 3.0;
+    const MIN_RATIO = 4.5;
     const PREVIEW_DEBOUNCE_MS = 250;
     let previewTimer = null;
 
@@ -61,10 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (fails) {
             banner.textContent =
-                `Contrast vs white page: ${display}:1 — this accent may be nearly invisible on screen and as a pale gray when printed in black & white. Consider a darker color. You can still save.`;
+                `Contrast vs white: ${display}:1 — below 4.5:1, so white header, footer and section-bar text may be hard to read, especially in black & white. Consider a darker color. You can still save.`;
         } else {
             banner.textContent =
-                `Contrast vs white page: ${display}:1 — OK for chrome (UI graphics threshold ≈ 3:1).`;
+                `Contrast vs white: ${display}:1 — OK for white header/footer text (needs 4.5:1).`;
         }
     }
 

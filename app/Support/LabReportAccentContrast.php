@@ -4,6 +4,8 @@ namespace App\Support;
 
 final class LabReportAccentContrast
 {
+    public const MIN_RATIO = 4.5;
+
     public static function ratioAgainstWhite(string $hex): float
     {
         $hex = strtoupper(trim($hex));
@@ -22,7 +24,7 @@ final class LabReportAccentContrast
         return ($lighter + 0.05) / ($darker + 0.05);
     }
 
-    public static function failsMinimum(string $hex, float $min = 3.0): bool
+    public static function failsMinimum(string $hex, float $min = self::MIN_RATIO): bool
     {
         return self::ratioAgainstWhite($hex) < $min;
     }
