@@ -195,6 +195,23 @@ it('does not accent results-table or clinical abnormal classes', function () {
         ->and($html)->toContain('color: #c2410c');
 });
 
+it('forces background printing on every accent-filled element', function () {
+    $html = $this->get(route('investigation-orders.report', $this->order))->assertOk()->getContent();
+
+    // Chrome's print dialog defaults "Background graphics" off; without exact, accent fills
+    // are dropped and white labels on them print as faint gray on white.
+    preg_match_all('/([^{}]+)\{([^{}]*background:\s*var\(--lab-report-accent\)[^{}]*)\}/s', $html, $rules, PREG_SET_ORDER);
+
+    expect($rules)->not->toBeEmpty()
+        ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*-webkit-print-color-adjust:\s*exact/s')
+        ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*[^-]print-color-adjust:\s*exact/s');
+
+    foreach ($rules as [, $selector, $body]) {
+        expect($body)->toMatch('/-webkit-print-color-adjust:\s*exact/', trim($selector).' missing -webkit-print-color-adjust')
+            ->and($body)->toMatch('/(^|[^-])print-color-adjust:\s*exact/', trim($selector).' missing print-color-adjust');
+    }
+});
+
 it('keeps structural size metrics identical to pre-accent chrome (pure-color lock)', function () {
     $html = $this->get(route('investigation-orders.report', $this->order))->assertOk()->getContent();
 

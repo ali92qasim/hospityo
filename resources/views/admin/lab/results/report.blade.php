@@ -184,6 +184,8 @@
         .test-panel-header {
             background: var(--lab-report-accent);
             color: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
             border-bottom: 1px solid var(--lab-report-accent);
             padding: 6px 8px;
             font-size: 10.5pt;
