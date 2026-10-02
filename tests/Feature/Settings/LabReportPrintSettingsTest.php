@@ -376,7 +376,7 @@ it('shows the amber warn banner for a saved accent between 3:1 and 4.5:1', funct
     $this->get(route('settings.lab-report-print.edit'))
         ->assertOk()
         ->assertSee('rounded-lg border px-3 py-2 text-xs border-amber-300 bg-amber-50 text-amber-900', false)
-        ->assertSee('Contrast vs white: 4.4:1 — below 4.5:1, so white header, footer and section-bar text may be hard to read, especially in black & white. Consider a darker color. You can still save.')
+        ->assertSee('Contrast vs white: 4.42:1 — below 4.5:1, so white header, footer and section-bar text may be hard to read, especially in black & white. Consider a darker color. You can still save.')
         ->assertDontSee('OK for white header/footer text');
 });
 
@@ -392,8 +392,26 @@ it('shows the OK banner copy for an accent that meets 4.5:1', function () {
     $this->get(route('settings.lab-report-print.edit'))
         ->assertOk()
         ->assertSee('rounded-lg border px-3 py-2 text-xs border-emerald-300 bg-emerald-50 text-emerald-900', false)
-        ->assertSee('Contrast vs white: 5.5:1 — OK for white header/footer text (needs 4.5:1).')
+        ->assertSee('Contrast vs white: 5.47:1 — OK for white header/footer text (needs 4.5:1).')
         ->assertDontSee('You can still save.');
+});
+
+it('never shows a failing boundary accent as 4.5:1 in the warn banner', function () {
+    $this->withoutMiddleware([\App\Http\Middleware\CheckModule::class]);
+    $this->actingAs(labReportPrintUser(['access settings.lab-report-print']));
+
+    // #777777 is ~4.478:1 — fails 4.5, and 1-dp rounding used to render it as "4.5:1 — below 4.5:1".
+    Setting::set('lab_report_print', json_encode([
+        'accent_color' => '#777777',
+        'previous_values_count' => 3,
+    ]));
+
+    $this->get(route('settings.lab-report-print.edit'))
+        ->assertOk()
+        ->assertSee('rounded-lg border px-3 py-2 text-xs border-amber-300 bg-amber-50 text-amber-900', false)
+        ->assertSee('Contrast vs white: 4.47:1 — below 4.5:1')
+        ->assertDontSee('4.5:1 — below')
+        ->assertDontSee('OK for white header/footer text');
 });
 
 it('still saves an accent between 3:1 and 4.5:1 (warn-only)', function () {

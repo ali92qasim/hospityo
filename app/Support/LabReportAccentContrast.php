@@ -29,6 +29,17 @@ final class LabReportAccentContrast
         return self::ratioAgainstWhite($hex) < $min;
     }
 
+    /**
+     * Ratio formatted for display, truncated (not rounded) to two decimals so the
+     * shown number can never contradict failsMinimum(): a failing ratio (< 4.5)
+     * always shows below "4.50", a passing one (>= 4.5) never shows below it.
+     * Mirrored exactly in resources/js/lab-report-accent-settings.js.
+     */
+    public static function displayRatio(string $hex): string
+    {
+        return number_format(floor(self::ratioAgainstWhite($hex) * 100) / 100, 2, '.', '');
+    }
+
     private static function channel(float $c): float
     {
         return $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;

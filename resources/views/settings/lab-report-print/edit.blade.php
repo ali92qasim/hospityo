@@ -88,7 +88,7 @@
             @php
                 $accent = old('accent_color', $toggles['accent_color'] ?? '#0F766E');
                 $accentFails = \App\Support\LabReportAccentContrast::failsMinimum($accent);
-                $accentRatio = round(\App\Support\LabReportAccentContrast::ratioAgainstWhite($accent), 1);
+                $accentRatio = \App\Support\LabReportAccentContrast::displayRatio($accent);
             @endphp
             <div class="mb-6 pt-4 border-t border-gray-100" data-lab-report-accent-settings>
                 <p class="text-sm font-medium text-gray-800 mb-1">Report accent color</p>

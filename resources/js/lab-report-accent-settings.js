@@ -53,7 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyBanner(hex) {
         const ratio = ratioAgainstWhite(hex);
         const fails = ratio < MIN_RATIO;
-        const display = Math.round(ratio * 10) / 10;
+        // Mirrors LabReportAccentContrast::displayRatio(): truncate to 2 dp so the
+        // shown number never contradicts the verdict (no "4.5:1 — below 4.5:1").
+        const display = (Math.floor(ratio * 100) / 100).toFixed(2);
         const okClass = banner.dataset.okClass || '';
         const warnClass = banner.dataset.warnClass || '';
 
