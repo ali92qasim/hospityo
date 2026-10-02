@@ -99,20 +99,6 @@
             break-after: auto;
         }
 
-        .report-qr {
-            width: 100px;
-            height: 100px;
-            display: flex;
-            align-items: flex-start;
-            justify-content: flex-end;
-        }
-
-        .report-qr svg {
-            width: 90px;
-            height: 90px;
-            display: block;
-        }
-
         /* Page-1 chrome: PHC registration line above a full-width accent band */
         .report-reg-line {
             text-align: right;
@@ -187,8 +173,6 @@
             padding: 3px;
             border-radius: 4px;
             flex: none;
-            width: auto;
-            height: auto;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
@@ -211,7 +195,7 @@
 
         .patient-strip.no-qr { grid-template-columns: 1fr 1fr; }
         .patient-strip-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-        .patient-strip-qr { grid-row: span 2; display: flex; justify-content: flex-end; width: auto; height: auto; }
+        .patient-strip-qr { grid-row: span 2; display: flex; align-items: flex-start; justify-content: flex-end; }
         .patient-strip-qr svg { width: 90px; height: 90px; display: block; }
         .patient-strip-note { grid-column: 1 / 3; }
 
@@ -234,8 +218,6 @@
             margin-bottom: 4mm;
             font-size: 9pt;
         }
-
-        .running-header strong { font-weight: 700; }
 
         .test-panel {
             border: 1px solid var(--lab-report-accent);
@@ -290,14 +272,10 @@
             font-weight: 600;
         }
 
-        .comments-box,
-        .signatures {
+        .comments-box {
             margin-top: 14px;
             break-inside: avoid;
             page-break-inside: avoid;
-        }
-
-        .comments-box {
             background: #f7f9f9;
             background: color-mix(in srgb, var(--lab-report-accent) 7%, #fff);
             -webkit-print-color-adjust: exact;
@@ -312,7 +290,8 @@
             grid-template-columns: 1fr;
             max-width: 280px;
             margin-left: auto;
-            margin-top: 28px;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
 
         .signature-line {
@@ -327,7 +306,6 @@
             display: flex;
             flex-wrap: wrap;
             gap: 16px 28px;
-            margin-top: 20px;
             break-inside: avoid;
             page-break-inside: avoid;
         }
@@ -357,9 +335,6 @@
             page-break-inside: avoid;
         }
 
-        .report-signoff .reviewer-blocks { margin-top: 0; }
-        .report-signoff .signatures { margin: 0 0 0 auto; }
-
         /* Every page: accent bookend pinned to the page bottom by margin-top: auto in the flex column. */
         .report-footer-band {
             margin-top: auto;
@@ -376,18 +351,9 @@
             font-size: 8.5pt;
         }
 
-        .report-footer-band .report-contact {
-            margin: 0;
-            text-align: left;
-            color: inherit;
-            font-size: inherit;
-        }
-
         /* margin-left: auto keeps the page number right-aligned when the contact side is empty. */
         .report-footer-band .page-number {
             margin: 0 0 0 auto;
-            color: inherit;
-            font-size: inherit;
             white-space: nowrap;
         }
 

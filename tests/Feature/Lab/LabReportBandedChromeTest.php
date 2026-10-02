@@ -688,3 +688,32 @@ it('tints the comments box with a pale accent mix and keeps its accent border', 
         ->and($html)->toMatch('/\.reviewer-block\s*\{[^}]*font-size:\s*9\.5pt/s')
         ->and($html)->toMatch('/\.signature-line\s*\{[^}]*font-size:\s*9\.5pt/s');
 });
+
+it('carries no always-overridden chrome declarations and keeps the effective ones', function () {
+    $html = bandedChromeReportHtml($this);
+
+    // Gone: legacy 100px QR box and its svg size (always overridden by the strip / band QR rules).
+    expect($html)->not->toMatch('/\.report-qr\s*\{/')
+        ->and($html)->not->toMatch('/\.report-qr svg\s*\{/')
+        ->and($html)->not->toMatch('/\.(patient-strip|report-band)-qr\s*\{[^}]*(width|height):\s*auto/s')
+        // Gone: sign-off margins that .report-signoff always overrode.
+        ->and($html)->not->toMatch('/\.comments-box,\s*\.signatures/')
+        ->and($html)->not->toMatch('/\.signatures\s*\{[^}]*margin-top/s')
+        ->and($html)->not->toMatch('/\.reviewer-blocks\s*\{[^}]*margin-top/s')
+        ->and($html)->not->toContain('.report-signoff .signatures')
+        ->and($html)->not->toContain('.report-signoff .reviewer-blocks')
+        // Gone: no-op rules that only restate inherited / UA defaults.
+        ->and($html)->not->toContain('.report-footer-band .report-contact')
+        ->and($html)->not->toContain('.running-header strong')
+        ->and($html)->not->toMatch('/\.page-number\s*\{[^}]*inherit/s');
+
+    // Kept: the values that were actually in effect.
+    expect($html)->toMatch('/\.patient-strip-qr\s*\{[^}]*justify-content:\s*flex-end/s')
+        ->and($html)->toMatch('/\.patient-strip-qr svg\s*\{[^}]*width:\s*90px;\s*height:\s*90px/s')
+        ->and($html)->toMatch('/\.report-band-qr svg\s*\{[^}]*width:\s*72px;\s*height:\s*72px/s')
+        ->and($html)->toMatch('/\.comments-box\s*\{[^}]*margin-top:\s*14px[^}]*break-inside:\s*avoid/s')
+        ->and($html)->toMatch('/\.signatures\s*\{[^}]*max-width:\s*280px[^}]*margin-left:\s*auto/s')
+        ->and($html)->toMatch('/\.reviewer-blocks\s*\{[^}]*break-inside:\s*avoid/s')
+        ->and($html)->toMatch('/\.report-signoff\s*\{[^}]*margin-top:\s*14px/s')
+        ->and($html)->toMatch('/\.report-footer-band \.page-number\s*\{[^}]*margin:\s*0 0 0 auto[^}]*white-space:\s*nowrap/s');
+});
