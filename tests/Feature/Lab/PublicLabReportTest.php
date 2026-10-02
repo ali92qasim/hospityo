@@ -166,6 +166,22 @@ it('unlocks the report after matching patient number and mobile', function () {
         ->assertDontSee('Order #:', false);
 });
 
+it('renders the banded chrome on the unlocked public view with Print but no Close button', function () {
+    $this->post(route('lab-report.verify', $this->order->share_token), [
+        'patient_no' => $this->patient->patient_no,
+        'phone' => '03001112222',
+    ])->assertRedirect(route('lab-report.view', $this->order->share_token));
+
+    $this->get(route('lab-report.view', $this->order->share_token))
+        ->assertOk()
+        ->assertSee('<header class="report-band">', false)
+        ->assertSee('class="patient-strip', false)
+        ->assertSee('<footer class="report-footer-band">', false)
+        ->assertSee('Page 1 of 1', false)
+        ->assertSee('id="lab-report-print-btn"', false)
+        ->assertDontSee('lab-report-close-btn', false);
+});
+
 it('accepts pakistan country-code style mobile numbers', function () {
     $this->post(route('lab-report.verify', $this->order->share_token), [
         'patient_no' => $this->patient->patient_no,

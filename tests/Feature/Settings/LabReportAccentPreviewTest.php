@@ -56,6 +56,20 @@ it('renders fixture preview when tenant has no printable lab order', function ()
         ->assertSee('Preview Sample Patient', false);
 });
 
+it('renders the banded chrome in embed mode with the accent override and no print controls', function () {
+    $this->actingAs(labReportAccentPreviewUser());
+
+    $this->get(route('settings.lab-report-print.preview', ['accent' => '#123456']))
+        ->assertOk()
+        ->assertSee('--lab-report-accent: #123456', false)
+        ->assertSee('<body class="embed-preview">', false)
+        ->assertSee('body.embed-preview .no-print', false)
+        ->assertSee('<header class="report-band">', false)
+        ->assertSee('class="patient-strip', false)
+        ->assertSee('<footer class="report-footer-band">', false)
+        ->assertDontSee('lab-report-close-btn', false);
+});
+
 it('prefers a real printable order over the fixture when one exists', function () {
     $this->actingAs(labReportAccentPreviewUser());
 
