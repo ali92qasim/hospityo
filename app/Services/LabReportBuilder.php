@@ -16,7 +16,7 @@ class LabReportBuilder
     public const FIRST_PAGE_ROW_BUDGET = 12;
 
     /** Rows available for test panels on continuation pages. */
-    public const PAGE_ROW_BUDGET = 26;
+    public const PAGE_ROW_BUDGET = 25;
 
     /** Estimated rows for a test section heading and spacing. */
     public const SECTION_HEADER_ROWS = 2;

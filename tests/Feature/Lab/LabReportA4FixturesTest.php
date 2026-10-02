@@ -349,7 +349,7 @@ it('writes V2: page-1 worst case at exactly 12 row units', function () {
         ->and($html)->toContain('Registration Date:');
 });
 
-it('writes V3: multi-page 12 / 26 / 26 with comments, reviewers and verified by', function () {
+it('writes V3: multi-page 12 / 25 / 25 with comments, reviewers and verified by', function () {
     a4FixtureFullHospitalInfo();
 
     // Page 1: three cost-4 sections = 12.
@@ -357,10 +357,10 @@ it('writes V3: multi-page 12 / 26 / 26 with comments, reviewers and verified by'
     a4FixtureSection($this->order, $this->user, 'BET', 'Beta Panel', [['Beta Panel Param', '1.0', 'N']]);
     a4FixtureSection($this->order, $this->user, 'GAM', 'Gamma Panel', [['Gamma Panel Param', '1.0', 'N']]);
 
-    // Pages 2 and 3: one 23-param section each = 2 + 23 + 1 = 26 (PAGE_ROW_BUDGET, filled exactly).
+    // Pages 2 and 3: one 22-param section each = 2 + 22 + 1 = 25 (PAGE_ROW_BUDGET, filled exactly).
     $paramsFor = fn (string $prefix) => array_map(
         fn (int $i) => ["{$prefix} Parameter {$i}", (string) (10 + $i).'.5', $i % 9 === 0 ? 'H' : 'N', 'mg/dL', '1-50'],
-        range(1, 23)
+        range(1, 22)
     );
     a4FixtureSection($this->order, $this->user, 'XTP', 'Extended Metabolic Profile', $paramsFor('Metabolic'));
     $last = a4FixtureSection($this->order, $this->user, 'YTP', 'Extended Tumour Marker Profile', $paramsFor('Marker'), 'biochemistry', [
@@ -371,7 +371,7 @@ it('writes V3: multi-page 12 / 26 / 26 with comments, reviewers and verified by'
     a4FixtureTwoReviewers($this, $last['result']);
 
     $report = LabReportBuilder::build($this->order->fresh());
-    expect(array_column($report['pages'], 'row_cost'))->toBe([12, 26, 26])
+    expect(array_column($report['pages'], 'row_cost'))->toBe([12, 25, 25])
         ->and($report['primaryResult']->id)->toBe($last['result']->id);
 
     $html = a4FixtureRender($this, 3, 'v3-multipage.html');

@@ -226,10 +226,10 @@ function budgetTestSection(string $name, int $itemCount): array
     );
 }
 
-it('caps continuation pages at a row budget of 26 so banded chrome fits real A4', function () {
-    expect(LabReportBuilder::PAGE_ROW_BUDGET)->toBe(26);
+it('caps continuation pages at a row budget of 25 so banded chrome fits real A4', function () {
+    expect(LabReportBuilder::PAGE_ROW_BUDGET)->toBe(25);
 
-    // Page 1: three cost-4 sections (12). Then seven cost-4 sections: 6 fill 24 of 26, the 7th spills.
+    // Page 1: three cost-4 sections (12). Then seven cost-4 sections: 6 fill 24 of 25, the 7th spills.
     $sections = array_map(fn (int $i) => budgetTestSection("Panel {$i}", 1), range(1, 10));
 
     $pages = LabReportBuilder::packIntoPages($sections);
@@ -238,30 +238,42 @@ it('caps continuation pages at a row budget of 26 so banded chrome fits real A4'
         ->and(array_map(fn ($page) => count($page['sections']), $pages))->toBe([3, 6, 1]);
 });
 
-it('fills a continuation page to exactly the budget of 26 and spills the next section', function () {
+it('fills a continuation page to exactly the budget of 25 and spills the next section', function () {
     $sections = [
         budgetTestSection('First A', 1),
         budgetTestSection('First B', 1),
         budgetTestSection('First C', 1),
-        budgetTestSection('Wide', 19),   // 2 + 19 + 1 = 22
-        budgetTestSection('Small A', 1), // 22 + 4 = 26, fits exactly
-        budgetTestSection('Small B', 1), // 30 > 26, spills
+        budgetTestSection('Wide', 18),   // 2 + 18 + 1 = 21
+        budgetTestSection('Small A', 1), // 21 + 4 = 25, fits exactly
+        budgetTestSection('Small B', 1), // 29 > 25, spills
     ];
 
     $pages = LabReportBuilder::packIntoPages($sections);
 
-    expect(array_column($pages, 'row_cost'))->toBe([12, 26, 4])
+    expect(array_column($pages, 'row_cost'))->toBe([12, 25, 4])
         ->and(collect($pages[1]['sections'])->pluck('investigation.name')->all())->toBe(['Wide', 'Small A'])
         ->and($pages[2]['sections'][0]['investigation']->name)->toBe('Small B');
+
+    // One row wider: 22 + 4 = 26 would have fitted the old budget of 26, but overflows 25 and spills.
+    $tighter = LabReportBuilder::packIntoPages([
+        budgetTestSection('First A', 1),
+        budgetTestSection('First B', 1),
+        budgetTestSection('First C', 1),
+        budgetTestSection('Wider', 19),  // 2 + 19 + 1 = 22
+        budgetTestSection('Small C', 1), // 26 > 25, spills
+    ]);
+
+    expect(array_column($tighter, 'row_cost'))->toBe([12, 22, 4])
+        ->and($tighter[2]['sections'][0]['investigation']->name)->toBe('Small C');
 });
 
-it('treats a section as large only when its cost exceeds the continuation budget of 26', function () {
-    $atBudget = budgetTestSection('At Budget', 23);   // 2 + 23 + 1 = 26
-    $overBudget = budgetTestSection('Over Budget', 24); // 2 + 24 + 1 = 27
+it('treats a section as large only when its cost exceeds the continuation budget of 25', function () {
+    $atBudget = budgetTestSection('At Budget', 22);   // 2 + 22 + 1 = 25
+    $overBudget = budgetTestSection('Over Budget', 23); // 2 + 23 + 1 = 26
 
-    expect($atBudget['row_cost'])->toBe(26)
+    expect($atBudget['row_cost'])->toBe(25)
         ->and($atBudget['is_large'])->toBeFalse()
-        ->and($overBudget['row_cost'])->toBe(27)
+        ->and($overBudget['row_cost'])->toBe(26)
         ->and($overBudget['is_large'])->toBeTrue();
 
     $pages = LabReportBuilder::packIntoPages([
@@ -274,6 +286,6 @@ it('treats a section as large only when its cost exceeds the continuation budget
     ]);
 
     // The over-budget section closes the open continuation page and takes a page of its own.
-    expect(array_column($pages, 'row_cost'))->toBe([12, 4, 27, 4])
+    expect(array_column($pages, 'row_cost'))->toBe([12, 4, 26, 4])
         ->and($pages[2]['sections'][0]['investigation']->name)->toBe('Over Budget');
 });
