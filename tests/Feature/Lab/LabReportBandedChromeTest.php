@@ -471,7 +471,7 @@ it('omits empty optional fields exactly as the old band did', function () {
 /** Adds enough single-parameter panels to the order to spill onto three logical pages. */
 function bandedChromeThreePageOrder(object $test): void
 {
-    // 4 rows per one-parameter panel: page 1 (12) holds 3, page 2 (30) holds 7, page 3 takes the rest.
+    // 4 rows per one-parameter panel: page 1 (12) holds 3, page 2 (26) holds 6, page 3 takes the rest.
     foreach (range(1, 12) as $i) {
         bandedChromeLabTestWithResult($test->order, $test->user, 'RH'.$i, "Running Panel {$i}");
     }
