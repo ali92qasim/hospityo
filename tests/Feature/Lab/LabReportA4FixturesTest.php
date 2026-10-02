@@ -340,6 +340,8 @@ it('writes V2: page-1 worst case at exactly 12 row units', function () {
 
     expect($html)->toContain('1234.567')
         ->and($html)->toContain('Positive (1:320)')
+        ->and($html)->toContain('<td class="result-abnormal">1234.567&nbsp;<span class="result-flag">HH</span></td>')
+        ->and($html)->toContain('<td class="result-abnormal">Positive (1:320)&nbsp;<span class="result-flag">A</span></td>')
         ->and(substr_count($html, '<tr class="previous-result">'))->toBe(4)
         ->and(substr_count($html, 'class="reviewer-block"'))->toBe(2)
         ->and($html)->toContain('Verified By')
@@ -418,4 +420,24 @@ it('writes V5: V2 data on the default accent and on a borderline 4.5:1 accent', 
 
     $html = a4FixtureRender($this, 1, 'v5-borderline-accent.html');
     expect($html)->toContain('--lab-report-accent: #30827C');
+});
+
+it('writes V2 no-flags: V2 data with every flag forced to N (OQ-4 zero-height comparison)', function () {
+    a4FixtureWorstCase($this);
+
+    LabResultItem::query()->update(['flag' => 'N']);
+    expect(LabResultItem::where('flag', '!=', 'N')->count())->toBe(0);
+
+    $report = LabReportBuilder::build($this->order->fresh());
+    expect($report['pages'])->toHaveCount(1)
+        ->and($report['pages'][0]['row_cost'])->toBe(12);
+
+    $html = a4FixtureRender($this, 1, 'v2-no-flags.html');
+
+    expect($html)->toContain('1234.567')
+        ->and($html)->toContain('Positive (1:320)')
+        ->and(substr_count($html, '<tr class="previous-result">'))->toBe(4)
+        ->and($html)->not->toContain('class="result-abnormal"')
+        ->and($html)->not->toContain('class="result-abnormal-muted"')
+        ->and($html)->not->toContain('<span class="result-flag">');
 });

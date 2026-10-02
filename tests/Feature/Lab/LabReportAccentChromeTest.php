@@ -192,7 +192,11 @@ it('does not accent results-table or clinical abnormal classes', function () {
     expect($html)->toMatch('/\.results-table th\s*\{[^}]*background:\s*#fafafa/s')
         ->and($html)->not->toMatch('/\.results-table[^\{]*\{[^}]*var\(--lab-report-accent\)/s')
         ->and($html)->toContain('.result-abnormal { font-weight: 700; }')
-        ->and($html)->toContain('color: #c2410c');
+        ->and($html)->toContain('color: #c2410c')
+        ->and($html)->toContain('<th style="width: 36%;">Parameter</th>')
+        ->and($html)->toContain('<th style="width: 18%;">Result</th>')
+        ->and($html)->toContain('<th style="width: 14%;">Unit</th>')
+        ->and($html)->toContain('<th style="width: 32%;">Reference Range</th>');
 });
 
 it('forces background printing on every accent-filled element', function () {

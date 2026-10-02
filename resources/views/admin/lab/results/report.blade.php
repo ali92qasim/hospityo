@@ -278,6 +278,8 @@
 
         .result-abnormal { font-weight: 700; }
 
+        .result-flag { white-space: nowrap; }
+
         tr.previous-result td {
             color: #6b7280;
             font-size: 0.85em;
@@ -567,7 +569,7 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $parameter?->parameter_name ?? 'N/A' }}</td>
-                                    <td class="{{ $isAbnormal ? 'result-abnormal' : '' }}">{{ $item->value }}</td>
+                                    <td class="{{ $isAbnormal ? 'result-abnormal' : '' }}">{{ $item->value }}@if($isAbnormal)&nbsp;<span class="result-flag">{{ $item->flag }}</span>@endif</td>
                                     <td>{{ $item->unit ?? ($parameter?->unit ?? '-') }}</td>
                                     <td>{{ $referenceRange }}</td>
                                 </tr>
