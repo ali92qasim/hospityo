@@ -200,10 +200,14 @@ it('forces background printing on every accent-filled element', function () {
 
     // Chrome's print dialog defaults "Background graphics" off; without exact, accent fills
     // are dropped and white labels on them print as faint gray on white.
-    preg_match_all('/([^{}]+)\{([^{}]*background:\s*var\(--lab-report-accent\)[^{}]*)\}/s', $html, $rules, PREG_SET_ORDER);
+    // Matches any background that contains the accent, including color-mix() tints.
+    preg_match_all('/([^{}]+)\{([^{}]*background:[^;{}]*var\(--lab-report-accent\)[^{}]*)\}/s', $html, $rules, PREG_SET_ORDER);
+    $selectors = collect($rules)->map(fn ($rule) => trim(preg_replace('#/\*.*?\*/#s', '', $rule[1])))->all();
 
     expect($rules)->not->toBeEmpty()
-        ->and(collect($rules)->map(fn ($rule) => trim($rule[1]))->all())->toContain('.report-band')
+        ->and($selectors)->toContain('.report-band')
+        ->and($selectors)->toContain('.report-footer-band')
+        ->and($selectors)->toContain('.comments-box')
         ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*-webkit-print-color-adjust:\s*exact/s')
         ->and($html)->toMatch('/\.test-panel-header\s*\{[^}]*[^-]print-color-adjust:\s*exact/s');
 

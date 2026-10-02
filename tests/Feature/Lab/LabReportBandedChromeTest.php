@@ -539,3 +539,152 @@ it('widens middle-column patient labels so all four middle values share one star
     preg_match('/\.patient-strip-middle \.patient-label\s*\{[^}]*min-width:\s*(\d+(?:\.\d+)?)mm/s', $html, $m);
     expect((float) $m[1])->toBeGreaterThan(27.0);
 });
+
+/** Adds three single-parameter panels so the report spills onto exactly two logical pages. */
+function bandedChromeTwoPageOrder(object $test): void
+{
+    bandedChromeLabTestWithResult($test->order, $test->user, 'ALP', 'Alpha Panel');
+    bandedChromeLabTestWithResult($test->order, $test->user, 'BET', 'Beta Panel');
+    bandedChromeLabTestWithResult($test->order, $test->user, 'GAM', 'Gamma Panel');
+}
+
+/** Each footer band's inner markup, in document order. */
+function bandedChromeFooterBands(string $html): array
+{
+    preg_match_all('/<footer class="report-footer-band">(.*?)<\/footer>/s', $html, $m);
+
+    return $m[1];
+}
+
+it('renders the footer band on every page with page numbers inside it', function () {
+    bandedChromeTwoPageOrder($this);
+
+    $html = bandedChromeReportHtml($this);
+    $bands = bandedChromeFooterBands($html);
+
+    expect(substr_count($html, 'class="report-footer-band"'))->toBe(2)
+        ->and($bands)->toHaveCount(2)
+        ->and(substr_count($html, 'Page 1 of 2'))->toBe(1)
+        ->and(substr_count($html, 'Page 2 of 2'))->toBe(1)
+        ->and($bands[0])->toContain('class="page-number">Page 1 of 2<')
+        ->and($bands[1])->toContain('class="page-number">Page 2 of 2<')
+        ->and(substr_count($html, 'class="page-number"'))->toBe(2)
+        ->and($html)->toMatch('/class="report-footer-band".*?Page 1 of 2/s');
+});
+
+it('puts enabled footer contact parts in every page band and nothing when all are off', function () {
+    bandedChromeTwoPageOrder($this);
+    Setting::set('hospital_phone', '555-0100');
+    Setting::set('hospital_email', 'lab@chrome.test');
+
+    $off = bandedChromeReportHtml($this);
+
+    expect($off)->not->toContain('class="report-contact"')
+        ->and(substr_count($off, 'class="report-footer-band"'))->toBe(2);
+
+    LabReportPrintSettings::put([
+        ...LabReportPrintSettings::DEFAULTS,
+        'show_footer_phone' => true,
+        'show_footer_email' => true,
+    ]);
+
+    $on = bandedChromeReportHtml($this);
+    $bands = bandedChromeFooterBands($on);
+
+    expect(substr_count($on, 'class="report-contact"'))->toBe(2)
+        ->and($bands)->toHaveCount(2);
+
+    foreach ($bands as $band) {
+        expect($band)->toContain('class="report-contact">555-0100 · lab@chrome.test<');
+    }
+});
+
+it('still renders a thin bookend band when page numbers and contact are both off', function () {
+    LabReportPrintSettings::put([...LabReportPrintSettings::DEFAULTS, 'show_page_numbers' => false]);
+
+    $html = bandedChromeReportHtml($this);
+
+    expect(substr_count($html, 'class="report-footer-band"'))->toBe(1)
+        ->and($html)->not->toContain('class="page-number"')
+        ->and($html)->not->toContain('class="report-contact"')
+        ->and($html)->toMatch('/\.report-footer-band\s*\{[^}]*min-height:\s*3mm/s')
+        ->and($html)->toMatch('/\.report-footer-band\s*\{[^}]*padding:\s*1\.5mm 4mm/s');
+});
+
+it('styles the footer band as an accent fill with white 8.5pt text and forced background printing', function () {
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->toMatch('/\.report-footer-band\s*\{[^}]*background:\s*var\(--lab-report-accent\)/s')
+        ->and($html)->toMatch('/\.report-footer-band\s*\{[^}]*color:\s*#fff/s')
+        ->and($html)->toMatch('/\.report-footer-band\s*\{[^}]*font-size:\s*8\.5pt/s')
+        ->and($html)->toMatch('/\.report-footer-band\s*\{[^}]*-webkit-print-color-adjust:\s*exact/s')
+        ->and($html)->toMatch('/\.report-footer-band\s*\{[^}]*[^-]print-color-adjust:\s*exact/s');
+});
+
+it('bottom-pins the footer band with a flex column page and margin-top auto', function () {
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->toMatch('/\.report-footer-band\s*\{[^}]*margin-top:\s*auto/s')
+        ->and($html)->toMatch('/@media print\s*\{.*?\.report-page\s*\{[^}]*min-height:\s*276mm/s')
+        ->and($html)->not->toMatch('/@media print\s*\{.*?\.report-page\s*\{[^}]*[^-]height:\s*276mm/s')
+        ->and($html)->toMatch('/\.report-page\s*\{[^}]*display:\s*flex[^}]*flex-direction:\s*column/s');
+});
+
+it('keeps reviewers and Verified By in one sign-off row above the band on the last page only', function () {
+    bandedChromeTwoPageOrder($this);
+    // primaryResult is the order's last result; give every result the pathologist so the gate opens.
+    LabResult::where('lab_order_id', $this->order->id)->update(['pathologist_id' => $this->user->id]);
+
+    $html = bandedChromeReportHtml($this);
+    $signoff = bandedChromeBetween($html, 'class="report-signoff"', '</div><!-- /report-signoff -->');
+
+    expect(substr_count($html, 'class="report-signoff"'))->toBe(1)
+        ->and(strpos($html, 'class="report-signoff"'))->toBeLessThan(strrpos($html, 'class="report-footer-band"'))
+        ->and(strpos($html, 'class="report-signoff"'))->toBeGreaterThan(strpos($html, 'Page 1 of 2'))
+        ->and($signoff)->toContain('class="reviewer-blocks"')
+        ->and($signoff)->toContain('class="reviewer-name">Dr. Dr Review Accent<')
+        ->and($signoff)->toContain('FCPS')
+        ->and($signoff)->toContain('Pathology')
+        ->and($signoff)->toContain('class="signatures"')
+        ->and($signoff)->toContain('<strong>Verified By</strong>')
+        ->and($signoff)->toContain('Banded Chrome Printer')
+        ->and(strpos($signoff, 'class="reviewer-blocks"'))->toBeLessThan(strpos($signoff, 'class="signatures"'))
+        ->and(substr_count($html, 'class="reviewer-block"'))->toBe(1)
+        ->and(substr_count($html, 'Verified By'))->toBe(1)
+        ->and($html)->toMatch('/\.report-signoff\s*\{[^}]*display:\s*flex/s');
+});
+
+it('omits the sign-off wrapper when neither reviewers nor Verified By render', function () {
+    $this->labResult->reviewers()->sync([]);
+    $this->labResult->update(['pathologist_id' => null]);
+
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->not->toContain('class="report-signoff"')
+        ->and($html)->not->toContain('Verified By')
+        ->and($html)->toContain('class="report-footer-band"');
+
+    $this->labResult->update(['pathologist_id' => $this->user->id]);
+    $html = bandedChromeReportHtml($this);
+
+    expect(bandedChromeBetween($html, 'class="report-signoff"', '</div><!-- /report-signoff -->'))
+        ->toContain('Verified By')
+        ->not->toContain('class="reviewer-blocks"');
+});
+
+it('tints the comments box with a pale accent mix and keeps its accent border', function () {
+    $this->labResult->update(['comments' => 'Tinted comment line.']);
+
+    $html = bandedChromeReportHtml($this);
+
+    expect($html)->toContain('class="comments-box"')
+        ->and(strpos($html, 'class="comments-box"'))->toBeLessThan(strpos($html, 'class="report-signoff"'))
+        ->and($html)->toMatch('/\.comments-box\s*\{[^}]*background:\s*#f7f9f9;\s*background:\s*color-mix\(in srgb, var\(--lab-report-accent\) 7%, #fff\)/s')
+        ->and($html)->toMatch('/\.comments-box\s*\{[^}]*-webkit-print-color-adjust:\s*exact/s')
+        ->and($html)->toMatch('/\.comments-box\s*\{[^}]*[^-]print-color-adjust:\s*exact/s')
+        ->and($html)->toMatch('/\.comments-box\s*\{[^}]*border:\s*1px solid var\(--lab-report-accent\)/s')
+        ->and($html)->toMatch('/\.comments-box\s*\{[^}]*padding:\s*8px 10px/s')
+        ->and($html)->toMatch('/\.comments-box\s*\{[^}]*font-size:\s*9\.5pt/s')
+        ->and($html)->toMatch('/\.reviewer-block\s*\{[^}]*font-size:\s*9\.5pt/s')
+        ->and($html)->toMatch('/\.signature-line\s*\{[^}]*font-size:\s*9\.5pt/s');
+});

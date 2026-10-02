@@ -87,6 +87,8 @@
             min-height: 277mm;
             margin: 0 auto;
             padding: 10mm 12mm 12mm;
+            display: flex;
+            flex-direction: column;
             page-break-after: always;
             break-after: page;
         }
@@ -294,6 +296,10 @@
         }
 
         .comments-box {
+            background: #f7f9f9;
+            background: color-mix(in srgb, var(--lab-report-accent) 7%, #fff);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
             border: 1px solid var(--lab-report-accent);
             padding: 8px 10px;
             font-size: 9.5pt;
@@ -337,18 +343,50 @@
             font-weight: 700;
         }
 
-        .report-contact {
+        /* Last page: reviewer credentials (left) and the pathologist signature (right) share one row above the footer band. */
+        .report-signoff {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
             margin-top: 14px;
-            font-size: 9pt;
-            text-align: center;
-            color: #222;
+            margin-bottom: 4mm;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
 
-        .page-number {
-            margin-top: 16px;
-            text-align: center;
-            font-size: 9pt;
-            color: #333;
+        .report-signoff .reviewer-blocks { margin-top: 0; }
+        .report-signoff .signatures { margin: 0 0 0 auto; }
+
+        /* Every page: accent bookend pinned to the page bottom by margin-top: auto in the flex column. */
+        .report-footer-band {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            min-height: 3mm;
+            padding: 1.5mm 4mm;
+            background: var(--lab-report-accent);
+            color: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            font-size: 8.5pt;
+        }
+
+        .report-footer-band .report-contact {
+            margin: 0;
+            text-align: left;
+            color: inherit;
+            font-size: inherit;
+        }
+
+        /* margin-left: auto keeps the page number right-aligned when the contact side is empty. */
+        .report-footer-band .page-number {
+            margin: 0 0 0 auto;
+            color: inherit;
+            font-size: inherit;
+            white-space: nowrap;
         }
 
         .empty-state {
@@ -363,7 +401,7 @@
             .no-print { display: none !important; }
             .report-page {
                 width: auto;
-                min-height: 0;
+                min-height: 276mm;
                 height: auto;
                 margin: 0;
                 padding: 0;
@@ -563,6 +601,12 @@
                     </div>
                 @endif
 
+                @php
+                    $showSignoff = (($printToggles['show_reviewers'] ?? true) && count($reviewers) > 0)
+                        || $primaryResult?->pathologist;
+                @endphp
+                @if($showSignoff)
+                <div class="report-signoff">
                 @if(($printToggles['show_reviewers'] ?? true) && count($reviewers) > 0)
                     <div class="reviewer-blocks">
                         @foreach($reviewers as $reviewer)
@@ -589,15 +633,18 @@
                         </div>
                     </div>
                 @endif
-
-                @if(count($contactParts) > 0)
-                    <div class="report-contact">{{ implode(' · ', $contactParts) }}</div>
+                </div><!-- /report-signoff -->
                 @endif
             @endif
 
-            @if($printToggles['show_page_numbers'] ?? true)
-                <div class="page-number">Page {{ $pageIndex + 1 }} of {{ $pageCount }}</div>
-            @endif
+            <footer class="report-footer-band">
+                @if(count($contactParts) > 0)
+                    <div class="report-contact">{{ implode(' · ', $contactParts) }}</div>
+                @endif
+                @if($printToggles['show_page_numbers'] ?? true)
+                    <div class="page-number">Page {{ $pageIndex + 1 }} of {{ $pageCount }}</div>
+                @endif
+            </footer>
         </section>
     @empty
         <section class="report-page">
