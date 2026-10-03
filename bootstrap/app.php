@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'module' => \App\Http\Middleware\CheckModule::class,
             'settings.section' => \App\Http\Middleware\EnsureSettingsSection::class,
             'super_admin' => \App\Http\Middleware\SuperAdminAuth::class,
+            'not_installed' => \App\Http\Middleware\EnsureAppNotInstalled::class,
         ]);
 
         // Tenant middleware group — apply to tenant-aware routes only

@@ -81,7 +81,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 
 // Installation Routes
-Route::prefix('install')->name('install.')->group(function () {
+Route::prefix('install')->name('install.')->middleware('not_installed')->group(function () {
     Route::get('/', [InstallController::class, 'index'])->name('index');
     Route::get('/requirements', [InstallController::class, 'requirements'])->name('requirements');
     Route::get('/database', [InstallController::class, 'database'])->name('database');
@@ -863,12 +863,24 @@ Route::middleware('auth')->group(function () {
     });
 
     // RBAC Routes
+    // Each action requires its own permission — never an any-of list across CRUD verbs.
     Route::get('/users/data', [UserController::class, 'data'])
-        ->middleware('role_or_permission:Super Admin|Hospital Administrator|view users|create users|edit users|delete users');
+        ->middleware('permission:view users');
     Route::resource('users', UserController::class)
-        ->middleware('role_or_permission:Super Admin|Hospital Administrator|view users|create users|edit users|delete users');
-    Route::resource('roles', RoleController::class)->middleware('permission:view roles|create roles|edit roles|delete roles');
-    Route::resource('permissions', PermissionController::class)->middleware('permission:view permissions|create permissions|edit permissions|delete permissions');
+        ->middlewareFor(['index', 'show'], 'permission:view users')
+        ->middlewareFor(['create', 'store'], 'permission:create users')
+        ->middlewareFor(['edit', 'update'], 'permission:edit users')
+        ->middlewareFor('destroy', 'permission:delete users');
+    Route::resource('roles', RoleController::class)
+        ->middlewareFor(['index', 'show'], 'permission:view roles')
+        ->middlewareFor(['create', 'store'], 'permission:create roles')
+        ->middlewareFor(['edit', 'update'], 'permission:edit roles')
+        ->middlewareFor('destroy', 'permission:delete roles');
+    Route::resource('permissions', PermissionController::class)
+        ->middlewareFor(['index', 'show'], 'permission:view permissions')
+        ->middlewareFor(['create', 'store'], 'permission:create permissions')
+        ->middlewareFor(['edit', 'update'], 'permission:edit permissions')
+        ->middlewareFor('destroy', 'permission:delete permissions');
 
     // Reports Routes
     Route::prefix('reports')->name('reports.')->group(function () {
@@ -918,7 +930,7 @@ Route::middleware('auth')->group(function () {
 
     // Audit Logs
     Route::resource('audit-logs', AuditLogController::class)->only(['index', 'show'])
-        ->middleware('role_or_permission:Super Admin|Hospital Administrator|view audit logs');
+        ->middleware('permission:view audit logs');
 
     // Operation Theatre Management
     Route::prefix('ot')->name('ot.')->group(function () {
