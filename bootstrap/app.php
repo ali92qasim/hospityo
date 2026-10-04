@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'settings.section' => \App\Http\Middleware\EnsureSettingsSection::class,
             'super_admin' => \App\Http\Middleware\SuperAdminAuth::class,
             'not_installed' => \App\Http\Middleware\EnsureAppNotInstalled::class,
+            'gateway_enabled' => \App\Http\Middleware\EnsurePaymentGatewayEnabled::class,
         ]);
 
         // Tenant middleware group — apply to tenant-aware routes only

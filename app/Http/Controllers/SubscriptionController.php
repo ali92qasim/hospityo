@@ -6,6 +6,7 @@ use App\Models\PaymentGateway;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Services\Payments\PaddleWebhookSignature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -36,48 +37,39 @@ class SubscriptionController extends Controller
     {
         try {
             $tenant = Tenant::current();
-            $gateway = PaymentGateway::enabled()->first();
+            $gateway = PaymentGateway::enabled()->where('slug', 'paddle')->first();
 
             if (!$tenant || !$gateway) {
                 return response()->json(['success' => false, 'message' => 'Invalid request'], 400);
             }
 
             $transactionId = $request->input('transaction_id');
-            $subscriptionId = $request->input('subscription_id');
-            $customerId = $request->input('customer_id');
 
             if (!$transactionId) {
                 return response()->json(['success' => false, 'message' => 'Missing transaction ID'], 400);
             }
 
-            // Try to get transaction details from Paddle API
-            $apiKey = $gateway->getCredential('api_key');
-            $baseUrl = $gateway->isSandbox() ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
+            // The transaction must be confirmed with Paddle itself — paid, for this tenant,
+            // for a known plan. Anything less leaves the subscription and trial untouched.
+            $transactionData = $this->fetchPaddleTransaction($gateway, (string) $transactionId);
+            $failure = $this->paddleTransactionProblem($transactionData, $tenant, $request->input('subscription_id'));
 
-            $transactionData = null;
-            if ($apiKey) {
-                try {
-                    $response = Http::withToken($apiKey)
-                        ->get("{$baseUrl}/transactions/{$transactionId}");
+            if ($failure !== null) {
+                Log::warning('[Subscription] Paddle activation rejected', [
+                    'tenant_id' => $tenant->id,
+                    'transaction_id' => $transactionId,
+                    'reason' => $failure,
+                ]);
 
-                    if ($response->successful()) {
-                        $transactionData = $response->json('data');
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('[Subscription] Paddle API call failed', ['error' => $e->getMessage()]);
-                }
+                return response()->json([
+                    'success' => false,
+                    'message' => 'We could not verify this payment with Paddle, so your subscription was not changed.',
+                ], 422);
             }
 
-            // Determine the plan from transaction data or from tenant's current plan
-            $plan = null;
-            if ($transactionData && isset($transactionData['items'][0]['price']['id'])) {
-                $priceId = $transactionData['items'][0]['price']['id'];
-                $plan = Plan::where('paddle_price_id', $priceId)->first();
-            }
-            $plan = $plan ?? $tenant->plan;
-
-            // Determine subscription ID
-            $subId = $subscriptionId ?? ($transactionData['subscription_id'] ?? null);
+            $plan = Plan::where('paddle_price_id', $transactionData['items'][0]['price']['id'])->first();
+            $subId = $transactionData['subscription_id'] ?? null;
+            $customerId = $transactionData['customer_id'] ?? null;
 
             // Create or update subscription
             $subscription = Subscription::updateOrCreate(
@@ -88,7 +80,7 @@ class SubscriptionController extends Controller
                 ],
                 [
                     'plan_id' => $plan?->id,
-                    'gateway_customer_id' => $customerId ?? ($transactionData['customer_id'] ?? null),
+                    'gateway_customer_id' => $customerId,
                     'status' => 'active',
                     'amount' => $plan?->price ?? 0,
                     'currency' => $transactionData['currency_code'] ?? 'USD',
@@ -104,8 +96,8 @@ class SubscriptionController extends Controller
                 'trial_ends_at' => null,
             ]);
 
-            // Record subscription payment for history
-            $subscription->payments()->create([
+            // Record subscription payment for history (once per Paddle transaction)
+            $subscription->payments()->firstOrCreate(['gateway_transaction_id' => $transactionId], [
                 'tenant_id'              => $tenant->id,
                 'amount'                 => $plan?->price ?? 0,
                 'currency'               => $transactionData['currency_code'] ?? 'USD',
@@ -135,9 +127,17 @@ class SubscriptionController extends Controller
      */
     public function paddleWebhook(Request $request)
     {
-        $gateway = PaymentGateway::where('slug', 'paddle')->first();
-        if (!$gateway || !$gateway->is_enabled) {
-            return response('Gateway not configured', 400);
+        // Route middleware already 404s while Paddle is disabled.
+        $gateway = PaymentGateway::where('slug', 'paddle')->firstOrFail();
+
+        if (! PaddleWebhookSignature::isValid(
+            $request->getContent(),
+            $request->header('Paddle-Signature'),
+            $gateway->getCredential('webhook_secret'),
+        )) {
+            Log::warning('[Paddle Webhook] Rejected: missing or invalid Paddle-Signature');
+
+            return response('Invalid signature', 403);
         }
 
         $payload = $request->all();
@@ -255,6 +255,62 @@ class SubscriptionController extends Controller
             'paid_at' => now(),
             'gateway_transaction_id' => $data['id'] ?? null,
         ]);
+    }
+
+    /**
+     * Fetch a transaction from the Paddle API; null when it can't be confirmed.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function fetchPaddleTransaction(PaymentGateway $gateway, string $transactionId): ?array
+    {
+        $apiKey = $gateway->getCredential('api_key');
+        if ($apiKey === '') {
+            return null;
+        }
+
+        $baseUrl = $gateway->isSandbox() ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
+
+        try {
+            $response = Http::withToken($apiKey)->get("{$baseUrl}/transactions/".rawurlencode($transactionId));
+
+            return $response->successful() ? $response->json('data') : null;
+        } catch (\Throwable $e) {
+            Log::warning('[Subscription] Paddle API call failed', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Why a Paddle transaction may not activate this tenant's subscription, or null if it may.
+     *
+     * @param  array<string, mixed>|null  $transaction
+     */
+    protected function paddleTransactionProblem(?array $transaction, Tenant $tenant, mixed $claimedSubscriptionId): ?string
+    {
+        if ($transaction === null) {
+            return 'transaction could not be retrieved from Paddle';
+        }
+
+        if (! in_array($transaction['status'] ?? null, ['paid', 'completed'], true)) {
+            return 'transaction is not paid';
+        }
+
+        if ((string) ($transaction['custom_data']['tenant_id'] ?? '') !== (string) $tenant->id) {
+            return 'transaction belongs to another tenant';
+        }
+
+        $priceId = $transaction['items'][0]['price']['id'] ?? null;
+        if (! $priceId || ! Plan::where('paddle_price_id', $priceId)->exists()) {
+            return 'transaction is not for a known plan';
+        }
+
+        if ($claimedSubscriptionId !== null && (string) $claimedSubscriptionId !== (string) ($transaction['subscription_id'] ?? '')) {
+            return 'subscription id does not match the transaction';
+        }
+
+        return null;
     }
 
     protected function mapPaddleStatus(string $status): string

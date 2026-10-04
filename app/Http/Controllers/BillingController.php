@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\InvalidPaymentNotification;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\BillingService;
+use App\Services\Payments\PayFastNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -97,39 +99,40 @@ class BillingController extends Controller
     public function success(Request $request)
     {
         try {
-            $subscriptionId = $request->query('subscription_id');
-
-            if (! $subscriptionId) {
-                return redirect()->route('billing.index')
-                    ->with('error', 'Invalid payment callback.');
-            }
-
-            $subscription = $this->billing->handleSuccess(
-                (int) $subscriptionId,
-                $request->all()
-            );
+            $notification = PayFastNotification::verify($request->query());
+            $subscription = $this->billing->applyPayFastNotification($notification, (int) Tenant::current()->id);
+        } catch (InvalidPaymentNotification $e) {
+            Log::warning('[Billing] Rejected PayFast success return', ['error' => $e->getMessage()]);
 
             return redirect()->route('billing.index')
-                ->with('success', 'Payment successful. Your plan has been upgraded.');
-
+                ->with('error', 'We could not verify this payment with PayFast, so your plan was not changed. If you were charged, please contact support.');
         } catch (\Throwable $e) {
             Log::error('[Billing] Success callback error', ['error' => $e->getMessage()]);
+
             return redirect()->route('billing.index')
                 ->with('error', 'Payment was received but there was an issue updating your plan. Please contact support.');
         }
+
+        if ($subscription->status !== 'active') {
+            return redirect()->route('billing.index')
+                ->with('error', 'PayFast did not approve this payment, so your plan was not changed.');
+        }
+
+        return redirect()->route('billing.index')
+            ->with('success', 'Payment successful. Your plan has been upgraded.');
     }
 
     /**
-     * PayFast cancel/failure callback.
+     * PayFast cancel/failure callback. Only a PayFast-signed notification for
+     * this tenant's own subscription changes anything.
      */
     public function cancel(Request $request)
     {
         try {
-            $subscriptionId = $request->query('subscription_id');
-
-            if ($subscriptionId) {
-                $this->billing->handleFailure((int) $subscriptionId, $request->all());
-            }
+            $notification = PayFastNotification::verify($request->query());
+            $this->billing->applyPayFastNotification($notification, (int) Tenant::current()->id);
+        } catch (InvalidPaymentNotification $e) {
+            Log::info('[Billing] Unverified PayFast cancel return ignored', ['error' => $e->getMessage()]);
         } catch (\Throwable $e) {
             Log::error('[Billing] Cancel callback error', ['error' => $e->getMessage()]);
         }
@@ -145,9 +148,15 @@ class BillingController extends Controller
     {
         try {
             $this->billing->handleWebhook($request->all());
+
             return response()->json(['status' => 'ok']);
+        } catch (InvalidPaymentNotification $e) {
+            Log::warning('[Billing] Rejected PayFast webhook', ['error' => $e->getMessage()]);
+
+            return response()->json(['status' => 'rejected'], 403);
         } catch (\Throwable $e) {
             Log::error('[Billing] Webhook error', ['error' => $e->getMessage()]);
+
             return response()->json(['status' => 'error'], 500);
         }
     }

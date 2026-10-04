@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Exceptions\InvalidPaymentNotification;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\Tenant;
+use App\Services\Payments\PayFastNotification;
 use Illuminate\Support\Facades\Log;
 use zfhassaan\Payfast\PayFast;
 
@@ -112,11 +114,56 @@ class BillingService
     }
 
     /**
-     * Handle successful payment callback from PayFast.
+     * Apply a PayFast notification that has already been verified.
+     *
+     * Resolves the subscription from the signed basket_id, requires that basket to be
+     * the one issued at checkout, and (for browser returns) that it belongs to $tenantId.
+     * Only a pending subscription changes state, so replays can't revive or extend it.
+     *
+     * @throws InvalidPaymentNotification
      */
-    public function handleSuccess(int $subscriptionId, array $payfastData): Subscription
+    public function applyPayFastNotification(PayFastNotification $notification, ?int $tenantId = null): Subscription
     {
-        $subscription = Subscription::findOrFail($subscriptionId);
+        $subscription = $this->subscriptionForBasket($notification->basketId);
+
+        if ($tenantId !== null && (int) $subscription->tenant_id !== $tenantId) {
+            throw new InvalidPaymentNotification('PayFast notification is for another tenant\'s subscription.');
+        }
+
+        if ($subscription->status !== 'pending') {
+            return $subscription;
+        }
+
+        return $notification->approved()
+            ? $this->handleSuccess($subscription, $notification->raw)
+            : $this->handleFailure($subscription, $notification->raw);
+    }
+
+    /**
+     * @throws InvalidPaymentNotification
+     */
+    protected function subscriptionForBasket(string $basketId): Subscription
+    {
+        if (! preg_match('/^SUB-(\d+)-\d+$/', $basketId, $m)) {
+            throw new InvalidPaymentNotification('Unrecognised PayFast basket_id.');
+        }
+
+        $subscription = Subscription::find((int) $m[1]);
+        $issuedBasket = (string) ($subscription?->payfast_meta['basket_id'] ?? '');
+
+        if (! $subscription || $issuedBasket === '' || ! hash_equals($issuedBasket, $basketId)) {
+            throw new InvalidPaymentNotification('PayFast basket_id was not issued for this subscription.');
+        }
+
+        return $subscription;
+    }
+
+    /**
+     * Mark a pending subscription paid. Only reachable through a verified notification.
+     */
+    protected function handleSuccess(Subscription $subscription, array $payfastData): Subscription
+    {
+        $subscriptionId = $subscription->id;
 
         try {
             $subscription->update([
@@ -165,11 +212,11 @@ class BillingService
     }
 
     /**
-     * Handle failed/cancelled payment callback.
+     * Mark a pending subscription failed. Only reachable through a verified notification.
      */
-    public function handleFailure(int $subscriptionId, array $payfastData): Subscription
+    protected function handleFailure(Subscription $subscription, array $payfastData): Subscription
     {
-        $subscription = Subscription::findOrFail($subscriptionId);
+        $subscriptionId = $subscription->id;
 
         try {
             $subscription->update([
@@ -208,47 +255,13 @@ class BillingService
     }
 
     /**
-     * Handle IPN (Instant Payment Notification) webhook from PayFast.
+     * Handle the PayFast IPN (server-to-server). Unsigned or unrecognised
+     * notifications throw InvalidPaymentNotification and change nothing.
+     *
+     * @throws InvalidPaymentNotification
      */
-    public function handleWebhook(array $data): void
+    public function handleWebhook(array $data): Subscription
     {
-        try {
-            $basketId = $data['basket_id'] ?? $data['BASKET_ID'] ?? null;
-
-            if (! $basketId) {
-                Log::warning('[Billing] Webhook received without basket_id', $data);
-                return;
-            }
-
-            // Extract subscription ID from basket_id format: SUB-{id}-{timestamp}
-            $parts = explode('-', $basketId);
-            if (count($parts) < 2 || $parts[0] !== 'SUB') {
-                Log::warning('[Billing] Invalid basket_id format in webhook', $data);
-                return;
-            }
-
-            $subscriptionId = (int) $parts[1];
-            $subscription = Subscription::find($subscriptionId);
-
-            if (! $subscription) {
-                Log::warning('[Billing] Subscription not found for webhook', ['subscription_id' => $subscriptionId]);
-                return;
-            }
-
-            $status = $data['status'] ?? $data['STATUS'] ?? '';
-            $isSuccess = in_array($status, ['00', 'success', 'SUCCESS', 'COMPLETED']);
-
-            if ($isSuccess) {
-                $this->handleSuccess($subscriptionId, $data);
-            } else {
-                $this->handleFailure($subscriptionId, $data);
-            }
-
-        } catch (\Throwable $e) {
-            Log::error('[Billing] Webhook processing failed', [
-                'error' => $e->getMessage(),
-                'data'  => $data,
-            ]);
-        }
+        return $this->applyPayFastNotification(PayFastNotification::verify($data));
     }
 }

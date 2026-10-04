@@ -122,14 +122,18 @@ Route::post('/signin', [CentralLoginController::class, 'login'])->name('central.
 // Language Switcher Route
 Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
-// PayFast Webhook (server-to-server, no auth/tenant required)
+// PayFast Webhook (server-to-server, no auth/tenant required).
+// 404 while PayFast is disabled; the controller rejects anything not signed by PayFast.
 Route::post('/billing/payfast/webhook', [BillingController::class, 'webhook'])
     ->name('billing.payfast.webhook')
+    ->middleware('gateway_enabled:payfast')
     ->withoutMiddleware([VerifyCsrfToken::class]);
 
-// Paddle Webhook (server-to-server, no auth/tenant required)
+// Paddle Webhook (server-to-server, no auth/tenant required).
+// 404 while Paddle is disabled; the controller rejects anything without a valid Paddle-Signature.
 Route::post('/paddle/webhook', [SubscriptionController::class, 'paddleWebhook'])
     ->name('paddle.webhook')
+    ->middleware('gateway_enabled:paddle')
     ->withoutMiddleware([VerifyCsrfToken::class]);
 
 /*

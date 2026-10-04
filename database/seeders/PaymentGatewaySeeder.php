@@ -83,7 +83,7 @@ class PaymentGatewaySeeder extends Seeder
                 'config_fields' => [
                     ['key' => 'api_key', 'label' => 'API Key', 'type' => 'password', 'required' => true, 'placeholder' => 'Your Paddle API Key', 'hint' => 'Developer Tools → Authentication → API Keys'],
                     ['key' => 'client_side_token', 'label' => 'Client-Side Token', 'type' => 'text', 'required' => true, 'placeholder' => 'test_... or live_...', 'hint' => 'Developer Tools → Authentication → Client-side tokens'],
-                    ['key' => 'webhook_secret', 'label' => 'Webhook Secret Key', 'type' => 'password', 'required' => false, 'placeholder' => 'pdl_ntfset_...', 'hint' => 'Notifications → Webhook destination → Secret key'],
+                    ['key' => 'webhook_secret', 'label' => 'Webhook Secret Key', 'type' => 'password', 'required' => true, 'placeholder' => 'pdl_ntfset_...', 'hint' => 'Notifications → Webhook destination → Secret key. Required: unsigned webhooks are rejected.'],
                 ],
             ],
         ];
