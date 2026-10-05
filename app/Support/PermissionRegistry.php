@@ -534,6 +534,7 @@ class PermissionRegistry
                     'view settings',
                     'edit settings',
                 ],
+                'subscription' => ['manage subscription'],
             ],
         ],
         'settings.hospital-info' => [

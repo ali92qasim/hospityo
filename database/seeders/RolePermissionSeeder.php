@@ -268,6 +268,9 @@ class RolePermissionSeeder extends Seeder
         'view settings',
         'edit settings',
 
+        // ── Subscription ──────────────────────────────────────────────────────
+        'manage subscription',
+
         // ── Backup ────────────────────────────────────────────────────────────
         'manage backup', // DEPRECATED: use granular backup permissions below
         'view backup',
@@ -375,6 +378,7 @@ class RolePermissionSeeder extends Seeder
             'access settings.lab-report-print',
             'manage settings', // DEPRECATED: backward compatibility
             'view settings', 'edit settings',
+            'manage subscription',
             'manage backup', // DEPRECATED: backward compatibility
             'view backup', 'create backup', 'restore backup', 'delete backup',
             'manage surgical checklists',

@@ -56,6 +56,7 @@ it('splits settings permission registry so parent forModule excludes child names
             'manage settings',
             'view settings',
             'edit settings',
+            'manage subscription',
         ])
         ->and(PermissionRegistry::forModule('settings.prescription-print'))->toBe(['access settings.prescription-print'])
         ->and(PermissionRegistry::forModule('settings.lab-report-print'))->toBe(['access settings.lab-report-print'])
