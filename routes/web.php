@@ -834,31 +834,31 @@ Route::middleware('auth')->group(function () {
     Route::prefix('doctor-share')->name('doctor-share.')->group(function () {
         Route::get('rates', [DoctorShareController::class, 'ratesIndex'])
             ->name('rates.index')
-            ->middleware('permission:view share rules|create share rules|edit share rules|manage doctor shares');
+            ->middleware('permission:view share rules|manage doctor shares');
         Route::put('rates', [DoctorShareController::class, 'ratesSync'])
             ->name('rates.sync')
-            ->middleware('permission:create share rules|edit share rules|manage doctor shares');
+            ->middleware('permission:edit share rules|manage doctor shares');
 
         Route::get('rules', [DoctorShareController::class, 'rulesIndex'])
             ->name('rules.index')
-            ->middleware('permission:view share rules|create share rules|edit share rules|manage doctor shares');
+            ->middleware('permission:view share rules|manage doctor shares');
 
         Route::get('items', [DoctorShareController::class, 'itemsIndex'])
             ->name('items.index')
-            ->middleware('permission:view share items|create share items|edit share items|delete share items|manage doctor shares');
+            ->middleware('permission:view share items|manage doctor shares');
 
-        Route::middleware('permission:view settlements|create settlements|edit settlements|approve settlements|manage doctor shares')->group(function () {
+        Route::middleware('permission:view settlements|manage doctor shares')->group(function () {
             Route::get('settlements', [DoctorShareController::class, 'settlementsIndex'])->name('settlements.index');
         });
         Route::get('settlements/preview', [DoctorShareController::class, 'settlementsPreview'])
             ->name('settlements.preview')
-            ->middleware('permission:create settlements|approve settlements|manage doctor shares');
+            ->middleware('permission:approve settlements|manage doctor shares');
         Route::post('settlements', [DoctorShareController::class, 'settlementsStore'])
             ->name('settlements.store')
-            ->middleware('permission:create settlements|approve settlements|manage doctor shares');
+            ->middleware('permission:approve settlements|manage doctor shares');
         Route::get('settlements/{settlement}', [DoctorShareController::class, 'settlementsShow'])
             ->name('settlements.show')
-            ->middleware('permission:view settlements|create settlements|edit settlements|approve settlements|manage doctor shares');
+            ->middleware('permission:view settlements|manage doctor shares');
 
         Route::middleware('permission:view share reports|manage doctor shares')->group(function () {
             Route::get('reports', [DoctorShareController::class, 'reportsIndex'])->name('reports.index');
