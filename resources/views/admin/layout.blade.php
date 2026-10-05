@@ -44,9 +44,11 @@
                         <i class="fas fa-clock mr-2"></i>
                         <span>Trial ends in <span class="font-semibold">{{ $currentTenant->trialDaysRemaining() }} day{{ $currentTenant->trialDaysRemaining() !== 1 ? 's' : '' }}</span> ({{ $currentTenant->trial_ends_at->format('M d, Y') }})</span>
                     </div>
+                    @can('manage subscription')
                     <a href="{{ route('subscription.index') }}" class="text-sm font-medium text-amber-800 hover:text-amber-900 underline whitespace-nowrap">
                         Upgrade Now <i class="fas fa-arrow-right ml-1 text-xs"></i>
                     </a>
+                    @endcan
                 </div>
             @endif
             @include('partials.alerts', ['flashAsToast' => true])

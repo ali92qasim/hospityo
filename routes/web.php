@@ -275,7 +275,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Billing & Subscription Routes
-    Route::prefix('billing')->name('billing.')->group(function () {
+    Route::prefix('billing')->name('billing.')->middleware('permission:manage subscription')->group(function () {
         Route::get('/', [BillingController::class, 'index'])->name('index');
         Route::post('/subscribe', [BillingController::class, 'subscribe'])->name('subscribe');
         Route::get('/payfast/success', [BillingController::class, 'success'])->name('payfast.success');
@@ -283,8 +283,12 @@ Route::middleware('auth')->group(function () {
     });
 
     // Subscription management (Paddle)
-    Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
-    Route::post('/subscription/activate', [SubscriptionController::class, 'activate'])->name('subscription.activate');
+    Route::get('/subscription', [SubscriptionController::class, 'index'])
+        ->name('subscription.index')
+        ->middleware('permission:manage subscription');
+    Route::post('/subscription/activate', [SubscriptionController::class, 'activate'])
+        ->name('subscription.activate')
+        ->middleware('permission:manage subscription');
 });
 
 Route::middleware('auth')->group(function () {

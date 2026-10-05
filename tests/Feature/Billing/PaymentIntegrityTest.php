@@ -7,6 +7,7 @@ use App\Models\SubscriptionPayment;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
+use Spatie\Permission\Models\Permission;
 
 const PF_MERCHANT = 'MERCHANT-1001';
 const PF_SECRET = 'pf-secured-key-test';
@@ -68,14 +69,20 @@ function bindIntegrityTenant(Tenant $row, bool $allowUpdate = true): Tenant
     return $tenant;
 }
 
+/** A billing user: the billing/subscription pages require `manage subscription`. */
 function integrityUser(): User
 {
-    return User::create([
+    Permission::findOrCreate('manage subscription', 'web');
+
+    $user = User::create([
         'name' => 'Integrity User',
         'email' => 'integrity-'.uniqid().'@example.com',
         'password' => bcrypt('password'),
         'email_verified_at' => now(),
     ]);
+    $user->givePermissionTo('manage subscription');
+
+    return $user;
 }
 
 function integrityPlan(array $overrides = []): Plan

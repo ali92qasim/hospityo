@@ -5,6 +5,7 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\BillingService;
+use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     $this->withoutMiddleware([
@@ -55,14 +56,20 @@ function bindBillingTenant(): Tenant
     return $tenant;
 }
 
+/** A billing user: the billing/subscription pages require `manage subscription`. */
 function billingUser(): User
 {
-    return User::create([
+    Permission::findOrCreate('manage subscription', 'web');
+
+    $user = User::create([
         'name' => 'Billing User',
         'email' => 'billing-user-'.uniqid().'@example.com',
         'password' => bcrypt('password'),
         'email_verified_at' => now(),
     ]);
+    $user->givePermissionTo('manage subscription');
+
+    return $user;
 }
 
 function makeBillingPlan(array $overrides = []): Plan

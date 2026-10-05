@@ -62,8 +62,9 @@
                 @endif
             @endforeach
 
-            {{-- Subscription (always at bottom for admins) --}}
-            @if($currentTenant && auth()->user()->hasAnyRole(['Super Admin', 'Hospital Administrator']))
+            {{-- Subscription (always at bottom for manage subscription holders) --}}
+            @if($currentTenant)
+            @can('manage subscription')
                 @if($currentTenant->plan)
                 <li class="pt-6 mt-4 border-t border-gray-200">
                     <a href="{{ route('subscription.index') }}"
@@ -87,6 +88,7 @@
                     </a>
                 </li>
                 @endif
+            @endcan
             @endif
         </ul>
     </nav>
