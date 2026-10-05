@@ -258,3 +258,163 @@ it('hides the trial banner Upgrade Now link without manage subscription', functi
         ->and($html)->not->toContain('Upgrade Now')
         ->and($html)->not->toContain(route('subscription.index'));
 });
+
+// ── DS-2: expired trial (EnsureTenantActive enforced) ────────────────────────
+
+/** Expire the bound tenant's trial; `activeSubscription` stays null unless one is given. */
+function mspExpireTrial(Tenant $tenant, ?Subscription $activeSubscription = null): Tenant
+{
+    $tenant->trial_ends_at = now()->subDays(3);
+    $tenant->setRelation('activeSubscription', $activeSubscription);
+
+    return $tenant;
+}
+
+/** GET $url and follow at most $maxHops redirects; returns [final response, hops taken]. */
+function mspFollow($test, string $url, int $maxHops = 2): array
+{
+    $response = $test->get($url);
+    $hops = 0;
+
+    while ($response->isRedirect() && $hops < $maxHops) {
+        $response = $test->get($response->headers->get('Location'));
+        $hops++;
+    }
+
+    return [$response, $hops];
+}
+
+describe('expired trial', function () {
+    beforeEach(function () {
+        // The file-level beforeEach bypasses EnsureTenantActive; these tests exercise it.
+        $this->withMiddleware(\App\Http\Middleware\EnsureTenantActive::class);
+    });
+
+    // Non-admin (no `manage subscription`)
+
+    it('shows the 402 trial-expired page on the dashboard to a user without manage subscription', function () {
+        mspExpireTrial(bindMspTenant());
+        $this->actingAs(mspUser([], 'Hospital Administrator'));
+
+        $response = $this->get(route('dashboard'));
+
+        $response->assertStatus(402)
+            ->assertViewIs('errors.trial-expired')
+            ->assertSee('ask your administrator')
+            ->assertDontSee('Subscribe Now')
+            ->assertDontSee(route('subscription.index'));
+    });
+
+    it('shows the 402 page, not a redirect or 403, on subscription.index without manage subscription', function () {
+        mspExpireTrial(bindMspTenant());
+        $this->actingAs(mspUser());
+
+        $this->get(route('subscription.index'))
+            ->assertStatus(402)
+            ->assertViewIs('errors.trial-expired');
+    });
+
+    it('still lets a user without manage subscription log out', function () {
+        mspExpireTrial(bindMspTenant());
+        $this->actingAs(mspUser());
+
+        $this->post(route('logout'))->assertRedirect();
+        $this->assertGuest();
+    });
+
+    // Admin (`manage subscription`)
+
+    it('redirects a manage subscription holder from the dashboard to subscription.index', function () {
+        mspExpireTrial(bindMspTenant());
+        mspPlan();
+        $this->actingAs(mspUser(['manage subscription']));
+
+        $this->get(route('dashboard'))->assertRedirect(route('subscription.index'));
+    });
+
+    it('lets a manage subscription holder open subscription.index', function () {
+        mspExpireTrial(bindMspTenant());
+        mspPlan();
+        $this->actingAs(mspUser(['manage subscription']));
+
+        $this->get(route('subscription.index'))->assertOk();
+    });
+
+    it('shows Subscribe Now on the trial-expired page to a manage subscription holder', function () {
+        $tenant = mspExpireTrial(bindMspTenant());
+        $this->actingAs(mspUser(['manage subscription']));
+
+        $html = view('errors.trial-expired', ['tenant' => $tenant])->render();
+
+        expect($html)->toContain('Subscribe Now')
+            ->and($html)->toContain(route('subscription.index'))
+            ->and($html)->not->toContain('ask your administrator');
+    });
+
+    // No redirect loop
+
+    it('settles within two hops from the dashboard for each user type', function (array $permissions, int $expectedStatus) {
+        mspExpireTrial(bindMspTenant());
+        mspPlan();
+        $this->actingAs(mspUser($permissions));
+
+        [$response, $hops] = mspFollow($this, route('dashboard'));
+
+        expect($response->isRedirect())->toBeFalse()
+            ->and($hops)->toBeLessThanOrEqual(2)
+            ->and($response->getStatusCode())->toBe($expectedStatus);
+    })->with([
+        'without manage subscription' => [[], 402],
+        'with manage subscription' => [['manage subscription'], 200],
+    ]);
+
+    // Guests
+
+    it('sends a guest on a protected route to login, not to subscription or a loop', function () {
+        mspExpireTrial(bindMspTenant());
+
+        // `auth` has middleware priority over the `tenant` group, so it runs first for guests.
+        $this->get(route('dashboard'))->assertRedirect(route('login'));
+
+        [$response, $hops] = mspFollow($this, route('dashboard'), 1);
+
+        expect($hops)->toBe(1)
+            ->and($response->headers->get('Location'))->toBe(config('app.url').'/signin');
+    });
+
+    it('keeps the login route reachable for a guest', function () {
+        mspExpireTrial(bindMspTenant());
+
+        // The tenant login action hands off to central sign-in by design; reaching it
+        // (instead of the 402 page or a subscription redirect) proves login is not blocked.
+        $this->get(route('login'))->assertRedirect(config('app.url').'/signin');
+    });
+
+    // Regression: tenants that are not blocked
+
+    it('does not block a tenant still on trial', function (array $permissions) {
+        bindMspTenant(onTrial: true);
+        $this->actingAs(mspUser($permissions));
+
+        $this->get(route('dashboard'))->assertOk();
+    })->with([
+        'without manage subscription' => [[]],
+        'with manage subscription' => [['manage subscription']],
+    ]);
+
+    it('does not block an expired-trial tenant that has an active subscription', function (array $permissions) {
+        $tenant = bindMspTenant();
+        $plan = mspPlan();
+        mspExpireTrial($tenant, new Subscription([
+            'tenant_id' => $tenant->id,
+            'plan_id' => $plan->id,
+            'status' => 'active',
+        ]));
+        $this->actingAs(mspUser($permissions));
+
+        $this->get(route('dashboard'))->assertOk();
+    })->with([
+        'without manage subscription' => [[]],
+        'with manage subscription' => [['manage subscription']],
+    ]);
+});

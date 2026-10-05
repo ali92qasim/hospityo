@@ -41,10 +41,20 @@ class EnsureTenantActive
         app(PermissionRegistrar::class)->cacheKey =
             'spatie.permission.cache.tenant.' . $tenant->id;
 
-        // Trial expiry check — allow subscription page so users can upgrade
-        if ($tenant->trialExpired() && !$tenant->activeSubscription) {
-            if (!$request->routeIs('subscription.*') && !$request->routeIs('login') && !$request->routeIs('logout')) {
-                return redirect()->route('subscription.index');
+        // Trial expiry check — login/logout stay reachable. Users who can manage the
+        // subscription are sent to the subscription page; everyone else (including guests)
+        // gets the trial-expired page, so nobody is bounced into a 403 or a redirect loop.
+        if ($tenant->trialExpired() && ! $tenant->activeSubscription) {
+            if (! $request->routeIs('login') && ! $request->routeIs('logout')) {
+                $user = $request->user();
+
+                if ($user && $user->can('manage subscription')) {
+                    if (! $request->routeIs('subscription.*')) {
+                        return redirect()->route('subscription.index');
+                    }
+                } else {
+                    return response()->view('errors.trial-expired', ['tenant' => $tenant], 402);
+                }
             }
         }
 
