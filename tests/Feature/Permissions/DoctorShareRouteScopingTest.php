@@ -320,3 +320,106 @@ it('lets an approve settlements user run a settlement', function () {
         ->and($item->fresh()->status)->toBe('settled')
         ->and($item->fresh()->settlement_id)->toBe($settlement->id);
 });
+
+// ── Action controls: rates page ──────────────────────────────────────────────
+
+function dsScopeRatesPageWithOneRow(array $permissions)
+{
+    dsScopeTenant(['settings', 'settings.doctor-share', 'visits']);
+    $doctor = dsScopeDoctor('Rates View');
+    DoctorShareRate::create([
+        'doctor_id' => $doctor->id,
+        'service_category' => 'opd',
+        'percentage' => 35,
+    ]);
+
+    test()->actingAs(dsScopeUser($permissions));
+
+    return test()->get(route('doctor-share.rates.index'))->assertOk();
+}
+
+/**
+ * @return array{total: int, disabled: int}
+ */
+function dsScopeRateInputCounts(string $html): array
+{
+    preg_match_all('/<input\b[^>]*\bdata-rate-input\b[^>]*>/s', $html, $inputs);
+    $disabled = array_filter($inputs[0], fn (string $tag) => preg_match('/\sdisabled(\s|>|=)/', $tag) === 1);
+
+    return ['total' => count($inputs[0]), 'disabled' => count($disabled)];
+}
+
+it('renders the rates matrix read-only for a view share rules only user', function () {
+    $response = dsScopeRatesPageWithOneRow(['view share rules']);
+    $html = $response->getContent();
+
+    $response->assertSee('Dr Scope Rates View')
+        ->assertDontSee('Save Rates')
+        ->assertDontSee('id="doctor-share-add-row"', false)
+        ->assertDontSee('id="doctor-share-doctor-select"', false)
+        ->assertDontSee('data-remove-row', false)
+        ->assertDontSee('id="doctor-share-rate-row-template"', false);
+
+    $counts = dsScopeRateInputCounts($html);
+
+    expect($counts['total'])->toBeGreaterThan(0)
+        ->and($counts['disabled'])->toBe($counts['total']);
+});
+
+dataset('doctor share rate editors', [
+    'view + edit share rules' => [['view share rules', 'edit share rules']],
+    'manage doctor shares' => [['manage doctor shares']],
+]);
+
+it('renders the editable rates matrix for a rate editor', function (array $permissions) {
+    $response = dsScopeRatesPageWithOneRow($permissions);
+    $html = $response->getContent();
+
+    $response->assertSee('Save Rates')
+        ->assertSee('action="'.route('doctor-share.rates.sync').'"', false)
+        ->assertSee('id="doctor-share-add-row"', false)
+        ->assertSee('data-remove-row', false)
+        ->assertSee('id="doctor-share-rate-row-template"', false);
+
+    $counts = dsScopeRateInputCounts($html);
+
+    expect($counts['total'])->toBeGreaterThan(0)
+        ->and($counts['disabled'])->toBe(0);
+})->with('doctor share rate editors');
+
+// ── Action controls: settlements ─────────────────────────────────────────────
+
+it('hides the new settlement link from a view settlements only user', function () {
+    dsScopeTenant();
+    $this->actingAs(dsScopeUser(['view settlements']));
+
+    $this->get(route('doctor-share.settlements.index'))
+        ->assertOk()
+        ->assertDontSee('href="'.route('doctor-share.settlements.preview').'"', false)
+        ->assertDontSee('New Settlement');
+});
+
+it('shows the new settlement link to a settlement approver', function () {
+    dsScopeTenant();
+    $this->actingAs(dsScopeUser(['view settlements', 'approve settlements']));
+
+    $this->get(route('doctor-share.settlements.index'))
+        ->assertOk()
+        ->assertSee('href="'.route('doctor-share.settlements.preview').'"', false)
+        ->assertSee('New Settlement');
+});
+
+it('renders the confirm settlement form for a settlement approver', function () {
+    dsScopeTenant();
+    $user = dsScopeUser(['approve settlements']);
+    dsScopePendingShareItem($user);
+    $this->actingAs($user);
+
+    $this->get(route('doctor-share.settlements.preview', [
+        'date_from' => today()->toDateString(),
+        'date_to' => today()->toDateString(),
+    ]))
+        ->assertOk()
+        ->assertSee('action="'.route('doctor-share.settlements.store').'"', false)
+        ->assertSee('Confirm Settlement');
+});

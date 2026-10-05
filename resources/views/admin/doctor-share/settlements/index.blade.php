@@ -5,9 +5,11 @@
 @section('content')
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Settlement Batches</h1>
-    <a href="{{ route('doctor-share.settlements.preview') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
-        <i class="fas fa-plus mr-2"></i>New Settlement
-    </a>
+    @canany(['approve settlements', 'manage doctor shares'])
+        <a href="{{ route('doctor-share.settlements.preview') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
+            <i class="fas fa-plus mr-2"></i>New Settlement
+        </a>
+    @endcanany
 </div>
 
 @if(session('success'))

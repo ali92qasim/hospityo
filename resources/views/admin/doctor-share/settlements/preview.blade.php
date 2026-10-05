@@ -105,17 +105,19 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('doctor-share.settlements.store') }}" class="flex items-center gap-4">
-        @csrf
-        <input type="hidden" name="doctor_id" value="{{ request('doctor_id') }}">
-        <input type="hidden" name="date_from" value="{{ request('date_from') }}">
-        <input type="hidden" name="date_to" value="{{ request('date_to') }}">
-        <button type="submit" class="bg-medical-green text-white px-6 py-2 rounded-lg hover:bg-green-700">
-            Confirm Settlement
-        </button>
-        <a href="{{ route('doctor-share.settlements.index') }}" class="text-gray-500 hover:text-gray-700">
-            Cancel
-        </a>
-    </form>
+    @canany(['approve settlements', 'manage doctor shares'])
+        <form method="POST" action="{{ route('doctor-share.settlements.store') }}" class="flex items-center gap-4">
+            @csrf
+            <input type="hidden" name="doctor_id" value="{{ request('doctor_id') }}">
+            <input type="hidden" name="date_from" value="{{ request('date_from') }}">
+            <input type="hidden" name="date_to" value="{{ request('date_to') }}">
+            <button type="submit" class="bg-medical-green text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                Confirm Settlement
+            </button>
+            <a href="{{ route('doctor-share.settlements.index') }}" class="text-gray-500 hover:text-gray-700">
+                Cancel
+            </a>
+        </form>
+    @endcanany
 @endif
 @endsection

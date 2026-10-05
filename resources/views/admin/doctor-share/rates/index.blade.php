@@ -3,6 +3,8 @@
 @section('title', 'Doctor Share Rates')
 
 @section('content')
+@php($canEditRates = auth()->user()->canany(['edit share rules', 'manage doctor shares']))
+
 <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Doctor Share Rates</h1>
     <p class="mt-1 text-sm text-gray-600">Leave a cell empty when no rate applies. Zero is saved as an explicit 0% rate.</p>
@@ -35,6 +37,7 @@
 
     <input type="hidden" name="doctors" value="">
 
+    @if($canEditRates)
     <div class="bg-white rounded-lg shadow p-4 mb-6">
         <div class="flex flex-wrap gap-3 items-end">
             <div class="min-w-64">
@@ -63,6 +66,7 @@
             </button>
         </div>
     </div>
+    @endif
 
     <div class="bg-white rounded-lg shadow">
         <div class="overflow-x-auto">
@@ -95,14 +99,17 @@
                                         min="0"
                                         max="100"
                                         step="0.01"
+                                        @disabled(! $canEditRates)
                                         class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
                                     >
                                 </td>
                             @endforeach
                             <td class="px-4 py-3 text-right">
-                                <button type="button" data-remove-row class="text-red-600 hover:text-red-700">
-                                    <i class="fas fa-trash mr-1"></i>Remove
-                                </button>
+                                @if($canEditRates)
+                                    <button type="button" data-remove-row class="text-red-600 hover:text-red-700">
+                                        <i class="fas fa-trash mr-1"></i>Remove
+                                    </button>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
@@ -114,14 +121,17 @@
                 </tbody>
             </table>
         </div>
-        <div class="px-4 py-4 border-t flex justify-end">
-            <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                Save Rates
-            </button>
-        </div>
+        @if($canEditRates)
+            <div class="px-4 py-4 border-t flex justify-end">
+                <button type="submit" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    Save Rates
+                </button>
+            </div>
+        @endif
     </div>
 </form>
 
+@if($canEditRates)
 <template id="doctor-share-rate-row-template">
     <tr data-rate-row class="hover:bg-gray-50">
         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -151,4 +161,5 @@
 </template>
 
 @vite(['resources/js/doctor-share-rates-form.js'])
+@endif
 @endsection
