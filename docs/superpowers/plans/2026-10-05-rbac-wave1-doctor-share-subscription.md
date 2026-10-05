@@ -354,7 +354,13 @@ vendor/bin/pest tests/Feature/Permissions tests/Feature/DoctorShare tests/Featur
 2. **With explicit approval,** run `php artisan rbac:backfill-manage-subscription` for real. Without it, admins lose the subscription pages after deploy.
 3. Remove the worktree.
 
-**Ordering note for deployment:** the routes and the backfill must go live together. Run the backfill **before** or immediately after deploying the route change.
+**Deployment hard requirement (every environment beyond this machine):** run `php artisan rbac:backfill-manage-subscription` (after confirming `--dry-run`) **in the same deploy action** as this code, not before and not after. From the moment the routes are live, admins get 403 on Billing / Subscription until it has run. This is tracked in `README.md` → Deployment → "Required Deploy Step: `manage subscription`".
+
+**Local execution record (2026-10-05):**
+- `main` fast-forwarded to `b62b56d` and pushed.
+- The dry run reported 14 roles (2 × 7 tenants) and wrote nothing (before/after probe identical).
+- The real backfill updated 14 roles.
+- A read-only check confirmed only Super Admin and Hospital Administrator hold `manage subscription` in all 7 tenants (+1 permission row and +2 role-permission rows per tenant).
 
 ---
 
