@@ -31,6 +31,15 @@ final class SettingsAccess
             return false;
         }
 
+        if (in_array($method, ['GET', 'HEAD'], true)) {
+            $names = array_values(array_filter(
+                $names,
+                fn (string $name) => str_starts_with($name, 'view ')
+                    || str_starts_with($name, 'manage ')
+                    || str_starts_with($name, 'access ')
+            ));
+        }
+
         return self::userCanAny($user, $names);
     }
 

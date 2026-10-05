@@ -423,3 +423,100 @@ it('renders the confirm settlement form for a settlement approver', function () 
         ->assertSee('action="'.route('doctor-share.settlements.store').'"', false)
         ->assertSee('Confirm Settlement');
 });
+
+// ── Settings entry: a section is listed only with a view-level permission ────
+
+function dsScopeSettingsTenant(): Tenant
+{
+    return dsScopeTenant([
+        'settings',
+        'settings.doctor-share',
+        'settings.prescription-print',
+        'settings.lab-report-print',
+    ]);
+}
+
+/**
+ * @return list<string>
+ */
+function dsScopeSidebarSettingsLabels(User $user, Tenant $tenant): array
+{
+    $settings = collect(app(\App\Services\SidebarService::class)->build($user, $tenant))
+        ->firstWhere('id', 'settings');
+
+    return $settings === null ? [] : collect($settings['items'])->pluck('label')->all();
+}
+
+dataset('doctor share settings section access', [
+    'create share rules only' => [['create share rules'], false],
+    'edit share rules only' => [['edit share rules'], false],
+    'delete share rules only' => [['delete share rules'], false],
+    'view share rules' => [['view share rules'], true],
+    'manage doctor shares' => [['manage doctor shares'], true],
+]);
+
+it('requires a view-level permission to open the doctor share settings section', function (array $permissions, bool $expected) {
+    dsScopeSettingsTenant();
+    $user = dsScopeUser($permissions);
+
+    expect(\App\Support\SettingsAccess::canAccessSection($user, 'settings.doctor-share', 'GET'))->toBe($expected)
+        ->and(\App\Support\SettingsAccess::canAccessSection($user, 'settings.doctor-share', 'HEAD'))->toBe($expected);
+})->with('doctor share settings section access');
+
+it('does not route a create share rules only user into doctor share from the settings index', function () {
+    dsScopeSettingsTenant();
+    $this->actingAs(dsScopeUser(['create share rules']));
+
+    $this->get(route('settings.index'))->assertForbidden();
+});
+
+it('routes a view share rules user into doctor share from the settings index', function () {
+    dsScopeSettingsTenant();
+    $this->actingAs(dsScopeUser(['view share rules']));
+
+    $this->get(route('settings.index'))->assertRedirect(route('doctor-share.rates.index'));
+});
+
+it('does not list doctor share in the settings tabs for a create share rules user', function () {
+    dsScopeSettingsTenant();
+    $this->actingAs(dsScopeUser(['access settings.prescription-print', 'create share rules']));
+
+    $this->get(route('settings.prescription-print-templates.index'))
+        ->assertOk()
+        ->assertSee('href="'.route('settings.prescription-print-templates.index').'"', false)
+        ->assertDontSee('href="'.route('doctor-share.rates.index').'"', false);
+});
+
+it('lists doctor share in the settings tabs for a view share rules user', function () {
+    dsScopeSettingsTenant();
+    $this->actingAs(dsScopeUser(['access settings.prescription-print', 'view share rules']));
+
+    $this->get(route('settings.prescription-print-templates.index'))
+        ->assertOk()
+        ->assertSee('href="'.route('doctor-share.rates.index').'"', false);
+});
+
+it('hides the doctor share settings child in the sidebar from a create share rules only user', function () {
+    $tenant = dsScopeSettingsTenant();
+
+    expect(dsScopeSidebarSettingsLabels(dsScopeUser(['create share rules']), $tenant))->not->toContain('Doctor Share')
+        ->and(dsScopeSidebarSettingsLabels(dsScopeUser(['access settings.prescription-print', 'create share rules']), $tenant))
+        ->toContain('Prescription Print Templates')
+        ->not->toContain('Doctor Share');
+});
+
+it('shows the doctor share settings child in the sidebar to a view share rules user', function () {
+    $tenant = dsScopeSettingsTenant();
+
+    expect(dsScopeSidebarSettingsLabels(dsScopeUser(['view share rules']), $tenant))->toContain('Doctor Share');
+});
+
+it('keeps access-level settings permissions working for read and write', function () {
+    dsScopeSettingsTenant();
+    $labReport = dsScopeUser(['access settings.lab-report-print']);
+    $prescription = dsScopeUser(['access settings.prescription-print']);
+
+    expect(\App\Support\SettingsAccess::canAccessSection($labReport, 'settings.lab-report-print', 'GET'))->toBeTrue()
+        ->and(\App\Support\SettingsAccess::canAccessSection($labReport, 'settings.lab-report-print', 'PUT'))->toBeTrue()
+        ->and(\App\Support\SettingsAccess::canAccessSection($prescription, 'settings.prescription-print', 'GET'))->toBeTrue();
+});
