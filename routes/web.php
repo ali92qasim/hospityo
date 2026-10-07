@@ -653,16 +653,26 @@ Route::middleware('auth')->group(function () {
     Route::resource('medicines', MedicineController::class)
         ->only(['destroy'])
         ->middleware('permission:delete medicines|manage pharmacy');
-    Route::resource('prescriptions', PrescriptionController::class)->middleware('permission:edit visits');
+    // Prescriptions (D1): prescribing takes create prescriptions (clinical, so no
+    // manage pharmacy superset); list/show take view prescriptions; dispense is a
+    // pharmacy action. No edit/update/destroy: the controller has none (dead routes
+    // removed). create is registered before show so /create is not read as {prescription}.
+    Route::resource('prescriptions', PrescriptionController::class)
+        ->only(['create', 'store'])
+        ->middleware('permission:create prescriptions');
+    Route::resource('prescriptions', PrescriptionController::class)
+        ->only(['index', 'show'])
+        ->middleware('permission:view prescriptions|manage pharmacy');
     Route::post('prescriptions/{prescription}/dispense', [PrescriptionController::class, 'dispense'])
         ->name('prescriptions.dispense')
-        ->middleware('permission:edit visits');
-    Route::post('visits/{visit}/prescription', [VisitController::class, 'createPrescription'])->name('visits.prescription')->middleware('permission:edit visits');
+        ->middleware('permission:dispense pharmacy|manage pharmacy');
+    Route::post('visits/{visit}/prescription', [VisitController::class, 'createPrescription'])->name('visits.prescription')->middleware('permission:create prescriptions');
     Route::post('visits/{visit}/order-multiple-lab-tests', [VisitController::class, 'orderMultipleLabTests'])->name('visits.order-multiple-lab-tests')->middleware('permission:edit visits');
     Route::post('visits/{visit}/order-multiple-imaging-studies', [VisitController::class, 'orderMultipleImagingStudies'])->name('visits.order-multiple-imaging-studies')->middleware('permission:edit visits');
 
     Route::prefix('pharmacy/pos')->name('pharmacy.pos.')
-        ->middleware('permission:view pos|dispense pharmacy|manage pharmacy')
+        // AC-2: the terminal exists only to dispense; view pos opens nothing.
+        ->middleware('permission:dispense pharmacy|manage pharmacy')
         ->group(function () {
             Route::get('/', [PharmacyPosController::class, 'index'])->name('index');
             Route::get('/prescriptions/{prescription}', [PharmacyPosController::class, 'loadPrescription'])->name('prescription');

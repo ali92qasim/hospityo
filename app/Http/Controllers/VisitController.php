@@ -347,7 +347,9 @@ class VisitController extends Controller
 
         $workflowData = array_merge($workflowData, [
             'can_consult' => $handler->canConsult($visit),
-            'can_prescribe' => $handler->canPrescribe($visit) && Tenant::currentHasModule('pharmacy'),
+            'can_prescribe' => $handler->canPrescribe($visit)
+                && Tenant::currentHasModule('pharmacy')
+                && (bool) auth()->user()?->can('create prescriptions'),
             'can_order_labs' => $handler->canOrderLabs($visit) && (
                 Tenant::currentHasModule('laboratory') || Tenant::currentHasModule('imaging')
             ),

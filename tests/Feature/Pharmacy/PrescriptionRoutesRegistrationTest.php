@@ -70,14 +70,14 @@ it('can list routes including prescriptions without a BindingResolutionException
         ->not->toContain('Target class [PrescriptionController]');
 });
 
-it('loads prescriptions index for a user with edit visits', function () {
-    $this->actingAs(prescriptionsUser(['edit visits']));
+it('loads prescriptions index for a user with view prescriptions', function () {
+    $this->actingAs(prescriptionsUser(['view prescriptions']));
 
     $this->get(route('prescriptions.index'))->assertOk();
 });
 
-it('loads prescriptions create for a user with edit visits', function () {
-    $this->actingAs(prescriptionsUser(['edit visits']));
+it('loads prescriptions create for a user with create prescriptions', function () {
+    $this->actingAs(prescriptionsUser(['create prescriptions']));
 
     $this->get(route('prescriptions.create'))->assertOk();
 });
@@ -86,4 +86,29 @@ it('forbids prescriptions index for a receptionist without edit visits', functio
     $this->actingAs(prescriptionsUser([], 'Receptionist'));
 
     $this->get(route('prescriptions.index'))->assertForbidden();
+});
+
+it('registers no edit, update or destroy prescription routes', function () {
+    foreach (['prescriptions.edit', 'prescriptions.update', 'prescriptions.destroy'] as $name) {
+        expect(app('router')->getRoutes()->getByName($name))->toBeNull("{$name} must not be registered");
+    }
+});
+
+it('gates the remaining prescription routes on pharmacy permissions', function () {
+    $expected = [
+        'prescriptions.index' => 'permission:view prescriptions|manage pharmacy',
+        'prescriptions.show' => 'permission:view prescriptions|manage pharmacy',
+        'prescriptions.create' => 'permission:create prescriptions',
+        'prescriptions.store' => 'permission:create prescriptions',
+        'prescriptions.dispense' => 'permission:dispense pharmacy|manage pharmacy',
+        'visits.prescription' => 'permission:create prescriptions',
+    ];
+
+    foreach ($expected as $name => $middleware) {
+        $route = app('router')->getRoutes()->getByName($name);
+
+        expect($route)->not->toBeNull()
+            ->and($route->gatherMiddleware())->toContain($middleware)
+            ->and($route->gatherMiddleware())->not->toContain('permission:edit visits');
+    }
 });

@@ -20,7 +20,8 @@ beforeEach(function () {
     $tenant->status = 'active';
     app()->instance(config('multitenancy.current_tenant_container_key'), $tenant);
 
-    Permission::findOrCreate('edit visits', 'web');
+    Permission::findOrCreate('view prescriptions', 'web');
+    Permission::findOrCreate('dispense pharmacy', 'web');
 
     $this->user = User::create([
         'name' => 'Rx Dispense User',
@@ -28,7 +29,7 @@ beforeEach(function () {
         'password' => bcrypt('password'),
         'email_verified_at' => now(),
     ]);
-    $this->user->givePermissionTo('edit visits');
+    $this->user->givePermissionTo(['view prescriptions', 'dispense pharmacy']);
 
     $this->withoutMiddleware([
         \App\Http\Middleware\EnsureTenantActive::class,

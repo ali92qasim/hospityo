@@ -28,7 +28,8 @@ beforeEach(function () {
     ]);
 
     Permission::findOrCreate('edit visits', 'web');
-    $this->user->givePermissionTo('edit visits');
+    Permission::findOrCreate('create prescriptions', 'web');
+    $this->user->givePermissionTo(['edit visits', 'create prescriptions']);
 
     $this->withoutMiddleware([
         \App\Http\Middleware\EnsureTenantActive::class,

@@ -248,6 +248,9 @@ it('rejects doctor visit notes for a doctor not on the active care team', functi
 });
 
 it('requires prescription doctor_id to be an active care team member for ipd', function () {
+    Permission::findOrCreate('create prescriptions', 'web');
+    $this->user->givePermissionTo('create prescriptions');
+
     $medicine = Medicine::create([
         'name' => 'Paracetamol',
         'generic_name' => 'Paracetamol',

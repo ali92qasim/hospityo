@@ -382,7 +382,7 @@ it('rejects visit prescriptions when pharmacy module is not entitled', function 
 
 it('allows visit prescriptions when pharmacy module is entitled', function () {
     bindEntitlementTenant(['visits', 'pharmacy']);
-    $this->actingAs(entitlementUser(['edit visits']));
+    $this->actingAs(entitlementUser(['edit visits', 'create prescriptions']));
 
     $visit = entitlementOpdVisit(entitlementPatient());
     $medicine = Medicine::create([
