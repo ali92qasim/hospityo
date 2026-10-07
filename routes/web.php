@@ -967,42 +967,95 @@ Route::middleware('auth')->group(function () {
 
     // Operation Theatre Management
     Route::prefix('ot')->name('ot.')->group(function () {
-        Route::middleware('permission:view surgeries|create surgeries|edit surgeries|delete surgeries')->group(function () {
-            // Calendar
-            Route::get('calendar', [OTController::class, 'calendar'])->name('calendar');
-            Route::get('calendar/events', [OTController::class, 'calendarEvents'])->name('calendar.events');
+        // Surgeries: one action permission per route. `check-conflicts` is a
+        // read-only helper for both the create and edit forms, so it accepts
+        // either; theatre configuration needs `manage theatres` (OT-1) and
+        // cancelling needs `delete surgeries` (OT-2).
 
-            // Conflict detection API
-            Route::get('conflicts', [OTController::class, 'checkConflicts'])->name('check-conflicts');
+        // Calendar
+        Route::get('calendar', [OTController::class, 'calendar'])
+            ->middleware('permission:view surgeries')
+            ->name('calendar');
+        Route::get('calendar/events', [OTController::class, 'calendarEvents'])
+            ->middleware('permission:view surgeries')
+            ->name('calendar.events');
 
-            // Theatres
-            Route::get('theatres', [OTController::class, 'theatres'])->name('theatres');
-            Route::get('theatres/create', [OTController::class, 'createTheatre'])->name('theatres.create');
-            Route::post('theatres', [OTController::class, 'storeTheatre'])->name('theatres.store');
-            Route::get('theatres/{theatre}/edit', [OTController::class, 'editTheatre'])->name('theatres.edit');
-            Route::put('theatres/{theatre}', [OTController::class, 'updateTheatre'])->name('theatres.update');
+        // Conflict detection API
+        Route::get('conflicts', [OTController::class, 'checkConflicts'])
+            ->middleware('permission:create surgeries|edit surgeries')
+            ->name('check-conflicts');
 
-            // Surgeries
-            Route::get('surgeries', [OTController::class, 'index'])->name('surgeries.index');
-            Route::get('surgeries/create', [OTController::class, 'create'])->name('surgeries.create');
-            Route::post('surgeries', [OTController::class, 'store'])->name('surgeries.store');
-            Route::get('surgeries/{surgery}', [OTController::class, 'show'])->name('surgeries.show');
-            Route::get('surgeries/{surgery}/edit', [OTController::class, 'edit'])->name('surgeries.edit');
-            Route::put('surgeries/{surgery}', [OTController::class, 'update'])->name('surgeries.update');
-            Route::post('surgeries/{surgery}/start', [OTController::class, 'start'])->name('surgeries.start');
-            Route::post('surgeries/{surgery}/complete', [OTController::class, 'complete'])->name('surgeries.complete');
-            Route::post('surgeries/{surgery}/cancel', [OTController::class, 'cancel'])->name('surgeries.cancel');
-            Route::post('surgeries/{surgery}/postpone', [OTController::class, 'postpone'])->name('surgeries.postpone');
+        // Theatres
+        Route::get('theatres', [OTController::class, 'theatres'])
+            ->middleware('permission:view surgeries')
+            ->name('theatres');
+        Route::get('theatres/create', [OTController::class, 'createTheatre'])
+            ->middleware('permission:manage theatres')
+            ->name('theatres.create');
+        Route::post('theatres', [OTController::class, 'storeTheatre'])
+            ->middleware('permission:manage theatres')
+            ->name('theatres.store');
+        Route::get('theatres/{theatre}/edit', [OTController::class, 'editTheatre'])
+            ->middleware('permission:manage theatres')
+            ->name('theatres.edit');
+        Route::put('theatres/{theatre}', [OTController::class, 'updateTheatre'])
+            ->middleware('permission:manage theatres')
+            ->name('theatres.update');
 
-            // Intra-operative & Post-operative Monitoring
-            Route::get('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'anaesthesiaForm'])->name('monitoring.anaesthesia');
-            Route::post('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'storeAnaesthesia'])->name('monitoring.store-anaesthesia');
-            Route::get('surgeries/{surgery}/vitals', [OperativeMonitoringController::class, 'vitalsForm'])->name('monitoring.vitals');
-            Route::post('surgeries/{surgery}/vitals', [OperativeMonitoringController::class, 'storeVitals'])->name('monitoring.store-vitals');
-            Route::get('surgeries/{surgery}/vitals-data', [OperativeMonitoringController::class, 'vitalsData'])->name('monitoring.vitals-data');
-            Route::get('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'postOpForm'])->name('monitoring.post-op');
-            Route::post('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'storePostOp'])->name('monitoring.store-post-op');
-        });
+        // Surgeries
+        Route::get('surgeries', [OTController::class, 'index'])
+            ->middleware('permission:view surgeries')
+            ->name('surgeries.index');
+        Route::get('surgeries/create', [OTController::class, 'create'])
+            ->middleware('permission:create surgeries')
+            ->name('surgeries.create');
+        Route::post('surgeries', [OTController::class, 'store'])
+            ->middleware('permission:create surgeries')
+            ->name('surgeries.store');
+        Route::get('surgeries/{surgery}', [OTController::class, 'show'])
+            ->middleware('permission:view surgeries')
+            ->name('surgeries.show');
+        Route::get('surgeries/{surgery}/edit', [OTController::class, 'edit'])
+            ->middleware('permission:edit surgeries')
+            ->name('surgeries.edit');
+        Route::put('surgeries/{surgery}', [OTController::class, 'update'])
+            ->middleware('permission:edit surgeries')
+            ->name('surgeries.update');
+        Route::post('surgeries/{surgery}/start', [OTController::class, 'start'])
+            ->middleware('permission:edit surgeries')
+            ->name('surgeries.start');
+        Route::post('surgeries/{surgery}/complete', [OTController::class, 'complete'])
+            ->middleware('permission:edit surgeries')
+            ->name('surgeries.complete');
+        Route::post('surgeries/{surgery}/cancel', [OTController::class, 'cancel'])
+            ->middleware('permission:delete surgeries')
+            ->name('surgeries.cancel');
+        Route::post('surgeries/{surgery}/postpone', [OTController::class, 'postpone'])
+            ->middleware('permission:edit surgeries')
+            ->name('surgeries.postpone');
+
+        // Intra-operative & Post-operative Monitoring
+        Route::get('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'anaesthesiaForm'])
+            ->middleware('permission:edit surgeries')
+            ->name('monitoring.anaesthesia');
+        Route::post('surgeries/{surgery}/anaesthesia', [OperativeMonitoringController::class, 'storeAnaesthesia'])
+            ->middleware('permission:edit surgeries')
+            ->name('monitoring.store-anaesthesia');
+        Route::get('surgeries/{surgery}/vitals', [OperativeMonitoringController::class, 'vitalsForm'])
+            ->middleware('permission:edit surgeries')
+            ->name('monitoring.vitals');
+        Route::post('surgeries/{surgery}/vitals', [OperativeMonitoringController::class, 'storeVitals'])
+            ->middleware('permission:edit surgeries')
+            ->name('monitoring.store-vitals');
+        Route::get('surgeries/{surgery}/vitals-data', [OperativeMonitoringController::class, 'vitalsData'])
+            ->middleware('permission:view surgeries')
+            ->name('monitoring.vitals-data');
+        Route::get('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'postOpForm'])
+            ->middleware('permission:edit surgeries')
+            ->name('monitoring.post-op');
+        Route::post('surgeries/{surgery}/post-op', [OperativeMonitoringController::class, 'storePostOp'])
+            ->middleware('permission:edit surgeries')
+            ->name('monitoring.store-post-op');
 
         Route::middleware('permission:manage pac')->group(function () {
             // Pre-Anaesthesia Checkup (PAC)
