@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Medicine;
 use App\Services\MedicinePricing;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class PrescriptionController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function __construct(
         private readonly PharmacyStockDispenseService $stockDispenseService,
     ) {
@@ -86,8 +89,7 @@ class PrescriptionController extends Controller
 
         $prescription->update(['total_amount' => $totalAmount]);
 
-        return redirect()->route('prescriptions.index')
-            ->with('success', 'Prescription created successfully.');
+        return $this->redirectAfterWrite('prescriptions.index', [], ['view prescriptions', 'manage pharmacy'], 'Prescription created successfully.', 'prescriptions.create');
     }
 
     public function show(Prescription $prescription)

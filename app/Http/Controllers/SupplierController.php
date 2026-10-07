@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StoreSupplierRequest;
 use App\Http\Requests\UpdateSupplierRequest;
 use App\Models\Supplier;
@@ -10,6 +11,8 @@ use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index(Request $request)
     {
         $query = Supplier::query();
@@ -41,8 +44,7 @@ class SupplierController extends Controller
     {
         Supplier::create($request->validated());
 
-        return redirect()->route('suppliers.index')
-            ->with('success', 'Supplier created successfully.');
+        return $this->redirectAfterWrite('suppliers.index', [], ['view suppliers', 'view services', 'view pharmacy', 'manage pharmacy'], 'Supplier created successfully.', 'suppliers.create');
     }
 
     public function show(Supplier $supplier)
@@ -70,8 +72,7 @@ class SupplierController extends Controller
     {
         $supplier->update($request->validated());
 
-        return redirect()->route('suppliers.index')
-            ->with('success', 'Supplier updated successfully.');
+        return $this->redirectAfterWrite('suppliers.index', [], ['view suppliers', 'view services', 'view pharmacy', 'manage pharmacy'], 'Supplier updated successfully.', 'suppliers.edit', ['supplier' => $supplier]);
     }
 
     public function destroy(Supplier $supplier)
@@ -84,7 +85,6 @@ class SupplierController extends Controller
 
         $supplier->delete();
 
-        return redirect()->route('suppliers.index')
-            ->with('success', 'Supplier deleted successfully.');
+        return $this->redirectAfterWrite('suppliers.index', [], ['view suppliers', 'view services', 'view pharmacy', 'manage pharmacy'], 'Supplier deleted successfully.');
     }
 }

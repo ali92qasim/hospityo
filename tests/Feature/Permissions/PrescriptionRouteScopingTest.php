@@ -497,3 +497,23 @@ it('references no dead prescription route in resources or app', function () {
 
     expect($offenders)->toBe([]);
 });
+
+// ── AD-1 redirects (Task 12): the standalone store lands on the list only when the user can view it ──
+
+it('redirects a standalone prescription store to the create form when the user cannot view the list', function () {
+    $this->actingAs(phRxUser(['create prescriptions']));
+
+    phRxRequest($this, 'prescriptions.store')
+        ->assertRedirect(route('prescriptions.create'))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+});
+
+it('redirects a standalone prescription store to the list when the user can view it', function () {
+    $this->actingAs(phRxUser(['create prescriptions', 'view prescriptions']));
+
+    phRxRequest($this, 'prescriptions.store')
+        ->assertRedirect(route('prescriptions.index'))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+});

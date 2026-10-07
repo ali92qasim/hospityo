@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Jobs\Tenant\ImportMedicineBrandsJob;
 use App\Models\MedicineBrand;
 use App\Http\Requests\StoreMedicineBrandRequest;
@@ -13,6 +14,8 @@ use Illuminate\Support\Str;
 
 class MedicineBrandController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index(Request $request)
     {
         $query = MedicineBrand::query();
@@ -41,8 +44,7 @@ class MedicineBrandController extends Controller
     {
         MedicineBrand::create($request->validated());
 
-        return redirect()->route('medicine-brands.index')
-            ->with('success', 'Medicine brand created successfully.');
+        return $this->redirectAfterWrite('medicine-brands.index', [], ['view brands', 'view services', 'view pharmacy', 'manage pharmacy'], 'Medicine brand created successfully.', 'medicine-brands.create');
     }
 
     public function show(MedicineBrand $medicineBrand)
@@ -61,8 +63,7 @@ class MedicineBrandController extends Controller
     {
         $medicineBrand->update($request->validated());
 
-        return redirect()->route('medicine-brands.index')
-            ->with('success', 'Medicine brand updated successfully.');
+        return $this->redirectAfterWrite('medicine-brands.index', [], ['view brands', 'view services', 'view pharmacy', 'manage pharmacy'], 'Medicine brand updated successfully.', 'medicine-brands.edit', ['medicine_brand' => $medicineBrand]);
     }
 
     public function destroy(MedicineBrand $medicineBrand)
@@ -73,8 +74,7 @@ class MedicineBrandController extends Controller
 
         $medicineBrand->delete();
 
-        return redirect()->route('medicine-brands.index')
-            ->with('success', 'Medicine brand deleted successfully.');
+        return $this->redirectAfterWrite('medicine-brands.index', [], ['view brands', 'view services', 'view pharmacy', 'manage pharmacy'], 'Medicine brand deleted successfully.');
     }
 
     public function import(Request $request)

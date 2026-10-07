@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StoreMedicineRequest;
 use App\Http\Requests\UpdateMedicineRequest;
 use App\Jobs\Tenant\ImportMedicinesJob;
@@ -16,6 +17,8 @@ use Yajra\DataTables\Facades\DataTables;
 
 class MedicineController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index()
     {
         $categories = \App\Models\MedicineCategory::active()->orderBy('name')->get();
@@ -78,7 +81,7 @@ class MedicineController extends Controller
     {
         Medicine::create($request->validated());
 
-        return redirect()->route('medicines.index')->with('success', 'Medicine added successfully.');
+        return $this->redirectAfterWrite('medicines.index', [], ['view medicines', 'view services', 'view pharmacy', 'manage pharmacy'], 'Medicine added successfully.', 'medicines.create');
     }
 
     public function edit(Medicine $medicine)
@@ -90,13 +93,13 @@ class MedicineController extends Controller
     {
         $medicine->update($request->validated());
 
-        return redirect()->route('medicines.index')->with('success', 'Medicine updated successfully.');
+        return $this->redirectAfterWrite('medicines.index', [], ['view medicines', 'view services', 'view pharmacy', 'manage pharmacy'], 'Medicine updated successfully.', 'medicines.edit', ['medicine' => $medicine]);
     }
 
     public function destroy(Medicine $medicine)
     {
         $medicine->delete();
-        return redirect()->route('medicines.index')->with('success', 'Medicine deleted successfully.');
+        return $this->redirectAfterWrite('medicines.index', [], ['view medicines', 'view services', 'view pharmacy', 'manage pharmacy'], 'Medicine deleted successfully.');
     }
 
     public function import(Request $request)

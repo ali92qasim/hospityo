@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index(Request $request)
     {
         $query = PurchaseOrder::with(['supplier', 'user']);
@@ -93,8 +96,7 @@ class PurchaseController extends Controller
             ]);
         });
 
-        return redirect()->route('purchases.index')
-            ->with('success', 'Purchase order created successfully.');
+        return $this->redirectAfterWrite('purchases.index', [], ['view purchases', 'view services', 'view pharmacy', 'manage pharmacy'], 'Purchase order created successfully.', 'purchases.create');
     }
 
     public function show(PurchaseOrder $purchase)

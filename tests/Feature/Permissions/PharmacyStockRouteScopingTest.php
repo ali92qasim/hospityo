@@ -463,9 +463,61 @@ it('creates inventory transactions when edit purchases receives an approved orde
 it('decrements the batch when edit inventory posts stock-out', function () {
     $this->actingAs(phStkUser(['edit inventory']));
 
+    // AD-1: edit inventory alone cannot view the index, so it returns to the stock-out form.
     phStkRequest($this, 'inventory.process-stock-out')
-        ->assertRedirect(route('inventory.index'))
+        ->assertRedirect(route('inventory.stock-out'))
         ->assertSessionHas('success');
 
     expect($this->batch->fresh()->remaining_quantity)->toBe(45);
+});
+
+// ── AD-1 redirects (Task 12): a write lands on the index only when the user can view it ──
+
+/** [write route, write permission, index route, a view permission, fallback route or null for back()]. */
+function phStkRedirectCases(): array
+{
+    return [
+        'suppliers.store' => ['suppliers.store', 'create suppliers', 'suppliers.index', 'view suppliers', 'suppliers.create'],
+        'suppliers.update' => ['suppliers.update', 'edit suppliers', 'suppliers.index', 'view suppliers', 'suppliers.edit'],
+        'suppliers.destroy' => ['suppliers.destroy', 'delete suppliers', 'suppliers.index', 'view suppliers', null],
+        'purchases.store' => ['purchases.store', 'create purchases', 'purchases.index', 'view purchases', 'purchases.create'],
+        'inventory.process-stock-in' => ['inventory.process-stock-in', 'create inventory', 'inventory.index', 'view inventory', 'inventory.stock-in'],
+        'inventory.process-stock-out' => ['inventory.process-stock-out', 'edit inventory', 'inventory.index', 'view inventory', 'inventory.stock-out'],
+    ];
+}
+
+it('redirects a stock write to its fallback when the user cannot view the index', function (string $name, string $write, string $index, string $view, ?string $fallback) {
+    $this->actingAs(phStkUser([$write]));
+    $previous = url('/dashboard?from=phstk-write');
+    $this->from($previous);
+
+    $expected = match (true) {
+        $fallback === null => $previous,
+        $fallback === 'suppliers.edit' => route('suppliers.edit', ['supplier' => $this->supplier->id]),
+        default => route($fallback),
+    };
+
+    phStkRequest($this, $name)
+        ->assertRedirect($expected)
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with(phStkRedirectCases());
+
+it('redirects a stock write to the index when the user can view it', function (string $name, string $write, string $index, string $view) {
+    $this->actingAs(phStkUser([$write, $view]));
+    $this->from(url('/dashboard?from=phstk-write'));
+
+    phStkRequest($this, $name)
+        ->assertRedirect(route($index))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with(phStkRedirectCases());
+
+it('counts manage inventory as able to view the inventory index after a stock-in', function () {
+    $this->actingAs(phStkUser(['create inventory', 'manage inventory']));
+
+    phStkRequest($this, 'inventory.process-stock-in')
+        ->assertRedirect(route('inventory.index'))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
 });

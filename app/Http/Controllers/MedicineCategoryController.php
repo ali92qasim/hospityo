@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Jobs\Tenant\ImportMedicineCategoriesJob;
 use App\Models\MedicineCategory;
 use App\Http\Requests\StoreMedicineCategoryRequest;
@@ -13,6 +14,8 @@ use Illuminate\Support\Str;
 
 class MedicineCategoryController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index(Request $request)
     {
         $query = MedicineCategory::query();
@@ -42,8 +45,7 @@ class MedicineCategoryController extends Controller
     {
         MedicineCategory::create($request->validated());
 
-        return redirect()->route('medicine-categories.index')
-            ->with('success', 'Medicine category created successfully.');
+        return $this->redirectAfterWrite('medicine-categories.index', [], ['view medicine categories', 'view services', 'view pharmacy', 'manage pharmacy'], 'Medicine category created successfully.', 'medicine-categories.create');
     }
 
     public function show(MedicineCategory $medicineCategory)
@@ -62,8 +64,7 @@ class MedicineCategoryController extends Controller
     {
         $medicineCategory->update($request->validated());
 
-        return redirect()->route('medicine-categories.index')
-            ->with('success', 'Medicine category updated successfully.');
+        return $this->redirectAfterWrite('medicine-categories.index', [], ['view medicine categories', 'view services', 'view pharmacy', 'manage pharmacy'], 'Medicine category updated successfully.', 'medicine-categories.edit', ['medicine_category' => $medicineCategory]);
     }
 
     public function destroy(MedicineCategory $medicineCategory)
@@ -74,8 +75,7 @@ class MedicineCategoryController extends Controller
 
         $medicineCategory->delete();
 
-        return redirect()->route('medicine-categories.index')
-            ->with('success', 'Medicine category deleted successfully.');
+        return $this->redirectAfterWrite('medicine-categories.index', [], ['view medicine categories', 'view services', 'view pharmacy', 'manage pharmacy'], 'Medicine category deleted successfully.');
     }
 
     public function import(Request $request)

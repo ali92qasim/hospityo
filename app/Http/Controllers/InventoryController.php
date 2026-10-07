@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StockInRequest;
 use App\Http\Requests\StockOutRequest;
 use App\Models\Medicine;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 
 class InventoryController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index(Request $request)
     {
         $query = InventoryTransaction::with(['medicine.baseUnit', 'user']);
@@ -129,8 +132,7 @@ class InventoryController extends Controller
             return back()->withInput()->with('error', 'Failed to record stock. Please try again.');
         }
 
-        return redirect()->route('inventory.index')
-            ->with('success', 'Stock added successfully.');
+        return $this->redirectAfterWrite('inventory.index', [], ['view inventory', 'view services', 'view pharmacy', 'manage pharmacy', 'manage inventory'], 'Stock added successfully.', 'inventory.stock-in');
     }
 
     public function stockOut()
@@ -206,8 +208,7 @@ class InventoryController extends Controller
             return back()->withInput()->with('error', 'Failed to remove stock. Please try again.');
         }
 
-        return redirect()->route('inventory.index')
-            ->with('success', 'Stock removed successfully.');
+        return $this->redirectAfterWrite('inventory.index', [], ['view inventory', 'view services', 'view pharmacy', 'manage pharmacy', 'manage inventory'], 'Stock removed successfully.', 'inventory.stock-out');
     }
 
     public function lowStock()

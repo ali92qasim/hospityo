@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StoreUnitRequest;
 use App\Http\Requests\UpdateUnitRequest;
 use App\Jobs\Tenant\ImportUnitsJob;
@@ -14,6 +15,8 @@ use Yajra\DataTables\Facades\DataTables;
 
 class UnitController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index()
     {
         return view('admin.units.index');
@@ -45,8 +48,7 @@ class UnitController extends Controller
     {
         Unit::create($request->validated());
 
-        return redirect()->route('units.index')
-            ->with('success', 'Unit created successfully.');
+        return $this->redirectAfterWrite('units.index', [], ['view units', 'view services', 'view pharmacy', 'manage pharmacy'], 'Unit created successfully.', 'units.create');
     }
 
     public function edit(Unit $unit)
@@ -59,8 +61,7 @@ class UnitController extends Controller
     {
         $unit->update($request->validated());
 
-        return redirect()->route('units.index')
-            ->with('success', 'Unit updated successfully.');
+        return $this->redirectAfterWrite('units.index', [], ['view units', 'view services', 'view pharmacy', 'manage pharmacy'], 'Unit updated successfully.', 'units.edit', ['unit' => $unit]);
     }
 
     public function destroy(Unit $unit)
@@ -71,8 +72,7 @@ class UnitController extends Controller
 
         $unit->delete();
 
-        return redirect()->route('units.index')
-            ->with('success', 'Unit deleted successfully.');
+        return $this->redirectAfterWrite('units.index', [], ['view units', 'view services', 'view pharmacy', 'manage pharmacy'], 'Unit deleted successfully.');
     }
 
     public function import(Request $request)

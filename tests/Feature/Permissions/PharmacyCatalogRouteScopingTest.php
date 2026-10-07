@@ -339,3 +339,89 @@ it('does not register the dead show routes for units and prescription instructio
         ->and(Route::has('units.index'))->toBeTrue()
         ->and(Route::has('prescription-instructions.index'))->toBeTrue();
 });
+
+// ── AD-1 redirects (Task 12): a write lands on the index only when the user can view it ──
+
+/** The four catalog controllers on the AD-1 trait (prescription instructions are not). */
+function phCatRedirectResources(): array
+{
+    return [
+        'medicines' => ['medicines'],
+        'medicine-categories' => ['medicine-categories'],
+        'medicine-brands' => ['medicine-brands'],
+        'units' => ['units'],
+    ];
+}
+
+it('redirects a store to the create form when the user cannot view the index', function (string $resource) {
+    $noun = phCatResources()[$resource][2];
+    $this->actingAs(phCatUser(["create {$noun}"]));
+
+    phCatRequest($this, $resource, 'store')
+        ->assertRedirect(route("{$resource}.create"))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with(phCatRedirectResources());
+
+it('redirects a store to the index when the user can view it', function (string $resource) {
+    $noun = phCatResources()[$resource][2];
+    $this->actingAs(phCatUser(["create {$noun}", "view {$noun}"]));
+
+    phCatRequest($this, $resource, 'store')
+        ->assertRedirect(route("{$resource}.index"))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with(phCatRedirectResources());
+
+it('redirects an update to the edit form when the user cannot view the index', function (string $resource) {
+    [$param, $fixture, $noun] = phCatResources()[$resource];
+    $this->actingAs(phCatUser(["edit {$noun}"]));
+
+    phCatRequest($this, $resource, 'update')
+        ->assertRedirect(route("{$resource}.edit", [$param => $this->{$fixture}->id]))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with(phCatRedirectResources());
+
+it('redirects an update to the index when the user can view it', function (string $resource) {
+    $noun = phCatResources()[$resource][2];
+    $this->actingAs(phCatUser(["edit {$noun}", "view {$noun}"]));
+
+    phCatRequest($this, $resource, 'update')
+        ->assertRedirect(route("{$resource}.index"))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with(phCatRedirectResources());
+
+it('redirects a destroy back when the user cannot view the index', function (string $resource) {
+    $noun = phCatResources()[$resource][2];
+    $this->actingAs(phCatUser(["delete {$noun}"]));
+    $previous = url('/dashboard?from=phcat-destroy');
+
+    $this->from($previous);
+
+    phCatRequest($this, $resource, 'destroy')
+        ->assertRedirect($previous)
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with(phCatRedirectResources());
+
+it('redirects a destroy to the index when the user can view it', function (string $resource) {
+    $noun = phCatResources()[$resource][2];
+    $this->actingAs(phCatUser(["delete {$noun}", "view {$noun}"]));
+
+    $this->from(url('/dashboard?from=phcat-destroy'));
+
+    phCatRequest($this, $resource, 'destroy')
+        ->assertRedirect(route("{$resource}.index"))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with(phCatRedirectResources());
+
+it('treats the coarse view pharmacy as able to view the catalog index after a store', function () {
+    $this->actingAs(phCatUser(['create medicines', 'view pharmacy']));
+
+    phCatRequest($this, 'medicines', 'store')
+        ->assertRedirect(route('medicines.index'))
+        ->assertSessionHas('success');
+});
