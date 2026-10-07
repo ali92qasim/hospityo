@@ -452,6 +452,23 @@ php artisan rbac:backfill-manage-theatres
 
 Afterwards, check that every tenant's Super Admin and Hospital Administrator roles hold `manage theatres` and that no other role does. Not yet applied locally.
 
+### Required Deploy Step: `create prescriptions` (RBAC Wave 1 completion, D1)
+
+> **Hard requirement.** Any environment (production, staging, …) that receives this code must run the backfill **in the same deploy action** as the code. Not before (the command doesn't exist until the code is deployed), and not later (from the moment the new routes are live, **every Doctor and Nurse loses the ability to prescribe** until the backfill has run).
+
+```bash
+# 1. Preview: read-only, writes nothing. Expect "would update 2 role(s)" per tenant.
+#    Read every "[report only]" line: each names a custom role that prescribes today through
+#    edit visits and will lose that ability. Decide on those roles before go-live; the command never grants them.
+php artisan rbac:backfill-create-prescriptions --dry-run
+
+# 2. Apply in the same deploy action. Grants `create prescriptions` to exactly
+#    Doctor and Nurse in every tenant. Idempotent.
+php artisan rbac:backfill-create-prescriptions
+```
+
+Afterwards, check that every tenant's Doctor and Nurse roles hold `create prescriptions`. Both RBAC Wave 1-completion backfills (`manage theatres` and `create prescriptions`) belong to the same release and are both run in the same deploy action. Not yet applied locally.
+
 ---
 
 ## Important Commands
