@@ -726,8 +726,9 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:create inventory|manage pharmacy|manage inventory');
     Route::post('inventory/stock-in', [InventoryController::class, 'processStockIn'])->name('inventory.process-stock-in')
         ->middleware('permission:create inventory|manage pharmacy|manage inventory');
+    // Serves the stock-in form only (existing-batch mode), so it takes stock-in's permission.
     Route::get('inventory/medicines/{medicine}/batches', [InventoryController::class, 'batchesForMedicine'])->name('inventory.medicines.batches')
-        ->middleware('permission:edit inventory|manage pharmacy|manage inventory');
+        ->middleware('permission:create inventory|manage pharmacy|manage inventory');
     Route::get('inventory/stock-out', [InventoryController::class, 'stockOut'])->name('inventory.stock-out')
         ->middleware('permission:edit inventory|manage pharmacy|manage inventory');
     Route::post('inventory/stock-out', [InventoryController::class, 'processStockOut'])->name('inventory.process-stock-out')

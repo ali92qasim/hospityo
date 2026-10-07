@@ -76,8 +76,8 @@ Here `<X>` is `medicines`, `medicine categories`, `brands` or `units`.
 |---|---|
 | `inventory.index`, `.low-stock`, `.expiring`, `.opening-stock` | `view inventory\|R` +mi |
 | `inventory.opening-stock.import`, `.import-status` | `create inventory` +mp +mi |
-| `inventory.stock-in`, `.process-stock-in` | `create inventory` +mp +mi |
-| `inventory.stock-out`, `.process-stock-out`, `.medicines.batches` | `edit inventory` +mp +mi |
+| `inventory.stock-in`, `.process-stock-in`, `.medicines.batches` | `create inventory` +mp +mi (batches corrected 2026-10-07: batches is used only by the stock-in form) |
+| `inventory.stock-out`, `.process-stock-out` | `edit inventory` +mp +mi |
 
 ### 2.5 POS (changed from the investigation, per AC-2)
 

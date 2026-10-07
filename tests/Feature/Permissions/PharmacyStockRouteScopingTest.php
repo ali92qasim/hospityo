@@ -172,7 +172,7 @@ function phStkRoutes(): array
         'inventory.process-stock-in' => ['post', 'create inventory'],
         'inventory.stock-out' => ['get', 'edit inventory'],
         'inventory.process-stock-out' => ['post', 'edit inventory'],
-        'inventory.medicines.batches' => ['get', 'edit inventory'],
+        'inventory.medicines.batches' => ['get', 'create inventory'],
     ];
 }
 
@@ -291,7 +291,8 @@ function phStkDenyCases(): array
     foreach (['inventory.stock-out', 'inventory.process-stock-out'] as $name) {
         $cases["{$name} via create inventory"] = [$name, ['create inventory']];
     }
-    foreach (['inventory.stock-in', 'inventory.process-stock-in', 'inventory.opening-stock.import'] as $name) {
+    // The batch lookup serves the stock-in form only (corrected 2026-10-07).
+    foreach (['inventory.stock-in', 'inventory.process-stock-in', 'inventory.medicines.batches', 'inventory.opening-stock.import'] as $name) {
         $cases["{$name} via edit inventory"] = [$name, ['edit inventory']];
     }
 

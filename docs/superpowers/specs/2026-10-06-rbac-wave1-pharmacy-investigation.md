@@ -96,8 +96,8 @@ The 82 total breaks down as 37 catalog + 7 instructions + 7 suppliers + 7 purcha
 |---|---|---|
 | index, low-stock, expiring, opening-stock (page) | `view/create/edit/delete inventory\|R\|manage inventory` | `view inventory\|R` +mi |
 | opening-stock import, import-status | `manage pharmacy\|manage inventory\|create\|edit inventory` | `create inventory` +mp +mi |
-| stock-in (GET form), process-stock-in | **`view services`**\|mp\|mi\|create\|edit inventory | `create inventory` +mp +mi |
-| stock-out (GET form), process-stock-out, medicines/{id}/batches (JSON for the stock-out form) | **`view services`**\|… | `edit inventory` +mp +mi |
+| stock-in (GET form), process-stock-in, medicines/{id}/batches (JSON for the stock-in form's existing-batch mode; corrected 2026-10-07: batches is used only by the stock-in form) | **`view services`**\|mp\|mi\|create\|edit inventory | `create inventory` +mp +mi |
+| stock-out (GET form), process-stock-out | **`view services`**\|… | `edit inventory` +mp +mi |
 
 `delete inventory` gates no route, because there's no delete action. It stays in the registry.
 
