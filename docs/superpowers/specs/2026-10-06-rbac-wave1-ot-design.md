@@ -29,7 +29,7 @@
 | Expected result | 14 grants (2 roles × 7 tenants). |
 | Deploy | It must run **in the same deploy action** as the route change. Otherwise admins get 403 on theatre create/edit from the moment the routes are live. This goes in the README deploy note together with PH-1 (see the Pharmacy design §7). |
 
-## 2. Route mapping (27 routes)
+## 2. Route mapping (25 routes; corrected from 27)
 
 **Shape:** replace the single any-of `Route::middleware('permission:view|create|edit|delete surgeries')->group()` with a per-route `->middleware('permission:…')`. URLs, names and verbs stay the same.
 
@@ -93,7 +93,7 @@ There's one private helper in `OTController` with the same contract as the Accou
 
 **`tests/Feature/Permissions/OtSurgeryRouteScopingTest.php`** (new; helper names checked for collisions; reuses the `makeScheduledSurgery` fixture approach from `tests/Feature/OT`).
 
-**For each of the 27 routes:**
+**For each of the 25 routes:**
 - **Red before the fix:** a `view surgeries`-only user gets **403** on every write and form route. Each read route also gets the wrong-verb case, e.g. `create surgeries`-only gets 403 on index/show/calendar.
 - **Positive control:** exactly the new permission passes (200, or the expected 302).
 

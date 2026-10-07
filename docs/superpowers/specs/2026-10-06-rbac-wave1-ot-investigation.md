@@ -21,7 +21,7 @@
 
 | Group | Routes | Gate today | Verdict |
 |---|---|---|---|
-| **Surgeries** (calendar, conflicts, theatres, surgeries, lifecycle, monitoring) | **27** | `view\|create\|edit\|delete surgeries` on the whole group | **BUG (P1 + P3).** This wave's scope. |
+| **Surgeries** (calendar, conflicts, theatres, surgeries, lifecycle, monitoring) | **25** (corrected from 27 on 2026-10-07) | `view\|create\|edit\|delete surgeries` on the whole group | **BUG (P1 + P3).** This wave's scope. |
 | PAC | 7 | `manage pac` | OK. A single coarse superset (D5), not an escalation. |
 | Surgical checklist | 4 | `manage surgical checklists` | OK (same) |
 | OT consumables | 10 | `manage ot consumables` | OK (same) |

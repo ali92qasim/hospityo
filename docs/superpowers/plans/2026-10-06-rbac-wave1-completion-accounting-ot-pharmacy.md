@@ -4,7 +4,7 @@
 
 **Goal:** Finish the original Wave 1 scope (Doctor Share ✓ → **Accounting → OT → Pharmacy**). Every route in the three modules gets exactly one action permission (plus confirmed supersets and view-only coarse grants on reads):
 - **Accounting:** 17 routes.
-- **OT:** 27 surgeries-group routes.
+- **OT:** 25 surgeries-group routes (corrected from 27 on 2026-10-07: the group has 25 route lines).
 - **Pharmacy:** 82 routes, 77 live after the 5 dead routes are removed.
 
 Alongside the routing:
@@ -379,7 +379,7 @@ trait RedirectsAfterWrite
   - The only Commands failures allowed are the 3 baseline `MigrateCoarsePermissionsTest` ones.
   - **Step 5: Commit:** `feat: add manage theatres permission with seeder default and backfill command`
 
-### Task 5: Per-route OT middleware (27 routes)
+### Task 5: Per-route OT middleware (25 routes)
 
 **Files:**
 - Modify `routes/web.php` (the OT surgeries group).
@@ -400,7 +400,7 @@ trait RedirectsAfterWrite
 
 - [ ] **Step 1: Failing tests.**
   - **Fixtures:** a theatre and surgeries in each status: `scheduled`, `in_progress`, plus PAC cleared and checklist sign-in complete, so `start` reaches its write. Reuse the `makeScheduledSurgery` approach from `tests/Feature/OT/SurgicalChecklistIndexTest.php` under new helper names (`otScope*`).
-  - **(a) Deny dataset, 27 rows:**
+  - **(a) Deny dataset, 25 rows:**
     - every write/form route with a `view surgeries`-only user;
     - every read route with a `create surgeries`-only user;
     - `check-conflicts` with `view surgeries`-only;
@@ -467,7 +467,7 @@ trait RedirectsAfterWrite
 
 - [ ] **Step 5: Green** (`tests/Feature/OT`, the OT scoping file, `tests/Feature/Navigation`). **Step 6: Commit:** `fix: hide operation theatre actions users are not permitted to perform`
 
-- [ ] **Step 7: Phase 2 report.** SHAs; red/green per task; the **27-row route → permission table as implemented**; the side-effect proof list; the OT-1 superset-sanity result; changed pre-existing tests with reasons (expected: `PermissionRegistryTest:122`, and possibly `OtPermissionSeederTest`); the README section text; main tree unchanged.
+- [ ] **Step 7: Phase 2 report.** SHAs; red/green per task; the **25-row route → permission table as implemented**; the side-effect proof list; the OT-1 superset-sanity result; changed pre-existing tests with reasons (expected: `PermissionRegistryTest:122`, and possibly `OtPermissionSeederTest`); the README section text; main tree unchanged.
 
 ---
 
