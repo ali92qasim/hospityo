@@ -5,15 +5,21 @@
 
 @section('content')
 <div class="mb-4 flex flex-wrap justify-end gap-2">
+    @can('create deposits')
     <a href="{{ route('accounting.deposit') }}" class="bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm">
         <i class="fas fa-arrow-down mr-2"></i> Deposit
     </a>
+    @endcan
+    @can('create transfers')
     <a href="{{ route('accounting.transfer') }}" class="bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition-colors flex items-center text-sm">
         <i class="fas fa-exchange-alt mr-2"></i> Transfer
     </a>
+    @endcan
+    @can('create chart of accounts')
     <a href="{{ route('accounting.create-account') }}" class="bg-medical-blue text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
         <i class="fas fa-plus mr-2"></i> Add Account
     </a>
+    @endcan
 </div>
 
 @php
@@ -77,9 +83,11 @@
                                 @endif
                             </td>
                             <td class="px-4 lg:px-6 py-3 text-center">
+                                @can('edit chart of accounts')
                                 <a href="{{ route('accounting.edit-account', $account) }}" class="text-medical-blue hover:text-blue-700 text-sm" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                @endcan
                             </td>
                         </tr>
                         @endforeach

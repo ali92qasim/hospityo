@@ -46,10 +46,14 @@
                     </td>
                     <td class="px-6 py-4 text-sm text-center">
                         @if(!$fy->is_closed)
+                            @can('close fiscal years')
                             <a href="{{ route('accounting.fiscal-years.pre-close', $fy) }}"
                                class="text-red-600 hover:text-red-800 text-xs font-medium">
                                 <i class="fas fa-lock mr-1"></i>Close Period
                             </a>
+                            @else
+                            <span class="text-gray-400">—</span>
+                            @endcan
                         @else
                             <span class="text-xs text-gray-400">Locked</span>
                         @endif

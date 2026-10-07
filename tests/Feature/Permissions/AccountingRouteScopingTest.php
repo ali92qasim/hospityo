@@ -434,3 +434,160 @@ it('treats view accounting as view for the list after a write', function (string
     'store-journal-entry → journal-entries' => ['post', 'accounting.store-journal-entry', [], 'create journal entries', 'accounting.journal-entries'],
     'fiscal-years.close → fiscal-years' => ['post', 'accounting.fiscal-years.close', ['fy'], 'close fiscal years', 'accounting.fiscal-years'],
 ]);
+
+// ── UI gating: action controls render only with their own permission (Task 3) ─
+
+/** An exact `href="…"` attribute, as Blade renders it. */
+function acScopeHref(string $route, array $params = []): string
+{
+    return 'href="'.e(route($route, $params)).'"';
+}
+
+/** A pattern matching an href to this route for any id in place of $param. */
+function acScopeHrefPattern(string $route, string $param): string
+{
+    $url = preg_quote(e(route($route, [$param => 'ACSCOPEID'])), '/');
+
+    return '/href="'.str_replace('ACSCOPEID', '\d+', $url).'"/';
+}
+
+it('hides every chart-of-accounts action from a view-only user', function () {
+    $this->actingAs(acScopeUser(['view chart of accounts', 'view accounting']));
+
+    $html = $this->get(route('accounting.chart-of-accounts'))
+        ->assertOk()
+        ->assertSee('Cash in Hand') // the account rows render
+        ->assertDontSee(acScopeHref('accounting.deposit'), false)
+        ->assertDontSee(acScopeHref('accounting.transfer'), false)
+        ->assertDontSee(acScopeHref('accounting.create-account'), false)
+        ->getContent();
+
+    expect(preg_match(acScopeHrefPattern('accounting.edit-account', 'account'), $html))->toBe(0);
+});
+
+it('shows each chart-of-accounts action with its own permission', function (string $permission, string $route, bool $perAccount) {
+    $this->actingAs(acScopeUser(['view chart of accounts', 'view accounting', $permission]));
+
+    $response = $this->get(route('accounting.chart-of-accounts'))->assertOk();
+
+    if ($perAccount) {
+        foreach ([$this->cash, $this->bank, $this->revenue] as $account) {
+            $response->assertSee(acScopeHref($route, ['account' => $account->id]), false);
+        }
+    } else {
+        $response->assertSee(acScopeHref($route), false);
+        expect(preg_match(acScopeHrefPattern('accounting.edit-account', 'account'), $response->getContent()))->toBe(0);
+    }
+
+    // The other header actions stay hidden.
+    foreach (['accounting.deposit', 'accounting.transfer', 'accounting.create-account'] as $other) {
+        if ($other !== $route) {
+            $response->assertDontSee(acScopeHref($other), false);
+        }
+    }
+})->with([
+    'create deposits → deposit' => ['create deposits', 'accounting.deposit', false],
+    'create transfers → transfer' => ['create transfers', 'accounting.transfer', false],
+    'create chart of accounts → new account' => ['create chart of accounts', 'accounting.create-account', false],
+    'edit chart of accounts → row edit' => ['edit chart of accounts', 'accounting.edit-account', true],
+]);
+
+/** Seed an auto (system-posted) entry beside the manual fixture entry. */
+function acScopeAutoEntry($test): JournalEntry
+{
+    $auto = JournalEntry::create([
+        'entry_date' => '2026-03-16',
+        'description' => 'Auto fixture entry',
+        'created_by' => $test->entry->created_by,
+        'is_auto' => true,
+        'entry_type' => 'original',
+    ]);
+    $auto->lines()->create(['account_id' => $test->cash->id, 'debit' => 400, 'credit' => 0, 'narration' => 'Auto debit']);
+    $auto->lines()->create(['account_id' => $test->revenue->id, 'debit' => 0, 'credit' => 400, 'narration' => 'Auto credit']);
+
+    return $auto;
+}
+
+it('hides New and manual-row Edit on journal entries from a view-only user but keeps the auto lock', function () {
+    $auto = acScopeAutoEntry($this);
+    $this->actingAs(acScopeUser(['view journal entries', 'view accounting']));
+
+    $this->get(route('accounting.journal-entries'))
+        ->assertOk()
+        ->assertSee('Manual fixture entry')
+        ->assertSee('Auto fixture entry')
+        ->assertDontSee(acScopeHref('accounting.create-journal-entry'), false)
+        ->assertDontSee(acScopeHref('accounting.edit-journal-entry', ['journalEntry' => $this->entry->id]), false)
+        ->assertDontSee(acScopeHref('accounting.edit-journal-entry', ['journalEntry' => $auto->id]), false)
+        ->assertSee('title="Auto entries cannot be edited"', false);
+});
+
+it('shows the journal-entry New link with create journal entries', function () {
+    acScopeAutoEntry($this);
+    $this->actingAs(acScopeUser(['view journal entries', 'create journal entries']));
+
+    $this->get(route('accounting.journal-entries'))
+        ->assertOk()
+        ->assertSee(acScopeHref('accounting.create-journal-entry'), false)
+        ->assertDontSee(acScopeHref('accounting.edit-journal-entry', ['journalEntry' => $this->entry->id]), false);
+});
+
+it('shows the manual-row Edit link with edit journal entries, never on the auto entry', function () {
+    $auto = acScopeAutoEntry($this);
+    $this->actingAs(acScopeUser(['view journal entries', 'edit journal entries']));
+
+    $this->get(route('accounting.journal-entries'))
+        ->assertOk()
+        ->assertSee(acScopeHref('accounting.edit-journal-entry', ['journalEntry' => $this->entry->id]), false)
+        ->assertDontSee(acScopeHref('accounting.edit-journal-entry', ['journalEntry' => $auto->id]), false)
+        ->assertDontSee(acScopeHref('accounting.create-journal-entry'), false)
+        ->assertSee('title="Auto entries cannot be edited"', false);
+});
+
+/** The text of the last cell (Actions) in the fiscal-year row that names $name. */
+function acScopeFyActionCell(string $html, string $name): ?string
+{
+    preg_match_all('/<tr\b[^>]*>(.*?)<\/tr>/s', $html, $rows);
+    foreach ($rows[1] as $row) {
+        if (! str_contains($row, e($name))) {
+            continue;
+        }
+        preg_match_all('/<td\b[^>]*>(.*?)<\/td>/s', $row, $cells);
+
+        return $cells[1] === [] ? null : trim(strip_tags(end($cells[1])));
+    }
+
+    return null;
+}
+
+it('hides Close Period from a view fiscal years user and shows a dash for the open year', function () {
+    $this->actingAs(acScopeUser(['view fiscal years']));
+
+    $html = $this->get(route('accounting.fiscal-years'))
+        ->assertOk()
+        ->assertSee('FY 2025-26')
+        ->assertDontSee(acScopeHref('accounting.fiscal-years.pre-close', ['fiscalYear' => $this->fy->id]), false)
+        ->getContent();
+
+    expect(acScopeFyActionCell($html, 'FY 2025-26'))->toBe('—');
+});
+
+it('shows Close Period with close fiscal years', function () {
+    $this->actingAs(acScopeUser(['view fiscal years', 'close fiscal years']));
+
+    $html = $this->get(route('accounting.fiscal-years'))
+        ->assertOk()
+        ->assertSee(acScopeHref('accounting.fiscal-years.pre-close', ['fiscalYear' => $this->fy->id]), false)
+        ->getContent();
+
+    expect(acScopeFyActionCell($html, 'FY 2025-26'))->toBe('Close Period');
+});
+
+it('still shows Locked for a closed year without close fiscal years', function () {
+    $this->fy->update(['is_closed' => true]);
+    $this->actingAs(acScopeUser(['view fiscal years']));
+
+    $html = $this->get(route('accounting.fiscal-years'))->assertOk()->getContent();
+
+    expect(acScopeFyActionCell($html, 'FY 2025-26'))->toBe('Locked');
+});

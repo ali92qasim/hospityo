@@ -9,9 +9,11 @@
     <div class="p-4 sm:p-6 border-b border-gray-200">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-4">
             <h3 class="text-lg font-semibold text-gray-800">Journal Entries</h3>
+            @can('create journal entries')
             <a href="{{ route('accounting.create-journal-entry') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
                 <i class="fas fa-plus mr-2"></i> New Entry
             </a>
+            @endcan
         </div>
         <form method="GET" action="{{ route('accounting.journal-entries') }}" class="flex flex-col sm:flex-row gap-3 items-end">
             <div class="flex-1 w-full sm:w-auto">
@@ -69,9 +71,11 @@
                     <td class="px-4 lg:px-6 py-3 text-sm text-gray-600">{{ $entry->createdBy?->name ?? '—' }}</td>
                     <td class="px-4 lg:px-6 py-3 text-sm text-center">
                         @if(!$entry->is_auto)
+                        @can('edit journal entries')
                         <a href="{{ route('accounting.edit-journal-entry', $entry) }}" class="text-medical-blue hover:text-blue-700" title="Edit" onclick="event.stopPropagation()">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @endcan
                         @else
                         <span class="text-gray-300" title="Auto entries cannot be edited"><i class="fas fa-lock"></i></span>
                         @endif
