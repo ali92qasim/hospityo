@@ -200,21 +200,21 @@ it('forbids a wrong-verb permission on each accounting route', function (string 
 dataset('accounting positive controls', [
     'chart-of-accounts' => ['get', 'accounting.chart-of-accounts', [], 'view chart of accounts', null],
     'create-account' => ['get', 'accounting.create-account', [], 'create chart of accounts', null],
-    'store-account' => ['post', 'accounting.store-account', [], 'create chart of accounts', 'accounting.chart-of-accounts'],
+    'store-account' => ['post', 'accounting.store-account', [], 'create chart of accounts', 'accounting.create-account'],
     'edit-account' => ['get', 'accounting.edit-account', ['account'], 'edit chart of accounts', null],
-    'update-account' => ['put', 'accounting.update-account', ['account'], 'edit chart of accounts', 'accounting.chart-of-accounts'],
+    'update-account' => ['put', 'accounting.update-account', ['account'], 'edit chart of accounts', 'accounting.edit-account'],
     'deposit' => ['get', 'accounting.deposit', [], 'create deposits', null],
-    'process-deposit' => ['post', 'accounting.process-deposit', [], 'create deposits', 'accounting.chart-of-accounts'],
+    'process-deposit' => ['post', 'accounting.process-deposit', [], 'create deposits', 'accounting.deposit'],
     'transfer' => ['get', 'accounting.transfer', [], 'create transfers', null],
-    'process-transfer' => ['post', 'accounting.process-transfer', [], 'create transfers', 'accounting.chart-of-accounts'],
+    'process-transfer' => ['post', 'accounting.process-transfer', [], 'create transfers', 'accounting.transfer'],
     'journal-entries' => ['get', 'accounting.journal-entries', [], 'view journal entries', null],
     'create-journal-entry' => ['get', 'accounting.create-journal-entry', [], 'create journal entries', null],
-    'store-journal-entry' => ['post', 'accounting.store-journal-entry', [], 'create journal entries', 'accounting.journal-entries'],
+    'store-journal-entry' => ['post', 'accounting.store-journal-entry', [], 'create journal entries', 'accounting.create-journal-entry'],
     'edit-journal-entry' => ['get', 'accounting.edit-journal-entry', ['entry'], 'edit journal entries', null],
-    'update-journal-entry' => ['put', 'accounting.update-journal-entry', ['entry'], 'edit journal entries', 'accounting.journal-entries'],
+    'update-journal-entry' => ['put', 'accounting.update-journal-entry', ['entry'], 'edit journal entries', 'accounting.edit-journal-entry'],
     'fiscal-years' => ['get', 'accounting.fiscal-years', [], 'view fiscal years', null],
     'fiscal-years.pre-close' => ['get', 'accounting.fiscal-years.pre-close', ['fy'], 'close fiscal years', null],
-    'fiscal-years.close' => ['post', 'accounting.fiscal-years.close', ['fy'], 'close fiscal years', 'accounting.fiscal-years'],
+    'fiscal-years.close' => ['post', 'accounting.fiscal-years.close', ['fy'], 'close fiscal years', 'accounting.fiscal-years.pre-close'],
 ]);
 
 it('allows exactly the new permission on each accounting route', function (string $method, string $route, array $fixtures, string $permission, ?string $redirectsTo) {
@@ -228,7 +228,8 @@ it('allows exactly the new permission on each accounting route', function (strin
         return;
     }
 
-    $response->assertRedirect(route($redirectsTo))
+    // AD-1 (Task 2): without a view permission the write falls back to its form.
+    $response->assertRedirect(route($redirectsTo, acScopeParams($this, $fixtures)))
         ->assertSessionHasNoErrors()
         ->assertSessionMissing('error')
         ->assertSessionHas('success');
@@ -341,7 +342,7 @@ it('keeps the fiscal year open when view fiscal years posts close', function () 
 });
 
 it('closes the fiscal year for a close fiscal years holder', function () {
-    $user = acScopeUser(['close fiscal years']);
+    $user = acScopeUser(['close fiscal years', 'view fiscal years']);
     $this->actingAs($user);
 
     acScopeRequest($this, 'post', 'accounting.fiscal-years.close', ['fy'])
@@ -389,3 +390,47 @@ it('denies the seeded Hospital Administrator pre-close and close but keeps every
         $this->get(route($route))->assertOk();
     }
 });
+
+// ── AD-1: after a write, redirect only to a page the user can view (Task 2) ─
+
+dataset('accounting write redirects', [
+    // write route, fixtures, write permission, fallback route, fallback fixtures, list route, list view permission
+    'store-account' => ['post', 'accounting.store-account', [], 'create chart of accounts', 'accounting.create-account', [], 'accounting.chart-of-accounts', 'view chart of accounts'],
+    'update-account' => ['put', 'accounting.update-account', ['account'], 'edit chart of accounts', 'accounting.edit-account', ['account'], 'accounting.chart-of-accounts', 'view chart of accounts'],
+    'process-deposit' => ['post', 'accounting.process-deposit', [], 'create deposits', 'accounting.deposit', [], 'accounting.chart-of-accounts', 'view chart of accounts'],
+    'process-transfer' => ['post', 'accounting.process-transfer', [], 'create transfers', 'accounting.transfer', [], 'accounting.chart-of-accounts', 'view chart of accounts'],
+    'store-journal-entry' => ['post', 'accounting.store-journal-entry', [], 'create journal entries', 'accounting.create-journal-entry', [], 'accounting.journal-entries', 'view journal entries'],
+    'update-journal-entry' => ['put', 'accounting.update-journal-entry', ['entry'], 'edit journal entries', 'accounting.edit-journal-entry', ['entry'], 'accounting.journal-entries', 'view journal entries'],
+    'fiscal-years.close' => ['post', 'accounting.fiscal-years.close', ['fy'], 'close fiscal years', 'accounting.fiscal-years.pre-close', ['fy'], 'accounting.fiscal-years', 'view fiscal years'],
+]);
+
+it('redirects a write-only holder to the fallback with the success flash', function (string $method, string $route, array $fixtures, string $write, string $fallback, array $fallbackFixtures) {
+    $this->actingAs(acScopeUser([$write]));
+
+    acScopeRequest($this, $method, $route, $fixtures)
+        ->assertRedirect(route($fallback, acScopeParams($this, $fallbackFixtures)))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with('accounting write redirects');
+
+it('redirects a write + view holder to the list with the success flash', function (string $method, string $route, array $fixtures, string $write, string $fallback, array $fallbackFixtures, string $list, string $view) {
+    $this->actingAs(acScopeUser([$write, $view]));
+
+    acScopeRequest($this, $method, $route, $fixtures)
+        ->assertRedirect(route($list))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with('accounting write redirects');
+
+it('treats view accounting as view for the list after a write', function (string $method, string $route, array $fixtures, string $write, string $list) {
+    $this->actingAs(acScopeUser([$write, 'view accounting']));
+
+    acScopeRequest($this, $method, $route, $fixtures)
+        ->assertRedirect(route($list))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with([
+    'store-account → chart-of-accounts' => ['post', 'accounting.store-account', [], 'create chart of accounts', 'accounting.chart-of-accounts'],
+    'store-journal-entry → journal-entries' => ['post', 'accounting.store-journal-entry', [], 'create journal entries', 'accounting.journal-entries'],
+    'fiscal-years.close → fiscal-years' => ['post', 'accounting.fiscal-years.close', ['fy'], 'close fiscal years', 'accounting.fiscal-years'],
+]);

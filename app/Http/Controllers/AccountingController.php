@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\Account;
 use App\Models\Employee;
 use App\Models\JournalEntry;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 
 class AccountingController extends Controller
 {
+    use RedirectsAfterWrite;
+
     // ── Chart of Accounts ──────────────────────────
 
     public function chartOfAccounts()
@@ -46,7 +49,7 @@ class AccountingController extends Controller
             $this->recordOpeningBalance($account, $openingBalance);
         }
 
-        return redirect()->route('accounting.chart-of-accounts')->with('success', 'Account created.');
+        return $this->redirectAfterWrite('accounting.chart-of-accounts', [], ['view chart of accounts', 'view accounting'], 'Account created.', 'accounting.create-account');
     }
 
     public function editAccount(Account $account)
@@ -91,7 +94,7 @@ class AccountingController extends Controller
             $this->recordOpeningBalance($account, $openingBalance);
         }
 
-        return redirect()->route('accounting.chart-of-accounts')->with('success', 'Account updated.');
+        return $this->redirectAfterWrite('accounting.chart-of-accounts', [], ['view chart of accounts', 'view accounting'], 'Account updated.', 'accounting.edit-account', ['account' => $account]);
     }
 
     // ── General Ledger ─────────────────────────────
@@ -203,7 +206,7 @@ class AccountingController extends Controller
             return back()->withInput()->with('error', 'Failed to create journal entry. Please try again.');
         }
 
-        return redirect()->route('accounting.journal-entries')->with('success', 'Journal entry created successfully.');
+        return $this->redirectAfterWrite('accounting.journal-entries', [], ['view journal entries', 'view accounting'], 'Journal entry created successfully.', 'accounting.create-journal-entry');
     }
 
     public function editJournalEntry(JournalEntry $journalEntry)
@@ -284,7 +287,7 @@ class AccountingController extends Controller
             return back()->withInput()->with('error', 'Failed to update journal entry. Please try again.');
         }
 
-        return redirect()->route('accounting.journal-entries')->with('success', 'Journal entry updated successfully.');
+        return $this->redirectAfterWrite('accounting.journal-entries', [], ['view journal entries', 'view accounting'], 'Journal entry updated successfully.', 'accounting.edit-journal-entry', ['journalEntry' => $journalEntry]);
     }
 
     // ── Sub-Ledgers ────────────────────────────────
@@ -336,7 +339,7 @@ class AccountingController extends Controller
             return back()->withInput()->with('error', 'Failed to record deposit. Please try again.');
         }
 
-        return redirect()->route('accounting.chart-of-accounts')->with('success', 'Deposit recorded successfully.');
+        return $this->redirectAfterWrite('accounting.chart-of-accounts', [], ['view chart of accounts', 'view accounting'], 'Deposit recorded successfully.', 'accounting.deposit');
     }
 
     public function transfer()
@@ -393,7 +396,7 @@ class AccountingController extends Controller
             return back()->withInput()->with('error', 'Failed to record transfer. Please try again.');
         }
 
-        return redirect()->route('accounting.chart-of-accounts')->with('success', 'Funds transfer recorded successfully.');
+        return $this->redirectAfterWrite('accounting.chart-of-accounts', [], ['view chart of accounts', 'view accounting'], 'Funds transfer recorded successfully.', 'accounting.transfer');
     }
 
     // ── Sub-Ledgers ────────────────────────────────
@@ -629,7 +632,13 @@ class AccountingController extends Controller
             'closed_by' => auth()->id(),
         ]);
 
-        return redirect()->route('accounting.fiscal-years')
-            ->with('success', "Fiscal year \"{$fiscalYear->name}\" has been closed. No further entries can be posted to this period.");
+        return $this->redirectAfterWrite(
+            'accounting.fiscal-years',
+            [],
+            ['view fiscal years', 'view accounting'],
+            "Fiscal year \"{$fiscalYear->name}\" has been closed. No further entries can be posted to this period.",
+            'accounting.fiscal-years.pre-close',
+            ['fiscalYear' => $fiscalYear],
+        );
     }
 }
