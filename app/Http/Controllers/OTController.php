@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\Doctor;
 use App\Models\OperationTheatre;
 use App\Models\Patient;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 
 class OTController extends Controller
 {
+    use RedirectsAfterWrite;
+
     // ── Conflict Detection API ────────────────────────────────────────────────
 
     /**
@@ -178,7 +181,7 @@ class OTController extends Controller
             return back()->withInput()->with('error', 'Failed to create operation theatre.');
         }
 
-        return redirect()->route('ot.theatres')->with('success', 'Operation theatre created.');
+        return $this->redirectAfterWrite('ot.theatres', [], ['view surgeries'], 'Operation theatre created.', 'ot.theatres.create');
     }
 
     public function editTheatre(OperationTheatre $theatre)
@@ -205,7 +208,7 @@ class OTController extends Controller
             return back()->withInput()->with('error', 'Failed to update operation theatre.');
         }
 
-        return redirect()->route('ot.theatres')->with('success', 'Operation theatre updated.');
+        return $this->redirectAfterWrite('ot.theatres', [], ['view surgeries'], 'Operation theatre updated.', 'ot.theatres.edit', ['theatre' => $theatre]);
     }
 
     // ── Surgeries ─────────────────────────────────────────────────────────────
@@ -324,7 +327,7 @@ class OTController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Surgery scheduled successfully.']);
         }
-        return redirect()->route('ot.surgeries.index')->with('success', 'Surgery scheduled successfully.');
+        return $this->redirectAfterWrite('ot.surgeries.index', [], ['view surgeries'], 'Surgery scheduled successfully.', 'ot.surgeries.create');
     }
 
     public function show(Surgery $surgery)
@@ -429,7 +432,7 @@ class OTController extends Controller
             return back()->withInput()->with('error', 'Failed to update surgery.');
         }
 
-        return redirect()->route('ot.surgeries.show', $surgery)->with('success', 'Surgery updated.');
+        return $this->redirectAfterWrite('ot.surgeries.show', ['surgery' => $surgery], ['view surgeries'], 'Surgery updated.', 'ot.surgeries.edit', ['surgery' => $surgery]);
     }
 
     // ── Status Transitions ────────────────────────────────────────────────────

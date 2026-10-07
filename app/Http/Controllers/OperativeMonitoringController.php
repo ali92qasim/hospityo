@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\AnaesthesiaRecord;
 use App\Models\OperativeVital;
 use App\Models\PostOpMonitoring;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Log;
 
 class OperativeMonitoringController extends Controller
 {
+    use RedirectsAfterWrite;
+
     // ── Anaesthesia Record ─────────────────────────────────────────────────────
 
     public function anaesthesiaForm(Surgery $surgery)
@@ -68,7 +71,7 @@ class OperativeMonitoringController extends Controller
             return back()->withInput()->with('error', 'Failed to save anaesthesia record.');
         }
 
-        return redirect()->route('ot.surgeries.show', $surgery)->with('success', 'Anaesthesia record saved.');
+        return $this->redirectAfterWrite('ot.surgeries.show', ['surgery' => $surgery], ['view surgeries'], 'Anaesthesia record saved.', 'ot.monitoring.anaesthesia', ['surgery' => $surgery]);
     }
 
     // ── Intra-Operative Vitals ────────────────────────────────────────────────

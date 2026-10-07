@@ -411,3 +411,34 @@ it('leaves the theatre name and status unchanged when edit surgeries puts theatr
         ->and($theatre->status)->toBe('available');
     $response->assertForbidden();
 });
+
+// ── AD-1: after a write, redirect only to a page the user can view (Task 6) ─
+
+dataset('ot write redirects', [
+    // method, write route, fixtures, write permission, fallback route, fallback fixtures, target route, target fixtures
+    'theatres.store' => ['post', 'ot.theatres.store', [], 'manage theatres', 'ot.theatres.create', [], 'ot.theatres', []],
+    'theatres.update' => ['put', 'ot.theatres.update', ['theatre'], 'manage theatres', 'ot.theatres.edit', ['theatre'], 'ot.theatres', []],
+    'surgeries.store' => ['post', 'ot.surgeries.store', [], 'create surgeries', 'ot.surgeries.create', [], 'ot.surgeries.index', []],
+    'surgeries.update' => ['put', 'ot.surgeries.update', ['scheduled'], 'edit surgeries', 'ot.surgeries.edit', ['scheduled'], 'ot.surgeries.show', ['scheduled']],
+    'monitoring.store-anaesthesia' => ['post', 'ot.monitoring.store-anaesthesia', ['live'], 'edit surgeries', 'ot.monitoring.anaesthesia', ['live'], 'ot.surgeries.show', ['live']],
+]);
+
+it('redirects an OT write-only holder to the fallback with the success flash', function (string $method, string $route, array $fixtures, string $write, string $fallback, array $fallbackFixtures) {
+    $this->actingAs(otScopeUser([$write]));
+
+    otScopeRequest($this, $method, $route, $fixtures)
+        ->assertRedirect(route($fallback, otScopeParams($this, $fallbackFixtures)))
+        ->assertSessionHasNoErrors()
+        ->assertSessionMissing('error')
+        ->assertSessionHas('success');
+})->with('ot write redirects');
+
+it('redirects an OT write + view surgeries holder to the target with the success flash', function (string $method, string $route, array $fixtures, string $write, string $fallback, array $fallbackFixtures, string $target, array $targetFixtures) {
+    $this->actingAs(otScopeUser([$write, 'view surgeries']));
+
+    otScopeRequest($this, $method, $route, $fixtures)
+        ->assertRedirect(route($target, otScopeParams($this, $targetFixtures)))
+        ->assertSessionHasNoErrors()
+        ->assertSessionMissing('error')
+        ->assertSessionHas('success');
+})->with('ot write redirects');
