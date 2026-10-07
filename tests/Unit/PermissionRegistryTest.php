@@ -121,6 +121,7 @@ it('splits hr permissions onto catalog children and keeps view hr on each', func
 it('splits ot permissions onto catalog children including manage pac', function () {
     expect(PermissionRegistry::forModule('ot'))->toEqualCanonicalizing([
             'view surgeries', 'create surgeries', 'edit surgeries', 'delete surgeries',
+            'manage theatres',
         ])
         ->and(PermissionRegistry::forModule('ot.pac'))->toBe(['manage pac'])
         ->and(PermissionRegistry::forModule('ot.checklist'))->toBe(['manage surgical checklists'])

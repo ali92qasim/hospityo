@@ -483,6 +483,7 @@ class PermissionRegistry
                     'edit surgeries',
                     'delete surgeries',
                 ],
+                'theatres' => ['manage theatres'],
             ],
         ],
         'ot.pac' => [

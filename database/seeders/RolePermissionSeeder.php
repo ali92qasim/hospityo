@@ -254,6 +254,7 @@ class RolePermissionSeeder extends Seeder
         'create surgeries',
         'edit surgeries',
         'delete surgeries',
+        'manage theatres',
         'manage pac',
 
         // ── Audit ─────────────────────────────────────────────────────────────
@@ -364,6 +365,7 @@ class RolePermissionSeeder extends Seeder
             'view department staff', 'edit department staff',
             'view hr documents', 'create hr documents', 'edit hr documents',
             'view surgeries', 'create surgeries', 'edit surgeries', 'delete surgeries',
+            'manage theatres',
             'manage doctor shares', // DEPRECATED: backward compatibility
             'view share rules', 'create share rules', 'edit share rules', 'delete share rules',
             'view share items', 'create share items', 'edit share items', 'delete share items',
