@@ -355,35 +355,56 @@ Route::middleware('auth')->group(function () {
 
     // Accounting
     Route::prefix('accounting')->name('accounting.')->group(function () {
-        Route::middleware('permission:view chart of accounts|create chart of accounts|edit chart of accounts|delete chart of accounts|view accounting')->group(function () {
-            Route::get('chart-of-accounts', [AccountingController::class, 'chartOfAccounts'])->name('chart-of-accounts');
-            Route::get('chart-of-accounts/create', [AccountingController::class, 'createAccount'])->name('create-account');
-            Route::post('chart-of-accounts', [AccountingController::class, 'storeAccount'])->name('store-account');
-            Route::get('chart-of-accounts/{account}/edit', [AccountingController::class, 'editAccount'])->name('edit-account');
-            Route::put('chart-of-accounts/{account}', [AccountingController::class, 'updateAccount'])->name('update-account');
-        });
+        // One permission per action. `view accounting` is accepted on read GETs only.
+        Route::get('chart-of-accounts', [AccountingController::class, 'chartOfAccounts'])
+            ->name('chart-of-accounts')
+            ->middleware('permission:view chart of accounts|view accounting');
+        Route::get('chart-of-accounts/create', [AccountingController::class, 'createAccount'])
+            ->name('create-account')
+            ->middleware('permission:create chart of accounts');
+        Route::post('chart-of-accounts', [AccountingController::class, 'storeAccount'])
+            ->name('store-account')
+            ->middleware('permission:create chart of accounts');
+        Route::get('chart-of-accounts/{account}/edit', [AccountingController::class, 'editAccount'])
+            ->name('edit-account')
+            ->middleware('permission:edit chart of accounts');
+        Route::put('chart-of-accounts/{account}', [AccountingController::class, 'updateAccount'])
+            ->name('update-account')
+            ->middleware('permission:edit chart of accounts');
 
-        Route::middleware('permission:view deposits|create deposits|view accounting')->group(function () {
-            Route::get('deposit', [AccountingController::class, 'deposit'])->name('deposit');
-            Route::post('deposit', [AccountingController::class, 'processDeposit'])->name('process-deposit');
-        });
+        Route::get('deposit', [AccountingController::class, 'deposit'])
+            ->name('deposit')
+            ->middleware('permission:create deposits');
+        Route::post('deposit', [AccountingController::class, 'processDeposit'])
+            ->name('process-deposit')
+            ->middleware('permission:create deposits');
 
-        Route::middleware('permission:view transfers|create transfers|view accounting')->group(function () {
-            Route::get('transfer', [AccountingController::class, 'transfer'])->name('transfer');
-            Route::post('transfer', [AccountingController::class, 'processTransfer'])->name('process-transfer');
-        });
+        Route::get('transfer', [AccountingController::class, 'transfer'])
+            ->name('transfer')
+            ->middleware('permission:create transfers');
+        Route::post('transfer', [AccountingController::class, 'processTransfer'])
+            ->name('process-transfer')
+            ->middleware('permission:create transfers');
 
         Route::get('general-ledger', [AccountingController::class, 'generalLedger'])
             ->name('general-ledger')
             ->middleware('permission:view general ledger|view accounting');
 
-        Route::middleware('permission:view journal entries|create journal entries|edit journal entries|delete journal entries|view accounting')->group(function () {
-            Route::get('journal-entries', [AccountingController::class, 'journalEntries'])->name('journal-entries');
-            Route::get('journal-entries/create', [AccountingController::class, 'createJournalEntry'])->name('create-journal-entry');
-            Route::post('journal-entries', [AccountingController::class, 'storeJournalEntry'])->name('store-journal-entry');
-            Route::get('journal-entries/{journalEntry}/edit', [AccountingController::class, 'editJournalEntry'])->name('edit-journal-entry');
-            Route::put('journal-entries/{journalEntry}', [AccountingController::class, 'updateJournalEntry'])->name('update-journal-entry');
-        });
+        Route::get('journal-entries', [AccountingController::class, 'journalEntries'])
+            ->name('journal-entries')
+            ->middleware('permission:view journal entries|view accounting');
+        Route::get('journal-entries/create', [AccountingController::class, 'createJournalEntry'])
+            ->name('create-journal-entry')
+            ->middleware('permission:create journal entries');
+        Route::post('journal-entries', [AccountingController::class, 'storeJournalEntry'])
+            ->name('store-journal-entry')
+            ->middleware('permission:create journal entries');
+        Route::get('journal-entries/{journalEntry}/edit', [AccountingController::class, 'editJournalEntry'])
+            ->name('edit-journal-entry')
+            ->middleware('permission:edit journal entries');
+        Route::put('journal-entries/{journalEntry}', [AccountingController::class, 'updateJournalEntry'])
+            ->name('update-journal-entry')
+            ->middleware('permission:edit journal entries');
 
         Route::get('patient-ledger', [AccountingController::class, 'patientLedger'])
             ->name('patient-ledger')
@@ -405,11 +426,15 @@ Route::middleware('auth')->group(function () {
             ->name('balance-sheet')
             ->middleware('permission:view balance sheet|view accounting');
 
-        Route::middleware('permission:view fiscal years|create fiscal years|edit fiscal years|close fiscal years|view accounting')->group(function () {
-            Route::get('fiscal-years', [AccountingController::class, 'fiscalYears'])->name('fiscal-years');
-            Route::get('fiscal-years/{fiscalYear}/pre-close', [AccountingController::class, 'preCloseSummary'])->name('fiscal-years.pre-close');
-            Route::post('fiscal-years/{fiscalYear}/close', [AccountingController::class, 'closeFiscalYear'])->name('fiscal-years.close');
-        });
+        Route::get('fiscal-years', [AccountingController::class, 'fiscalYears'])
+            ->name('fiscal-years')
+            ->middleware('permission:view fiscal years|view accounting');
+        Route::get('fiscal-years/{fiscalYear}/pre-close', [AccountingController::class, 'preCloseSummary'])
+            ->name('fiscal-years.pre-close')
+            ->middleware('permission:close fiscal years');
+        Route::post('fiscal-years/{fiscalYear}/close', [AccountingController::class, 'closeFiscalYear'])
+            ->name('fiscal-years.close')
+            ->middleware('permission:close fiscal years');
     });
 
     // HR Module
