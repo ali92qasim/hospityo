@@ -396,6 +396,7 @@ class RolePermissionSeeder extends Seeder
             'view investigations',
             'view investigation orders', 'create investigation orders',
             'view lab results',
+            'create prescriptions',
         ],
         'Nurse' => [
             'view patients', 'edit patients',
@@ -409,6 +410,7 @@ class RolePermissionSeeder extends Seeder
             'manage surgical checklists',
             'manage ot consumables',
             'manage sterilization',
+            'create prescriptions',
         ],
         'Receptionist' => [
             'view patients', 'create patients', 'edit patients',
