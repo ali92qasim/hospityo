@@ -61,7 +61,7 @@ it('shows pos when pharmacy.pos is entitled even if catalog is not', function ()
 
 it('forbids pos when pharmacy.pos is missing from the plan', function () {
     pharmacyCatalogTenant(['pharmacy']);
-    $this->actingAs(pharmacyCatalogUser(['view pos']));
+    $this->actingAs(pharmacyCatalogUser(['dispense pharmacy']));
 
     $this->get(route('pharmacy.pos.index'))->assertForbidden();
 });

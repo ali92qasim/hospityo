@@ -362,7 +362,7 @@ it('gates emergency investigation flags on laboratory and imaging modules', func
 
 it('rejects visit prescriptions when pharmacy module is not entitled', function () {
     bindEntitlementTenant(['visits']);
-    $this->actingAs(entitlementUser(['edit visits']));
+    $this->actingAs(entitlementUser(['edit visits', 'create prescriptions']));
 
     $visit = entitlementOpdVisit(entitlementPatient());
     $medicine = Medicine::create([
