@@ -710,45 +710,62 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:delete units|manage pharmacy');
 
     // Inventory Routes
+    // R = view pharmacy|view services|manage pharmacy (read GETs only); +mi = manage inventory.
     Route::get('inventory/opening-stock', [OpeningStockController::class, 'index'])
         ->name('inventory.opening-stock')
-        ->middleware('permission:view inventory|create inventory|edit inventory|delete inventory|view services|view pharmacy|manage pharmacy|manage inventory');
+        ->middleware('permission:view inventory|view pharmacy|view services|manage pharmacy|manage inventory');
     Route::post('inventory/opening-stock/import', [OpeningStockController::class, 'import'])
         ->name('inventory.opening-stock.import')
-        ->middleware('permission:manage pharmacy|manage inventory|create inventory|edit inventory');
+        ->middleware('permission:create inventory|manage pharmacy|manage inventory');
     Route::get('inventory/opening-stock/import-status', [OpeningStockController::class, 'importStatus'])
         ->name('inventory.opening-stock.import-status')
-        ->middleware('permission:manage pharmacy|manage inventory|create inventory|edit inventory');
+        ->middleware('permission:create inventory|manage pharmacy|manage inventory');
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index')
-        ->middleware('permission:view inventory|create inventory|edit inventory|delete inventory|view services|view pharmacy|manage inventory');
+        ->middleware('permission:view inventory|view pharmacy|view services|manage pharmacy|manage inventory');
     Route::get('inventory/stock-in', [InventoryController::class, 'stockIn'])->name('inventory.stock-in')
-        ->middleware('permission:view services|manage pharmacy|manage inventory|create inventory|edit inventory');
+        ->middleware('permission:create inventory|manage pharmacy|manage inventory');
     Route::post('inventory/stock-in', [InventoryController::class, 'processStockIn'])->name('inventory.process-stock-in')
-        ->middleware('permission:view services|manage pharmacy|manage inventory|create inventory|edit inventory');
+        ->middleware('permission:create inventory|manage pharmacy|manage inventory');
     Route::get('inventory/medicines/{medicine}/batches', [InventoryController::class, 'batchesForMedicine'])->name('inventory.medicines.batches')
-        ->middleware('permission:view services|manage pharmacy|manage inventory|create inventory|edit inventory');
+        ->middleware('permission:edit inventory|manage pharmacy|manage inventory');
     Route::get('inventory/stock-out', [InventoryController::class, 'stockOut'])->name('inventory.stock-out')
-        ->middleware('permission:view services|manage pharmacy|manage inventory|create inventory|edit inventory');
+        ->middleware('permission:edit inventory|manage pharmacy|manage inventory');
     Route::post('inventory/stock-out', [InventoryController::class, 'processStockOut'])->name('inventory.process-stock-out')
-        ->middleware('permission:view services|manage pharmacy|manage inventory|create inventory|edit inventory');
+        ->middleware('permission:edit inventory|manage pharmacy|manage inventory');
     Route::get('inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock')
-        ->middleware('permission:view inventory|create inventory|edit inventory|delete inventory|view services|view pharmacy|manage inventory');
+        ->middleware('permission:view inventory|view pharmacy|view services|manage pharmacy|manage inventory');
     Route::get('inventory/expiring', [InventoryController::class, 'expiring'])->name('inventory.expiring')
-        ->middleware('permission:view inventory|create inventory|edit inventory|delete inventory|view services|view pharmacy|manage inventory');
+        ->middleware('permission:view inventory|view pharmacy|view services|manage pharmacy|manage inventory');
 
     // Supplier Routes
+    // create is registered before show so suppliers/create never matches {supplier}.
     Route::resource('suppliers', SupplierController::class)
-        ->middleware('permission:view suppliers|create suppliers|edit suppliers|delete suppliers|view services|view pharmacy|manage pharmacy');
+        ->only(['create', 'store'])
+        ->middleware('permission:create suppliers|manage pharmacy');
+    Route::resource('suppliers', SupplierController::class)
+        ->only(['index', 'show'])
+        ->middleware('permission:view suppliers|view services|view pharmacy|manage pharmacy');
+    Route::resource('suppliers', SupplierController::class)
+        ->only(['edit', 'update'])
+        ->middleware('permission:edit suppliers|manage pharmacy');
+    Route::resource('suppliers', SupplierController::class)
+        ->only(['destroy'])
+        ->middleware('permission:delete suppliers|manage pharmacy');
 
     // Purchase Routes
-    Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store', 'show'])
-        ->middleware('permission:view purchases|create purchases|edit purchases|delete purchases|view services|view pharmacy|manage pharmacy');
+    // create is registered before show so purchases/create never matches {purchase}.
+    Route::resource('purchases', PurchaseController::class)
+        ->only(['create', 'store'])
+        ->middleware('permission:create purchases|manage pharmacy');
+    Route::resource('purchases', PurchaseController::class)
+        ->only(['index', 'show'])
+        ->middleware('permission:view purchases|view services|view pharmacy|manage pharmacy');
     Route::post('purchases/{purchase}/approve', [PurchaseController::class, 'approve'])->name('purchases.approve')
-        ->middleware('permission:view services|manage pharmacy|edit purchases');
+        ->middleware('permission:edit purchases|manage pharmacy');
     Route::post('purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive')
-        ->middleware('permission:view services|manage pharmacy|edit purchases');
+        ->middleware('permission:edit purchases|manage pharmacy');
     Route::post('purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel')
-        ->middleware('permission:view services|manage pharmacy|edit purchases|delete purchases');
+        ->middleware('permission:delete purchases|manage pharmacy');
 
     // Laboratory Routes
     Route::get('/investigations/data', [InvestigationController::class, 'data'])
