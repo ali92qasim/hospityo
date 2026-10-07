@@ -8,12 +8,14 @@
         <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Prescription Details</h1>
         <div class="flex space-x-2">
             @if($prescription->status === 'pending')
+                @canany(['dispense pharmacy', 'manage pharmacy'])
                 <form method="POST" action="{{ route('prescriptions.dispense', $prescription) }}" class="inline">
                     @csrf
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700" data-confirm="Dispense this prescription?" data-confirm-title="Dispense" data-confirm-text="Dispense" data-confirm-variant="success">
                         <i class="fas fa-check mr-2"></i>Dispense
                     </button>
                 </form>
+                @endcanany
             @endif
             <a href="{{ route('prescriptions.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
                 <i class="fas fa-arrow-left mr-2"></i>Back

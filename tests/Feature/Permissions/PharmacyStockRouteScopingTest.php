@@ -521,3 +521,170 @@ it('counts manage inventory as able to view the inventory index after a stock-in
         ->assertSessionHasNoErrors()
         ->assertSessionHas('success');
 });
+
+// ── UI gating (Task 13): write controls render only for permitted users ───
+
+/**
+ * Control name => the permissions that reveal it. Fixture-free, so it can feed datasets.
+ */
+function phStkUiControlPermissions(): array
+{
+    $mpMi = ['manage pharmacy', 'manage inventory'];
+
+    return [
+        'suppliers new' => ['create suppliers', 'manage pharmacy'],
+        'suppliers row edit' => ['edit suppliers', 'manage pharmacy'],
+        'suppliers row delete' => ['delete suppliers', 'manage pharmacy'],
+        'suppliers show edit' => ['edit suppliers', 'manage pharmacy'],
+        'purchases new' => ['create purchases', 'manage pharmacy'],
+        'purchases index approve' => ['edit purchases', 'manage pharmacy'],
+        'purchases index receive' => ['edit purchases', 'manage pharmacy'],
+        'purchases index cancel' => ['delete purchases', 'manage pharmacy'],
+        'purchases show approve' => ['edit purchases', 'manage pharmacy'],
+        'purchases show receive' => ['edit purchases', 'manage pharmacy'],
+        'purchases show cancel' => ['delete purchases', 'manage pharmacy'],
+        'inventory index stock in' => ['create inventory', ...$mpMi],
+        'inventory index stock out' => ['edit inventory', ...$mpMi],
+        'low-stock stock in' => ['create inventory', ...$mpMi],
+        'opening-stock stock in' => ['create inventory', ...$mpMi],
+        'expiring stock out' => ['edit inventory', ...$mpMi],
+    ];
+}
+
+/**
+ * Control name => [page route, page params, exact markup].
+ * Stock links on low-stock and expiring carry a ?medicine= query.
+ */
+function phStkUiControls($test): array
+{
+    $stockIn = 'href="'.route('inventory.stock-in');
+    $stockOut = 'href="'.route('inventory.stock-out');
+    $pending = ['purchase' => $test->pendingOrder->id];
+    $approved = ['purchase' => $test->approvedOrder->id];
+
+    return [
+        'suppliers new' => ['suppliers.index', [], 'href="'.route('suppliers.create').'"'],
+        'suppliers row edit' => ['suppliers.index', [], 'href="'.route('suppliers.edit', $test->supplier).'"'],
+        'suppliers row delete' => ['suppliers.index', [], 'action="'.route('suppliers.destroy', $test->supplier).'"'],
+        'suppliers show edit' => ['suppliers.show', ['supplier' => $test->supplier->id], 'href="'.route('suppliers.edit', $test->supplier).'"'],
+        'purchases new' => ['purchases.index', [], 'href="'.route('purchases.create').'"'],
+        'purchases index approve' => ['purchases.index', [], 'action="'.route('purchases.approve', $test->pendingOrder).'"'],
+        'purchases index receive' => ['purchases.index', [], 'action="'.route('purchases.receive', $test->approvedOrder).'"'],
+        'purchases index cancel' => ['purchases.index', [], 'action="'.route('purchases.cancel', $test->pendingOrder).'"'],
+        'purchases show approve' => ['purchases.show', $pending, 'action="'.route('purchases.approve', $test->pendingOrder).'"'],
+        'purchases show receive' => ['purchases.show', $approved, 'action="'.route('purchases.receive', $test->approvedOrder).'"'],
+        'purchases show cancel' => ['purchases.show', $pending, 'action="'.route('purchases.cancel', $test->pendingOrder).'"'],
+        'inventory index stock in' => ['inventory.index', [], $stockIn.'"'],
+        'inventory index stock out' => ['inventory.index', [], $stockOut.'"'],
+        'low-stock stock in' => ['inventory.low-stock', [], $stockIn.'?medicine='.$test->lowMedicine->id.'"'],
+        'opening-stock stock in' => ['inventory.opening-stock', [], $stockIn.'"'],
+        'expiring stock out' => ['inventory.expiring', [], $stockOut.'?medicine='.$test->medicine->id.'"'],
+    ];
+}
+
+/** The view permission that opens each control's page. */
+function phStkUiViewPermission(string $pageRoute): string
+{
+    return match (strtok($pageRoute, '.')) {
+        'suppliers' => 'view suppliers',
+        'purchases' => 'view purchases',
+        'inventory' => 'view inventory',
+    };
+}
+
+/** Seed what makes the low-stock, expiring and locked opening-stock pages render their controls. */
+function phStkUiSeedStockPages($test): void
+{
+    // No stock at all: at or below a zero reorder level, so it lists as low stock.
+    $test->lowMedicine = Medicine::create([
+        'name' => 'PhStk Low Medicine',
+        'sku' => 'PHSTK-MED-LOW',
+        'base_unit_id' => $test->unit->id,
+        'manage_stock' => true,
+        'status' => 'active',
+        'selling_price' => 20,
+    ]);
+
+    // Expires within 30 days: the expiring page offers its Remove (stock-out) link.
+    InventoryTransaction::create([
+        'medicine_id' => $test->medicine->id,
+        'type' => 'stock_in',
+        'quantity' => 5,
+        'remaining_quantity' => 5,
+        'unit_cost' => 10,
+        'total_cost' => 50,
+        'batch_no' => 'PHSTK-EXP',
+        'expiry_date' => now()->addDays(10),
+        'created_by' => $test->owner->id,
+    ]);
+
+    // A completed opening-stock import: the locked page points to Stock In.
+    \App\Services\OpeningStockService::lock($test->owner->id, 1);
+}
+
+function phStkUiControlCases(): array
+{
+    $cases = [];
+    foreach (phStkUiControlPermissions() as $control => $permissions) {
+        foreach ($permissions as $permission) {
+            $cases["{$control} via {$permission}"] = [$control, $permission];
+        }
+    }
+
+    return $cases;
+}
+
+it('hides every stock write control from a view-only user', function (string $control) {
+    phStkUiSeedStockPages($this);
+    [$pageRoute, $params, $markup] = phStkUiControls($this)[$control];
+    $this->actingAs(phStkUser([phStkUiViewPermission($pageRoute)]));
+
+    $this->get(route($pageRoute, $params))
+        ->assertOk()
+        ->assertDontSee($markup, false);
+})->with(array_keys(phStkUiControlPermissions()));
+
+it('shows a stock write control to each permission that may use it', function (string $control, string $permission) {
+    phStkUiSeedStockPages($this);
+    [$pageRoute, $params, $markup] = phStkUiControls($this)[$control];
+    $this->actingAs(phStkUser([phStkUiViewPermission($pageRoute), $permission]));
+
+    $this->get(route($pageRoute, $params))
+        ->assertOk()
+        ->assertSee($markup, false);
+})->with(phStkUiControlCases());
+
+it('hides a stock write control from a holder of a different write permission', function (string $control, string $permission) {
+    phStkUiSeedStockPages($this);
+    [$pageRoute, $params, $markup] = phStkUiControls($this)[$control];
+    $this->actingAs(phStkUser([phStkUiViewPermission($pageRoute), $permission]));
+
+    $this->get(route($pageRoute, $params))
+        ->assertOk()
+        ->assertDontSee($markup, false);
+})->with([
+    'purchases new via edit purchases' => ['purchases new', 'edit purchases'],
+    'purchases index approve via delete purchases' => ['purchases index approve', 'delete purchases'],
+    'purchases index cancel via edit purchases' => ['purchases index cancel', 'edit purchases'],
+    'purchases show receive via delete purchases' => ['purchases show receive', 'delete purchases'],
+    'purchases show cancel via edit purchases' => ['purchases show cancel', 'edit purchases'],
+    'suppliers row delete via edit suppliers' => ['suppliers row delete', 'edit suppliers'],
+    'inventory index stock in via edit inventory' => ['inventory index stock in', 'edit inventory'],
+    'inventory index stock out via create inventory' => ['inventory index stock out', 'create inventory'],
+    'low-stock stock in via edit inventory' => ['low-stock stock in', 'edit inventory'],
+    'expiring stock out via create inventory' => ['expiring stock out', 'create inventory'],
+]);
+
+it('keeps the opening-stock import gate on manage pharmacy or manage inventory', function (array $permissions, bool $visible) {
+    $this->actingAs(phStkUser($permissions));
+
+    $importForm = 'action="'.route('inventory.opening-stock.import').'"';
+    $response = $this->get(route('inventory.opening-stock'))->assertOk();
+
+    $visible
+        ? $response->assertSee($importForm, false)->assertSee('data-opening-stock-import-trigger', false)
+        : $response->assertDontSee($importForm, false)->assertDontSee('data-opening-stock-import-trigger', false);
+})->with([
+    'manage pharmacy' => [['manage pharmacy'], true],
+    'view inventory only' => [['view inventory'], false],
+]);

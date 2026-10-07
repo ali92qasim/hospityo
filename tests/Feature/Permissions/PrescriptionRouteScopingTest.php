@@ -517,3 +517,71 @@ it('redirects a standalone prescription store to the list when the user can view
         ->assertSessionHasNoErrors()
         ->assertSessionHas('success');
 });
+
+// ── UI gating (Task 13): New and Dispense render only for permitted users ──
+
+/** Control name => [page route, exact markup]. */
+function phRxUiControls($test): array
+{
+    $dispense = 'action="'.route('prescriptions.dispense', $test->prescription).'"';
+
+    return [
+        'index new' => ['prescriptions.index', 'href="'.route('prescriptions.create').'"'],
+        'index dispense' => ['prescriptions.index', $dispense],
+        'show dispense' => ['prescriptions.show', $dispense],
+    ];
+}
+
+function phRxUiGet($test, string $pageRoute)
+{
+    $params = $pageRoute === 'prescriptions.show' ? ['prescription' => $test->prescription->id] : [];
+
+    return $test->get(route($pageRoute, $params))->assertOk();
+}
+
+it('shows a prescription control only to the permission that may use it', function (string $control, array $permissions, bool $visible) {
+    [$pageRoute, $markup] = phRxUiControls($this)[$control];
+    $this->actingAs(phRxUser($permissions));
+
+    $response = phRxUiGet($this, $pageRoute);
+
+    $visible
+        ? $response->assertSee($markup, false)
+        : $response->assertDontSee($markup, false);
+})->with([
+    'index new via view prescriptions' => ['index new', ['view prescriptions'], false],
+    'index new via dispense pharmacy' => ['index new', ['view prescriptions', 'dispense pharmacy'], false],
+    // Prescribing is clinical: manage pharmacy is not a superset on it.
+    'index new via manage pharmacy' => ['index new', ['manage pharmacy'], false],
+    'index new via create prescriptions' => ['index new', ['view prescriptions', 'create prescriptions'], true],
+
+    'index dispense via view prescriptions' => ['index dispense', ['view prescriptions'], false],
+    'index dispense via create prescriptions' => ['index dispense', ['view prescriptions', 'create prescriptions'], false],
+    'index dispense via dispense pharmacy' => ['index dispense', ['view prescriptions', 'dispense pharmacy'], true],
+    'index dispense via manage pharmacy' => ['index dispense', ['manage pharmacy'], true],
+
+    'show dispense via view prescriptions' => ['show dispense', ['view prescriptions'], false],
+    'show dispense via create prescriptions' => ['show dispense', ['view prescriptions', 'create prescriptions'], false],
+    'show dispense via dispense pharmacy' => ['show dispense', ['view prescriptions', 'dispense pharmacy'], true],
+    'show dispense via manage pharmacy' => ['show dispense', ['manage pharmacy'], true],
+]);
+
+// ── Sidebar (Task 13): POS follows the route gate (dispense | manage pharmacy) ──
+
+it('lists POS in the pharmacy sidebar only for users who can open it', function (array $permissions, bool $visible) {
+    $user = phRxUser($permissions);
+
+    $menu = (new \App\Services\SidebarService)->build($user, phRxTenant());
+    $pharmacy = collect($menu)->firstWhere('label', 'Pharmacy');
+    $pos = collect($pharmacy['items'] ?? [])->firstWhere('route', 'pharmacy.pos.index');
+
+    $visible
+        ? expect($pos)->not->toBeNull()
+        : expect($pos)->toBeNull();
+})->with([
+    'dispense pharmacy' => [['dispense pharmacy'], true],
+    'manage pharmacy' => [['manage pharmacy'], true],
+    // AC-2: view pos opens nothing, so it no longer lists the terminal.
+    'view pos only' => [['view pos'], false],
+    'view pos with view pharmacy (group still listed)' => [['view pos', 'view pharmacy'], false],
+]);

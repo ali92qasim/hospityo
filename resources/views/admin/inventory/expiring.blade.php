@@ -71,9 +71,11 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         @if($daysLeft <= 30)
+                            @canany(['edit inventory', 'manage pharmacy', 'manage inventory'])
                             <a href="{{ route('inventory.stock-out') }}?medicine={{ $stock->medicine->id }}" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">
                                 <i class="fas fa-trash mr-1"></i>Remove
                             </a>
+                            @endcanany
                         @endif
                     </td>
                 </tr>

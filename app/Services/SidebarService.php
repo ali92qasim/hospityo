@@ -123,7 +123,7 @@ class SidebarService
         // ── Pharmacy ──────────────────────────────────────────────────────────
         if ($this->hasModule($tenant, 'pharmacy')) {
             $items = [];
-            if ($this->hasModule($tenant, 'pharmacy.pos') && ($user->can('view pos') || $user->can('dispense pharmacy') || $user->can('manage pharmacy'))) {
+            if ($this->hasModule($tenant, 'pharmacy.pos') && ($user->can('dispense pharmacy') || $user->can('manage pharmacy'))) {
                 $items[] = $this->item('POS', 'fa-cash-register', 'pharmacy.pos.index', ['pharmacy.pos.*'], [], null, true);
             }
             if ($this->hasModule($tenant, 'pharmacy.catalog') && ($user->can('view medicine categories') || $user->can('view pharmacy') || $user->can('manage pharmacy'))) {

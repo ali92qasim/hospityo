@@ -83,35 +83,43 @@
 
     <!-- Action Buttons -->
     @if(in_array($purchase->status, ['pending', 'approved']))
+    @canany(['edit purchases', 'delete purchases', 'manage pharmacy'])
     <div class="bg-white rounded-lg shadow-sm p-6">
         <h4 class="text-lg font-medium text-gray-800 mb-4">Actions</h4>
         <div class="flex space-x-4">
             @if($purchase->status === 'pending')
+                @canany(['edit purchases', 'manage pharmacy'])
                 <form action="{{ route('purchases.approve', $purchase) }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
                         <i class="fas fa-check mr-2"></i>Approve Order
                     </button>
                 </form>
+                @endcanany
             @endif
             
             @if($purchase->status === 'approved')
+                @canany(['edit purchases', 'manage pharmacy'])
                 <form action="{{ route('purchases.receive', $purchase) }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
                         <i class="fas fa-truck mr-2"></i>Mark as Received
                     </button>
                 </form>
+                @endcanany
             @endif
             
+            @canany(['delete purchases', 'manage pharmacy'])
             <form action="{{ route('purchases.cancel', $purchase) }}" method="POST" class="inline" data-confirm="Are you sure you want to cancel this order?" data-confirm-variant="danger" data-confirm-text="Cancel order">>
                 @csrf
                 <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
                     <i class="fas fa-times mr-2"></i>Cancel Order
                 </button>
             </form>
+            @endcanany
         </div>
     </div>
+    @endcanany
     @endif
 
     <!-- Order Items -->

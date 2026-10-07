@@ -5,9 +5,11 @@
 @section('content')
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Prescriptions Management</h1>
+    @can('create prescriptions')
     <a href="{{ route('prescriptions.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
         <i class="fas fa-plus mr-2"></i>New Prescription
     </a>
+    @endcan
 </div>
 
 <!-- Filters -->
@@ -74,12 +76,14 @@
                             <i class="fas fa-eye"></i>
                         </a>
                         @if($prescription->status === 'pending')
+                            @canany(['dispense pharmacy', 'manage pharmacy'])
                             <form method="POST" action="{{ route('prescriptions.dispense', $prescription) }}" class="inline">
                                 @csrf
                                 <button type="submit" class="text-green-600 hover:text-green-700" data-confirm="Dispense this prescription?" data-confirm-title="Dispense" data-confirm-text="Dispense" data-confirm-variant="success" title="Dispense">
                                     <i class="fas fa-check"></i>
                                 </button>
                             </form>
+                            @endcanany
                         @endif
                     </td>
                 </tr>

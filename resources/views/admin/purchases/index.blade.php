@@ -25,9 +25,11 @@
         </select>
     </div>
     
+    @canany(['create purchases', 'manage pharmacy'])
     <a href="{{ route('purchases.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
         <i class="fas fa-plus mr-2"></i>New Purchase Order
     </a>
+    @endcanany
 </div>
 
 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -81,30 +83,36 @@
                         </a>
                         
                         @if($order->status === 'pending')
+                            @canany(['edit purchases', 'manage pharmacy'])
                             <form action="{{ route('purchases.approve', $order) }}" method="POST" class="inline mr-2">
                                 @csrf
                                 <button type="submit" class="text-green-600 hover:text-green-800" title="Approve">
                                     <i class="fas fa-check"></i>
                                 </button>
                             </form>
+                            @endcanany
                         @endif
                         
                         @if($order->status === 'approved')
+                            @canany(['edit purchases', 'manage pharmacy'])
                             <form action="{{ route('purchases.receive', $order) }}" method="POST" class="inline mr-2">
                                 @csrf
                                 <button type="submit" class="text-purple-600 hover:text-purple-800" title="Receive">
                                     <i class="fas fa-truck"></i>
                                 </button>
                             </form>
+                            @endcanany
                         @endif
                         
                         @if(in_array($order->status, ['pending', 'approved']))
+                            @canany(['delete purchases', 'manage pharmacy'])
                             <form action="{{ route('purchases.cancel', $order) }}" method="POST" class="inline" data-confirm="Cancel this order?" data-confirm-variant="danger" data-confirm-text="Cancel order">>
                                 @csrf
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="Cancel">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </form>
+                            @endcanany
                         @endif
                     </td>
                 </tr>

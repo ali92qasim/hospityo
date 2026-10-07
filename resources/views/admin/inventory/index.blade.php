@@ -34,12 +34,16 @@
         <a href="{{ route('inventory.expiring') }}" class="inline-flex items-center justify-center px-3 py-2.5 sm:px-4 sm:py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 text-center">
             <i class="fas fa-clock sm:mr-2"></i><span class="hidden sm:inline">Expiring</span><span class="sm:hidden ml-2">Expiry</span>
         </a>
+        @canany(['edit inventory', 'manage pharmacy', 'manage inventory'])
         <a href="{{ route('inventory.stock-out') }}" class="inline-flex items-center justify-center px-3 py-2.5 sm:px-4 sm:py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 text-center">
             <i class="fas fa-minus sm:mr-2"></i><span class="hidden sm:inline">Stock Out</span><span class="sm:hidden ml-2">Out</span>
         </a>
+        @endcanany
+        @canany(['create inventory', 'manage pharmacy', 'manage inventory'])
         <a href="{{ route('inventory.stock-in') }}" class="inline-flex items-center justify-center px-3 py-2.5 sm:px-4 sm:py-2 text-sm bg-medical-blue text-white rounded-lg hover:bg-blue-700 text-center col-span-2 sm:col-span-1">
             <i class="fas fa-plus sm:mr-2"></i>Stock In
         </a>
+        @endcanany
     </div>
 
     {{-- Transactions table --}}

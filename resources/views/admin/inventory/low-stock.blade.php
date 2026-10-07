@@ -60,9 +60,11 @@
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        @canany(['create inventory', 'manage pharmacy', 'manage inventory'])
                         <a href="{{ route('inventory.stock-in') }}?medicine={{ $medicine->id }}" class="bg-medical-blue text-white px-3 py-1 rounded text-xs hover:bg-blue-700">
                             <i class="fas fa-plus mr-1"></i>Add Stock
                         </a>
+                        @endcanany
                     </td>
                 </tr>
             @empty

@@ -18,9 +18,11 @@
         </select>
     </div>
     
+    @canany(['create suppliers', 'manage pharmacy'])
     <a href="{{ route('suppliers.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
         <i class="fas fa-plus mr-2"></i>Add Supplier
     </a>
+    @endcanany
 </div>
 
 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -58,9 +60,12 @@
                         <a href="{{ route('suppliers.show', $supplier) }}" class="text-blue-600 hover:text-blue-800 mr-3">
                             <i class="fas fa-eye"></i>
                         </a>
+                        @canany(['edit suppliers', 'manage pharmacy'])
                         <a href="{{ route('suppliers.edit', $supplier) }}" class="text-yellow-600 hover:text-yellow-800 mr-3">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @endcanany
+                        @canany(['delete suppliers', 'manage pharmacy'])
                         <form action="{{ route('suppliers.destroy', $supplier) }}" method="POST" class="inline" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
                             @csrf
                             @method('DELETE')
@@ -68,6 +73,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endcanany
                     </td>
                 </tr>
             @empty

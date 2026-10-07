@@ -29,9 +29,11 @@
         </button>
         @endcan
 
+        @canany(['create brands', 'manage pharmacy'])
         <a href="{{ route('medicine-brands.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center text-sm">
             <i class="fas fa-plus mr-2"></i>Add Brand
         </a>
+        @endcanany
     </div>
 </div>
 
@@ -136,15 +138,19 @@
                             <a href="{{ route('medicine-brands.show', $brand) }}" class="text-blue-600 hover:text-blue-800" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
+                            @canany(['edit brands', 'manage pharmacy'])
                             <a href="{{ route('medicine-brands.edit', $brand) }}" class="text-yellow-600 hover:text-yellow-800" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            @endcanany
+                            @canany(['delete brands', 'manage pharmacy'])
                             <form method="POST" action="{{ route('medicine-brands.destroy', $brand) }}" class="inline" data-confirm="Are you sure you want to delete this brand?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                 @csrf @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
+                            @endcanany
                         </div>
                     </td>
                 </tr>

@@ -425,3 +425,113 @@ it('treats the coarse view pharmacy as able to view the catalog index after a st
         ->assertRedirect(route('medicines.index'))
         ->assertSessionHas('success');
 });
+
+// ── UI gating (Task 13): write controls render only for permitted users ───
+// medicines and units render their row actions in JS (Task 14); only their
+// Blade New button is covered here.
+
+/**
+ * Every Blade write control per catalog resource:
+ * name => [page (index|show), exact markup, permission verb].
+ */
+function phCatUiControls($test, string $resource): array
+{
+    [, $fixture] = phCatResources()[$resource];
+    $record = $test->{$fixture};
+
+    $controls = [
+        'new' => ['index', 'href="'.route("{$resource}.create").'"', 'create'],
+    ];
+
+    if (in_array($resource, ['medicine-categories', 'medicine-brands', 'prescription-instructions'], true)) {
+        $controls['row edit'] = ['index', 'href="'.route("{$resource}.edit", $record).'"', 'edit'];
+        $controls['row delete'] = ['index', 'action="'.route("{$resource}.destroy", $record).'"', 'delete'];
+    }
+
+    if (in_array($resource, ['medicine-categories', 'medicine-brands'], true)) {
+        $controls['show edit'] = ['show', 'href="'.route("{$resource}.edit", $record).'"', 'edit'];
+    }
+
+    return $controls;
+}
+
+/** The page a control lives on: the index, or the seeded record's show page. */
+function phCatUiPage($test, string $resource, string $page): string
+{
+    [$param, $fixture] = phCatResources()[$resource];
+
+    return $page === 'show'
+        ? route("{$resource}.show", [$param => $test->{$fixture}->id])
+        : route("{$resource}.index");
+}
+
+/** Every [resource, control] pair, for the per-permission positive cases. */
+function phCatUiControlCases(): array
+{
+    $names = [
+        'medicines' => ['new'],
+        'medicine-categories' => ['new', 'row edit', 'row delete', 'show edit'],
+        'medicine-brands' => ['new', 'row edit', 'row delete', 'show edit'],
+        'units' => ['new'],
+        'prescription-instructions' => ['new', 'row edit', 'row delete'],
+    ];
+
+    $cases = [];
+    foreach ($names as $resource => $controls) {
+        foreach ($controls as $control) {
+            $cases["{$resource} {$control}"] = [$resource, $control];
+        }
+    }
+
+    return $cases;
+}
+
+it('hides each catalog write control from a view-only user', function (string $resource, string $control) {
+    $noun = phCatResources()[$resource][2];
+    [$page, $markup] = phCatUiControls($this, $resource)[$control];
+    $this->actingAs(phCatUser(["view {$noun}"]));
+
+    $this->get(phCatUiPage($this, $resource, $page))
+        ->assertOk()
+        ->assertDontSee($markup, false);
+})->with(phCatUiControlCases());
+
+it('shows a catalog write control to the user holding its permission', function (string $resource, string $control) {
+    $noun = phCatResources()[$resource][2];
+    [$page, $markup, $verb] = phCatUiControls($this, $resource)[$control];
+    $this->actingAs(phCatUser(["view {$noun}", "{$verb} {$noun}"]));
+
+    $response = $this->get(phCatUiPage($this, $resource, $page))
+        ->assertOk()
+        ->assertSee($markup, false);
+
+    // Each permission reveals only its own control.
+    foreach (phCatUiControls($this, $resource) as $other => [$otherPage, $otherMarkup, $otherVerb]) {
+        if ($otherPage === $page && $otherVerb !== $verb) {
+            $response->assertDontSee($otherMarkup, false);
+        }
+    }
+})->with(phCatUiControlCases());
+
+it('shows a catalog write control to a manage pharmacy user', function (string $resource, string $control) {
+    [$page, $markup] = phCatUiControls($this, $resource)[$control];
+    $this->actingAs(phCatUser(['manage pharmacy']));
+
+    $this->get(phCatUiPage($this, $resource, $page))
+        ->assertOk()
+        ->assertSee($markup, false);
+})->with(phCatUiControlCases());
+
+it('keeps the catalog import gate on manage pharmacy', function (array $permissions, bool $visible) {
+    $this->actingAs(phCatUser($permissions));
+
+    $importForm = 'action="'.route('medicine-categories.import').'"';
+    $response = $this->get(route('medicine-categories.index'))->assertOk();
+
+    $visible
+        ? $response->assertSee($importForm, false)->assertSee('data-medicine-category-import-trigger', false)
+        : $response->assertDontSee($importForm, false)->assertDontSee('data-medicine-category-import-trigger', false);
+})->with([
+    'manage pharmacy' => [['manage pharmacy'], true],
+    'view medicine categories only' => [['view medicine categories'], false],
+]);

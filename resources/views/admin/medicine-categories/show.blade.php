@@ -10,9 +10,11 @@
             <p class="text-gray-600 mt-1">Category Details</p>
         </div>
         <div class="flex space-x-3">
+            @canany(['edit medicine categories', 'manage pharmacy'])
             <a href="{{ route('medicine-categories.edit', $medicineCategory) }}" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
                 <i class="fas fa-edit mr-2"></i>Edit
             </a>
+            @endcanany
             <a href="{{ route('medicine-categories.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>

@@ -30,9 +30,11 @@
         </button>
         @endcan
 
+        @canany(['create units', 'manage pharmacy'])
         <a href="{{ route('units.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center text-sm">
             <i class="fas fa-plus mr-2"></i>Add Unit
         </a>
+        @endcanany
     </div>
 </div>
 

@@ -46,9 +46,11 @@
                     <li><span class="font-medium">Batches recorded:</span> {{ number_format($batchCount) }}</li>
                 @endif
             </ul>
+            @canany(['create inventory', 'manage pharmacy', 'manage inventory'])
             <p class="text-sm text-green-700 mt-3">
                 Use <a href="{{ route('inventory.stock-in') }}" class="underline font-medium">Stock In</a> for ongoing purchases and adjustments.
             </p>
+            @endcanany
         </div>
     </div>
 </div>

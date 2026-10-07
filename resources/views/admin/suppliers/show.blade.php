@@ -23,9 +23,11 @@
                     </div>
                 </div>
                 <div class="flex space-x-3">
+                    @canany(['edit suppliers', 'manage pharmacy'])
                     <a href="{{ route('suppliers.edit', $supplier) }}" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700">
                         <i class="fas fa-edit mr-2"></i>Edit
                     </a>
+                    @endcanany
                     <a href="{{ route('suppliers.index') }}" class="text-gray-600 hover:text-gray-800">
                         <i class="fas fa-arrow-left mr-2"></i>Back to Suppliers
                     </a>

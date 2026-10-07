@@ -7,9 +7,11 @@
 @section('content')
 <div class="flex justify-between items-center mb-6">
     <div></div>
+    @canany(['create prescriptions', 'manage pharmacy'])
     <a href="{{ route('prescription-instructions.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">
         <i class="fas fa-plus mr-2"></i>Add Instruction
     </a>
+    @endcanany
 </div>
 
 @if(session('success'))
@@ -49,9 +51,12 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center space-x-3">
+                                @canany(['edit prescriptions', 'manage pharmacy'])
                                 <a href="{{ route('prescription-instructions.edit', $instruction) }}" class="text-yellow-600 hover:text-yellow-800" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                @endcanany
+                                @canany(['delete prescriptions', 'manage pharmacy'])
                                 <form action="{{ route('prescription-instructions.destroy', $instruction) }}" method="POST" class="inline" data-confirm="Delete this instruction?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                     @csrf
                                     @method('DELETE')
@@ -59,6 +64,7 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
+                                @endcanany
                             </div>
                         </td>
                     </tr>

@@ -24,9 +24,11 @@
         </button>
         @endcan
 
+        @canany(['create medicines', 'manage pharmacy'])
         <a href="{{ route('medicines.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center btn-touch">
             <i class="fas fa-plus mr-2"></i>Add Medicine
         </a>
+        @endcanany
     </div>
 </div>
 

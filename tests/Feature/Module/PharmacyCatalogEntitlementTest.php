@@ -52,7 +52,7 @@ it('hides pos when pharmacy is on the plan but pharmacy.pos is not', function ()
 
 it('shows pos when pharmacy.pos is entitled even if catalog is not', function () {
     $tenant = pharmacyCatalogTenant(['pharmacy', 'pharmacy.pos']);
-    $user = pharmacyCatalogUser(['view pos']);
+    $user = pharmacyCatalogUser(['dispense pharmacy']);
     $group = collect(app(\App\Services\SidebarService::class)->build($user, $tenant))->firstWhere('id', 'pharmacy');
 
     expect($group)->not->toBeNull()
