@@ -6,6 +6,8 @@
 
 @section('content')
 <div id="units-index"
+     data-can-edit="{{ auth()->user()->canany(['edit units', 'manage pharmacy']) ? '1' : '0' }}"
+     data-can-delete="{{ auth()->user()->canany(['delete units', 'manage pharmacy']) ? '1' : '0' }}"
      data-import-pending="{{ session('import_pending') ? '1' : '0' }}"
      data-import-cache-key="{{ session('import_cache_key') }}"
      data-import-status-url="{{ route('units.import-status') }}"

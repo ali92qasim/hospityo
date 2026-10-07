@@ -149,6 +149,9 @@ function bindMedicineImportForm(root) {
 
 $(document).ready(function () {
     const root = document.getElementById('medicines-index');
+    // Row-action flags from the Blade root; the routes still enforce access.
+    const canEdit = root?.dataset.canEdit === '1';
+    const canDelete = root?.dataset.canDelete === '1';
     if (root) {
         bindMedicineImportForm(root);
     }
@@ -251,18 +254,25 @@ $(document).ready(function () {
                 orderable: false,
                 searchable: false,
                 render: function (id) {
-                    return `
-                        <div class="flex items-center space-x-3">
+                    if (!canEdit && !canDelete) {
+                        return '';
+                    }
+
+                    const editLink = canEdit ? `
                             <a href="/medicines/${id}/edit" class="text-medical-blue hover:text-blue-700" title="Edit">
                                 <i class="fas fa-edit"></i>
-                            </a>
+                            </a>` : '';
+                    const deleteForm = canDelete ? `
                             <form method="POST" action="/medicines/${id}" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
                                 <input type="hidden" name="_token" value="${window.csrf}">
                                 <input type="hidden" name="_method" value="DELETE">
                                 <button type="submit" class="text-red-600 hover:text-red-700" title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                            </form>
+                            </form>` : '';
+
+                    return `
+                        <div class="flex items-center space-x-3">${editLink}${deleteForm}
                         </div>
                     `;
                 },

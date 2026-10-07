@@ -258,6 +258,10 @@ $(document).ready(function () {
         return;
     }
 
+    // Row-action flags from the Blade root; the routes still enforce access.
+    const canEdit = root.dataset.canEdit === '1';
+    const canDelete = root.dataset.canDelete === '1';
+
     handlePostReloadResult();
     bindImportForm(root);
     bootstrapImportPolling(root);
@@ -321,18 +325,25 @@ $(document).ready(function () {
                 orderable: false,
                 searchable: false,
                 render: function (id) {
-                    return `
-                        <div class="flex items-center space-x-3">
+                    if (!canEdit && !canDelete) {
+                        return '';
+                    }
+
+                    const editLink = canEdit ? `
                             <a href="/units/${id}/edit" class="text-yellow-600 hover:text-yellow-800" title="Edit">
                                 <i class="fas fa-edit"></i>
-                            </a>
+                            </a>` : '';
+                    const deleteForm = canDelete ? `
                             <form method="POST" action="/units/${id}" data-confirm="Delete this unit?" data-confirm-detail="This action cannot be undone if the unit is not linked elsewhere." data-confirm-variant="danger" data-confirm-text="Delete">
                                 <input type="hidden" name="_token" value="${window.csrf}">
                                 <input type="hidden" name="_method" value="DELETE">
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                            </form>
+                            </form>` : '';
+
+                    return `
+                        <div class="flex items-center space-x-3">${editLink}${deleteForm}
                         </div>
                     `;
                 },

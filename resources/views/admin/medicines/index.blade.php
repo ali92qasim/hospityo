@@ -3,7 +3,9 @@
 @section('title', 'Medicines Management')
 
 @section('content')
-<div id="medicines-index">
+<div id="medicines-index"
+     data-can-edit="{{ auth()->user()->canany(['edit medicines', 'manage pharmacy']) ? '1' : '0' }}"
+     data-can-delete="{{ auth()->user()->canany(['delete medicines', 'manage pharmacy']) ? '1' : '0' }}">
 
 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 gap-3">
     <h1 class="text-xl md:text-2xl font-bold text-gray-800">Medicines Management</h1>

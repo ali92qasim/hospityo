@@ -535,3 +535,46 @@ it('keeps the catalog import gate on manage pharmacy', function (array $permissi
     'manage pharmacy' => [['manage pharmacy'], true],
     'view medicine categories only' => [['view medicine categories'], false],
 ]);
+
+/*
+| JS-rendered row actions (Task 14): the medicines and units tables build
+| their Edit / Delete row actions in JS, so the index root carries
+| data-can-edit / data-can-delete flags the JS reads before rendering them.
+*/
+
+/** The opening tag of the index root element (#medicines-index / #units-index). */
+function phCatIndexRootTag($test, string $resource): string
+{
+    $html = $test->get(route("{$resource}.index"))->assertOk()->getContent();
+
+    preg_match('/<div id="'.preg_quote($resource, '/').'-index"[^>]*>/', $html, $match);
+
+    expect($match)->not->toBeEmpty("root #{$resource}-index not found");
+
+    return $match[0];
+}
+
+/** [resource, extra permissions, expected edit flag, expected delete flag]. */
+function phCatRowActionFlagCases(): array
+{
+    $cases = [];
+    foreach (['medicines', 'units'] as $resource) {
+        $cases["{$resource} view only"] = [$resource, ["view {$resource}"], '0', '0'];
+        $cases["{$resource} edit only"] = [$resource, ["view {$resource}", "edit {$resource}"], '1', '0'];
+        $cases["{$resource} delete only"] = [$resource, ["view {$resource}", "delete {$resource}"], '0', '1'];
+        $cases["{$resource} edit and delete"] = [$resource, ["view {$resource}", "edit {$resource}", "delete {$resource}"], '1', '1'];
+        $cases["{$resource} manage pharmacy"] = [$resource, ['manage pharmacy'], '1', '1'];
+    }
+
+    return $cases;
+}
+
+it('emits the row action flags on the catalog index root', function (string $resource, array $permissions, string $edit, string $delete) {
+    $this->actingAs(phCatUser($permissions));
+
+    $tag = phCatIndexRootTag($this, $resource);
+
+    expect($tag)
+        ->toContain('data-can-edit="'.$edit.'"')
+        ->toContain('data-can-delete="'.$delete.'"');
+})->with(phCatRowActionFlagCases());
