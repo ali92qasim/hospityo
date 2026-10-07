@@ -7,9 +7,11 @@
 @section('content')
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Operation Theatres</h1>
+    @can('manage theatres')
     <a href="{{ route('ot.theatres.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center text-sm">
         <i class="fas fa-plus mr-2"></i>Add Theatre
     </a>
+    @endcan
 </div>
 
 @if(session('success'))
@@ -48,9 +50,11 @@
             <p class="text-xs text-gray-500 mb-3">{{ Str::limit($theatre->notes, 80) }}</p>
             @endif
 
+            @can('manage theatres')
             <a href="{{ route('ot.theatres.edit', $theatre) }}" class="text-sm text-medical-blue hover:text-blue-700">
                 <i class="fas fa-edit mr-1"></i>Edit
             </a>
+            @endcan
         </div>
     </div>
     @empty

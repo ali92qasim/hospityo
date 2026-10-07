@@ -30,6 +30,7 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 @if($surgery->status === 'scheduled')
+                    @can('edit surgeries')
                     <form action="{{ route('ot.surgeries.start', $surgery) }}" method="POST" class="inline"
                           data-confirm="Start this surgery? The OT will be marked as occupied." data-confirm-title="Start surgery" data-confirm-text="Start" data-confirm-variant="success">
                         @csrf
@@ -43,20 +44,25 @@
                     <a href="{{ route('ot.surgeries.edit', $surgery) }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm">
                         <i class="fas fa-edit mr-1"></i>Edit
                     </a>
+                    @endcan
                 @endif
 
                 @if($surgery->status === 'in_progress')
+                    @can('edit surgeries')
                     <button type="button" id="complete-btn"
                             class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
                         <i class="fas fa-check mr-1"></i>Complete Surgery
                     </button>
+                    @endcan
                 @endif
 
                 @if(!in_array($surgery->status, ['completed', 'cancelled']))
+                    @can('delete surgeries')
                     <button type="button" id="cancel-btn"
                             class="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 text-sm">
                         <i class="fas fa-times mr-1"></i>Cancel
                     </button>
+                    @endcan
                 @endif
             </div>
         </div>
@@ -158,6 +164,7 @@
     @endif
 
     {{-- Complete Surgery Form (hidden) --}}
+    @can('edit surgeries')
     <div id="complete-form" class="bg-white rounded-lg shadow-sm mb-6 hidden">
         <div class="p-6 border-b border-gray-200">
             <h4 class="text-md font-medium text-gray-800">Complete Surgery — Post-Op Notes</h4>
@@ -181,8 +188,10 @@
             </button>
         </form>
     </div>
+    @endcan
 
     {{-- Cancel Surgery Form (hidden) --}}
+    @can('delete surgeries')
     <div id="cancel-form" class="bg-white rounded-lg shadow-sm mb-6 hidden">
         <form action="{{ route('ot.surgeries.cancel', $surgery) }}" method="POST" class="p-6">
             @csrf
@@ -194,9 +203,11 @@
             </button>
         </form>
     </div>
+    @endcan
 
     {{-- Postpone Surgery Form (hidden) --}}
     @if($surgery->status === 'scheduled')
+    @can('edit surgeries')
     <div id="postpone-form" class="bg-white rounded-lg shadow-sm mb-6 hidden">
         <div class="p-6 border-b border-gray-200">
             <h4 class="text-md font-medium text-gray-800"><i class="fas fa-clock mr-2 text-orange-500"></i>Postpone Surgery</h4>
@@ -219,6 +230,7 @@
             </button>
         </form>
     </div>
+    @endcan
     @endif
 
     {{-- Details Grid --}}
@@ -340,6 +352,7 @@
     </div>
 
     {{-- Operative Monitoring --}}
+    @can('edit surgeries')
     <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
         <h4 class="text-sm font-semibold text-gray-500 uppercase mb-3">Operative Monitoring</h4>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -366,6 +379,7 @@
             </a>
         </div>
     </div>
+    @endcan
     @endif
 
     <div class="flex justify-end">

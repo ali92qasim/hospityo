@@ -37,9 +37,11 @@
                 <a href="{{ route('ot.surgeries.index') }}" class="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">
                     <i class="fas fa-list mr-1"></i>List
                 </a>
+                @can('create surgeries')
                 <a href="{{ route('ot.surgeries.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
                     <i class="fas fa-plus mr-2"></i>Schedule
                 </a>
+                @endcan
             </div>
         </div>
     </div>

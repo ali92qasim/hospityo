@@ -437,6 +437,21 @@ php artisan rbac:backfill-manage-subscription
 
 Afterwards, check that every tenant's Super Admin and Hospital Administrator roles hold `manage subscription` and that no other role does. Already applied locally on 2026-10-05: 14 roles across 7 tenants.
 
+### Required Deploy Step: `manage theatres` (RBAC Wave 1 completion)
+
+> **Hard requirement.** Any environment (production, staging, …) that receives this code must run the backfill **in the same deploy action** as the code. Not before (the command doesn't exist until the code is deployed), and not later (from the moment the new routes are live, Super Admin and Hospital Administrator get **403** on theatre create / edit until the backfill has run).
+
+```bash
+# 1. Preview: read-only, writes nothing. Expect "would update 2 role(s)" per tenant.
+php artisan rbac:backfill-manage-theatres --dry-run
+
+# 2. Apply in the same deploy action. Grants `manage theatres` to exactly
+#    Super Admin and Hospital Administrator in every tenant. Idempotent.
+php artisan rbac:backfill-manage-theatres
+```
+
+Afterwards, check that every tenant's Super Admin and Hospital Administrator roles hold `manage theatres` and that no other role does. Not yet applied locally.
+
 ---
 
 ## Important Commands

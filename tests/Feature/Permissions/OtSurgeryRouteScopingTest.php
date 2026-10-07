@@ -442,3 +442,147 @@ it('redirects an OT write + view surgeries holder to the target with the success
         ->assertSessionMissing('error')
         ->assertSessionHas('success');
 })->with('ot write redirects');
+
+// ── UI gating: action controls render only for permitted users (Task 7) ───
+
+/** The exact markup of each surgery show-page control, keyed by name. */
+function otUiShowControls(Surgery $surgery): array
+{
+    return [
+        'start form' => 'action="'.route('ot.surgeries.start', $surgery).'"',
+        'postpone button' => 'id="postpone-btn"',
+        'postpone form' => 'action="'.route('ot.surgeries.postpone', $surgery).'"',
+        'edit link' => 'href="'.route('ot.surgeries.edit', $surgery).'"',
+        'complete button' => 'id="complete-btn"',
+        'complete form' => 'action="'.route('ot.surgeries.complete', $surgery).'"',
+        'cancel button' => 'id="cancel-btn"',
+        'cancel form' => 'action="'.route('ot.surgeries.cancel', $surgery).'"',
+        'anaesthesia link' => 'href="'.route('ot.monitoring.anaesthesia', $surgery).'"',
+        'vitals link' => 'href="'.route('ot.monitoring.vitals', $surgery).'"',
+        'post-op link' => 'href="'.route('ot.monitoring.post-op', $surgery).'"',
+    ];
+}
+
+function otUiAssertControls($response, Surgery $surgery, array $present, array $absent): void
+{
+    $controls = otUiShowControls($surgery);
+
+    foreach ($present as $name) {
+        $response->assertSee($controls[$name], false);
+    }
+    foreach ($absent as $name) {
+        $response->assertDontSee($controls[$name], false);
+    }
+}
+
+it('hides every action control on a scheduled surgery from a view surgeries-only user', function () {
+    $this->actingAs(otScopeUser(['view surgeries']));
+
+    $response = $this->get(route('ot.surgeries.show', $this->scheduled))->assertOk();
+
+    otUiAssertControls($response, $this->scheduled, [], [
+        'start form', 'postpone button', 'postpone form', 'edit link',
+        'anaesthesia link', 'vitals link', 'post-op link',
+        'cancel button', 'cancel form',
+    ]);
+});
+
+it('hides complete, cancel and monitoring on an in-progress surgery from a view surgeries-only user', function () {
+    $this->actingAs(otScopeUser(['view surgeries']));
+
+    $response = $this->get(route('ot.surgeries.show', $this->live))->assertOk();
+
+    otUiAssertControls($response, $this->live, [], [
+        'complete button', 'complete form', 'cancel button', 'cancel form',
+        'anaesthesia link', 'vitals link', 'post-op link',
+    ]);
+});
+
+it('shows start, postpone and edit but not cancel on a scheduled surgery to an edit surgeries holder', function () {
+    $this->actingAs(otScopeUser(['view surgeries', 'edit surgeries']));
+
+    $response = $this->get(route('ot.surgeries.show', $this->scheduled))->assertOk();
+
+    otUiAssertControls($response, $this->scheduled,
+        ['start form', 'postpone button', 'postpone form', 'edit link'],
+        ['cancel button', 'cancel form'],
+    );
+});
+
+it('shows complete and the monitoring links but not cancel on an in-progress surgery to an edit surgeries holder', function () {
+    $this->actingAs(otScopeUser(['view surgeries', 'edit surgeries']));
+
+    $response = $this->get(route('ot.surgeries.show', $this->live))->assertOk();
+
+    otUiAssertControls($response, $this->live,
+        ['complete button', 'complete form', 'anaesthesia link', 'vitals link', 'post-op link'],
+        ['cancel button', 'cancel form'],
+    );
+});
+
+it('shows cancel but not start or edit to a delete surgeries holder', function () {
+    $this->actingAs(otScopeUser(['view surgeries', 'delete surgeries']));
+
+    $response = $this->get(route('ot.surgeries.show', $this->scheduled))->assertOk();
+
+    otUiAssertControls($response, $this->scheduled,
+        ['cancel button', 'cancel form'],
+        ['start form', 'edit link', 'postpone button', 'postpone form'],
+    );
+});
+
+it('shows the calendar Schedule link only with create surgeries', function (array $permissions, bool $visible) {
+    $this->actingAs(otScopeUser($permissions));
+
+    $response = $this->get(route('ot.calendar'))->assertOk();
+    $link = 'href="'.route('ot.surgeries.create').'"';
+
+    $visible ? $response->assertSee($link, false) : $response->assertDontSee($link, false);
+})->with([
+    'view only' => [['view surgeries'], false],
+    'view + edit' => [['view surgeries', 'edit surgeries'], false],
+    'view + create' => [['view surgeries', 'create surgeries'], true],
+]);
+
+it('shows Add Theatre and per-theatre Edit only with manage theatres', function (array $permissions, bool $visible) {
+    $this->actingAs(otScopeUser($permissions));
+
+    $response = $this->get(route('ot.theatres'))->assertOk();
+    $links = [
+        'href="'.route('ot.theatres.create').'"',
+        'href="'.route('ot.theatres.edit', $this->theatre).'"',
+    ];
+
+    foreach ($links as $link) {
+        $visible ? $response->assertSee($link, false) : $response->assertDontSee($link, false);
+    }
+})->with([
+    'view only' => [['view surgeries'], false],
+    'all four surgery permissions' => [['view surgeries', 'create surgeries', 'edit surgeries', 'delete surgeries'], false],
+    'view + manage theatres' => [['view surgeries', 'manage theatres'], true],
+]);
+
+it('shows the back-link to the surgery only with view surgeries', function (string $page, string $permission, array $extra, bool $visible) {
+    $this->actingAs(otScopeUser([$permission, ...$extra]));
+
+    $url = match ($page) {
+        'checklist' => route('ot.checklist.show', $this->scheduled),
+        'usage' => route('ot.consumables.usage', $this->scheduled),
+        'pac' => route('ot.pac.show', PreAnaesthesiaCheckup::where('surgery_id', $this->scheduled->id)->firstOrFail()),
+    };
+
+    $response = $this->get($url)->assertOk();
+    $link = 'href="'.route('ot.surgeries.show', $this->scheduled).'"';
+
+    $visible ? $response->assertSee($link, false) : $response->assertDontSee($link, false);
+})->with([
+    'checklist, manage only' => ['checklist', 'manage surgical checklists', [], false],
+    'checklist, + edit surgeries' => ['checklist', 'manage surgical checklists', ['edit surgeries'], false],
+    'checklist, + view surgeries' => ['checklist', 'manage surgical checklists', ['view surgeries'], true],
+    'usage, manage only' => ['usage', 'manage ot consumables', [], false],
+    'usage, + edit surgeries' => ['usage', 'manage ot consumables', ['edit surgeries'], false],
+    'usage, + view surgeries' => ['usage', 'manage ot consumables', ['view surgeries'], true],
+    'pac, manage only' => ['pac', 'manage pac', [], false],
+    'pac, + edit surgeries' => ['pac', 'manage pac', ['edit surgeries'], false],
+    'pac, + view surgeries' => ['pac', 'manage pac', ['view surgeries'], true],
+]);
