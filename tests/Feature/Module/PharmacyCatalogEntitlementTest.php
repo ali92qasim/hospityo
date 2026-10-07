@@ -44,7 +44,7 @@ function pharmacyCatalogUser(array $permissions): User
 
 it('hides pos when pharmacy is on the plan but pharmacy.pos is not', function () {
     $tenant = pharmacyCatalogTenant(['pharmacy']);
-    $user = pharmacyCatalogUser(['view pos']);
+    $user = pharmacyCatalogUser(['dispense pharmacy']);
     $group = collect(app(\App\Services\SidebarService::class)->build($user, $tenant))->firstWhere('id', 'pharmacy');
 
     expect($group)->toBeNull();
