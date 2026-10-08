@@ -4,6 +4,7 @@
 
 import { initDataTable } from './datatable';
 import confirmDialog from './confirm-dialog';
+import { renderUnitRowActions } from './pharmacy-catalog-row-actions';
 
 const STORAGE_KEYS = {
     importKey: 'unitImportKey',
@@ -259,8 +260,8 @@ $(document).ready(function () {
     }
 
     // Row-action flags from the Blade root; the routes still enforce access.
-    const canEdit = root.dataset.canEdit === '1';
-    const canDelete = root.dataset.canDelete === '1';
+    const canEdit = root.dataset.canEdit;
+    const canDelete = root.dataset.canDelete;
 
     handlePostReloadResult();
     bindImportForm(root);
@@ -325,27 +326,7 @@ $(document).ready(function () {
                 orderable: false,
                 searchable: false,
                 render: function (id) {
-                    if (!canEdit && !canDelete) {
-                        return '';
-                    }
-
-                    const editLink = canEdit ? `
-                            <a href="/units/${id}/edit" class="text-yellow-600 hover:text-yellow-800" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>` : '';
-                    const deleteForm = canDelete ? `
-                            <form method="POST" action="/units/${id}" data-confirm="Delete this unit?" data-confirm-detail="This action cannot be undone if the unit is not linked elsewhere." data-confirm-variant="danger" data-confirm-text="Delete">
-                                <input type="hidden" name="_token" value="${window.csrf}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>` : '';
-
-                    return `
-                        <div class="flex items-center space-x-3">${editLink}${deleteForm}
-                        </div>
-                    `;
+                    return renderUnitRowActions(id, canEdit, canDelete, window.csrf);
                 },
             },
         ],

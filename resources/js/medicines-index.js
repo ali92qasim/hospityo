@@ -1,5 +1,6 @@
 import { initDataTable } from './datatable';
 import confirmDialog from './confirm-dialog';
+import { renderMedicineRowActions } from './pharmacy-catalog-row-actions';
 
 function capitalize(value) {
     if (!value) {
@@ -150,8 +151,8 @@ function bindMedicineImportForm(root) {
 $(document).ready(function () {
     const root = document.getElementById('medicines-index');
     // Row-action flags from the Blade root; the routes still enforce access.
-    const canEdit = root?.dataset.canEdit === '1';
-    const canDelete = root?.dataset.canDelete === '1';
+    const canEdit = root?.dataset.canEdit;
+    const canDelete = root?.dataset.canDelete;
     if (root) {
         bindMedicineImportForm(root);
     }
@@ -254,27 +255,7 @@ $(document).ready(function () {
                 orderable: false,
                 searchable: false,
                 render: function (id) {
-                    if (!canEdit && !canDelete) {
-                        return '';
-                    }
-
-                    const editLink = canEdit ? `
-                            <a href="/medicines/${id}/edit" class="text-medical-blue hover:text-blue-700" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>` : '';
-                    const deleteForm = canDelete ? `
-                            <form method="POST" action="/medicines/${id}" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
-                                <input type="hidden" name="_token" value="${window.csrf}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="text-red-600 hover:text-red-700" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>` : '';
-
-                    return `
-                        <div class="flex items-center space-x-3">${editLink}${deleteForm}
-                        </div>
-                    `;
+                    return renderMedicineRowActions(id, canEdit, canDelete, window.csrf);
                 },
             },
         ],
