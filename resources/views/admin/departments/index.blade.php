@@ -12,10 +12,12 @@
                 <h3 class="text-lg font-semibold text-gray-800">Hospital Departments</h3>
                 <p class="text-sm text-gray-600">Total: {{ $departments->total() }} departments</p>
             </div>
+            @can('create departments')
             <a href="{{ route('departments.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Add New Department
             </a>
+            @endcan
         </div>
     </div>
 
@@ -68,9 +70,12 @@
                         <a href="{{ route('departments.show', $department) }}" class="text-medical-blue hover:text-blue-700">
                             <i class="fas fa-eye"></i>
                         </a>
+                        @can('edit departments')
                         <a href="{{ route('departments.edit', $department) }}" class="text-medical-green hover:text-green-700">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @endcan
+                        @can('delete departments')
                         <form action="{{ route('departments.destroy', $department) }}" method="POST" class="inline" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
                             @csrf
                             @method('DELETE')
@@ -78,6 +83,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endcan
                     </td>
                 </tr>
                 @empty

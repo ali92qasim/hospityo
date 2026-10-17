@@ -22,10 +22,12 @@
                     </div>
                 </div>
                 <div class="flex space-x-2">
+                    @can('edit departments')
                     <a href="{{ route('departments.edit', $department) }}" class="px-4 py-2 bg-medical-green text-white rounded-lg hover:bg-green-700 flex items-center">
                         <i class="fas fa-edit mr-2"></i>
                         Edit
                     </a>
+                    @endcan
                     <a href="{{ route('departments.index') }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back

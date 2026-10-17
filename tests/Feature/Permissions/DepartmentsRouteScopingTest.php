@@ -256,3 +256,74 @@ it('redirects a write + view holder to the index with the success flash', functi
         ->assertSessionHasNoErrors()
         ->assertSessionHas('success');
 })->with('departments write redirects');
+
+// ── UI gating: action controls render only with their own permission (Task 3) ─
+
+/** An exact `href="…"` attribute, as Blade renders it. */
+function depScopeHref(string $route, array $params = []): string
+{
+    return 'href="'.e(route($route, $params)).'"';
+}
+
+/** An exact form `action="…"` for destroy, as Blade renders it. */
+function depScopeDestroyAction(Department $department): string
+{
+    return 'action="'.e(route('departments.destroy', $department)).'"';
+}
+
+it('hides Add, Edit, and Delete from a view-only user on the index', function () {
+    $this->actingAs(depScopeUser(['view departments']));
+
+    $this->get(route('departments.index'))
+        ->assertOk()
+        ->assertSee('Dep Scope Fixture')
+        ->assertSee(depScopeHref('departments.show', ['department' => $this->department->id]), false)
+        ->assertDontSee(depScopeHref('departments.create'), false)
+        ->assertDontSee(depScopeHref('departments.edit', ['department' => $this->department->id]), false)
+        ->assertDontSee(depScopeDestroyAction($this->department), false);
+});
+
+it('shows each index action with its own permission', function (string $permission, string $route, bool $isDestroyForm) {
+    $this->actingAs(depScopeUser(['view departments', $permission]));
+
+    $response = $this->get(route('departments.index'))->assertOk();
+
+    if ($isDestroyForm) {
+        $response->assertSee(depScopeDestroyAction($this->department), false);
+    } else {
+        $params = $route === 'departments.create'
+            ? []
+            : ['department' => $this->department->id];
+        $response->assertSee(depScopeHref($route, $params), false);
+    }
+
+    if ($permission !== 'create departments') {
+        $response->assertDontSee(depScopeHref('departments.create'), false);
+    }
+    if ($permission !== 'edit departments') {
+        $response->assertDontSee(depScopeHref('departments.edit', ['department' => $this->department->id]), false);
+    }
+    if ($permission !== 'delete departments') {
+        $response->assertDontSee(depScopeDestroyAction($this->department), false);
+    }
+})->with([
+    'create departments → Add New' => ['create departments', 'departments.create', false],
+    'edit departments → row edit' => ['edit departments', 'departments.edit', false],
+    'delete departments → row delete' => ['delete departments', 'departments.destroy', true],
+]);
+
+it('hides Edit from a view-only user on show', function () {
+    $this->actingAs(depScopeUser(['view departments']));
+
+    $this->get(route('departments.show', $this->department))
+        ->assertOk()
+        ->assertDontSee(depScopeHref('departments.edit', ['department' => $this->department->id]), false);
+});
+
+it('shows Edit on show for edit departments holders', function () {
+    $this->actingAs(depScopeUser(['view departments', 'edit departments']));
+
+    $this->get(route('departments.show', $this->department))
+        ->assertOk()
+        ->assertSee(depScopeHref('departments.edit', ['department' => $this->department->id]), false);
+});
