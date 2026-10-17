@@ -530,43 +530,53 @@ Route::middleware('auth')->group(function () {
             ->name('leave-types.destroy')
             ->middleware('permission:delete leave types');
 
-        // Payroll Runs
-        Route::middleware('permission:view payroll runs|create payroll runs|edit payroll runs|delete payroll runs|view hr')->group(function () {
+        // Payroll Runs — one permission per action (RBAC wave 2, HR §1f).
+        Route::middleware('permission:view payroll runs|view hr')->group(function () {
             Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
-            Route::post('payroll/generate', [PayrollController::class, 'generate'])->name('payroll.generate');
             Route::get('payroll/{payrollRun}', [PayrollController::class, 'show'])->name('payroll.show');
-            Route::post('payroll/{payrollRun}/cancel', [PayrollController::class, 'cancel'])->name('payroll.cancel');
         });
+        Route::post('payroll/generate', [PayrollController::class, 'generate'])
+            ->name('payroll.generate')
+            ->middleware('permission:create payroll runs');
+        Route::post('payroll/{payrollRun}/cancel', [PayrollController::class, 'cancel'])
+            ->name('payroll.cancel')
+            ->middleware('permission:edit payroll runs');
         Route::post('payroll/{payrollRun}/approve', [PayrollController::class, 'approve'])
             ->name('payroll.approve')
-            ->middleware('permission:approve payroll runs|view hr');
+            ->middleware('permission:approve payroll runs');
 
         // Payslips
-        Route::middleware('permission:view payslips|edit payslips|view hr')->group(function () {
+        Route::middleware('permission:view payslips|view hr')->group(function () {
             Route::get('payslip/{payslip}', [PayrollController::class, 'payslip'])->name('payroll.payslip');
             Route::get('payslip/{payslip}/print', [PayrollController::class, 'printPayslip'])->name('payroll.print-payslip');
-            Route::post('payslip/{payslip}/mark-paid', [PayrollController::class, 'markPaid'])
-                ->name('payroll.mark-paid')
-                ->middleware('permission:edit payslips|view hr');
         });
+        Route::post('payslip/{payslip}/mark-paid', [PayrollController::class, 'markPaid'])
+            ->name('payroll.mark-paid')
+            ->middleware('permission:edit payslips');
 
         // Salary Components
-        Route::middleware('permission:view salary components|create salary components|edit salary components|delete salary components|view hr')->group(function () {
-            Route::get('payroll-components', [PayrollController::class, 'components'])->name('payroll.components');
+        Route::get('payroll-components', [PayrollController::class, 'components'])
+            ->name('payroll.components')
+            ->middleware('permission:view salary components|view hr');
+        Route::middleware('permission:create salary components')->group(function () {
             Route::get('payroll-components/create', [PayrollController::class, 'createComponent'])->name('payroll.create-component');
             Route::post('payroll-components', [PayrollController::class, 'storeComponent'])->name('payroll.store-component');
+        });
+        Route::middleware('permission:edit salary components')->group(function () {
             Route::get('payroll-components/{salaryComponent}/edit', [PayrollController::class, 'editComponent'])->name('payroll.edit-component');
             Route::put('payroll-components/{salaryComponent}', [PayrollController::class, 'updateComponent'])->name('payroll.update-component');
-            Route::delete('payroll-components/{salaryComponent}', [PayrollController::class, 'destroyComponent'])->name('payroll.destroy-component');
         });
+        Route::delete('payroll-components/{salaryComponent}', [PayrollController::class, 'destroyComponent'])
+            ->name('payroll.destroy-component')
+            ->middleware('permission:delete salary components');
 
         // Employee Salary Structure
         Route::get('employees/{employee}/salary', [PayrollController::class, 'employeeSalary'])
             ->name('payroll.employee-salary')
-            ->middleware('permission:view employee salary|edit employee salary|view hr');
+            ->middleware('permission:view employee salary|view hr');
         Route::post('employees/{employee}/salary', [PayrollController::class, 'updateEmployeeSalary'])
             ->name('payroll.update-employee-salary')
-            ->middleware('permission:edit employee salary|view hr');
+            ->middleware('permission:edit employee salary');
 
         // Shifts
         Route::middleware('permission:view shifts|create shifts|edit shifts|delete shifts|view hr')->group(function () {
