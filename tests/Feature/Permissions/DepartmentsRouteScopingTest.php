@@ -201,3 +201,58 @@ it('denies the seeded Hospital Administrator destroy but keeps index create and 
     depScopeRequest($this, 'get', 'departments.create')->assertOk();
     depScopeRequest($this, 'get', 'departments.edit', $this->department)->assertOk();
 });
+
+// ── AD-1: after a write, redirect only to a page the user can view (Task 2) ─
+
+dataset('departments write redirects', [
+    'store' => ['post', 'departments.store', 'create departments', 'departments.create', [], 'departments.index'],
+    'update' => ['put', 'departments.update', 'edit departments', 'departments.edit', ['department'], 'departments.index'],
+    'destroy' => ['delete', 'departments.destroy', 'delete departments', null, [], 'departments.index'],
+]);
+
+it('redirects a write-only holder to the fallback with the success flash', function (string $method, string $route, string $write, ?string $fallback, array $fallbackFixtures) {
+    $this->actingAs(depScopeUser([$write]));
+
+    $needsDepartment = in_array($route, ['departments.update', 'departments.destroy'], true);
+    $department = $needsDepartment ? $this->department : null;
+
+    if ($method === 'delete') {
+        $previous = url('/dashboard?from=dep-scope-destroy');
+        $this->from($previous);
+    }
+
+    $response = depScopeRequest($this, $method, $route, $department);
+
+    if ($fallback === null) {
+        $response->assertRedirect($previous)
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        return;
+    }
+
+    $fallbackParams = [];
+    foreach ($fallbackFixtures as $key) {
+        $fallbackParams[$key] = $this->department->id;
+    }
+
+    $response->assertRedirect(route($fallback, $fallbackParams))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with('departments write redirects');
+
+it('redirects a write + view holder to the index with the success flash', function (string $method, string $route, string $write, ?string $fallback, array $fallbackFixtures, string $list) {
+    $this->actingAs(depScopeUser([$write, 'view departments']));
+
+    $needsDepartment = in_array($route, ['departments.update', 'departments.destroy'], true);
+    $department = $needsDepartment ? $this->department : null;
+
+    if ($method === 'delete') {
+        $this->from(url('/dashboard?from=dep-scope-destroy'));
+    }
+
+    depScopeRequest($this, $method, $route, $department)
+        ->assertRedirect(route($list))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with('departments write redirects');

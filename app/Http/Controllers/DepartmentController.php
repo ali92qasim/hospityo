@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StoreDepartmentRequest;
 use App\Http\Requests\UpdateDepartmentRequest;
 use App\Models\Department;
 
 class DepartmentController extends Controller
 {
+    use RedirectsAfterWrite;
     public function index()
     {
         $departments = Department::latest()->paginate(10);
@@ -23,8 +25,13 @@ class DepartmentController extends Controller
     {
         Department::create($request->validated());
 
-        return redirect()->route('departments.index')
-            ->with('success', 'Department created successfully.');
+        return $this->redirectAfterWrite(
+            'departments.index',
+            [],
+            ['view departments'],
+            'Department created successfully.',
+            'departments.create',
+        );
     }
 
     public function show(Department $department)
@@ -41,15 +48,25 @@ class DepartmentController extends Controller
     {
         $department->update($request->validated());
 
-        return redirect()->route('departments.index')
-            ->with('success', 'Department updated successfully.');
+        return $this->redirectAfterWrite(
+            'departments.index',
+            [],
+            ['view departments'],
+            'Department updated successfully.',
+            'departments.edit',
+            ['department' => $department],
+        );
     }
 
     public function destroy(Department $department)
     {
         $department->delete();
 
-        return redirect()->route('departments.index')
-            ->with('success', 'Department deleted successfully.');
+        return $this->redirectAfterWrite(
+            'departments.index',
+            [],
+            ['view departments'],
+            'Department deleted successfully.',
+        );
     }
 }
