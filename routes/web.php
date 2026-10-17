@@ -451,17 +451,39 @@ Route::middleware('auth')->group(function () {
 
     // HR Module
     Route::prefix('hr')->name('hr.')->group(function () {
+        // One permission per action (RBAC wave 2, HR §1a). create before show so /create is not captured as {employee}.
         Route::resource('employees', EmployeeController::class)
-            ->middleware('permission:view employees|create employees|edit employees|delete employees|view hr');
+            ->only(['create', 'store'])
+            ->middleware('permission:create employees');
+        Route::resource('employees', EmployeeController::class)
+            ->only(['index', 'show'])
+            ->middleware('permission:view employees|view hr');
+        Route::resource('employees', EmployeeController::class)
+            ->only(['edit', 'update'])
+            ->middleware('permission:edit employees');
+        Route::resource('employees', EmployeeController::class)
+            ->only(['destroy'])
+            ->middleware('permission:delete employees');
         Route::post('employees/{employee}/documents', [EmployeeController::class, 'uploadDocument'])
             ->name('employees.upload-document')
-            ->middleware('permission:create employee documents|view hr');
+            ->middleware('permission:create employee documents');
         Route::delete('employees/documents/{document}', [EmployeeController::class, 'deleteDocument'])
             ->name('employees.delete-document')
-            ->middleware('permission:delete employee documents|view hr');
+            ->middleware('permission:delete employee documents');
 
+        // One permission per action (RBAC wave 2, HR §1b).
         Route::resource('designations', DesignationController::class)
-            ->middleware('permission:view designations|create designations|edit designations|delete designations|view hr');
+            ->only(['create', 'store'])
+            ->middleware('permission:create designations');
+        Route::resource('designations', DesignationController::class)
+            ->only(['index', 'show'])
+            ->middleware('permission:view designations|view hr');
+        Route::resource('designations', DesignationController::class)
+            ->only(['edit', 'update'])
+            ->middleware('permission:edit designations');
+        Route::resource('designations', DesignationController::class)
+            ->only(['destroy'])
+            ->middleware('permission:delete designations');
 
         // Attendance
         Route::middleware('permission:view attendance|create attendance|edit attendance|view hr')->group(function () {
