@@ -578,19 +578,27 @@ Route::middleware('auth')->group(function () {
             ->name('payroll.update-employee-salary')
             ->middleware('permission:edit employee salary');
 
-        // Shifts
-        Route::middleware('permission:view shifts|create shifts|edit shifts|delete shifts|view hr')->group(function () {
-            Route::get('shifts', [ShiftController::class, 'shifts'])->name('shifts.index');
+        // Shifts — one permission per action (RBAC wave 2, HR §1g). create before {shift} routes.
+        Route::get('shifts', [ShiftController::class, 'shifts'])
+            ->name('shifts.index')
+            ->middleware('permission:view shifts|view hr');
+        Route::middleware('permission:create shifts')->group(function () {
             Route::get('shifts/create', [ShiftController::class, 'createShift'])->name('shifts.create');
             Route::post('shifts', [ShiftController::class, 'storeShift'])->name('shifts.store');
+        });
+        Route::middleware('permission:edit shifts')->group(function () {
             Route::get('shifts/{shift}/edit', [ShiftController::class, 'editShift'])->name('shifts.edit');
             Route::put('shifts/{shift}', [ShiftController::class, 'updateShift'])->name('shifts.update');
-            Route::delete('shifts/{shift}', [ShiftController::class, 'destroyShift'])->name('shifts.destroy');
         });
+        Route::delete('shifts/{shift}', [ShiftController::class, 'destroyShift'])
+            ->name('shifts.destroy')
+            ->middleware('permission:delete shifts');
 
         // Duty Roster
-        Route::middleware('permission:view duty roster|create duty roster|edit duty roster|view hr')->group(function () {
-            Route::get('duty-roster', [ShiftController::class, 'roster'])->name('shifts.roster');
+        Route::get('duty-roster', [ShiftController::class, 'roster'])
+            ->name('shifts.roster')
+            ->middleware('permission:view duty roster|view hr');
+        Route::middleware('permission:create duty roster')->group(function () {
             Route::post('duty-roster', [ShiftController::class, 'storeRoster'])->name('shifts.store-roster');
             Route::post('duty-roster/auto-generate', [ShiftController::class, 'autoGenerate'])->name('shifts.auto-generate');
         });
@@ -599,40 +607,38 @@ Route::middleware('auth')->group(function () {
         Route::get('shift-swaps', [ShiftController::class, 'swapRequests'])
             ->name('shifts.swap-requests')
             ->middleware('permission:view shift swaps|view hr');
-        Route::post('shift-swaps/{shiftSwapRequest}/approve', [ShiftController::class, 'approveSwap'])
-            ->name('shifts.approve-swap')
-            ->middleware('permission:approve shift swaps|view hr');
-        Route::post('shift-swaps/{shiftSwapRequest}/reject', [ShiftController::class, 'rejectSwap'])
-            ->name('shifts.reject-swap')
-            ->middleware('permission:approve shift swaps|view hr');
-
-        // Department Staff Management
-        Route::middleware('permission:view department staff|edit department staff|view hr')->group(function () {
-            Route::get('department-staff', [DepartmentStaffController::class, 'index'])->name('department-staff.index');
-            Route::get('department-staff/{department}', [DepartmentStaffController::class, 'show'])->name('department-staff.show');
-            Route::put('department-staff/{department}/head', [DepartmentStaffController::class, 'updateHead'])
-                ->name('department-staff.update-head')
-                ->middleware('permission:edit department staff|view hr');
-            Route::post('department-staff/transfer', [DepartmentStaffController::class, 'transferEmployee'])
-                ->name('department-staff.transfer')
-                ->middleware('permission:edit department staff|view hr');
+        Route::middleware('permission:approve shift swaps')->group(function () {
+            Route::post('shift-swaps/{shiftSwapRequest}/approve', [ShiftController::class, 'approveSwap'])->name('shifts.approve-swap');
+            Route::post('shift-swaps/{shiftSwapRequest}/reject', [ShiftController::class, 'rejectSwap'])->name('shifts.reject-swap');
         });
 
-        // Document Management
-        Route::middleware('permission:view hr documents|create hr documents|edit hr documents|delete hr documents|view hr')->group(function () {
+        // Department Staff Management — one permission per action (HR §1h).
+        Route::middleware('permission:view department staff|view hr')->group(function () {
+            Route::get('department-staff', [DepartmentStaffController::class, 'index'])->name('department-staff.index');
+            Route::get('department-staff/{department}', [DepartmentStaffController::class, 'show'])->name('department-staff.show');
+        });
+        Route::middleware('permission:edit department staff')->group(function () {
+            Route::put('department-staff/{department}/head', [DepartmentStaffController::class, 'updateHead'])->name('department-staff.update-head');
+            Route::post('department-staff/transfer', [DepartmentStaffController::class, 'transferEmployee'])->name('department-staff.transfer');
+        });
+
+        // Document Management — one permission per action (HR §1i).
+        Route::middleware('permission:view hr documents|view hr')->group(function () {
             Route::get('documents', [DocumentManagementController::class, 'index'])->name('documents.index');
             Route::get('documents/compliance', [DocumentManagementController::class, 'compliance'])->name('documents.compliance');
             Route::get('documents/requirements', [DocumentManagementController::class, 'requirements'])->name('documents.requirements');
+        });
+        Route::middleware('permission:create hr documents')->group(function () {
             Route::get('documents/requirements/create', [DocumentManagementController::class, 'createRequirement'])->name('documents.create-requirement');
             Route::post('documents/requirements', [DocumentManagementController::class, 'storeRequirement'])->name('documents.store-requirement');
-            Route::delete('documents/requirements/{documentRequirement}', [DocumentManagementController::class, 'destroyRequirement'])->name('documents.destroy-requirement');
         });
-        Route::post('documents/{document}/verify', [DocumentManagementController::class, 'verify'])
-            ->name('documents.verify')
-            ->middleware('permission:verify hr documents|view hr');
-        Route::post('documents/{document}/unverify', [DocumentManagementController::class, 'unverify'])
-            ->name('documents.unverify')
-            ->middleware('permission:verify hr documents|view hr');
+        Route::delete('documents/requirements/{documentRequirement}', [DocumentManagementController::class, 'destroyRequirement'])
+            ->name('documents.destroy-requirement')
+            ->middleware('permission:delete hr documents');
+        Route::middleware('permission:verify hr documents')->group(function () {
+            Route::post('documents/{document}/verify', [DocumentManagementController::class, 'verify'])->name('documents.verify');
+            Route::post('documents/{document}/unverify', [DocumentManagementController::class, 'unverify'])->name('documents.unverify');
+        });
     });
     // Service import routes — must be BEFORE the resource route to avoid
     // the resource route capturing 'import' as a {service} parameter
