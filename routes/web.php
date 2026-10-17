@@ -304,7 +304,19 @@ Route::middleware('auth')->group(function () {
         ->name('doctors.email-available')
         ->middleware('permission:create doctors|edit doctors');
     Route::resource('doctors', DoctorController::class)->middleware('permission:view doctors|create doctors|edit doctors|delete doctors');
-    Route::resource('departments', DepartmentController::class)->middleware('permission:view departments|create departments|edit departments|delete departments');
+    // One permission per action (RBAC wave 2, DEP-1). create before show so /create is not captured as {department}.
+    Route::resource('departments', DepartmentController::class)
+        ->only(['create', 'store'])
+        ->middleware('permission:create departments');
+    Route::resource('departments', DepartmentController::class)
+        ->only(['index', 'show'])
+        ->middleware('permission:view departments');
+    Route::resource('departments', DepartmentController::class)
+        ->only(['edit', 'update'])
+        ->middleware('permission:edit departments');
+    Route::resource('departments', DepartmentController::class)
+        ->only(['destroy'])
+        ->middleware('permission:delete departments');
     Route::get('/visits/data', [VisitController::class, 'data'])
         ->name('visits.data')
         ->middleware('permission:view visits|create visits|edit visits|delete visits');
