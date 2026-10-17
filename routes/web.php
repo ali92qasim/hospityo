@@ -485,42 +485,50 @@ Route::middleware('auth')->group(function () {
             ->only(['destroy'])
             ->middleware('permission:delete designations');
 
-        // Attendance
-        Route::middleware('permission:view attendance|create attendance|edit attendance|view hr')->group(function () {
+        // One permission per action (RBAC wave 2, HR §1c).
+        Route::middleware('permission:view attendance|view hr')->group(function () {
             Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-            Route::get('attendance/mark', [AttendanceController::class, 'markDaily'])->name('attendance.mark');
-            Route::post('attendance/mark', [AttendanceController::class, 'storeDaily'])->name('attendance.store-daily');
             Route::get('attendance/monthly', [AttendanceController::class, 'monthly'])->name('attendance.monthly');
         });
+        Route::middleware('permission:create attendance')->group(function () {
+            Route::get('attendance/mark', [AttendanceController::class, 'markDaily'])->name('attendance.mark');
+            Route::post('attendance/mark', [AttendanceController::class, 'storeDaily'])->name('attendance.store-daily');
+        });
 
-        // Leave Requests
-        Route::middleware('permission:view leave requests|create leave requests|edit leave requests|delete leave requests|view hr')->group(function () {
+        // One permission per action (RBAC wave 2, HR §1d).
+        Route::middleware('permission:view leave requests|view hr')->group(function () {
             Route::get('leave', [LeaveController::class, 'index'])->name('leave.index');
+        });
+        Route::middleware('permission:create leave requests')->group(function () {
             Route::get('leave/create', [LeaveController::class, 'create'])->name('leave.create');
             Route::post('leave', [LeaveController::class, 'store'])->name('leave.store');
         });
-        Route::post('leave/{leaveRequest}/approve', [LeaveController::class, 'approve'])
-            ->name('leave.approve')
-            ->middleware('permission:approve leave requests|view hr');
-        Route::post('leave/{leaveRequest}/reject', [LeaveController::class, 'reject'])
-            ->name('leave.reject')
-            ->middleware('permission:approve leave requests|view hr');
+        Route::middleware('permission:approve leave requests')->group(function () {
+            Route::post('leave/{leaveRequest}/approve', [LeaveController::class, 'approve'])->name('leave.approve');
+            Route::post('leave/{leaveRequest}/reject', [LeaveController::class, 'reject'])->name('leave.reject');
+        });
         Route::post('leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])
             ->name('leave.cancel')
-            ->middleware('permission:edit leave requests|delete leave requests|view hr');
+            ->middleware('permission:edit leave requests');
         Route::get('leave/balances', [LeaveController::class, 'balances'])
             ->name('leave.balances')
             ->middleware('permission:view leave balances|view hr');
 
-        // Leave Types
-        Route::middleware('permission:view leave types|create leave types|edit leave types|delete leave types|view hr')->group(function () {
+        // One permission per action (RBAC wave 2, HR §1e).
+        Route::middleware('permission:view leave types|view hr')->group(function () {
             Route::get('leave-types', [LeaveController::class, 'types'])->name('leave-types.index');
+        });
+        Route::middleware('permission:create leave types')->group(function () {
             Route::get('leave-types/create', [LeaveController::class, 'createType'])->name('leave-types.create');
             Route::post('leave-types', [LeaveController::class, 'storeType'])->name('leave-types.store');
+        });
+        Route::middleware('permission:edit leave types')->group(function () {
             Route::get('leave-types/{leaveType}/edit', [LeaveController::class, 'editType'])->name('leave-types.edit');
             Route::put('leave-types/{leaveType}', [LeaveController::class, 'updateType'])->name('leave-types.update');
-            Route::delete('leave-types/{leaveType}', [LeaveController::class, 'destroyType'])->name('leave-types.destroy');
         });
+        Route::delete('leave-types/{leaveType}', [LeaveController::class, 'destroyType'])
+            ->name('leave-types.destroy')
+            ->middleware('permission:delete leave types');
 
         // Payroll Runs
         Route::middleware('permission:view payroll runs|create payroll runs|edit payroll runs|delete payroll runs|view hr')->group(function () {
