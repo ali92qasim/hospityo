@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
 use App\Models\Department;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class EmployeeController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index(Request $request)
     {
         $query = Employee::with(['department', 'designation']);
@@ -98,7 +101,13 @@ class EmployeeController extends Controller
 
             $employee = Employee::create($validated);
 
-            return redirect()->route('hr.employees.show', $employee)->with('success', 'Employee created successfully.');
+            return $this->redirectAfterWrite(
+                'hr.employees.index',
+                [],
+                ['view employees', 'view hr'],
+                'Employee created successfully.',
+                'hr.employees.create',
+            );
         } catch (\Throwable $e) {
             Log::error('[HR] Employee create failed', ['error' => $e->getMessage()]);
             return back()->withInput()->with('error', 'Failed to create employee.');
@@ -165,7 +174,14 @@ class EmployeeController extends Controller
 
             $employee->update($validated);
 
-            return redirect()->route('hr.employees.show', $employee)->with('success', 'Employee updated successfully.');
+            return $this->redirectAfterWrite(
+                'hr.employees.show',
+                ['employee' => $employee],
+                ['view employees', 'view hr'],
+                'Employee updated successfully.',
+                'hr.employees.edit',
+                ['employee' => $employee],
+            );
         } catch (\Throwable $e) {
             Log::error('[HR] Employee update failed', ['error' => $e->getMessage()]);
             return back()->withInput()->with('error', 'Failed to update employee.');
@@ -175,7 +191,12 @@ class EmployeeController extends Controller
     public function destroy(Employee $employee)
     {
         $employee->delete();
-        return redirect()->route('hr.employees.index')->with('success', 'Employee deleted.');
+        return $this->redirectAfterWrite(
+            'hr.employees.index',
+            [],
+            ['view employees', 'view hr'],
+            'Employee deleted.',
+        );
     }
 
     // ── Document Upload ──

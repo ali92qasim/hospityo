@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Department;
@@ -11,6 +12,8 @@ use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index(Request $request)
     {
         $date = $request->input('date', today()->format('Y-m-d'));
@@ -87,8 +90,14 @@ class AttendanceController extends Controller
                 $count++;
             }
 
-            return redirect()->route('hr.attendance.index', ['date' => $date])
-                ->with('success', "Attendance marked for {$count} employees.");
+            return $this->redirectAfterWrite(
+                'hr.attendance.index',
+                ['date' => $date],
+                ['view attendance', 'view hr'],
+                "Attendance marked for {$count} employees.",
+                'hr.attendance.mark',
+                ['date' => $date],
+            );
         } catch (\Throwable $e) {
             Log::error('[Attendance] Mark failed', ['error' => $e->getMessage()]);
             return back()->with('error', 'Failed to save attendance.');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\EmployeeDocument;
 use App\Models\DocumentRequirement;
 use App\Models\Employee;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 
 class DocumentManagementController extends Controller
 {
+    use RedirectsAfterWrite;
+
     /**
      * Document dashboard — expiry alerts, compliance overview.
      */
@@ -147,13 +150,25 @@ class DocumentManagementController extends Controller
             'has_expiry' => $request->boolean('has_expiry'),
         ]);
 
-        return redirect()->route('hr.documents.requirements')->with('success', 'Document requirement created.');
+        return $this->redirectAfterWrite(
+            'hr.documents.requirements',
+            [],
+            ['view hr documents', 'view hr'],
+            'Document requirement created.',
+            'hr.documents.create-requirement',
+        );
     }
 
     public function destroyRequirement(DocumentRequirement $documentRequirement)
     {
         $documentRequirement->delete();
-        return back()->with('success', 'Document requirement deleted.');
+
+        return $this->redirectAfterWrite(
+            'hr.documents.requirements',
+            [],
+            ['view hr documents', 'view hr'],
+            'Document requirement deleted.',
+        );
     }
 
     /**

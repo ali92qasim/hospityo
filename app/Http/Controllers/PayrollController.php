@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\PayrollRun;
 use App\Models\Payslip;
 use App\Models\SalaryComponent;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 
 class PayrollController extends Controller
 {
+    use RedirectsAfterWrite;
+
     // ── Payroll Runs ──
 
     public function index()
@@ -36,7 +39,12 @@ class PayrollController extends Controller
 
         try {
             $run = PayrollService::generate($request->year, $request->month, auth()->id());
-            return redirect()->route('hr.payroll.show', $run)->with('success', "Payroll generated for {$run->total_employees} employees.");
+            return $this->redirectAfterWrite(
+                'hr.payroll.show',
+                ['payrollRun' => $run],
+                ['view payroll runs', 'view hr'],
+                "Payroll generated for {$run->total_employees} employees.",
+            );
         } catch (\Throwable $e) {
             Log::error('[Payroll] Generate failed', ['error' => $e->getMessage()]);
             return back()->with('error', 'Failed to generate payroll: ' . $e->getMessage());
@@ -142,7 +150,13 @@ class PayrollController extends Controller
             'is_taxable' => $request->boolean('is_taxable', true),
         ]);
 
-        return redirect()->route('hr.payroll.components')->with('success', 'Salary component created.');
+        return $this->redirectAfterWrite(
+            'hr.payroll.components',
+            [],
+            ['view salary components', 'view hr'],
+            'Salary component created.',
+            'hr.payroll.create-component',
+        );
     }
 
     public function editComponent(SalaryComponent $salaryComponent)
@@ -167,13 +181,26 @@ class PayrollController extends Controller
             'is_taxable' => $request->boolean('is_taxable', true),
         ]);
 
-        return redirect()->route('hr.payroll.components')->with('success', 'Salary component updated.');
+        return $this->redirectAfterWrite(
+            'hr.payroll.components',
+            [],
+            ['view salary components', 'view hr'],
+            'Salary component updated.',
+            'hr.payroll.edit-component',
+            ['salaryComponent' => $salaryComponent],
+        );
     }
 
     public function destroyComponent(SalaryComponent $salaryComponent)
     {
         $salaryComponent->delete();
-        return redirect()->route('hr.payroll.components')->with('success', 'Salary component deleted.');
+
+        return $this->redirectAfterWrite(
+            'hr.payroll.components',
+            [],
+            ['view salary components', 'view hr'],
+            'Salary component deleted.',
+        );
     }
 
     // ── Employee Salary Structure ──

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\Shift;
 use App\Models\DutyRoster;
 use App\Models\ShiftSwapRequest;
@@ -13,6 +14,17 @@ use Carbon\Carbon;
 
 class ShiftController extends Controller
 {
+    use RedirectsAfterWrite;
+
+    /** Roster view params posted back by the roster forms, so a redirect keeps the user's period. */
+    private function rosterParams(Request $request): array
+    {
+        return array_filter(
+            $request->only(['period', 'week_start', 'month', 'start_date', 'end_date', 'department_id']),
+            fn ($value) => $value !== null && $value !== '',
+        );
+    }
+
     // ── Shift Definitions ──
 
     public function shifts()
@@ -45,7 +57,13 @@ class ShiftController extends Controller
             'is_overnight' => $request->boolean('is_overnight'),
         ]);
 
-        return redirect()->route('hr.shifts.index')->with('success', 'Shift created.');
+        return $this->redirectAfterWrite(
+            'hr.shifts.index',
+            [],
+            ['view shifts', 'view hr'],
+            'Shift created.',
+            'hr.shifts.create',
+        );
     }
 
     public function editShift(Shift $shift)
@@ -72,7 +90,14 @@ class ShiftController extends Controller
             'is_overnight' => $request->boolean('is_overnight'),
         ]);
 
-        return redirect()->route('hr.shifts.index')->with('success', 'Shift updated.');
+        return $this->redirectAfterWrite(
+            'hr.shifts.index',
+            [],
+            ['view shifts', 'view hr'],
+            'Shift updated.',
+            'hr.shifts.edit',
+            ['shift' => $shift],
+        );
     }
 
     public function destroyShift(Shift $shift)
@@ -81,7 +106,13 @@ class ShiftController extends Controller
             return back()->with('error', 'Cannot delete — shift has roster assignments.');
         }
         $shift->delete();
-        return redirect()->route('hr.shifts.index')->with('success', 'Shift deleted.');
+
+        return $this->redirectAfterWrite(
+            'hr.shifts.index',
+            [],
+            ['view shifts', 'view hr'],
+            'Shift deleted.',
+        );
     }
 
     // ── Duty Roster ──
@@ -173,7 +204,12 @@ class ShiftController extends Controller
                 }
             }
 
-            return back()->with('success', "Roster saved for {$count} assignments.");
+            return $this->redirectAfterWrite(
+                'hr.shifts.roster',
+                $this->rosterParams($request),
+                ['view duty roster', 'view hr'],
+                "Roster saved for {$count} assignments.",
+            );
         } catch (\Throwable $e) {
             Log::error('[Shift] Roster save failed', ['error' => $e->getMessage()]);
             return back()->with('error', 'Failed to save roster.');
@@ -245,7 +281,12 @@ class ShiftController extends Controller
             }
         }
 
-        return back()->with('success', "Auto-generated {$count} roster entries.");
+        return $this->redirectAfterWrite(
+            'hr.shifts.roster',
+            $this->rosterParams($request),
+            ['view duty roster', 'view hr'],
+            "Auto-generated {$count} roster entries.",
+        );
     }
 
     // ── Shift Swap Requests ──

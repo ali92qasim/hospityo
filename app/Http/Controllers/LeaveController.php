@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Models\LeaveBalance;
@@ -14,6 +15,8 @@ use Carbon\Carbon;
 
 class LeaveController extends Controller
 {
+    use RedirectsAfterWrite;
+
     // ── Leave Requests ──
 
     public function index(Request $request)
@@ -90,7 +93,13 @@ class LeaveController extends Controller
                 'status' => 'pending',
             ]);
 
-            return redirect()->route('hr.leave.index')->with('success', 'Leave request submitted.');
+            return $this->redirectAfterWrite(
+                'hr.leave.index',
+                [],
+                ['view leave requests', 'view hr'],
+                'Leave request submitted.',
+                'hr.leave.create',
+            );
         } catch (\Throwable $e) {
             Log::error('[Leave] Create failed', ['error' => $e->getMessage()]);
             return back()->withInput()->with('error', 'Failed to submit leave request.');
@@ -228,7 +237,13 @@ class LeaveController extends Controller
             'requires_document' => $request->boolean('requires_document'),
         ]);
 
-        return redirect()->route('hr.leave-types.index')->with('success', 'Leave type created.');
+        return $this->redirectAfterWrite(
+            'hr.leave-types.index',
+            [],
+            ['view leave types', 'view hr'],
+            'Leave type created.',
+            'hr.leave-types.create',
+        );
     }
 
     public function editType(LeaveType $leaveType)
@@ -256,7 +271,14 @@ class LeaveController extends Controller
             'requires_document' => $request->boolean('requires_document'),
         ]);
 
-        return redirect()->route('hr.leave-types.index')->with('success', 'Leave type updated.');
+        return $this->redirectAfterWrite(
+            'hr.leave-types.index',
+            [],
+            ['view leave types', 'view hr'],
+            'Leave type updated.',
+            'hr.leave-types.edit',
+            ['leaveType' => $leaveType],
+        );
     }
 
     public function destroyType(LeaveType $leaveType)
@@ -265,6 +287,11 @@ class LeaveController extends Controller
             return back()->with('error', 'Cannot delete — leave type has existing requests.');
         }
         $leaveType->delete();
-        return redirect()->route('hr.leave-types.index')->with('success', 'Leave type deleted.');
+        return $this->redirectAfterWrite(
+            'hr.leave-types.index',
+            [],
+            ['view leave types', 'view hr'],
+            'Leave type deleted.',
+        );
     }
 }

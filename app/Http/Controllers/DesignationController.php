@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Models\Designation;
 use Illuminate\Http\Request;
 
 class DesignationController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index()
     {
         $designations = Designation::withCount('employees')->orderBy('category')->orderBy('name')->paginate(20);
@@ -27,7 +30,14 @@ class DesignationController extends Controller
         ]);
 
         Designation::create($request->only('name', 'category', 'description'));
-        return redirect()->route('hr.designations.index')->with('success', 'Designation created.');
+
+        return $this->redirectAfterWrite(
+            'hr.designations.index',
+            [],
+            ['view designations', 'view hr'],
+            'Designation created.',
+            'hr.designations.create',
+        );
     }
 
     public function edit(Designation $designation)
@@ -44,7 +54,15 @@ class DesignationController extends Controller
         ]);
 
         $designation->update($request->only('name', 'category', 'description'));
-        return redirect()->route('hr.designations.index')->with('success', 'Designation updated.');
+
+        return $this->redirectAfterWrite(
+            'hr.designations.index',
+            [],
+            ['view designations', 'view hr'],
+            'Designation updated.',
+            'hr.designations.edit',
+            ['designation' => $designation],
+        );
     }
 
     public function destroy(Designation $designation)
@@ -53,6 +71,12 @@ class DesignationController extends Controller
             return back()->with('error', 'Cannot delete — designation has employees assigned.');
         }
         $designation->delete();
-        return redirect()->route('hr.designations.index')->with('success', 'Designation deleted.');
+
+        return $this->redirectAfterWrite(
+            'hr.designations.index',
+            [],
+            ['view designations', 'view hr'],
+            'Designation deleted.',
+        );
     }
 }
