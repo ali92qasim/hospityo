@@ -2,10 +2,13 @@
 
 uses(Tests\TestCase::class, Illuminate\Foundation\Testing\RefreshDatabase::class);
 
+use App\Models\Admission;
 use App\Models\Bed;
 use App\Models\Department;
+use App\Models\Patient;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Visit;
 use App\Models\Ward;
 use Database\Seeders\RolePermissionSeeder;
 use Spatie\Permission\Models\Permission;
@@ -383,3 +386,198 @@ it('writes nothing when the seeded Nurse tries bed store destroy or ward bed upd
     wbScopeRequest($this, 'put', 'beds.update', $this->bed)->assertForbidden();
     expect($this->bed->fresh()->bed_number)->toBe($bedNumber);
 });
+
+// ── Task 12: beds.update-status + AD-1 + STATUS-TRANSITIONS (default) ─────
+
+function wbScopeStatusRequest($test, Bed $bed, string $status)
+{
+    return $test->from(route('beds.index'))
+        ->patch(route('beds.update-status', $bed), ['status' => $status]);
+}
+
+function wbScopeSnapshot(Bed $bed): array
+{
+    return $bed->only(['bed_number', 'ward_id', 'bed_type', 'status', 'daily_rate']);
+}
+
+it('lets a change-bed-status holder toggle available and maintenance', function () {
+    $this->actingAs(wbScopeUser(['change bed status', 'view beds']));
+
+    wbScopeStatusRequest($this, $this->bed, 'maintenance')
+        ->assertRedirect(route('beds.index'))
+        ->assertSessionHas('success')
+        ->assertSessionMissing('error');
+    expect($this->bed->fresh()->status)->toBe('maintenance');
+
+    wbScopeStatusRequest($this, $this->bed->fresh(), 'available')
+        ->assertRedirect(route('beds.index'))
+        ->assertSessionHas('success');
+    expect($this->bed->fresh()->status)->toBe('available');
+});
+
+it('lets an edit-beds holder use update-status without change bed status', function () {
+    $this->actingAs(wbScopeUser(['edit beds', 'view beds']));
+
+    wbScopeStatusRequest($this, $this->bed, 'maintenance')
+        ->assertRedirect(route('beds.index'))
+        ->assertSessionHas('success');
+    expect($this->bed->fresh()->status)->toBe('maintenance');
+});
+
+it('forbids view-beds-only from update-status and writes nothing', function () {
+    $this->actingAs(wbScopeUser(['view beds']));
+    $before = wbScopeSnapshot($this->bed);
+
+    wbScopeStatusRequest($this, $this->bed, 'maintenance')->assertForbidden();
+
+    expect($this->bed->fresh()->only(array_keys($before)))->toBe($before);
+});
+
+it('rejects setting occupied via update-status and writes nothing', function () {
+    $this->actingAs(wbScopeUser(['change bed status', 'view beds']));
+    $before = wbScopeSnapshot($this->bed);
+
+    wbScopeStatusRequest($this, $this->bed, 'occupied')
+        ->assertRedirect(route('beds.index'))
+        ->assertSessionHas('error')
+        ->assertSessionMissing('success');
+
+    expect($this->bed->fresh()->only(array_keys($before)))->toBe($before);
+});
+
+it('rejects update-status when the bed is already occupied and writes nothing', function () {
+    $this->bed->update(['status' => 'occupied']);
+    $this->actingAs(wbScopeUser(['change bed status', 'view beds']));
+    $before = wbScopeSnapshot($this->bed->fresh());
+
+    wbScopeStatusRequest($this, $this->bed->fresh(), 'available')
+        ->assertRedirect(route('beds.index'))
+        ->assertSessionHas('error');
+
+    expect($this->bed->fresh()->only(array_keys($before)))->toBe($before);
+});
+
+it('rejects update-status when the bed has an active admission and writes nothing', function () {
+    $patient = Patient::create([
+        'name' => 'WB Scope Patient',
+        'gender' => 'male',
+        'age' => 40,
+        'phone' => '03001234567',
+    ]);
+    $visit = Visit::create([
+        'patient_id' => $patient->id,
+        'visit_type' => 'ipd',
+        'visit_datetime' => now(),
+        'status' => 'admitted',
+        'doctor_id' => null,
+    ]);
+    Admission::create([
+        'visit_id' => $visit->id,
+        'bed_id' => $this->bed->id,
+        'admission_date' => now(),
+        'status' => 'active',
+    ]);
+    // Leave bed status available to prove admission alone blocks the action.
+    expect($this->bed->fresh()->status)->toBe('available');
+
+    $this->actingAs(wbScopeUser(['change bed status', 'view beds']));
+    $before = wbScopeSnapshot($this->bed->fresh());
+
+    wbScopeStatusRequest($this, $this->bed->fresh(), 'maintenance')
+        ->assertRedirect(route('beds.index'))
+        ->assertSessionHas('error');
+
+    expect($this->bed->fresh()->only(array_keys($before)))->toBe($before);
+});
+
+it('still forbids the seeded Nurse from full bed and ward writes after status route exists', function () {
+    $this->seed(RolePermissionSeeder::class);
+
+    $nurse = User::create([
+        'name' => 'Seeded Nurse Status Regression',
+        'email' => 'wb-scope-nurse-status-'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+        'email_verified_at' => now(),
+    ]);
+    $nurse->assignRole('Nurse');
+    $this->actingAs($nurse);
+
+    wbScopeStatusRequest($this, $this->bed, 'maintenance')
+        ->assertRedirect(route('beds.index'))
+        ->assertSessionHas('success');
+    expect($this->bed->fresh()->status)->toBe('maintenance');
+
+    wbScopeRequest($this, 'get', 'beds.edit', $this->bed)->assertForbidden();
+    wbScopeRequest($this, 'put', 'beds.update', $this->bed)->assertForbidden();
+    wbScopeRequest($this, 'post', 'beds.store')->assertForbidden();
+    wbScopeRequest($this, 'delete', 'beds.destroy', $this->bed)->assertForbidden();
+    wbScopeRequest($this, 'put', 'wards.update', $this->ward)->assertForbidden();
+});
+
+dataset('wards beds write redirects', [
+    'wards store' => ['post', 'wards.store', 'create wards', 'wards.create', [], 'wards.index', 'view wards'],
+    'wards update' => ['put', 'wards.update', 'edit wards', 'wards.edit', ['ward'], 'wards.index', 'view wards'],
+    'wards destroy' => ['delete', 'wards.destroy', 'delete wards', null, [], 'wards.index', 'view wards'],
+    'beds store' => ['post', 'beds.store', 'create beds', 'beds.create', [], 'beds.index', 'view beds'],
+    'beds update' => ['put', 'beds.update', 'edit beds', 'beds.edit', ['bed'], 'beds.index', 'view beds'],
+    'beds destroy' => ['delete', 'beds.destroy', 'delete beds', null, [], 'beds.index', 'view beds'],
+]);
+
+it('redirects a write-only ward/bed holder to the fallback with the success flash', function (
+    string $method,
+    string $route,
+    string $write,
+    ?string $fallback,
+    array $fallbackFixtures,
+    string $list,
+    string $view,
+) {
+    $this->actingAs(wbScopeUser([$write]));
+
+    $model = wbScopeModelFor($route);
+
+    if ($method === 'delete') {
+        $previous = url('/dashboard?from=wb-scope-destroy');
+        $this->from($previous);
+    }
+
+    $response = wbScopeRequest($this, $method, $route, $model);
+
+    if ($fallback === null) {
+        $response->assertRedirect($previous)
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        return;
+    }
+
+    $fallbackParams = [];
+    foreach ($fallbackFixtures as $key) {
+        $fallbackParams[$key] = $key === 'ward' ? $this->ward->id : $this->bed->id;
+    }
+
+    $response->assertRedirect(route($fallback, $fallbackParams))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with('wards beds write redirects');
+
+it('redirects a write + view ward/bed holder to the index with the success flash', function (
+    string $method,
+    string $route,
+    string $write,
+    ?string $fallback,
+    array $fallbackFixtures,
+    string $list,
+    string $view,
+) {
+    $this->actingAs(wbScopeUser([$write, $view]));
+
+    if ($method === 'delete') {
+        $this->from(url('/dashboard?from=wb-scope-destroy'));
+    }
+
+    wbScopeRequest($this, $method, $route, wbScopeModelFor($route))
+        ->assertRedirect(route($list))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('success');
+})->with('wards beds write redirects');

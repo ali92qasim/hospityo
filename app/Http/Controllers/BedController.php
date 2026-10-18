@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StoreBedRequest;
 use App\Http\Requests\UpdateBedRequest;
 use App\Models\Bed;
 use App\Models\Ward;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class BedController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index()
     {
         $beds = Bed::with('ward')->latest()->paginate(10);
@@ -25,7 +30,13 @@ class BedController extends Controller
     {
         Bed::create($request->validated());
 
-        return redirect()->route('beds.index')->with('success', 'Bed created successfully.');
+        return $this->redirectAfterWrite(
+            'beds.index',
+            [],
+            ['view beds'],
+            'Bed created successfully.',
+            'beds.create',
+        );
     }
 
     public function edit(Bed $bed)
@@ -38,12 +49,66 @@ class BedController extends Controller
     {
         $bed->update($request->validated());
 
-        return redirect()->route('beds.index')->with('success', 'Bed updated successfully.');
+        return $this->redirectAfterWrite(
+            'beds.index',
+            [],
+            ['view beds'],
+            'Bed updated successfully.',
+            'beds.edit',
+            ['bed' => $bed],
+        );
     }
 
     public function destroy(Bed $bed)
     {
         $bed->delete();
-        return redirect()->route('beds.index')->with('success', 'Bed deleted successfully.');
+
+        return $this->redirectAfterWrite(
+            'beds.index',
+            [],
+            ['view beds'],
+            'Bed deleted successfully.',
+        );
+    }
+
+    /**
+     * Lightweight status toggle for free beds (available ↔ maintenance).
+     * Occupancy remains admit/discharge's job; full edit form is unchanged.
+     */
+    public function updateStatus(Request $request, Bed $bed): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:available,occupied,maintenance',
+        ]);
+
+        $requested = $validated['status'];
+
+        if ($requested === 'occupied') {
+            return back()->with('error', 'Occupied status can only be set by admitting a patient.');
+        }
+
+        if ($bed->status === 'occupied') {
+            return back()->with('error', 'Cannot change status while the bed is occupied.');
+        }
+
+        if ($bed->admissions()->where('status', 'active')->exists()) {
+            return back()->with('error', 'Cannot change status while the bed has an active admission.');
+        }
+
+        if (! in_array($bed->status, ['available', 'maintenance'], true)
+            || ! in_array($requested, ['available', 'maintenance'], true)) {
+            return back()->with('error', 'Only available and maintenance statuses can be set from this action.');
+        }
+
+        if ($bed->status !== $requested) {
+            $bed->update(['status' => $requested]);
+        }
+
+        return $this->redirectAfterWrite(
+            'beds.index',
+            [],
+            ['view beds'],
+            'Bed status updated successfully.',
+        );
     }
 }

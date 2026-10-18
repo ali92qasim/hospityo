@@ -672,6 +672,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('beds', BedController::class)
         ->only(['destroy'])
         ->middleware('permission:delete beds');
+    Route::patch('beds/{bed}/status', [BedController::class, 'updateStatus'])
+        ->name('beds.update-status')
+        ->middleware('permission:change bed status|edit beds');
 
     // Pharmacy Routes
     Route::get('/medicines/data', [MedicineController::class, 'data'])

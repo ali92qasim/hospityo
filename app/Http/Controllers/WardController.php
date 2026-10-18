@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StoreWardRequest;
 use App\Http\Requests\UpdateWardRequest;
 use App\Models\Ward;
@@ -9,6 +10,8 @@ use App\Models\Department;
 
 class WardController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index()
     {
         $wards = Ward::with('department')->latest()->paginate(10);
@@ -25,7 +28,13 @@ class WardController extends Controller
     {
         Ward::create($request->validated());
 
-        return redirect()->route('wards.index')->with('success', 'Ward created successfully.');
+        return $this->redirectAfterWrite(
+            'wards.index',
+            [],
+            ['view wards'],
+            'Ward created successfully.',
+            'wards.create',
+        );
     }
 
     public function edit(Ward $ward)
@@ -38,12 +47,25 @@ class WardController extends Controller
     {
         $ward->update($request->validated());
 
-        return redirect()->route('wards.index')->with('success', 'Ward updated successfully.');
+        return $this->redirectAfterWrite(
+            'wards.index',
+            [],
+            ['view wards'],
+            'Ward updated successfully.',
+            'wards.edit',
+            ['ward' => $ward],
+        );
     }
 
     public function destroy(Ward $ward)
     {
         $ward->delete();
-        return redirect()->route('wards.index')->with('success', 'Ward deleted successfully.');
+
+        return $this->redirectAfterWrite(
+            'wards.index',
+            [],
+            ['view wards'],
+            'Ward deleted successfully.',
+        );
     }
 }
