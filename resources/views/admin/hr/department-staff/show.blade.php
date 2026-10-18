@@ -127,6 +127,7 @@
         </div>
     </div>
 
+    @can('edit department staff')
     <!-- Department Settings -->
     <div class="bg-white rounded-lg shadow-sm mb-6">
         <div class="p-4 border-b border-gray-200">
@@ -168,6 +169,7 @@
             </form>
         </div>
     </div>
+    @endcan
 
     <!-- Staff List Table -->
     <div class="bg-white rounded-lg shadow-sm mb-6">
@@ -326,6 +328,7 @@
         </div>
     </div>
 
+    @can('edit department staff')
     <!-- Transfer Employee -->
     <div class="bg-white rounded-lg shadow-sm mb-6">
         <div class="p-4 border-b border-gray-200">
@@ -368,6 +371,7 @@
             </form>
         </div>
     </div>
+    @endcan
 
 </div>
 @endsection

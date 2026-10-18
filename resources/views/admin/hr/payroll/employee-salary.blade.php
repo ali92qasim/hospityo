@@ -89,9 +89,11 @@
                             <td colspan="4" class="px-6 py-8 text-center text-gray-500">
                                 <i class="fas fa-cogs text-3xl mb-2 text-gray-300"></i>
                                 <p>No salary components defined</p>
+                                @can('create salary components')
                                 <a href="{{ route('hr.payroll.components') }}" class="mt-2 inline-block text-medical-blue hover:underline">
                                     Add salary components first
                                 </a>
+                                @endcan
                             </td>
                         </tr>
                         @endforelse
@@ -104,9 +106,11 @@
                 <a href="{{ route('hr.employees.show', $employee) }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Cancel
                 </a>
+                @can('edit employee salary')
                 <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
                     <i class="fas fa-save mr-2"></i>Save Salary Structure
                 </button>
+                @endcan
             </div>
             @endif
         </form>

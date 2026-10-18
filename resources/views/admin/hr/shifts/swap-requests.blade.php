@@ -11,9 +11,11 @@
                 <h3 class="text-lg font-semibold text-gray-800">Shift Swap Requests</h3>
                 <p class="text-sm text-gray-600">Review and manage shift swap requests between employees</p>
             </div>
+            @canany(['view duty roster', 'view hr'])
             <a href="{{ route('hr.shifts.roster') }}" class="text-gray-600 hover:text-gray-800">
                 <i class="fas fa-arrow-left mr-2"></i>Back to Roster
             </a>
+            @endcanany
         </div>
     </div>
 
@@ -102,6 +104,7 @@
                     </td>
                     <td class="px-6 py-4 text-sm font-medium">
                         @if($request->status === 'pending')
+                            @can('approve shift swaps')
                             <div class="flex items-center gap-2">
                                 <form action="{{ route('hr.shifts.approve-swap', $request) }}" method="POST" class="inline">
                                     @csrf
@@ -118,6 +121,9 @@
                                     </button>
                                 </form>
                             </div>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endcan
                         @else
                             <span class="text-gray-400">—</span>
                         @endif

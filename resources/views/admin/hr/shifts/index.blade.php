@@ -11,10 +11,12 @@
                 <h3 class="text-lg font-semibold text-gray-800">Shifts</h3>
                 <p class="text-sm text-gray-600">Manage work shifts and schedules</p>
             </div>
+            @can('create shifts')
             <a href="{{ route('hr.shifts.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Add Shift
             </a>
+            @endcan
         </div>
     </div>
 
@@ -65,9 +67,12 @@
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $shift->duty_rosters_count ?? 0 }}</td>
                     <td class="px-6 py-4 text-sm font-medium space-x-2">
+                        @can('edit shifts')
                         <a href="{{ route('hr.shifts.edit', $shift) }}" class="text-medical-green hover:text-green-700">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @endcan
+                        @can('delete shifts')
                         <form action="{{ route('hr.shifts.destroy', $shift) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this shift?" data-confirm-variant="danger" data-confirm-text="Delete">>
                             @csrf
                             @method('DELETE')
@@ -75,6 +80,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endcan
                     </td>
                 </tr>
                 @empty
@@ -82,9 +88,11 @@
                     <td colspan="10" class="px-6 py-12 text-center text-gray-500">
                         <i class="fas fa-clock text-4xl mb-4 text-gray-300"></i>
                         <p>No shifts found</p>
+                        @can('create shifts')
                         <a href="{{ route('hr.shifts.create') }}" class="mt-2 inline-block text-medical-blue hover:underline">
                             Create your first shift
                         </a>
+                        @endcan
                     </td>
                 </tr>
                 @endforelse

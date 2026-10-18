@@ -187,6 +187,7 @@
                     {{-- Actions --}}
                     <td class="px-6 py-4 text-sm font-medium">
                         <div class="flex items-center space-x-2">
+                            @can('verify hr documents')
                             @if($document->is_verified)
                                 <form action="{{ route('hr.documents.unverify', $document) }}" method="POST" class="inline">
                                     @csrf
@@ -202,6 +203,7 @@
                                     </button>
                                 </form>
                             @endif
+                            @endcan
 
                             @if($document->file_path)
                                 <a href="{{ asset('storage/' . $document->file_path) }}" target="_blank" class="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors" title="Download">

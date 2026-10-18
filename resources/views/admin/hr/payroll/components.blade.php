@@ -13,9 +13,11 @@
             <p class="text-sm text-gray-600">Manage allowances and deductions for payroll</p>
         </div>
         <div class="flex gap-2">
+            @can('create salary components')
             <a href="{{ route('hr.payroll.create-component') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                 <i class="fas fa-plus mr-2"></i>Add Component
             </a>
+            @endcan
             <a href="{{ route('hr.payroll.index') }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center">
                 <i class="fas fa-arrow-left mr-2"></i>Back to Payroll
             </a>
@@ -67,9 +69,12 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 text-sm font-medium space-x-2">
+                            @can('edit salary components')
                             <a href="{{ route('hr.payroll.edit-component', $component) }}" class="text-medical-blue hover:text-blue-700" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            @endcan
+                            @can('delete salary components')
                             <form action="{{ route('hr.payroll.destroy-component', $component) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this component?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                 @csrf
                                 @method('DELETE')
@@ -77,6 +82,7 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
+                            @endcan
                         </td>
                     </tr>
                     @empty
@@ -137,9 +143,12 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 text-sm font-medium space-x-2">
+                            @can('edit salary components')
                             <a href="{{ route('hr.payroll.edit-component', $component) }}" class="text-medical-blue hover:text-blue-700" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            @endcan
+                            @can('delete salary components')
                             <form action="{{ route('hr.payroll.destroy-component', $component) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this component?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                 @csrf
                                 @method('DELETE')
@@ -147,6 +156,7 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
+                            @endcan
                         </td>
                     </tr>
                     @empty

@@ -98,9 +98,11 @@
                 </button>
             </div>
             <div class="flex gap-2">
+                @can('create attendance')
                 <a href="{{ route('hr.attendance.mark', ['date' => $date]) }}" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center">
                     <i class="fas fa-clipboard-check mr-1"></i>Mark Attendance
                 </a>
+                @endcan
                 <a href="{{ route('hr.attendance.monthly') }}" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-center">
                     <i class="fas fa-calendar-alt mr-1"></i>Monthly View
                 </a>
@@ -191,9 +193,11 @@
                     <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                         <i class="fas fa-clipboard-list text-4xl mb-4 text-gray-300"></i>
                         <p>No attendance records for this date</p>
+                        @can('create attendance')
                         <a href="{{ route('hr.attendance.mark', ['date' => $date]) }}" class="mt-2 inline-block text-medical-blue hover:underline">
                             Mark attendance now
                         </a>
+                        @endcan
                     </td>
                 </tr>
                 @endforelse

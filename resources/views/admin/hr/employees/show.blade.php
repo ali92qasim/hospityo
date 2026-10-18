@@ -47,9 +47,11 @@
                     </div>
                 </div>
                 <div class="flex space-x-2">
+                    @can('edit employees')
                     <a href="{{ route('hr.employees.edit', $employee) }}" class="px-4 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 flex items-center">
                         <i class="fas fa-edit mr-2"></i>Edit
                     </a>
+                    @endcan
                     <a href="{{ route('hr.employees.index') }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                         <i class="fas fa-arrow-left mr-2"></i>Back to List
                     </a>
@@ -267,6 +269,7 @@
                             <a href="{{ asset('storage/' . $document->file_path) }}" target="_blank" class="text-medical-blue hover:text-blue-700">
                                 <i class="fas fa-download"></i>
                             </a>
+                            @can('delete employee documents')
                             <form action="{{ route('hr.employees.delete-document', $document) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this document?" data-confirm-variant="danger" data-confirm-text="Delete">>
                                 @csrf
                                 @method('DELETE')
@@ -274,6 +277,7 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
+                            @endcan
                         </td>
                     </tr>
                     @empty
@@ -288,6 +292,7 @@
             </table>
         </div>
 
+        @can('create employee documents')
         <!-- Upload Form -->
         <div class="p-6 border-t border-gray-200">
             <h5 class="text-md font-medium text-gray-800 mb-4">Upload New Document</h5>
@@ -340,6 +345,7 @@
                 </div>
             </form>
         </div>
+        @endcan
     </div>
 
     @if($employee->notes)

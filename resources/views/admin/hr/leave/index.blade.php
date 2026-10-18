@@ -69,11 +69,13 @@
                     <i class="fas fa-filter mr-2"></i>Apply
                 </button>
             </div>
+            @can('create leave requests')
             <div>
                 <a href="{{ route('hr.leave.create') }}" class="block w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center">
                     <i class="fas fa-plus mr-2"></i>New Leave Request
                 </a>
             </div>
+            @endcan
         </form>
     </div>
 </div>
@@ -152,6 +154,7 @@
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $request->approvedBy->name ?? '—' }}</td>
                     <td class="px-6 py-4 text-sm font-medium">
                         @if($request->status === 'pending')
+                            @can('approve leave requests')
                             <div class="flex flex-col gap-2">
                                 <form action="{{ route('hr.leave.approve', $request) }}" method="POST" class="inline">
                                     @csrf
@@ -175,13 +178,20 @@
                                     </div>
                                 </div>
                             </div>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endcan
                         @elseif($request->status === 'approved')
+                            @can('edit leave requests')
                             <form action="{{ route('hr.leave.cancel', $request) }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="text-orange-600 hover:text-orange-800 text-sm font-medium" data-confirm="Cancel this approved leave?" data-confirm-title="Cancel leave" data-confirm-text="Cancel leave" data-confirm-variant="danger">
                                     <i class="fas fa-ban mr-1"></i>Cancel
                                 </button>
                             </form>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endcan
                         @else
                             <span class="text-gray-400">—</span>
                         @endif
@@ -192,9 +202,11 @@
                     <td colspan="9" class="px-6 py-12 text-center text-gray-500">
                         <i class="fas fa-calendar-times text-4xl mb-4 text-gray-300"></i>
                         <p>No leave requests found</p>
+                        @can('create leave requests')
                         <a href="{{ route('hr.leave.create') }}" class="mt-2 inline-block text-medical-blue hover:underline">
                             Create a new leave request
                         </a>
+                        @endcan
                     </td>
                 </tr>
                 @endforelse

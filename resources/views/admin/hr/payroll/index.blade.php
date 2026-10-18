@@ -4,6 +4,7 @@
 @section('page-title', 'Payroll')
 
 @section('content')
+@can('create payroll runs')
 <!-- Generate Payroll Form -->
 <div class="bg-white rounded-lg shadow-sm mb-6">
     <div class="p-6 border-b border-gray-200">
@@ -42,6 +43,7 @@
         </form>
     </div>
 </div>
+@endcan
 
 <!-- Payroll Runs Table -->
 <div class="bg-white rounded-lg shadow-sm">
@@ -51,9 +53,11 @@
                 <h3 class="text-lg font-semibold text-gray-800">Payroll Runs</h3>
                 <p class="text-sm text-gray-600">Total: {{ $payrollRuns->total() }} runs</p>
             </div>
+            @canany(['view salary components', 'view hr'])
             <a href="{{ route('hr.payroll.components') }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center">
                 <i class="fas fa-cogs mr-2"></i>Salary Components
             </a>
+            @endcanany
         </div>
     </div>
 

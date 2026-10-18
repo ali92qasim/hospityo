@@ -192,6 +192,7 @@
                 <i class="fas fa-print mr-2 text-gray-500"></i>Print
             </button>
 
+            @can('create duty roster')
             <form action="{{ route('hr.shifts.auto-generate') }}" method="POST" class="inline-flex">
                 @csrf
                 <input type="hidden" name="period" value="{{ $period }}">
@@ -206,6 +207,7 @@
                     <i class="fas fa-magic mr-2"></i>Auto Generate
                 </button>
             </form>
+            @endcan
         </div>
     </div>
 </div>
@@ -328,7 +330,8 @@
                                     <select name="roster[{{ $employee->id }}][{{ $dateKey }}][shift_id]"
                                             class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-medical-blue focus:border-transparent roster-shift-select"
                                             data-employee="{{ $employee->id }}" data-date="{{ $dateKey }}"
-                                            {{ $isOff ? 'disabled' : '' }}>
+                                            {{ $isOff ? 'disabled' : '' }}
+                                            @cannot('create duty roster') disabled @endcannot>
                                         <option value="">— Select —</option>
                                         @foreach($shifts as $shift)
                                             <option value="{{ $shift->id }}" {{ $currentShiftId == $shift->id ? 'selected' : '' }}
@@ -341,7 +344,8 @@
                                         <input type="checkbox" name="roster[{{ $employee->id }}][{{ $dateKey }}][is_off]" value="1"
                                                {{ $isOff ? 'checked' : '' }}
                                                class="w-3.5 h-3.5 text-gray-500 border-gray-300 rounded focus:ring-gray-400 roster-off-checkbox"
-                                               data-employee="{{ $employee->id }}" data-date="{{ $dateKey }}">
+                                               data-employee="{{ $employee->id }}" data-date="{{ $dateKey }}"
+                                               @cannot('create duty roster') disabled @endcannot>
                                         <span class="text-xs text-gray-500">Off</span>
                                     </label>
                                 </div>
@@ -376,12 +380,14 @@
         </div>
 
         @if(($employees ?? collect())->count() > 0)
+        @can('create duty roster')
         <div class="px-6 py-4 border-t border-gray-200 flex justify-end print:hidden">
             <button type="submit" class="px-6 py-2 bg-medical-blue text-white rounded-lg hover:bg-blue-700 flex items-center">
                 <i class="fas fa-save mr-2"></i>
                 Save Roster
             </button>
         </div>
+        @endcan
         @endif
     </form>
 </div>

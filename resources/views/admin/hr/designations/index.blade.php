@@ -11,10 +11,12 @@
                 <h3 class="text-lg font-semibold text-gray-800">Designations</h3>
                 <p class="text-sm text-gray-600">Manage employee designations and roles</p>
             </div>
+            @can('create designations')
             <a href="{{ route('hr.designations.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Add Designation
             </a>
+            @endcan
         </div>
     </div>
 
@@ -54,9 +56,12 @@
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $designation->employees_count }}</td>
                     <td class="px-6 py-4 text-sm font-medium space-x-2">
+                        @can('edit designations')
                         <a href="{{ route('hr.designations.edit', $designation) }}" class="text-medical-green hover:text-green-700">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @endcan
+                        @can('delete designations')
                         <form action="{{ route('hr.designations.destroy', $designation) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this designation?" data-confirm-variant="danger" data-confirm-text="Delete">>
                             @csrf
                             @method('DELETE')
@@ -64,6 +69,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endcan
                     </td>
                 </tr>
                 @empty

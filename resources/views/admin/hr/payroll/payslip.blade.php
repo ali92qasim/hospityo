@@ -205,6 +205,7 @@
             </div>
 
             @if($payslip->payment_status !== 'paid')
+            @can('edit payslips')
             <div class="border-t border-gray-200 pt-6">
                 <h5 class="text-md font-medium text-gray-800 mb-4">Mark as Paid</h5>
                 <form action="{{ route('hr.payroll.mark-paid', $payslip) }}" method="POST" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
@@ -233,6 +234,7 @@
                     </div>
                 </form>
             </div>
+            @endcan
             @endif
         </div>
     </div>

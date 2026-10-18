@@ -106,10 +106,12 @@
                 <h3 class="text-lg font-semibold text-gray-800">Employee List</h3>
                 <p class="text-sm text-gray-600">Total: {{ $employees->total() }} employees</p>
             </div>
+            @can('create employees')
             <a href="{{ route('hr.employees.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Add Employee
             </a>
+            @endcan
         </div>
     </div>
 
@@ -181,9 +183,12 @@
                         <a href="{{ route('hr.employees.show', $employee) }}" class="text-medical-blue hover:text-blue-700">
                             <i class="fas fa-eye"></i>
                         </a>
+                        @can('edit employees')
                         <a href="{{ route('hr.employees.edit', $employee) }}" class="text-medical-green hover:text-green-700">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @endcan
+                        @can('delete employees')
                         <form action="{{ route('hr.employees.destroy', $employee) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this employee?" data-confirm-variant="danger" data-confirm-text="Delete">>
                             @csrf
                             @method('DELETE')
@@ -191,6 +196,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endcan
                     </td>
                 </tr>
                 @empty

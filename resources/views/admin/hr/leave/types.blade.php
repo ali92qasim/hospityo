@@ -11,10 +11,12 @@
                 <h3 class="text-lg font-semibold text-gray-800">Leave Types</h3>
                 <p class="text-sm text-gray-600">Manage leave type configurations</p>
             </div>
+            @can('create leave types')
             <a href="{{ route('hr.leave-types.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Add Leave Type
             </a>
+            @endcan
         </div>
     </div>
 
@@ -71,9 +73,12 @@
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $type->requests_count ?? 0 }}</td>
                     <td class="px-6 py-4 text-sm font-medium space-x-2">
+                        @can('edit leave types')
                         <a href="{{ route('hr.leave-types.edit', $type) }}" class="text-medical-blue hover:text-blue-700">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @endcan
+                        @can('delete leave types')
                         <form action="{{ route('hr.leave-types.destroy', $type) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this leave type?" data-confirm-variant="danger" data-confirm-text="Delete">>
                             @csrf
                             @method('DELETE')
@@ -81,6 +86,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endcan
                     </td>
                 </tr>
                 @empty
@@ -88,9 +94,11 @@
                     <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                         <i class="fas fa-list-alt text-4xl mb-4 text-gray-300"></i>
                         <p>No leave types configured</p>
+                        @can('create leave types')
                         <a href="{{ route('hr.leave-types.create') }}" class="mt-2 inline-block text-medical-blue hover:underline">
                             Add your first leave type
                         </a>
+                        @endcan
                     </td>
                 </tr>
                 @endforelse

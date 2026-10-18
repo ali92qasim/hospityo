@@ -19,10 +19,12 @@
                 <h3 class="text-lg font-semibold text-gray-800">Document Requirements</h3>
                 <p class="text-sm text-gray-600">Define which documents are required for employees</p>
             </div>
+            @can('create hr documents')
             <a href="{{ route('hr.documents.create-requirement') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Add Requirement
             </a>
+            @endcan
         </div>
     </div>
 
@@ -115,6 +117,7 @@
 
                     {{-- Actions --}}
                     <td class="px-6 py-4 text-sm font-medium">
+                        @can('delete hr documents')
                         <form action="{{ route('hr.documents.destroy-requirement', $requirement) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this requirement?" data-confirm-variant="danger" data-confirm-text="Delete">>
                             @csrf
                             @method('DELETE')
@@ -122,6 +125,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endcan
                     </td>
                 </tr>
                 @empty
@@ -129,9 +133,11 @@
                     <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                         <i class="fas fa-clipboard-list text-4xl mb-4 text-gray-300"></i>
                         <p>No document requirements defined</p>
+                        @can('create hr documents')
                         <a href="{{ route('hr.documents.create-requirement') }}" class="text-medical-blue hover:text-blue-700 text-sm mt-2 inline-block">
                             <i class="fas fa-plus mr-1"></i>Add your first requirement
                         </a>
+                        @endcan
                     </td>
                 </tr>
                 @endforelse
