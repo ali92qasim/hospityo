@@ -648,8 +648,30 @@ Route::middleware('auth')->group(function () {
     Route::resource('services', ServiceController::class)->middleware('permission:view services|create services|edit services|delete services');
 
     // IPD Management Routes
-    Route::resource('wards', WardController::class)->middleware('permission:view wards|create wards|edit wards|delete wards');
-    Route::resource('beds', BedController::class)->middleware('permission:view beds|create beds|edit beds|delete beds');
+    Route::resource('wards', WardController::class)
+        ->only(['create', 'store'])
+        ->middleware('permission:create wards');
+    Route::resource('wards', WardController::class)
+        ->only(['index', 'show'])
+        ->middleware('permission:view wards');
+    Route::resource('wards', WardController::class)
+        ->only(['edit', 'update'])
+        ->middleware('permission:edit wards');
+    Route::resource('wards', WardController::class)
+        ->only(['destroy'])
+        ->middleware('permission:delete wards');
+    Route::resource('beds', BedController::class)
+        ->only(['create', 'store'])
+        ->middleware('permission:create beds');
+    Route::resource('beds', BedController::class)
+        ->only(['index', 'show'])
+        ->middleware('permission:view beds');
+    Route::resource('beds', BedController::class)
+        ->only(['edit', 'update'])
+        ->middleware('permission:edit beds');
+    Route::resource('beds', BedController::class)
+        ->only(['destroy'])
+        ->middleware('permission:delete beds');
 
     // Pharmacy Routes
     Route::get('/medicines/data', [MedicineController::class, 'data'])
