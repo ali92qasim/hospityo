@@ -74,6 +74,7 @@ class RolePermissionSeeder extends Seeder
         'create beds',
         'edit beds',
         'delete beds',
+        'change bed status',
 
         // ── Pharmacy / Inventory ──────────────────────────────────────────────
         'view pharmacy', // DEPRECATED: use granular pharmacy permissions below
@@ -406,7 +407,7 @@ class RolePermissionSeeder extends Seeder
             'view investigations',
             'view investigation orders',
             'view lab results',
-            'view wards', 'view beds',
+            'view wards', 'view beds', 'change bed status',
             'manage surgical checklists',
             'manage ot consumables',
             'manage sterilization',

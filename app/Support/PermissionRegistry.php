@@ -108,6 +108,7 @@ class PermissionRegistry
                     'create beds',
                     'edit beds',
                     'delete beds',
+                    'change bed status',
                 ],
             ],
         ],
