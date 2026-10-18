@@ -469,6 +469,34 @@ php artisan rbac:backfill-create-prescriptions
 
 Afterwards, check that every tenant's Doctor and Nurse roles hold `create prescriptions`. Both RBAC Wave 1-completion backfills (`manage theatres` and `create prescriptions`) belong to the same release and are both run in the same deploy action. Not yet applied locally.
 
+### Required Deploy Step: `change bed status` (RBAC Wave 2, WB-3 F3)
+
+> **Hard requirement.** Same deploy action as the Wave 2 code. Not before
+> (command missing), not later (from the moment routes are scoped, Nurses
+> cannot change bed status until the backfill runs).
+
+```bash
+# 1. Preview: writes nothing. Expect "would update 1 role(s)" (Nurse) per tenant.
+#    Read every [report only] line.
+php artisan rbac:backfill-change-bed-status --dry-run
+
+# 2. Apply in the same deploy action. Grants `change bed status` to Nurse only.
+php artisan rbac:backfill-change-bed-status
+```
+
+Afterwards, check that every tenant's Nurse role holds `change bed status` and does **not** newly hold `edit beds`. Custom roles listed as `[report only]` were never granted. Not yet applied locally.
+
+### Required Deploy Check: Super Admin coverage (RBAC Wave 2, read-only)
+
+> Run in the same deploy window as Wave 2 route scoping. Writes nothing.
+> Lists Super Admin users per tenant; flags tenants with none.
+> Covers Wave 1 `close fiscal years` and all Wave 2 delete / approve closures
+> that remain Super-Admin-only after scoping.
+
+```bash
+php artisan rbac:probe-super-admins
+```
+
 ---
 
 ## Important Commands
