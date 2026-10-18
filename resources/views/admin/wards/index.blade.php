@@ -5,9 +5,11 @@
 @section('content')
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Wards Management</h1>
+    @can('create wards')
     <a href="{{ route('wards.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
         <i class="fas fa-plus mr-2"></i>Add Ward
     </a>
+    @endcan
 </div>
 
 <div class="bg-white rounded-lg shadow">
@@ -44,15 +46,19 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        @can('edit wards')
                         <a href="{{ route('wards.edit', $ward) }}" class="text-medical-blue hover:text-blue-700 mr-3" title="Edit">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @endcan
+                        @can('delete wards')
                         <form method="POST" action="{{ route('wards.destroy', $ward) }}" class="inline">
                             @csrf @method('DELETE')
                             <button type="submit" class="text-red-600 hover:text-red-700" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endcan
                     </td>
                 </tr>
                 @endforeach
