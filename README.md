@@ -484,7 +484,7 @@ php artisan rbac:backfill-change-bed-status --dry-run
 php artisan rbac:backfill-change-bed-status
 ```
 
-Afterwards, check that every tenant's Nurse role holds `change bed status` and does **not** newly hold `edit beds`. Custom roles listed as `[report only]` were never granted. Not yet applied locally.
+Afterwards, check that every tenant's Nurse role holds `change bed status` and does **not** newly hold `edit beds`. Custom roles listed as `[report only]` were never granted. Already applied locally on 2026-10-21: Nurse updated on 6 tenants (demo-hospital already held it).
 
 ### Required Deploy Check: Super Admin coverage (RBAC Wave 2, read-only)
 
