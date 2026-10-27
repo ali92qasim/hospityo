@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class Doctor extends Model
 {
-    use HasFactory, Auditable, UsesTenantConnection;
+    use HasFactory, Auditable, UsesTenantConnection, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -44,7 +45,7 @@ class Doctor extends Model
 
         static::creating(function ($doctor) {
             $doctor->doctor_no = 'DR' . str_pad(
-                (Doctor::max('id') ?? 0) + 1,
+                (Doctor::withTrashed()->max('id') ?? 0) + 1,
                 4,
                 '0',
                 STR_PAD_LEFT
