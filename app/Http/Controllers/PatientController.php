@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
@@ -16,7 +17,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PatientController extends Controller
 {
-    use HandlesErrors;
+    use HandlesErrors, RedirectsAfterWrite;
 
     public function index(): View
     {
@@ -54,11 +55,15 @@ class PatientController extends Controller
 
             $message = "Patient {$patient->name} created successfully with Patient No: {$patient->patient_no}";
 
+            if ($request->expectsJson()) {
+                return $this->successResponse($message, $patient, 'patients.index');
+            }
+
             if ($request->has('save_and_add_another')) {
                 return redirect()->route('patients.create')->with('success', $message);
             }
 
-            return $this->successResponse($message, $patient, 'patients.index');
+            return $this->redirectAfterWrite('patients.index', [], ['view patients'], $message, 'patients.create');
         } catch (\Throwable $e) {
             DB::rollBack();
             return $this->handleException($e, 'Patient creation');
@@ -101,15 +106,69 @@ class PatientController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            return $this->successResponse(
-                "Patient {$patient->name} updated successfully",
-                $patient,
-                'patients.index'
+            $message = "Patient {$patient->name} updated successfully";
+
+            if ($request->expectsJson()) {
+                return $this->successResponse($message, $patient, 'patients.index');
+            }
+
+            return $this->redirectAfterWrite(
+                'patients.index',
+                [],
+                ['view patients'],
+                $message,
+                'patients.edit',
+                ['patient' => $patient],
             );
         } catch (\Throwable $e) {
             DB::rollBack();
             return $this->handleException($e, 'Patient update');
         }
+    }
+
+    public function destroy(Patient $patient): RedirectResponse
+    {
+        $name = $patient->name;
+        $patient->delete();
+
+        Log::info('Patient moved to trash', [
+            'patient_id' => $patient->id,
+            'user_id' => auth()->id(),
+        ]);
+
+        return $this->redirectAfterWrite(
+            'patients.index',
+            [],
+            ['view patients'],
+            "Patient {$name} moved to trash.",
+            null,
+        );
+    }
+
+    public function trashed(): View
+    {
+        $patients = Patient::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+
+        return view('admin.patients.trashed', compact('patients'));
+    }
+
+    public function restore(int $patient): RedirectResponse
+    {
+        $model = Patient::onlyTrashed()->findOrFail($patient);
+        $model->restore();
+
+        Log::info('Patient restored from trash', [
+            'patient_id' => $model->id,
+            'user_id' => auth()->id(),
+        ]);
+
+        return $this->redirectAfterWrite(
+            'patients.index',
+            [],
+            ['view patients'],
+            "Patient {$model->name} restored.",
+            'patients.trashed',
+        );
     }
 
     public function history(Patient $patient): View

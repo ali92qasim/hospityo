@@ -294,8 +294,20 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/patients/data', [PatientController::class, 'data'])
         ->name('patients.data')
-        ->middleware('permission:view patients|create patients|edit patients|delete patients');
-    Route::resource('patients', PatientController::class)->middleware('permission:view patients|create patients|edit patients|delete patients');
+        ->middleware('permission:view patients');
+    // Literal routes must be registered before the resource's patients/{patient}.
+    Route::get('patients/trashed', [PatientController::class, 'trashed'])
+        ->name('patients.trashed')
+        ->middleware('permission:delete patients');
+    Route::post('patients/{patient}/restore', [PatientController::class, 'restore'])
+        ->name('patients.restore')
+        ->middleware('permission:restore patients')
+        ->withTrashed();
+    Route::resource('patients', PatientController::class)
+        ->middlewareFor(['index', 'show'], 'permission:view patients')
+        ->middlewareFor(['create', 'store'], 'permission:create patients')
+        ->middlewareFor(['edit', 'update'], 'permission:edit patients')
+        ->middlewareFor('destroy', 'permission:delete patients');
     Route::get('patients/{patient}/history', [PatientController::class, 'history'])->name('patients.history')->middleware('permission:view patients');
     Route::get('/doctors/data', [DoctorController::class, 'data'])
         ->name('doctors.data')
@@ -1273,7 +1285,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Patient Search API
-    Route::get('api/patients/search', [PatientController::class, 'search'])->name('api.patients.search');
+    Route::get('api/patients/search', [PatientController::class, 'search'])->name('api.patients.search')->middleware('permission:view patients');
 });
 
 require __DIR__.'/auth.php';
