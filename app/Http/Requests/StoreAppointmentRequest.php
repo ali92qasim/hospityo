@@ -6,6 +6,7 @@ use App\Models\Doctor;
 use App\Services\DoctorAvailability;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 class StoreAppointmentRequest extends FormRequest
 {
@@ -17,7 +18,7 @@ class StoreAppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'required|exists:tenant.patients,id',
+            'patient_id' => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
             'doctor_id' => 'required|exists:tenant.doctors,id',
             'appointment_datetime' => 'required|date|after_or_equal:today',
             'reason' => 'nullable|string',

@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class OTController extends Controller
 {
@@ -251,7 +252,7 @@ class OTController extends Controller
         }
 
         $validated = $request->validate([
-            'patient_id'            => 'required|exists:tenant.patients,id',
+            'patient_id'            => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
             'doctor_id'             => 'required|exists:tenant.doctors,id',
             'operation_theatre_id'  => 'nullable|exists:tenant.operation_theatres,id',
             'surgery_type'          => 'required|in:elective,emergency',
@@ -365,7 +366,7 @@ class OTController extends Controller
         }
 
         $validated = $request->validate([
-            'patient_id'            => 'required|exists:tenant.patients,id',
+            'patient_id'            => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
             'doctor_id'             => 'required|exists:tenant.doctors,id',
             'operation_theatre_id'  => 'nullable|exists:tenant.operation_theatres,id',
             'surgery_type'          => 'required|in:elective,emergency',

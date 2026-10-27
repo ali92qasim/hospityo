@@ -22,7 +22,7 @@ class UpdateVisitRequest extends FormRequest
         $visit = $this->route('visit');
 
         return [
-            'patient_id' => 'required|exists:tenant.patients,id',
+            'patient_id' => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
             'doctor_id' => [
                 Rule::requiredIf(fn () => $visit && $visit->visit_type !== 'ipd'),
                 'nullable',

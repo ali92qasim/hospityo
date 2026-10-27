@@ -17,7 +17,7 @@ class PharmacyPosCheckoutRequest extends FormRequest
         return [
             'mode' => ['required', Rule::in(['prescription', 'walk_in'])],
             'prescription_id' => ['required_if:mode,prescription', 'nullable', 'exists:tenant.prescriptions,id'],
-            'patient_id' => ['required', 'exists:tenant.patients,id'],
+            'patient_id' => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
             'items' => ['required_if:mode,walk_in', 'nullable', 'array', 'min:1'],
             'items.*.medicine_id' => ['required_with:items', 'exists:tenant.medicines,id'],
             'items.*.quantity' => ['required_with:items', 'integer', 'min:1', 'max:9999'],

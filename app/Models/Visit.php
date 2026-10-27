@@ -65,7 +65,7 @@ class Visit extends Model
 
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(Patient::class)->withTrashed();
     }
 
     /** @deprecated Use primaryDoctor() / careTeam() for IPD. Kept for OPD/emergency and legacy data. */

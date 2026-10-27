@@ -15,7 +15,7 @@ class StoreImagingOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id'                       => ['required', Rule::exists('tenant.patients', 'id')],
+            'patient_id'                       => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
             'doctor_id'                        => ['required', Rule::exists('tenant.doctors', 'id')],
             'visit_id'                         => ['nullable', Rule::exists('tenant.visits', 'id')],
             'clinical_notes'                   => ['nullable', 'string', 'max:2000'],

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreBillRequest extends FormRequest
 {
@@ -51,7 +52,7 @@ class StoreBillRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'required|exists:tenant.patients,id',
+            'patient_id' => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
             'bill_date' => 'required|date',
             'bill_type' => 'required|in:opd,ipd,emergency,pharmacy',
             'items' => 'required|array|min:1',

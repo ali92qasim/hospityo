@@ -504,6 +504,9 @@ php artisan rbac:probe-super-admins
 > Super Admin receives `restore patients` via permission seeder sync (`tenants:sync-permissions` / RolePermissionSeeder) — confirm SA can restore after deploy.
 
 ```bash
+# Prerequisite: tenant migrations (adds patients.deleted_at)
+php artisan tenants:migrate
+
 php artisan rbac:backfill-delete-patients --dry-run
 php artisan rbac:backfill-delete-patients
 php artisan tenants:sync-permissions

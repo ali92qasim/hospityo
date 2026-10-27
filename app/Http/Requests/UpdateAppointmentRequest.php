@@ -7,6 +7,7 @@ use App\Models\Doctor;
 use App\Services\DoctorAvailability;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 class UpdateAppointmentRequest extends FormRequest
 {
@@ -25,7 +26,7 @@ class UpdateAppointmentRequest extends FormRequest
         }
 
         return [
-            'patient_id' => 'sometimes|required|exists:tenant.patients,id',
+            'patient_id' => ['sometimes', 'required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
             'doctor_id' => 'sometimes|required|exists:tenant.doctors,id',
             'appointment_datetime' => 'required|date|after_or_equal:today',
             'status' => 'sometimes|required|in:scheduled,completed,cancelled,no_show',
