@@ -290,57 +290,6 @@ class BillController extends Controller
             : 'Bill updated successfully');
     }
 
-    public function destroy(Bill $bill)
-    {
-        // Void share items before deleting the bill.
-        // If settled items exist, the delete is blocked and the user is informed.
-        try {
-            \App\Services\DoctorShareService::voidForBill($bill, 'bill_cancelled');
-        } catch (\RuntimeException $e) {
-            return redirect()->back()->withErrors([
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        // Reverse all journal entries for this bill before deletion.
-        // If any reversal fails, abort the deletion to prevent orphaned entries.
-        $billEntries = \App\Models\JournalEntry::where('reference_type', 'Bill')
-            ->where('reference_id', $bill->id)
-            ->where('entry_type', 'original')
-            ->with(['lines', 'subLedgerEntries'])
-            ->get();
-
-        foreach ($billEntries as $entry) {
-            $reversal = \App\Services\AccountingService::reverseEntry($entry, 'bill_deleted');
-            if (!$reversal) {
-                return redirect()->back()->withErrors([
-                    'error' => "Failed to reverse journal entry #{$entry->entry_number}. Bill was not deleted to protect financial integrity.",
-                ]);
-            }
-        }
-
-        // Reverse payment journal entries linked to this bill's payments
-        foreach ($bill->payments as $payment) {
-            $paymentEntries = \App\Models\JournalEntry::where('reference_type', 'Payment')
-                ->where('reference_id', $payment->id)
-                ->where('entry_type', 'original')
-                ->with(['lines', 'subLedgerEntries'])
-                ->get();
-
-            foreach ($paymentEntries as $entry) {
-                $reversal = \App\Services\AccountingService::reverseEntry($entry, 'bill_deleted');
-                if (!$reversal) {
-                    return redirect()->back()->withErrors([
-                        'error' => "Failed to reverse payment journal entry #{$entry->entry_number}. Bill was not deleted to protect financial integrity.",
-                    ]);
-                }
-            }
-        }
-
-        $bill->delete();
-        return redirect()->route('bills.index')->with('success', 'Bill deleted successfully');
-    }
-
     public function addPayment(AddBillPaymentRequest $request, Bill $bill)
     {
         if ($bill->isDraft()) {

@@ -58,7 +58,6 @@ class RolePermissionSeeder extends Seeder
         'view bills',
         'create bills',
         'edit bills',
-        'delete bills',
         'create payments',
         'edit payments',
         'delete payments',

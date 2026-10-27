@@ -22,6 +22,8 @@ function statusColor(status) {
 }
 
 $(document).ready(function () {
+    const canEdit = document.getElementById('bills-index-root')?.dataset.canEdit === '1';
+
     initDataTable('.bills-table', {
         ajax: '/bills/data',
         initComplete: function () {
@@ -105,16 +107,9 @@ $(document).ready(function () {
                             <a href="/bills/${id}/print" target="_blank" class="text-green-600 hover:text-green-700" title="Print">
                                 <i class="fas fa-print"></i>
                             </a>
-                            <a href="/bills/${id}/edit" class="text-medical-blue hover:text-blue-700" title="Edit">
+                            ${canEdit ? `<a href="/bills/${id}/edit" class="text-medical-blue hover:text-blue-700" title="Edit">
                                 <i class="fas fa-edit"></i>
-                            </a>
-                            <form method="POST" action="/bills/${id}" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
-                                <input type="hidden" name="_token" value="${window.csrf}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="text-red-600 hover:text-red-700" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            </a>` : ''}
                         </div>
                     `;
                 },

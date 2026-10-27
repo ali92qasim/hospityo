@@ -81,7 +81,6 @@ class PermissionRegistry
                     'view bills',
                     'create bills',
                     'edit bills',
-                    'delete bills',
                 ],
                 'payments' => [
                     'create payments',

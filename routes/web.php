@@ -384,8 +384,13 @@ Route::middleware('auth')->group(function () {
     // Billing Routes
     Route::get('/bills/data', [BillController::class, 'data'])
         ->name('bills.data')
-        ->middleware('permission:view bills|create bills|edit bills|delete bills');
-    Route::resource('bills', BillController::class)->middleware('permission:view bills|create bills|edit bills|delete bills');
+        ->middleware('permission:view bills');
+    // One permission per action; no bill delete (RBAC wave 3 remainder). Payment routes below are unchanged.
+    Route::resource('bills', BillController::class)
+        ->except(['destroy'])
+        ->middlewareFor(['index', 'show'], 'permission:view bills')
+        ->middlewareFor(['create', 'store'], 'permission:create bills')
+        ->middlewareFor(['edit', 'update'], 'permission:edit bills');
     Route::post('bills/{bill}/payment', [BillController::class, 'addPayment'])->name('bills.add-payment')->middleware('permission:create payments');
     Route::put('bills/{bill}/payment/{payment}', [BillController::class, 'updatePayment'])->name('bills.update-payment')->middleware('permission:edit payments')->scopeBindings();
     Route::delete('bills/{bill}/payment/{payment}', [BillController::class, 'removePayment'])->name('bills.remove-payment')->middleware('permission:delete payments')->scopeBindings();

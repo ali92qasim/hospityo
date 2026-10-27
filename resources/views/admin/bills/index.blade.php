@@ -3,11 +3,13 @@
 @section('title', 'Bills Management')
 
 @section('content')
-<div class="flex justify-between items-center mb-6">
+<div id="bills-index-root" data-can-edit="{{ auth()->user()->can('edit bills') ? '1' : '0' }}" class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Bills Management</h1>
+    @can('create bills')
     <a href="{{ route('bills.create') }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
         <i class="fas fa-plus mr-2"></i>Create Bill
     </a>
+    @endcan
 </div>
 
 <table class="bills-table w-full invisible">

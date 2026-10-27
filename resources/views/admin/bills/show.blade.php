@@ -6,9 +6,11 @@
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <h1 class="text-2xl font-bold text-gray-800">Bill #{{ $bill->bill_number }}</h1>
     <div class="flex flex-wrap gap-2">
+        @can('edit bills')
         <a href="{{ route('bills.edit', $bill) }}" class="inline-flex items-center px-3 py-1.5 text-sm bg-medical-blue text-white rounded-lg hover:bg-blue-700">
             <i class="fas fa-edit mr-1"></i>Edit
         </a>
+        @endcan
         <a href="{{ route('bills.print', $bill) }}" target="_blank" class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50">
             <i class="fas fa-print mr-1"></i>{{ $bill->isDraft() ? 'Print Draft' : 'Print' }}
         </a>
@@ -294,7 +296,9 @@
     <a href="{{ route('bills.print', $bill) }}" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
         <i class="fas fa-print mr-2"></i>Print Bill
     </a>
+    @can('edit bills')
     <a href="{{ route('bills.edit', $bill) }}" class="bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">Edit Bill</a>
+    @endcan
 </div>
 
 {{-- Edit Payment Modal --}}
