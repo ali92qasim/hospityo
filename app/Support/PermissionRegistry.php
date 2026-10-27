@@ -37,6 +37,8 @@ class PermissionRegistry
                     'create doctors',
                     'edit doctors',
                     'delete doctors',
+                    'restore doctors',
+                    'view doctor assignments',
                 ],
             ],
         ],

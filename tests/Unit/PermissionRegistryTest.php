@@ -24,6 +24,17 @@ it('lists patient permissions including restore patients', function () {
     ]);
 });
 
+it('lists doctor permissions including restore doctors and view doctor assignments', function () {
+    expect(PermissionRegistry::forModule('doctors'))->toEqualCanonicalizing([
+        'view doctors',
+        'create doctors',
+        'edit doctors',
+        'delete doctors',
+        'restore doctors',
+        'view doctor assignments',
+    ]);
+});
+
 it('flat list has no duplicate permission strings', function () {
     $flat = PermissionRegistry::flat();
 
