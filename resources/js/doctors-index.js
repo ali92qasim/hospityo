@@ -8,6 +8,10 @@ function capitalize(value) {
     return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function flagAllowed(flag) {
+    return flag === '1';
+}
+
 function formatCurrency(amount) {
     const formatted = Number(amount || 0).toLocaleString(undefined, {
         minimumFractionDigits: 2,
@@ -88,21 +92,25 @@ $(document).ready(function () {
                 orderable: false,
                 searchable: false,
                 render: function (id) {
+                    const root = document.getElementById('doctors-index');
+                    const editLink = flagAllowed(root?.dataset.canEdit) ? `
+                            <a href="/doctors/${id}/edit" class="inline-flex items-center justify-center w-7 h-7 rounded text-medical-green hover:bg-green-50" title="Edit">
+                                <i class="fas fa-edit text-xs"></i>
+                            </a>` : '';
+                    const deleteForm = flagAllowed(root?.dataset.canDelete) ? `
+                            <form method="POST" action="/doctors/${id}" class="inline" data-confirm="Move this doctor to trash? You can restore them later." data-confirm-variant="danger" data-confirm-text="Move to trash">
+                                <input type="hidden" name="_token" value="${window.csrf}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="inline-flex items-center justify-center w-7 h-7 rounded text-red-600 hover:bg-red-50" title="Move to trash">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
+                            </form>` : '';
+
                     return `
                         <div class="flex items-center space-x-1">
                             <a href="/doctors/${id}" class="inline-flex items-center justify-center w-7 h-7 rounded text-medical-blue hover:bg-blue-50" title="View">
                                 <i class="fas fa-eye text-xs"></i>
-                            </a>
-                            <a href="/doctors/${id}/edit" class="inline-flex items-center justify-center w-7 h-7 rounded text-medical-green hover:bg-green-50" title="Edit">
-                                <i class="fas fa-edit text-xs"></i>
-                            </a>
-                            <form method="POST" action="/doctors/${id}" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
-                                <input type="hidden" name="_token" value="${window.csrf}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="inline-flex items-center justify-center w-7 h-7 rounded text-red-600 hover:bg-red-50" title="Delete">
-                                    <i class="fas fa-trash text-xs"></i>
-                                </button>
-                            </form>
+                            </a>${editLink}${deleteForm}
                         </div>
                     `;
                 },
