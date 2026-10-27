@@ -76,7 +76,7 @@
 | `README.md` → Deployment | `change bed status` backfill + SA probe sections |
 | `tests/Feature/Permissions/DepartmentsRouteScopingTest.php` | **Create** |
 | `tests/Feature/Permissions/HrRouteScopingTest.php` (may split by cluster) | **Create** |
-| `tests/Feature/Permissions/WardsBedsRouteScopingTest.php` | **Create** (15 routes + status rules) |
+| `tests/Feature/Permissions/WardsBedsRouteScopingTest.php` | **Create** (13 routes + status rules; show routes removed) |
 | `tests/Feature/Commands/BackfillChangeBedStatusPermissionTest.php` | **Create** |
 | `tests/Feature/Commands/ProbeSuperAdminsTest.php` | **Create** |
 
@@ -224,12 +224,12 @@ Implement against HR design §1a–§1i (73 routes). Prefer **one scoping test f
   - Super Admin / Hospital Administrator never appear on the report-only list (exclude by name).
 - [ ] **Step 2: Red** → Step 3: implement registry, seeder, command → Step 4: Green → Step 5: Commit `feat: backfill change bed status for Nurse with report-only ward/bed safety list`
 
-### Task 11: Per-route wards + beds middleware (14 resource routes)
+### Task 11: Per-route wards + beds middleware (12 resource routes; show removed)
 
 **Files:** `routes/web.php`; create/extend `WardsBedsRouteScopingTest.php`.
 
 - [ ] **Step 1: Failing tests:**
-  - D6 deny/positive/side-effect for all 14 resource routes.
+  - D6 deny/positive/side-effect for all 12 resource routes (`wards.show` / `beds.show` removed as dead).
   - Seeded HA: 403 destroy wards/beds; 200 create/edit/index.
   - **Seeded Nurse:** **403** on `beds.edit` / `beds.update` / `beds.create` / `beds.store` / `beds.destroy` and every ward write (`create`/`store`/`edit`/`update`/`destroy`); **200** on `wards.index` / `beds.index` with view perms; does **not** hold `edit beds`.
   - Side effects: Nurse POST `beds.store` / DELETE `beds.destroy` / PUT `wards.update` / PUT `beds.update` write nothing.
@@ -270,7 +270,7 @@ Implement against HR design §1a–§1i (73 routes). Prefer **one scoping test f
 - [ ] Add **"Required Deploy Step: `change bed status` (RBAC Wave 2, WB-3 F3)"** per Wards/Beds design §4 (dry-run first; same deploy action; report-only lines).
 - [ ] Add **"Required Deploy Check: Super Admin coverage (RBAC Wave 2, read-only)"** per HR design (probe name must match Task 15).
 - [ ] Commit: `docs: require change-bed-status backfill and Super Admin probe in Wave 2 deploy`
-- [ ] **Phase 3 report:** Nurse matrix; backfill output; STATUS-TRANSITIONS choice; 15-row route table; README texts; follow-up note (occupied ward move on full edit); main tree unchanged.
+- [ ] **Phase 3 report:** Nurse matrix; backfill output; STATUS-TRANSITIONS choice; 13-row route table; README texts; follow-up note (occupied ward move on full edit); main tree unchanged.
 
 ---
 
@@ -294,7 +294,7 @@ vendor/bin/pest tests/Feature/Permissions tests/Feature/Commands tests/Feature/M
   - CheckModule + HR catalog slugs unchanged;
   - AD-1 only via shared trait.
 
-- [ ] **Step 4: Route dump proof.** `php artisan route:list --json` filtered to `departments.*`, `hr.*`, `wards.*`, `beds.*`. Diff against the three design tables (15 ward/bed rows including `beds.update-status`). Every row must match.
+- [ ] **Step 4: Route dump proof.** `php artisan route:list --json` filtered to `departments.*`, `hr.*`, `wards.*`, `beds.*`. Diff against the three design tables (13 ward/bed rows including `beds.update-status`; no `wards.show` / `beds.show`). Every row must match.
 
 - [ ] **Step 5: Implement + test the read-only Super Admin probe** (if not done earlier):
   - Command e.g. `rbac:probe-super-admins` — per tenant list SA users; flag tenants with zero; **exit non-zero or print FLAG** when any tenant has none; **never writes**.

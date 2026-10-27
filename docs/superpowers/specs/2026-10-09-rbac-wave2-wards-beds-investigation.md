@@ -26,11 +26,11 @@
 
 | Resource | Routes | Controller | Current middleware (any-of) |
 |---|---|---|---|
-| `wards` | 7 resource | `WardController` | `view\|create\|edit\|delete wards` |
-| `beds` | 7 resource | `BedController` | `view\|create\|edit\|delete beds` |
-| **Total** | **14** | | |
+| `wards` | 6 resource (no show) | `WardController` | `view\|create\|edit\|delete wards` |
+| `beds` | 6 resource (no show) | `BedController` | `view\|create\|edit\|delete beds` |
+| **Total** | **12** resource (+1 status = **13** in scope) | | |
 
-**Note:** Controllers implement index/create/store/edit/update/destroy only — **no `show` action**. Laravel still registers `wards.show` / `beds.show`. Scoping should still assign `view wards` / `view beds` to those routes (or `except(['show'])` in the plan — recommend gate as view, leave route registered for consistency with Departments).
+**Note:** Controllers implement index/create/store/edit/update/destroy only — **no `show` action**. Dead `wards.show` / `beds.show` are **removed** (no app/Blade callers; `Route::has` false).
 
 **Authorization layers:** Controllers have no `authorize` / `can`. FormRequests only `auth()->check()`. Resource middleware is the only real gate.
 
@@ -48,11 +48,11 @@
 
 | Route | Candidate |
 |---|---|
-| `wards.index` / `wards.show` | `view wards` |
+| `wards.index` | `view wards` |
 | `wards.create` / `wards.store` | `create wards` |
 | `wards.edit` / `wards.update` | `edit wards` |
 | `wards.destroy` | `delete wards` |
-| `beds.index` / `beds.show` | `view beds` |
+| `beds.index` | `view beds` |
 | `beds.create` / `beds.store` | `create beds` |
 | `beds.edit` / `beds.update` | `edit beds` |
 | `beds.destroy` | `delete beds` |

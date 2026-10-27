@@ -1,7 +1,5 @@
 <?php
 
-uses(Tests\TestCase::class, Illuminate\Foundation\Testing\RefreshDatabase::class);
-
 use App\Models\Admission;
 use App\Models\Bed;
 use App\Models\Department;
@@ -11,14 +9,16 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Models\Ward;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Permission;
 
 /*
 |--------------------------------------------------------------------------
 | Wards / Beds route scoping (RBAC wave 2, Task 11)
 |--------------------------------------------------------------------------
-| Each of the 14 ward/bed resource routes accepts exactly one action permission.
-| beds.update-status is Task 12.
+| Each of the 12 ward/bed resource routes accepts exactly one action permission
+| (show routes removed — no controller methods). beds.update-status is Task 12
+| → 13 routes in scope total.
 */
 
 beforeEach(function () {
@@ -144,8 +144,8 @@ function wbScopeRequest($test, string $method, string $route, Ward|Bed|null $mod
 function wbScopeNeedsModel(string $route): bool
 {
     return in_array($route, [
-        'wards.show', 'wards.edit', 'wards.update', 'wards.destroy',
-        'beds.show', 'beds.edit', 'beds.update', 'beds.destroy',
+        'wards.edit', 'wards.update', 'wards.destroy',
+        'beds.edit', 'beds.update', 'beds.destroy',
     ], true);
 }
 
@@ -167,7 +167,6 @@ dataset('wards beds escalations', [
     'wards update via view only' => ['put', 'wards.update', ['view wards']],
     'wards destroy via view only' => ['delete', 'wards.destroy', ['view wards']],
     'wards index via create only' => ['get', 'wards.index', ['create wards']],
-    'wards show via create only' => ['get', 'wards.show', ['create wards']],
     'wards destroy via edit only' => ['delete', 'wards.destroy', ['edit wards']],
     'beds create via view only' => ['get', 'beds.create', ['view beds']],
     'beds store via view only' => ['post', 'beds.store', ['view beds']],
@@ -175,7 +174,6 @@ dataset('wards beds escalations', [
     'beds update via view only' => ['put', 'beds.update', ['view beds']],
     'beds destroy via view only' => ['delete', 'beds.destroy', ['view beds']],
     'beds index via create only' => ['get', 'beds.index', ['create beds']],
-    'beds show via create only' => ['get', 'beds.show', ['create beds']],
     'beds destroy via edit only' => ['delete', 'beds.destroy', ['edit beds']],
 ]);
 
@@ -191,30 +189,26 @@ dataset('wards beds positive controls', [
     'wards index' => ['get', 'wards.index', 'view wards'],
     'wards create' => ['get', 'wards.create', 'create wards'],
     'wards store' => ['post', 'wards.store', 'create wards'],
-    'wards show' => ['get', 'wards.show', 'view wards'],
     'wards edit' => ['get', 'wards.edit', 'edit wards'],
     'wards update' => ['put', 'wards.update', 'edit wards'],
     'wards destroy' => ['delete', 'wards.destroy', 'delete wards'],
     'beds index' => ['get', 'beds.index', 'view beds'],
     'beds create' => ['get', 'beds.create', 'create beds'],
     'beds store' => ['post', 'beds.store', 'create beds'],
-    'beds show' => ['get', 'beds.show', 'view beds'],
     'beds edit' => ['get', 'beds.edit', 'edit beds'],
     'beds update' => ['put', 'beds.update', 'edit beds'],
     'beds destroy' => ['delete', 'beds.destroy', 'delete beds'],
 ]);
 
+it('does not register dead wards.show or beds.show routes', function () {
+    expect(Route::has('wards.show'))->toBeFalse()
+        ->and(Route::has('beds.show'))->toBeFalse();
+});
+
 it('allows exactly the new permission on each ward and bed route', function (string $method, string $route, string $permission) {
     $this->actingAs(wbScopeUser([$permission]));
 
     $response = wbScopeRequest($this, $method, $route, wbScopeModelFor($route));
-
-    // Controllers lack show actions; permission must still pass (not 403).
-    if (str_ends_with($route, '.show')) {
-        expect($response->getStatusCode())->not->toBe(403);
-
-        return;
-    }
 
     if ($method === 'get') {
         $response->assertOk();
@@ -438,8 +432,7 @@ it('rejects setting occupied via update-status and writes nothing', function () 
     $before = wbScopeSnapshot($this->bed);
 
     wbScopeStatusRequest($this, $this->bed, 'occupied')
-        ->assertRedirect(route('beds.index'))
-        ->assertSessionHas('error')
+        ->assertSessionHasErrors('status')
         ->assertSessionMissing('success');
 
     expect($this->bed->fresh()->only(array_keys($before)))->toBe($before);

@@ -78,14 +78,10 @@ class BedController extends Controller
     public function updateStatus(Request $request, Bed $bed): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:available,occupied,maintenance',
+            'status' => 'required|in:available,maintenance',
         ]);
 
         $requested = $validated['status'];
-
-        if ($requested === 'occupied') {
-            return back()->with('error', 'Occupied status can only be set by admitting a patient.');
-        }
 
         if ($bed->status === 'occupied') {
             return back()->with('error', 'Cannot change status while the bed is occupied.');
@@ -95,8 +91,7 @@ class BedController extends Controller
             return back()->with('error', 'Cannot change status while the bed has an active admission.');
         }
 
-        if (! in_array($bed->status, ['available', 'maintenance'], true)
-            || ! in_array($requested, ['available', 'maintenance'], true)) {
+        if (! in_array($bed->status, ['available', 'maintenance'], true)) {
             return back()->with('error', 'Only available and maintenance statuses can be set from this action.');
         }
 

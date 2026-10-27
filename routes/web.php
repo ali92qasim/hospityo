@@ -652,7 +652,7 @@ Route::middleware('auth')->group(function () {
         ->only(['create', 'store'])
         ->middleware('permission:create wards');
     Route::resource('wards', WardController::class)
-        ->only(['index', 'show'])
+        ->only(['index'])
         ->middleware('permission:view wards');
     Route::resource('wards', WardController::class)
         ->only(['edit', 'update'])
@@ -664,7 +664,7 @@ Route::middleware('auth')->group(function () {
         ->only(['create', 'store'])
         ->middleware('permission:create beds');
     Route::resource('beds', BedController::class)
-        ->only(['index', 'show'])
+        ->only(['index'])
         ->middleware('permission:view beds');
     Route::resource('beds', BedController::class)
         ->only(['edit', 'update'])

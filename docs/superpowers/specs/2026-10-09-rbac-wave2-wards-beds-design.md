@@ -20,33 +20,31 @@
 
 ## 1. Route mapping
 
-### Wards (7) — `WardController`
+### Wards (6) — `WardController`
 
 | Route | After |
 |---|---|
 | `wards.index` | `view wards` |
 | `wards.create` | `create wards` |
 | `wards.store` | `create wards` |
-| `wards.show` | `view wards` |
 | `wards.edit` | `edit wards` |
 | `wards.update` | `edit wards` |
 | `wards.destroy` | `delete wards` |
 
-### Beds resource (7) — `BedController`
+### Beds resource (6) — `BedController`
 
 | Route | After |
 |---|---|
 | `beds.index` | `view beds` |
 | `beds.create` | `create beds` |
 | `beds.store` | `create beds` |
-| `beds.show` | `view beds` |
 | `beds.edit` | `edit beds` |
 | `beds.update` | `edit beds` |
 | `beds.destroy` | `delete beds` |
 
-Shape: per-route `->middleware('permission:…')`. Controllers still lack `show` actions; keep routes registered and gated as `view …`. **Full edit form / `beds.update` unchanged** (all fields, including status for editors).
+Shape: per-route `->middleware('permission:…')`. Controllers have no `show` actions; **`wards.show` / `beds.show` are removed** (dead routes, no app/Blade callers). **Full edit form / `beds.update` unchanged** (all fields, including status for editors).
 
-### New status-only route (+1) — **15 bed/ward routes total in scope**
+### New status-only route (+1) — **13 bed/ward routes total in scope**
 
 | Item | Proposal |
 |---|---|
@@ -58,7 +56,7 @@ Shape: per-route `->middleware('permission:…')`. Controllers still lack `show`
 
 **Superset:** `edit beds` is a **confirmed read/write superset** on this action so HA/SA (who hold `edit beds`, not the Nurse permission) can use the same list control without a second grant. **Agree** with that shape — same pattern as Wave 1 `manage pharmacy` on catalog writes. Disagree only if product wants status UI exclusive to the new permission (would force granting `change bed status` to HA too).
 
-**Totals:** 7 wards + 7 beds resource + 1 status = **15** routes.
+**Totals:** 6 wards + 6 beds resource + 1 status = **13** routes (was 15 before removing dead show routes).
 
 ---
 
