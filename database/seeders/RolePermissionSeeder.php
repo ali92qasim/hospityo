@@ -65,7 +65,6 @@ class RolePermissionSeeder extends Seeder
         'view services',
         'create services',
         'edit services',
-        'delete services',
 
         // ── IPD (Wards & Beds) ────────────────────────────────────────────────
         'view wards',

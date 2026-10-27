@@ -92,7 +92,6 @@ class PermissionRegistry
                     'view services',
                     'create services',
                     'edit services',
-                    'delete services',
                 ],
             ],
         ],

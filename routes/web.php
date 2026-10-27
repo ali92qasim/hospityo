@@ -675,7 +675,12 @@ Route::middleware('auth')->group(function () {
     Route::post('services/import', [ServiceController::class, 'import'])->name('services.import')->middleware('permission:create services');
     Route::get('services/import-status', [ServiceController::class, 'importStatus'])->name('services.import-status')->middleware('permission:create services');
 
-    Route::resource('services', ServiceController::class)->middleware('permission:view services|create services|edit services|delete services');
+    // One permission per action; no delete (RBAC wave 3 remainder).
+    Route::resource('services', ServiceController::class)
+        ->except(['destroy'])
+        ->middlewareFor(['index', 'show'], 'permission:view services')
+        ->middlewareFor(['create', 'store'], 'permission:create services')
+        ->middlewareFor(['edit', 'update'], 'permission:edit services');
 
     // IPD Management Routes
     Route::resource('wards', WardController::class)

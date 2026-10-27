@@ -118,15 +118,11 @@
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="{{ route('services.edit', $service) }}" class="text-medical-blue hover:text-blue-700 mr-3">
+                        @can('edit services')
+                        <a href="{{ route('services.edit', $service) }}" class="text-medical-blue hover:text-blue-700">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form method="POST" action="{{ route('services.destroy', $service) }}" class="inline">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-700" data-confirm="Are you sure?" data-confirm-variant="danger" data-confirm-text="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        @endcan
                     </td>
                 </tr>
                 @empty
