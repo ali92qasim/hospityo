@@ -497,6 +497,18 @@ Afterwards, check that every tenant's Nurse role holds `change bed status` and d
 php artisan rbac:probe-super-admins
 ```
 
+### Required Deploy Step: `delete patients` (RBAC Wave 3, Patients)
+
+> **Hard requirement.** Same deploy action as the Wave 3 Patients code.
+> Grants `delete patients` to Hospital Administrator so soft-delete/trash works.
+> Super Admin receives `restore patients` via permission seeder sync (`tenants:sync-permissions` / RolePermissionSeeder) — confirm SA can restore after deploy.
+
+```bash
+php artisan rbac:backfill-delete-patients --dry-run
+php artisan rbac:backfill-delete-patients
+php artisan tenants:sync-permissions
+```
+
 ---
 
 ## Important Commands
