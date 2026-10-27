@@ -253,7 +253,7 @@ class OTController extends Controller
 
         $validated = $request->validate([
             'patient_id'            => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
-            'doctor_id'             => 'required|exists:tenant.doctors,id',
+            'doctor_id'             => 'required|exists:tenant.doctors,id,deleted_at,NULL',
             'operation_theatre_id'  => 'nullable|exists:tenant.operation_theatres,id',
             'surgery_type'          => 'required|in:elective,emergency',
             'procedure_name'        => 'required|string|max:255',
@@ -367,7 +367,7 @@ class OTController extends Controller
 
         $validated = $request->validate([
             'patient_id'            => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
-            'doctor_id'             => 'required|exists:tenant.doctors,id',
+            'doctor_id'             => 'required|exists:tenant.doctors,id,deleted_at,NULL',
             'operation_theatre_id'  => 'nullable|exists:tenant.operation_theatres,id',
             'surgery_type'          => 'required|in:elective,emergency',
             'procedure_name'        => 'required|string|max:255',

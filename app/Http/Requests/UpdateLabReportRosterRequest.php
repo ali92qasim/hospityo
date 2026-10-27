@@ -17,7 +17,7 @@ class UpdateLabReportRosterRequest extends FormRequest
     {
         return [
             'doctor_ids' => ['required', 'array', 'min:1'],
-            'doctor_ids.*' => ['integer', Rule::exists('tenant.doctors', 'id')],
+            'doctor_ids.*' => ['integer', Rule::exists('tenant.doctors', 'id')->whereNull('deleted_at')],
         ];
     }
 

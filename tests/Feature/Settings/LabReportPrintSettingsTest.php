@@ -494,7 +494,7 @@ it('scopes roster doctor_ids exists rule to tenant.doctors', function () {
         ->first(fn ($rule) => $rule instanceof \Illuminate\Validation\Rules\Exists);
 
     expect($existsRule)->not->toBeNull()
-        ->and((string) $existsRule)->toBe('exists:tenant.doctors,id');
+        ->and((string) $existsRule)->toBe('exists:tenant.doctors,id,deleted_at,"NULL"');
 });
 
 it('accepts a real tenant doctor id when saving the lab report consultant roster', function () {

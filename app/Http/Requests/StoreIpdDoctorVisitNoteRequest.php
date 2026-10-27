@@ -14,7 +14,7 @@ class StoreIpdDoctorVisitNoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'doctor_id' => ['nullable', 'exists:tenant.doctors,id'],
+            'doctor_id' => ['nullable', 'exists:tenant.doctors,id,deleted_at,NULL'],
             'notes'     => ['required', 'string', 'max:5000'],
         ];
     }

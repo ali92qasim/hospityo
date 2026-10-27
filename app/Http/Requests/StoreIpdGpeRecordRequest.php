@@ -14,7 +14,7 @@ class StoreIpdGpeRecordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'doctor_id'       => ['nullable', 'exists:tenant.doctors,id'],
+            'doctor_id'       => ['nullable', 'exists:tenant.doctors,id,deleted_at,NULL'],
             'gpe_chest'       => ['nullable', 'string', 'max:255'],
             'gpe_abdomen'     => ['nullable', 'string', 'max:255'],
             'gpe_cvs'         => ['nullable', 'string', 'max:255'],

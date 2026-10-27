@@ -19,7 +19,7 @@ class StoreAppointmentRequest extends FormRequest
     {
         return [
             'patient_id' => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
-            'doctor_id' => 'required|exists:tenant.doctors,id',
+            'doctor_id' => 'required|exists:tenant.doctors,id,deleted_at,NULL',
             'appointment_datetime' => 'required|date|after_or_equal:today',
             'reason' => 'nullable|string',
             'notes' => 'nullable|string',

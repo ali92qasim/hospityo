@@ -27,7 +27,7 @@ class UpdateAppointmentRequest extends FormRequest
 
         return [
             'patient_id' => ['sometimes', 'required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
-            'doctor_id' => 'sometimes|required|exists:tenant.doctors,id',
+            'doctor_id' => 'sometimes|required|exists:tenant.doctors,id,deleted_at,NULL',
             'appointment_datetime' => 'required|date|after_or_equal:today',
             'status' => 'sometimes|required|in:scheduled,completed,cancelled,no_show',
             'reason' => 'nullable|string',

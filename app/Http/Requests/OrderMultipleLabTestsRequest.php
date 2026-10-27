@@ -21,7 +21,7 @@ class OrderMultipleLabTestsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'doctor_id' => ['nullable', 'exists:tenant.doctors,id'],
+            'doctor_id' => ['nullable', 'exists:tenant.doctors,id,deleted_at,NULL'],
             'tests' => 'required|array|min:1',
             'tests.*.lab_test_id' => 'required|exists:tenant.lab_tests,id',
             'tests.*.quantity' => 'required|integer|min:1|max:10',

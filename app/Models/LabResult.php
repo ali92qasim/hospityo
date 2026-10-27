@@ -49,6 +49,7 @@ class LabResult extends Model
     public function reviewers(): BelongsToMany
     {
         return $this->belongsToMany(Doctor::class, 'lab_result_reviewers')
+            ->withTrashed()
             ->withPivot('sort_order')
             ->orderByPivot('sort_order');
     }

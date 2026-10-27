@@ -16,7 +16,7 @@ class StoreLabOrderRequest extends FormRequest
     {
         return [
             'patient_id'                    => ['required', Rule::exists('tenant.patients', 'id')->whereNull('deleted_at')],
-            'doctor_id'                     => ['required', Rule::exists('tenant.doctors', 'id')],
+            'doctor_id'                     => ['required', Rule::exists('tenant.doctors', 'id')->whereNull('deleted_at')],
             'visit_id'                      => ['nullable', Rule::exists('tenant.visits', 'id')],
             'clinical_notes'                => ['nullable', 'string', 'max:2000'],
             'special_instructions'          => ['nullable', 'string', 'max:2000'],

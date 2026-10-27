@@ -14,7 +14,7 @@ class AssignDoctorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'doctor_id' => 'required|exists:tenant.doctors,id'
+            'doctor_id' => 'required|exists:tenant.doctors,id,deleted_at,NULL'
         ];
     }
 }

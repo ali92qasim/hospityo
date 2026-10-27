@@ -26,7 +26,7 @@ class UpdateVisitRequest extends FormRequest
             'doctor_id' => [
                 Rule::requiredIf(fn () => $visit && $visit->visit_type !== 'ipd'),
                 'nullable',
-                'exists:tenant.doctors,id',
+                'exists:tenant.doctors,id,deleted_at,NULL',
             ],
             'visit_datetime' => 'required|date',
             'status' => 'required|string',

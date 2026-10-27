@@ -22,7 +22,7 @@ beforeEach(function () {
 it('scopes prescription print template doctor_id exists rule to tenant.doctors', function () {
     $rules = (new \App\Http\Requests\StorePrescriptionPrintTemplateRequest)->rules()['doctor_id'];
 
-    expect($rules)->toContain('exists:tenant.doctors,id')
+    expect($rules)->toContain('exists:tenant.doctors,id,deleted_at,NULL')
         ->and($rules)->not->toContain('exists:doctors,id');
 });
 
