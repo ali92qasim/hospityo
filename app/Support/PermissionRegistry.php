@@ -25,6 +25,7 @@ class PermissionRegistry
                     'create patients',
                     'edit patients',
                     'delete patients',
+                    'restore patients',
                 ],
             ],
         ],

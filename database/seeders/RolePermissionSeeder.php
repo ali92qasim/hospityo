@@ -27,6 +27,7 @@ class RolePermissionSeeder extends Seeder
         'create patients',
         'edit patients',
         'delete patients',
+        'restore patients',
 
         // ── Doctor Management ─────────────────────────────────────────────────
         'view doctors',
@@ -313,7 +314,7 @@ class RolePermissionSeeder extends Seeder
      */
     private const ROLE_PERMISSIONS = [
         'Hospital Administrator' => [
-            'view patients', 'create patients', 'edit patients',
+            'view patients', 'create patients', 'edit patients', 'delete patients',
             'view doctors', 'create doctors', 'edit doctors',
             'view departments', 'create departments', 'edit departments',
             'view visits', 'create visits', 'edit visits',

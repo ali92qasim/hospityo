@@ -14,6 +14,16 @@ it('lists hr permissions under hr group', function () {
     expect($groups)->toHaveKey('hr');
 });
 
+it('lists patient permissions including restore patients', function () {
+    expect(PermissionRegistry::forModule('patients'))->toEqualCanonicalizing([
+        'view patients',
+        'create patients',
+        'edit patients',
+        'delete patients',
+        'restore patients',
+    ]);
+});
+
 it('flat list has no duplicate permission strings', function () {
     $flat = PermissionRegistry::flat();
 
