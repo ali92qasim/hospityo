@@ -20,8 +20,6 @@ beforeEach(function () {
     Permission::findOrCreate('view appointments', 'web');
     Permission::findOrCreate('create appointments', 'web');
     Permission::findOrCreate('edit appointments', 'web');
-    Permission::findOrCreate('delete appointments', 'web');
-
     $this->user = User::create([
         'name' => 'Appointment Clerk',
         'email' => 'appointment-clerk-'.uniqid().'@example.com',
@@ -33,7 +31,6 @@ beforeEach(function () {
         'view appointments',
         'create appointments',
         'edit appointments',
-        'delete appointments',
     ]);
 
     $this->actingAs($this->user);

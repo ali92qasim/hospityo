@@ -373,7 +373,12 @@ Route::middleware('auth')->group(function () {
     Route::post('visits/{visit}/gpe-records', [VisitController::class, 'storeIpdGpeRecord'])->name('visits.gpe-records.store')->middleware('permission:edit visits');
     Route::post('visits/{visit}/doctor-visit-notes', [VisitController::class, 'storeIpdDoctorVisitNote'])->name('visits.doctor-visit-notes.store')->middleware('permission:edit visits');
     Route::put('visits/{visit}/doctor-visit-notes/{doctorVisitNote}', [VisitController::class, 'updateIpdDoctorVisitNote'])->name('visits.doctor-visit-notes.update')->middleware('permission:edit visits');
-    Route::resource('appointments', AppointmentController::class)->middleware('permission:view appointments|create appointments|edit appointments|delete appointments');
+    // One permission per action; no delete (RBAC wave 3 remainder).
+    Route::resource('appointments', AppointmentController::class)
+        ->except(['destroy'])
+        ->middlewareFor(['index', 'show'], 'permission:view appointments')
+        ->middlewareFor(['create', 'store'], 'permission:create appointments')
+        ->middlewareFor(['edit', 'update'], 'permission:edit appointments');
     Route::get('calendar/events', [AppointmentController::class, 'getCalendarEvents'])->name('calendar.events')->middleware('permission:view appointments');
 
     // Billing Routes

@@ -53,7 +53,6 @@ class RolePermissionSeeder extends Seeder
         'view appointments',
         'create appointments',
         'edit appointments',
-        'delete appointments',
 
         // ── Billing ───────────────────────────────────────────────────────────
         'view bills',

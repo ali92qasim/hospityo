@@ -71,7 +71,6 @@ class PermissionRegistry
                     'view appointments',
                     'create appointments',
                     'edit appointments',
-                    'delete appointments',
                 ],
             ],
         ],

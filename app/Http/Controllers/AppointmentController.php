@@ -78,14 +78,6 @@ class AppointmentController extends Controller
             ->with('success', 'Appointment updated successfully.');
     }
 
-    public function destroy(Appointment $appointment): RedirectResponse
-    {
-        $appointment->delete();
-
-        return redirect()->route('appointments.index')
-            ->with('success', 'Appointment deleted successfully.');
-    }
-
     public function getCalendarEvents(Request $request): JsonResponse
     {
         $appointments = Appointment::with(['patient', 'doctor'])
