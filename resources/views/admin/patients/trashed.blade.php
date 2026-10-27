@@ -49,7 +49,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="px-4 py-6 text-center text-gray-500">No trashed patients.</td>
+                    <td colspan="{{ auth()->user()?->can('restore patients') ? 5 : 4 }}" class="px-4 py-6 text-center text-gray-500">No trashed patients.</td>
                 </tr>
             @endforelse
         </tbody>

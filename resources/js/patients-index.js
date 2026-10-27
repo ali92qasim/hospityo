@@ -8,6 +8,10 @@ function capitalize(value) {
     return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function flagAllowed(flag) {
+    return flag === '1';
+}
+
 function buildVisitRegisterLinks(id) {
     const root = document.getElementById('patients-index');
 
@@ -106,6 +110,21 @@ $(document).ready(function () {
                 orderable: false,
                 searchable: false,
                 render: function (id) {
+                    const root = document.getElementById('patients-index');
+                    const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+                    const editLink = flagAllowed(root?.dataset.canEdit) ? `
+                            <a href="/patients/${id}/edit" class="text-medical-green hover:text-green-700" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>` : '';
+                    const deleteForm = flagAllowed(root?.dataset.canDelete) ? `
+                            <form method="POST" action="/patients/${id}" class="inline" data-confirm="Move this patient to trash? You can restore them later." data-confirm-variant="danger" data-confirm-text="Move to trash">
+                                <input type="hidden" name="_token" value="${csrf}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="text-red-600 hover:text-red-700" title="Move to trash">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>` : '';
+
                     return `
                         <div class="flex items-center space-x-3">
                             ${buildVisitRegisterLinks(id)}
@@ -115,9 +134,7 @@ $(document).ready(function () {
                             <a href="/patients/${id}/history" class="text-purple-600 hover:text-purple-700" title="Patient History">
                                 <i class="fas fa-history"></i>
                             </a>
-                            <a href="/patients/${id}/edit" class="text-medical-green hover:text-green-700" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
+                            ${editLink}${deleteForm}
                         </div>
                     `;
                 },
