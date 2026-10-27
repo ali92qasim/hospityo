@@ -177,9 +177,11 @@
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
         <h3 class="text-base sm:text-lg font-semibold text-gray-800">Assigned Patients</h3>
         @if(($totalAssigned ?? 0) > 5)
+            @can('view doctor assignments')
             <a href="{{ route('doctor.assignments') }}" class="bg-medical-blue text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 text-sm text-center min-h-[44px] flex items-center justify-center">
                 View All ({{ $totalAssigned }})
             </a>
+            @endcan
         @endif
     </div>
 
