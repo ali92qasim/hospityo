@@ -512,6 +512,32 @@ php artisan rbac:backfill-delete-patients
 php artisan tenants:sync-permissions
 ```
 
+### Required Deploy Step: Doctors RBAC (RBAC Wave 3, Doctors)
+
+> **Hard requirement.** Same deploy action as the Wave 3 Doctors code.
+> Doctors are now soft-deleted, and doctor routes are scoped by permission.
+> Run the migration first, then both backfills, then the permission sync.
+
+```bash
+# 1. Prerequisite: tenant migrations (adds doctors.deleted_at via SoftDeletes)
+php artisan tenants:migrate
+
+# 2. Grant `delete doctors` to Hospital Administrator (preview first; writes nothing)
+php artisan rbac:backfill-delete-doctors --dry-run
+php artisan rbac:backfill-delete-doctors
+
+# 3. Grant `view doctor assignments` to Doctor (preview first; writes nothing)
+php artisan rbac:backfill-view-doctor-assignments --dry-run
+php artisan rbac:backfill-view-doctor-assignments
+
+# 4. Re-seed permissions
+php artisan tenants:sync-permissions
+```
+
+- **Backfills** are idempotent and only grant to the named role (`delete doctors` → Hospital Administrator; `view doctor assignments` → Doctor). Custom roles holding doctor permissions are listed as `[report only]` and never granted; read those lines.
+- **Permission registry / seeder:** `delete doctors` goes to Super Admin + Hospital Administrator. `restore doctors` is Super Admin only (via `tenants:sync-permissions` / `RolePermissionSeeder`; never backfilled), so confirm SA can restore after deploy. `view doctor assignments` goes to Doctor (plus SA).
+- **Trash / restore:** deleting a doctor soft-deletes the row and calls `TenantUser::unregister`, so the linked login can no longer resolve the tenant. Restoring (SA only) clears `deleted_at` and calls `TenantUser::register`. The linked `User` is never hard-deleted.
+
 ---
 
 ## Important Commands
