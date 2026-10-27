@@ -34,7 +34,7 @@ class Patient extends Model
 
         static::creating(function ($patient) {
             $patient->patient_no = 'P' . str_pad(
-                (Patient::max('id') ?? 0) + 1,
+                (Patient::withTrashed()->max('id') ?? 0) + 1,
                 6,
                 '0',
                 STR_PAD_LEFT
