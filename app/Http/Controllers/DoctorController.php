@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StoreDoctorRequest;
 use App\Http\Requests\UpdateDoctorRequest;
 use App\Models\Doctor;
@@ -16,6 +17,8 @@ use Yajra\DataTables\Facades\DataTables;
 
 class DoctorController extends Controller
 {
+    use RedirectsAfterWrite;
+
     public function index(): View
     {
         return view('admin.doctors.index');
@@ -75,8 +78,13 @@ class DoctorController extends Controller
         $validated['user_id'] = $user->id;
         Doctor::create($validated);
 
-        return redirect()->route('doctors.index')
-            ->with('success', 'Doctor created successfully. Login credentials - Email: ' . $validated['email'] . ', Password: ' . $randomPassword);
+        return $this->redirectAfterWrite(
+            'doctors.index',
+            [],
+            ['view doctors'],
+            'Doctor created successfully. Login credentials - Email: ' . $validated['email'] . ', Password: ' . $randomPassword,
+            'doctors.create',
+        );
     }
 
     public function show(Doctor $doctor): View
@@ -113,36 +121,73 @@ class DoctorController extends Controller
 
         $doctor->update($validated);
 
-        return redirect()->route('doctors.index')
-            ->with('success', 'Doctor updated successfully.');
+        return $this->redirectAfterWrite(
+            'doctors.index',
+            [],
+            ['view doctors'],
+            'Doctor updated successfully.',
+            'doctors.edit',
+            ['doctor' => $doctor],
+        );
     }
 
     public function destroy(Doctor $doctor): RedirectResponse
     {
-        // Delete associated user account and landlord login mapping
+        $name = $doctor->name;
+
+        // Soft delete: keep the linked User row, but drop the landlord login mapping.
+        $doctor->update(['status' => 'inactive']);
+
         if ($doctor->user) {
             $tenant = \App\Models\Tenant::current();
             if ($tenant) {
                 \App\Models\TenantUser::unregister($doctor->user->email, $tenant->id);
             }
-            $doctor->user->delete();
         }
-        
+
         $doctor->delete();
 
-        return redirect()->route('doctors.index')
-            ->with('success', 'Doctor deleted successfully.');
+        return $this->redirectAfterWrite(
+            'doctors.index',
+            [],
+            ['view doctors'],
+            "Doctor {$name} moved to trash.",
+            null,
+        );
+    }
+
+    public function trashed(): View
+    {
+        $doctors = Doctor::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+
+        return view('admin.doctors.trashed', compact('doctors'));
+    }
+
+    public function restore(int $doctor): RedirectResponse
+    {
+        $model = Doctor::onlyTrashed()->findOrFail($doctor);
+        $model->restore();
+        $model->update(['status' => 'active']);
+
+        if ($model->user) {
+            $tenant = \App\Models\Tenant::current();
+            if ($tenant) {
+                \App\Models\TenantUser::register($model->user->email, $tenant->id);
+            }
+        }
+
+        return $this->redirectAfterWrite(
+            'doctors.index',
+            [],
+            ['view doctors'],
+            "Doctor {$model->name} restored.",
+            'doctors.trashed',
+        );
     }
 
     public function assignments(): View
     {
-        $user = auth()->user();
-
-        if (!$user->hasRole('Doctor')) {
-            abort(403);
-        }
-
-        $doctor = Doctor::where('user_id', $user->id)->first();
+        $doctor = Doctor::where('user_id', auth()->id())->first();
         if (!$doctor) {
             abort(404);
         }

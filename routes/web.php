@@ -222,7 +222,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/whats-new', [WhatsNewController::class, 'index'])->name('whats-new.index');
 
-    Route::get('/doctor/assignments', [DoctorController::class, 'assignments'])->name('doctor.assignments');
+    Route::get('/doctor/assignments', [DoctorController::class, 'assignments'])
+        ->name('doctor.assignments')
+        ->middleware('permission:view doctor assignments');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -311,11 +313,22 @@ Route::middleware('auth')->group(function () {
     Route::get('patients/{patient}/history', [PatientController::class, 'history'])->name('patients.history')->middleware('permission:view patients');
     Route::get('/doctors/data', [DoctorController::class, 'data'])
         ->name('doctors.data')
-        ->middleware('permission:view doctors|create doctors|edit doctors|delete doctors');
+        ->middleware('permission:view doctors');
     Route::get('/doctors/email-available', [DoctorController::class, 'emailAvailable'])
         ->name('doctors.email-available')
         ->middleware('permission:create doctors|edit doctors');
-    Route::resource('doctors', DoctorController::class)->middleware('permission:view doctors|create doctors|edit doctors|delete doctors');
+    // Literal routes must be registered before the resource's doctors/{doctor}.
+    Route::get('doctors/trashed', [DoctorController::class, 'trashed'])
+        ->name('doctors.trashed')
+        ->middleware('permission:restore doctors');
+    Route::post('doctors/{doctor}/restore', [DoctorController::class, 'restore'])
+        ->name('doctors.restore')
+        ->middleware('permission:restore doctors');
+    Route::resource('doctors', DoctorController::class)
+        ->middlewareFor(['index', 'show'], 'permission:view doctors')
+        ->middlewareFor(['create', 'store'], 'permission:create doctors')
+        ->middlewareFor(['edit', 'update'], 'permission:edit doctors')
+        ->middlewareFor('destroy', 'permission:delete doctors');
     // One permission per action (RBAC wave 2, DEP-1). create before show so /create is not captured as {department}.
     Route::resource('departments', DepartmentController::class)
         ->only(['create', 'store'])
