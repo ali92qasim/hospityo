@@ -15,11 +15,11 @@ use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     foreach ([
-        'view investigations',
-        'view investigation orders',
+        'view imaging studies',
+        'view imaging orders',
         'view radiology results',
-        'create investigations',
-        'create investigation orders',
+        'create imaging studies',
+        'create imaging orders',
     ] as $permission) {
         Permission::findOrCreate($permission, 'web');
     }
@@ -31,11 +31,11 @@ beforeEach(function () {
         'email_verified_at' => now(),
     ]);
     $this->user->givePermissionTo([
-        'view investigations',
-        'view investigation orders',
+        'view imaging studies',
+        'view imaging orders',
         'view radiology results',
-        'create investigations',
-        'create investigation orders',
+        'create imaging studies',
+        'create imaging orders',
     ]);
 
     $this->withoutMiddleware([

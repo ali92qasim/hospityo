@@ -13,6 +13,8 @@ beforeEach(function () {
         'view investigation orders',
         'view lab orders',
         'view lab results',
+        'view imaging studies',
+        'view imaging orders',
         'view radiology results',
     ] as $permission) {
         Permission::findOrCreate($permission, 'web');
@@ -32,6 +34,8 @@ function diagnosticsNavUser(): User
         'view investigations',
         'view investigation orders',
         'view lab results',
+        'view imaging studies',
+        'view imaging orders',
         'view radiology results',
     ]);
 
@@ -128,7 +132,7 @@ it('shows imaging studies without view radiology results when imaging is on the 
         'password' => bcrypt('password'),
         'email_verified_at' => now(),
     ]);
-    $user->givePermissionTo(['view investigations']);
+    $user->givePermissionTo(['view imaging studies']);
 
     $menu = $this->service->build($user, diagnosticsTenant(['imaging']));
     $imaging = collect($menu)->firstWhere('label', 'Imaging');
@@ -160,6 +164,20 @@ it('hides imaging when the module is on but the user has no imaging item permiss
         'password' => bcrypt('password'),
         'email_verified_at' => now(),
     ]);
+
+    $labels = collect($this->service->build($user, diagnosticsTenant(['imaging'])))->pluck('label');
+
+    expect($labels)->not->toContain('Imaging');
+});
+
+it('does not show imaging studies or orders to users holding only laboratory permissions', function () {
+    $user = User::create([
+        'name' => 'Lab Perms Only',
+        'email' => 'lab-perms-only-'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+        'email_verified_at' => now(),
+    ]);
+    $user->givePermissionTo(['view investigations', 'view investigation orders', 'view lab orders']);
 
     $labels = collect($this->service->build($user, diagnosticsTenant(['imaging'])))->pluck('label');
 

@@ -52,13 +52,6 @@ class ImagingStudyController extends Controller
         return redirect()->route('imaging.studies.index')->with('success', 'Imaging study updated successfully.');
     }
 
-    public function destroy(ImagingStudy $imagingStudy)
-    {
-        $imagingStudy->delete();
-
-        return redirect()->route('imaging.studies.index')->with('success', 'Imaging study deleted successfully.');
-    }
-
     public function import(Request $request)
     {
         $request->validate([

@@ -73,19 +73,6 @@
                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                     <i class="fas fa-edit mr-1.5"></i>Edit
                 </a>
-                @unless($isLabSurface)
-                {{-- Imaging delete is handled in Task 5; laboratory orders cannot be deleted. --}}
-                <form action="{{ route('imaging.orders.destroy', $order) }}" method="POST" class="inline"
-                      data-confirm="Delete this order and all its items? This cannot be undone."
-                      data-confirm-variant="danger"
-                      data-confirm-text="Delete">
-                    @csrf @method('DELETE')
-                    <button type="submit"
-                            class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
-                        <i class="fas fa-trash mr-1.5"></i>Delete
-                    </button>
-                </form>
-                @endunless
             @endif
             <a href="{{ $isLabSurface ? route('investigation-orders.show', $order) : route('imaging.orders.show', $order) }}"
                class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-medical-blue bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">

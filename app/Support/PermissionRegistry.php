@@ -217,11 +217,20 @@ class PermissionRegistry
         'imaging' => [
             'label' => 'Imaging / Radiology',
             'groups' => [
+                'imaging studies' => [
+                    'view imaging studies',
+                    'create imaging studies',
+                    'edit imaging studies',
+                ],
+                'imaging orders' => [
+                    'view imaging orders',
+                    'create imaging orders',
+                    'edit imaging orders',
+                ],
                 'radiology results' => [
                     'view radiology results',
                     'create radiology results',
                     'edit radiology results',
-                    'delete radiology results',
                 ],
             ],
         ],

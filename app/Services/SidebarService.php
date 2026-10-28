@@ -190,12 +190,12 @@ class SidebarService
         // ── Imaging ───────────────────────────────────────────────────────────
         if ($this->hasModule($tenant, 'imaging')) {
             $imagingItems = [];
-            if ($user->can('view investigations')) {
+            if ($user->can('view imaging studies')) {
                 $imagingItems[] = $this->item('Imaging Studies', 'fa-x-ray', 'imaging.studies.index', [
                     'imaging.studies.*',
                 ]);
             }
-            if ($user->can('view investigation orders') || $user->can('view lab orders')) {
+            if ($user->can('view imaging orders')) {
                 $imagingItems[] = $this->item('Imaging Orders', 'fa-clipboard-list', 'imaging.orders.index', [
                     'imaging.orders.*',
                 ]);

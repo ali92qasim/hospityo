@@ -152,3 +152,18 @@ it('splits ot permissions onto catalog children including manage pac', function 
     expect(PermissionRegistry::flat())->toContain('manage pac')
         ->and(PermissionRegistry::flat())->toBe(array_values(array_unique(PermissionRegistry::flat())));
 });
+
+it('lists imaging studies, imaging orders and radiology results without delete', function () {
+    expect(PermissionRegistry::forModule('imaging'))->toEqualCanonicalizing([
+        'view imaging studies',
+        'create imaging studies',
+        'edit imaging studies',
+        'view imaging orders',
+        'create imaging orders',
+        'edit imaging orders',
+        'view radiology results',
+        'create radiology results',
+        'edit radiology results',
+    ])
+        ->and(PermissionRegistry::flat())->not->toContain('delete radiology results');
+});

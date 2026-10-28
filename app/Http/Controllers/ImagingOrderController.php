@@ -139,30 +139,4 @@ class ImagingOrderController extends Controller
         return redirect()->route('imaging.orders.show', $imagingOrder)
             ->with('success', 'Imaging order updated successfully.');
     }
-
-    public function destroy(ImagingOrder $imagingOrder)
-    {
-        if ($imagingOrder->status !== 'ordered') {
-            return redirect()->route('imaging.orders.index')
-                ->with('error', 'Only orders in "Ordered" status can be deleted. This order has already been processed.');
-        }
-
-        try {
-            DB::connection('tenant')->transaction(function () use ($imagingOrder) {
-                $imagingOrder->items()->delete();
-                $imagingOrder->delete();
-            });
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('[ImagingOrder] Delete failed', [
-                'order_id' => $imagingOrder->id,
-                'error'    => $e->getMessage(),
-            ]);
-
-            return redirect()->route('imaging.orders.index')
-                ->with('error', 'Failed to delete order. Please try again.');
-        }
-
-        return redirect()->route('imaging.orders.index')
-            ->with('success', 'Imaging order deleted successfully.');
-    }
 }

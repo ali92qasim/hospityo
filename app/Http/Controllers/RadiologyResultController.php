@@ -133,16 +133,4 @@ class RadiologyResultController extends Controller
 
         return view('admin.radiology.results.edit', compact('radiologyResult'));
     }
-
-    public function destroy(ImagingReport $radiologyResult)
-    {
-        if ($radiologyResult->file_path) {
-            Storage::disk('public')->delete($radiologyResult->file_path);
-        }
-
-        $radiologyResult->delete();
-
-        return redirect()->route('imaging.reports.index')
-            ->with('success', 'Imaging report deleted successfully.');
-    }
 }

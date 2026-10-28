@@ -128,10 +128,15 @@ class RolePermissionSeeder extends Seeder
         'view lab orders',
         'create lab orders',
         'edit lab orders',
+        'view imaging studies',
+        'create imaging studies',
+        'edit imaging studies',
+        'view imaging orders',
+        'create imaging orders',
+        'edit imaging orders',
         'view radiology results',
         'create radiology results',
         'edit radiology results',
-        'delete radiology results',
 
         // ── Accounting ────────────────────────────────────────────────────────
         'view accounting', // DEPRECATED: use granular accounting permissions below
@@ -333,6 +338,8 @@ class RolePermissionSeeder extends Seeder
             'view investigation orders', 'create investigation orders', 'edit investigation orders',
             'view lab results', 'create lab results', 'edit lab results',
             'view lab orders', 'create lab orders', 'edit lab orders',
+            'view imaging studies', 'create imaging studies', 'edit imaging studies',
+            'view imaging orders', 'create imaging orders', 'edit imaging orders',
             'view radiology results', 'create radiology results', 'edit radiology results',
             'view accounting', // DEPRECATED: backward compatibility
             'view chart of accounts', 'create chart of accounts', 'edit chart of accounts',
@@ -392,6 +399,8 @@ class RolePermissionSeeder extends Seeder
             'view bills', 'create bills',
             'view investigations',
             'view investigation orders', 'create investigation orders',
+            'view imaging studies',
+            'view imaging orders', 'create imaging orders',
             'view lab results',
             'create prescriptions',
             'view doctor assignments',
@@ -403,6 +412,8 @@ class RolePermissionSeeder extends Seeder
             'view bills',
             'view investigations',
             'view investigation orders',
+            'view imaging studies',
+            'view imaging orders',
             'view lab results',
             'view wards', 'view beds', 'change bed status',
             'manage surgical checklists',
@@ -427,6 +438,8 @@ class RolePermissionSeeder extends Seeder
             'view investigation orders', 'edit investigation orders',
             'view lab orders', 'edit lab orders',
             'view lab results', 'create lab results', 'edit lab results',
+            'view imaging studies',
+            'view imaging orders', 'edit imaging orders',
             'view radiology results', 'create radiology results', 'edit radiology results',
         ],
         'Pharmacist' => [
