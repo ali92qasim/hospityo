@@ -150,32 +150,6 @@ class InvestigationOrderController extends Controller
             ->with('success', 'Lab order updated successfully.');
     }
 
-    public function destroy(LabOrder $investigationOrder)
-    {
-        if ($investigationOrder->status !== 'ordered') {
-            return redirect()->route('lab.orders.index')
-                ->with('error', 'Only orders in "Ordered" status can be deleted. This order has already been processed.');
-        }
-
-        try {
-            DB::connection('tenant')->transaction(function () use ($investigationOrder) {
-                $investigationOrder->items()->delete();
-                $investigationOrder->delete();
-            });
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('[LabOrder] Delete failed', [
-                'order_id' => $investigationOrder->id,
-                'error'    => $e->getMessage(),
-            ]);
-
-            return redirect()->route('lab.orders.index')
-                ->with('error', 'Failed to delete order. Please try again.');
-        }
-
-        return redirect()->route('lab.orders.index')
-            ->with('success', 'Lab order deleted successfully.');
-    }
-
     public function collectSample(CollectSampleRequest $request, LabOrder $investigationOrder)
     {
         $validated = $request->validated();

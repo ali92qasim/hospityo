@@ -904,28 +904,44 @@ Route::middleware('auth')->group(function () {
     // Laboratory Routes
     Route::get('/investigations/data', [InvestigationController::class, 'data'])
         ->name('investigations.data')
-        ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
-    Route::resource('investigations', InvestigationController::class)
-        ->parameters(['investigations' => 'labTest'])
-        ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+        ->middleware('permission:view investigations');
     Route::post('investigations/import', [InvestigationController::class, 'import'])->name('investigations.import')->middleware('permission:create investigations');
     Route::get('investigations/import-status', [InvestigationController::class, 'importStatus'])->name('investigations.import-status')->middleware('permission:create investigations');
-    Route::resource('lab-tests', InvestigationController::class)
-        ->parameters(['lab-tests' => 'labTest'])
-        ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
-    Route::resource('investigation-orders', InvestigationOrderController::class)->middleware('permission:view investigation orders|create investigation orders|edit investigation orders|delete investigation orders');
+    Route::get('investigations', [InvestigationController::class, 'index'])->name('investigations.index')->middleware('permission:view investigations');
+    Route::get('investigations/create', [InvestigationController::class, 'create'])->name('investigations.create')->middleware('permission:create investigations');
+    Route::post('investigations', [InvestigationController::class, 'store'])->name('investigations.store')->middleware('permission:create investigations');
+    Route::get('investigations/{labTest}', [InvestigationController::class, 'show'])->name('investigations.show')->middleware('permission:view investigations');
+    Route::get('investigations/{labTest}/edit', [InvestigationController::class, 'edit'])->name('investigations.edit')->middleware('permission:edit investigations');
+    Route::match(['put', 'patch'], 'investigations/{labTest}', [InvestigationController::class, 'update'])->name('investigations.update')->middleware('permission:edit investigations');
+    Route::get('lab-tests', [InvestigationController::class, 'index'])->name('lab-tests.index')->middleware('permission:view investigations');
+    Route::get('lab-tests/create', [InvestigationController::class, 'create'])->name('lab-tests.create')->middleware('permission:create investigations');
+    Route::post('lab-tests', [InvestigationController::class, 'store'])->name('lab-tests.store')->middleware('permission:create investigations');
+    Route::get('lab-tests/{labTest}', [InvestigationController::class, 'show'])->name('lab-tests.show')->middleware('permission:view investigations');
+    Route::get('lab-tests/{labTest}/edit', [InvestigationController::class, 'edit'])->name('lab-tests.edit')->middleware('permission:edit investigations');
+    Route::match(['put', 'patch'], 'lab-tests/{labTest}', [InvestigationController::class, 'update'])->name('lab-tests.update')->middleware('permission:edit investigations');
+    Route::get('investigation-orders', [InvestigationOrderController::class, 'index'])->name('investigation-orders.index')->middleware('permission:view investigation orders');
+    Route::get('investigation-orders/create', [InvestigationOrderController::class, 'create'])->name('investigation-orders.create')->middleware('permission:create investigation orders');
+    Route::post('investigation-orders', [InvestigationOrderController::class, 'store'])->name('investigation-orders.store')->middleware('permission:create investigation orders');
+    Route::get('investigation-orders/{investigationOrder}', [InvestigationOrderController::class, 'show'])->name('investigation-orders.show')->middleware('permission:view investigation orders');
+    Route::get('investigation-orders/{investigationOrder}/edit', [InvestigationOrderController::class, 'edit'])->name('investigation-orders.edit')->middleware('permission:edit investigation orders');
+    Route::match(['put', 'patch'], 'investigation-orders/{investigationOrder}', [InvestigationOrderController::class, 'update'])->name('investigation-orders.update')->middleware('permission:edit investigation orders');
     Route::post('investigation-orders/{investigationOrder}/collect-sample', [InvestigationOrderController::class, 'collectSample'])->name('investigation-orders.collect-sample')->middleware('permission:edit investigation orders');
     Route::post('investigation-orders/{investigationOrder}/receive-sample', [InvestigationOrderController::class, 'receiveSample'])->name('investigation-orders.receive-sample')->middleware('permission:edit investigation orders');
 
     // Lab Orders (legacy routes - kept for backward compatibility)
-    Route::resource('lab-orders', LabOrderController::class)->middleware('permission:view lab orders|create lab orders|edit lab orders|delete lab orders');
+    Route::get('lab-orders', [LabOrderController::class, 'index'])->name('lab-orders.index')->middleware('permission:view lab orders');
+    Route::get('lab-orders/create', [LabOrderController::class, 'create'])->name('lab-orders.create')->middleware('permission:create lab orders');
+    Route::post('lab-orders', [LabOrderController::class, 'store'])->name('lab-orders.store')->middleware('permission:create lab orders');
+    Route::get('lab-orders/{labOrder}', [LabOrderController::class, 'show'])->name('lab-orders.show')->middleware('permission:view lab orders');
+    Route::get('lab-orders/{labOrder}/edit', [LabOrderController::class, 'edit'])->name('lab-orders.edit')->middleware('permission:edit lab orders');
+    Route::match(['put', 'patch'], 'lab-orders/{labOrder}', [LabOrderController::class, 'update'])->name('lab-orders.update')->middleware('permission:edit lab orders');
     Route::post('lab-orders/{labOrder}/collect-sample', [LabOrderController::class, 'collectSample'])->name('lab-orders.collect-sample')->middleware('permission:edit lab orders');
     Route::post('lab-orders/{labOrder}/receive-sample', [LabOrderController::class, 'receiveSample'])->name('lab-orders.receive-sample')->middleware('permission:edit lab orders');
 
     // Lab Results - Custom routes BEFORE resource route
     Route::get('/lab-results/data', [LabResultController::class, 'data'])
         ->name('lab-results.data')
-        ->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
+        ->middleware('permission:view lab results');
     Route::get('investigation-orders/{investigationOrder}/report', [LabResultController::class, 'orderReport'])->name('investigation-orders.report')->middleware('permission:view lab results');
     Route::get('lab-results/create-batch', [LabResultController::class, 'createBatch'])->name('lab-results.create-batch')->middleware('permission:create lab results');
     Route::post('lab-results/store-batch', [LabResultController::class, 'storeBatch'])->name('lab-results.store-batch')->middleware('permission:create lab results');
@@ -942,9 +958,10 @@ Route::middleware('auth')->group(function () {
     Route::get('lab-results/{labResult}/share-whatsapp', [LabResultController::class, 'shareWhatsApp'])->name('lab-results.share-whatsapp')->middleware('permission:view lab results');
     Route::get('investigation-orders/{investigationOrder}/share-whatsapp', [LabResultController::class, 'shareOrderWhatsApp'])->name('investigation-orders.share-whatsapp')->middleware('permission:view lab results');
 
-    Route::resource('lab-results', LabResultController::class)
-        ->except(['create', 'store'])
-        ->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
+    Route::get('lab-results', [LabResultController::class, 'index'])->name('lab-results.index')->middleware('permission:view lab results');
+    Route::get('lab-results/{labResult}', [LabResultController::class, 'show'])->name('lab-results.show')->middleware('permission:view lab results');
+    Route::get('lab-results/{labResult}/edit', [LabResultController::class, 'edit'])->name('lab-results.edit')->middleware('permission:edit lab results');
+    Route::match(['put', 'patch'], 'lab-results/{labResult}', [LabResultController::class, 'update'])->name('lab-results.update')->middleware('permission:edit lab results');
 
     // Radiology Results Routes
     Route::get('imaging-orders/{imagingOrder}/radiology-results/create', [RadiologyResultController::class, 'create'])->name('radiology-results.create')->middleware('permission:create radiology results');
@@ -954,10 +971,10 @@ Route::middleware('auth')->group(function () {
     Route::prefix('lab')->name('lab.')->group(function () {
         Route::get('tests', [InvestigationController::class, 'indexLab'])
             ->name('tests.index')
-            ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+            ->middleware('permission:view investigations');
         Route::get('tests/data', [InvestigationController::class, 'dataLab'])
             ->name('tests.data')
-            ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+            ->middleware('permission:view investigations');
         Route::get('tests/create', [InvestigationController::class, 'create'])
             ->name('tests.create')
             ->middleware('permission:create investigations');
@@ -972,19 +989,16 @@ Route::middleware('auth')->group(function () {
             ->middleware('permission:create investigations');
         Route::get('tests/{labTest}', [InvestigationController::class, 'show'])
             ->name('tests.show')
-            ->middleware('permission:view investigations|create investigations|edit investigations|delete investigations');
+            ->middleware('permission:view investigations');
         Route::get('tests/{labTest}/edit', [InvestigationController::class, 'edit'])
             ->name('tests.edit')
             ->middleware('permission:edit investigations');
         Route::put('tests/{labTest}', [InvestigationController::class, 'update'])
             ->name('tests.update')
             ->middleware('permission:edit investigations');
-        Route::delete('tests/{labTest}', [InvestigationController::class, 'destroy'])
-            ->name('tests.destroy')
-            ->middleware('permission:delete investigations');
         Route::get('orders', [InvestigationOrderController::class, 'indexLab'])
             ->name('orders.index')
-            ->middleware('permission:view investigation orders|create investigation orders|edit investigation orders|delete investigation orders|view lab orders');
+            ->middleware('permission:view investigation orders|view lab orders');
         Route::get('orders/create', [InvestigationOrderController::class, 'create'])
             ->name('orders.create')
             ->middleware('permission:create investigation orders|create lab orders');
@@ -993,7 +1007,7 @@ Route::middleware('auth')->group(function () {
             ->middleware('permission:create investigation orders|create lab orders');
         Route::get('results', [LabResultController::class, 'indexLab'])
             ->name('results.index')
-            ->middleware('permission:view lab results|create lab results|edit lab results|delete lab results');
+            ->middleware('permission:view lab results');
     });
 
     Route::prefix('imaging')->name('imaging.')->group(function () {

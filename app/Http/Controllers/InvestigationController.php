@@ -103,13 +103,6 @@ class InvestigationController extends Controller
         return redirect()->route('lab.tests.index')->with('success', 'Lab test updated successfully.');
     }
 
-    public function destroy(LabTest $labTest)
-    {
-        $labTest->delete();
-
-        return redirect()->route('lab.tests.index')->with('success', 'Lab test deleted successfully.');
-    }
-
     public function import(Request $request)
     {
         $request->validate([
