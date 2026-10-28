@@ -167,3 +167,13 @@ it('lists imaging studies, imaging orders and radiology results without delete',
     ])
         ->and(PermissionRegistry::flat())->not->toContain('delete radiology results');
 });
+
+it('lists visits permissions with view assigned visits and without delete', function () {
+    expect(PermissionRegistry::forModule('visits'))->toEqualCanonicalizing([
+        'view visits',
+        'create visits',
+        'edit visits',
+        'view assigned visits',
+    ])
+        ->and(PermissionRegistry::flat())->not->toContain('delete visits');
+});

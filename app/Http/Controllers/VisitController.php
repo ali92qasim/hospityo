@@ -139,23 +139,37 @@ class VisitController extends Controller
             ->toJson();
     }
 
+    /**
+     * The Doctor profile whose assigned visits the current user is limited to:
+     * requires `view assigned visits` AND a linked Doctor profile.
+     */
+    private function assignedVisitsDoctor(): ?Doctor
+    {
+        $user = auth()->user();
+
+        if (! $user || ! $user->can('view assigned visits')) {
+            return null;
+        }
+
+        return Doctor::where('user_id', $user->id)->first();
+    }
+
     private function visitsIndexQuery(Request $request)
     {
         $query = Visit::with(['patient', 'doctor.department']);
 
-        if (auth()->user()->hasRole('Doctor')) {
-            $doctor = Doctor::where('user_id', auth()->id())->first();
-            if ($doctor) {
-                $query->where(function ($q) use ($doctor) {
-                    $q->where('doctor_id', $doctor->id)
-                        ->orWhere(function ($ipdQuery) use ($doctor) {
-                            $ipdQuery->where('visit_type', 'ipd')
-                                ->whereHas('careTeam', fn ($team) => $team->where('doctor_id', $doctor->id));
-                        });
-                });
-            } else {
-                $query->whereNull('id');
-            }
+        // Assigned scoping is permission-driven (never role-name driven) and
+        // needs a linked Doctor profile. Admins without a profile stay unscoped.
+        $assignedDoctor = $this->assignedVisitsDoctor();
+
+        if ($assignedDoctor) {
+            $query->where(function ($q) use ($assignedDoctor) {
+                $q->where('doctor_id', $assignedDoctor->id)
+                    ->orWhere(function ($ipdQuery) use ($assignedDoctor) {
+                        $ipdQuery->where('visit_type', 'ipd')
+                            ->whereHas('careTeam', fn ($team) => $team->where('doctor_id', $assignedDoctor->id));
+                    });
+            });
         }
 
         if ($request->date_filter) {
@@ -519,12 +533,8 @@ class VisitController extends Controller
 
     public function checkPatient(Visit $visit)
     {
-        // Only allow doctors to check their assigned patients
-        if (!auth()->user()->hasRole('Doctor')) {
-            abort(403);
-        }
-
-        $doctor = Doctor::where('user_id', auth()->id())->first();
+        // Only doctors holding `view assigned visits` may check their assigned patients
+        $doctor = $this->assignedVisitsDoctor();
         if (! $doctor) {
             abort(403);
         }

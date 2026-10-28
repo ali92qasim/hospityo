@@ -60,7 +60,7 @@ class PermissionRegistry
                     'view visits',
                     'create visits',
                     'edit visits',
-                    'delete visits',
+                    'view assigned visits',
                 ],
             ],
         ],

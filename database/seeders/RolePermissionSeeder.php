@@ -47,7 +47,7 @@ class RolePermissionSeeder extends Seeder
         'view visits',
         'create visits',
         'edit visits',
-        'delete visits',
+        'view assigned visits',
 
         // ── Appointment Management ────────────────────────────────────────────
         'view appointments',
@@ -404,6 +404,7 @@ class RolePermissionSeeder extends Seeder
             'view lab results',
             'create prescriptions',
             'view doctor assignments',
+            'view assigned visits',
         ],
         'Nurse' => [
             'view patients', 'edit patients',
