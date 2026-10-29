@@ -538,6 +538,30 @@ php artisan tenants:sync-permissions
 - **Permission registry / seeder:** `delete doctors` goes to Super Admin + Hospital Administrator. `restore doctors` is Super Admin only (via `tenants:sync-permissions` / `RolePermissionSeeder`; never backfilled), so confirm SA can restore after deploy. `view doctor assignments` goes to Doctor (plus SA).
 - **Trash / restore:** deleting a doctor soft-deletes the row and calls `TenantUser::unregister`, so the linked login can no longer resolve the tenant. Restoring (SA only) clears `deleted_at` and calls `TenantUser::register`. The linked `User` is never hard-deleted.
 
+### Required Deploy Step: RBAC Wave 3 Remainder
+
+> **Hard requirement.** Same deploy action as the Wave 3 Remainder code
+> (appointments, services, bills, laboratory, imaging, visits).
+> Run the permission sync first, then both backfills (preview before apply).
+
+```bash
+# 1. Re-seed permissions (new/renamed imaging + visit permissions, removed delete permissions)
+php artisan tenants:sync-permissions
+
+# 2. Imaging: grant the new imaging permissions to roles that held the old lab investigation perms
+php artisan rbac:backfill-imaging-permissions --dry-run
+php artisan rbac:backfill-imaging-permissions
+
+# 3. Visits: grant `view assigned visits` where required (preview first; writes nothing)
+php artisan rbac:backfill-view-assigned-visits --dry-run
+php artisan rbac:backfill-view-assigned-visits
+```
+
+- **Backfills** are idempotent. Read every `[report only]` line from the `--dry-run` output before applying.
+- **Delete permissions removed** for appointments, services, bills, lab results, imaging results and visits. The `delete payments` permission is kept.
+- **No SoftDeletes** are introduced in this wave, so no tenant migration is required.
+- **Imaging** no longer uses the lab investigation permissions; it has its own imaging permissions. Run the imaging backfill so existing roles keep access.
+
 ---
 
 ## Important Commands
