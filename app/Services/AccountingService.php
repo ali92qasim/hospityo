@@ -28,6 +28,7 @@ class AccountingService
                 // Mark the original entry as superseded so it's no longer treated as
                 // the active "original" by duplicate checks or queries.
                 $originalEntry->update(['entry_type' => 'superseded']);
+                AccountingPaymentSync::clearEntry($originalEntry->id);
 
                 // Use the same entry_date as the original so both entries fall within
                 // the same reporting period and cancel each other out correctly.
@@ -62,6 +63,8 @@ class AccountingService
                         'narration'   => "Reversal: {$sub->narration}",
                     ]);
                 }
+
+                AccountingPaymentSync::syncEntry($reversal->fresh(['lines.account']));
 
                 Log::info('[Accounting] Journal entry reversed', [
                     'original_entry_id' => $originalEntry->id,
@@ -193,6 +196,8 @@ class AccountingService
                 'narration'   => "Credit balance from {$bill->bill_number}",
             ]);
 
+            AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
+
             Log::info('[Accounting] Overpayment adjustment posted', [
                 'bill_id' => $bill->id,
                 'amount'  => $overpaymentAmount,
@@ -321,6 +326,8 @@ class AccountingService
                 'narration' => "Payment for {$bill->bill_number}",
             ]);
 
+            AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
+
             return $entry;
         } catch (\Throwable $e) {
             Log::error('[Accounting] Failed to post payment entry', ['payment' => $payment->id, 'error' => $e->getMessage()]);
@@ -402,6 +409,8 @@ class AccountingService
                 'narration' => "Admission advance (patient credit)",
             ]);
 
+            AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
+
             return $entry;
         } catch (\Throwable $e) {
             Log::error('[Accounting] Failed to post admission advance', [
@@ -479,6 +488,8 @@ class AccountingService
                 'credit' => 0,
                 'narration' => "Advance applied to {$bill->bill_number}",
             ]);
+
+            AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
 
             return $entry;
         } catch (\Throwable $e) {
@@ -567,6 +578,8 @@ class AccountingService
                 ]);
             }
 
+            AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
+
             return $entry;
         } catch (\Throwable $e) {
             Log::error('[Accounting] Failed to post advance refund', [
@@ -638,6 +651,8 @@ class AccountingService
                     'narration' => "Purchase {$po->po_number}",
                 ]);
             }
+
+            AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
 
             return $entry;
         } catch (\Throwable $e) {
@@ -771,6 +786,8 @@ class AccountingService
                 'credit'      => 0,
                 'narration'   => "Invoice {$bill->bill_number}{$narrationSuffix}",
             ]);
+
+            AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
 
             return $entry;
         } catch (\Throwable $e) {
