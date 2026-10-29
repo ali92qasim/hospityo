@@ -9,6 +9,7 @@ use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\FiscalYear;
 use App\Models\SubLedgerEntry;
+use App\Services\AccountingPaymentSync;
 use Illuminate\Http\Request;
 
 class AccountingController extends Controller
@@ -198,6 +199,8 @@ class AccountingController extends Controller
                         'narration'  => $line['narration'] ?? null,
                     ]);
                 }
+
+                AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
             });
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('[Accounting] Journal entry creation failed', [
@@ -278,6 +281,8 @@ class AccountingController extends Controller
                         'narration'  => $line['narration'] ?? null,
                     ]);
                 }
+
+                AccountingPaymentSync::syncEntry($journalEntry->fresh(['lines.account']));
             });
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('[Accounting] Journal entry update failed', [
@@ -333,6 +338,8 @@ class AccountingController extends Controller
                     'credit'     => $request->amount,
                     'narration'  => 'Source of deposit',
                 ]);
+
+                AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
             });
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('[Accounting] Deposit failed', ['error' => $e->getMessage()]);
@@ -390,6 +397,8 @@ class AccountingController extends Controller
                         ? 'Reclassified to '.$toAccount->name
                         : 'Funds sent (transfer)',
                 ]);
+
+                AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
             });
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('[Accounting] Transfer failed', ['error' => $e->getMessage()]);
