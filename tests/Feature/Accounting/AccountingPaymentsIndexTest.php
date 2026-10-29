@@ -6,6 +6,7 @@ use App\Models\JournalEntry;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\SidebarService;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
@@ -195,4 +196,61 @@ it('filters payments by payment_method', function () {
         ->assertOk()
         ->assertSee(format_currency(50))
         ->assertDontSee(format_currency(200));
+});
+
+it('filters by payment type and method', function () {
+    paymentsIndexBindTenant();
+    $this->actingAs(paymentsIndexUser(['view accounting payments']));
+
+    createAccountingPaymentForIndex([
+        'amount' => 333.33,
+        'payment_date' => '2026-10-22',
+        'payment_type' => 'income',
+        'payment_method' => 'cash',
+    ]);
+    createAccountingPaymentForIndex([
+        'amount' => 444.44,
+        'payment_date' => '2026-10-21',
+        'payment_type' => 'expense',
+        'payment_method' => 'bank',
+    ]);
+
+    $this->get(route('accounting.payments', [
+        'payment_type' => 'income',
+        'payment_method' => 'cash',
+    ]))
+        ->assertOk()
+        ->assertSee(format_currency(333.33))
+        ->assertDontSee(format_currency(444.44));
+});
+
+it('does not N+1 when listing many accounting payments', function () {
+    paymentsIndexBindTenant();
+    $this->actingAs(paymentsIndexUser(['view accounting payments']));
+
+    foreach (range(1, 5) as $i) {
+        createAccountingPaymentForIndex([
+            'amount' => 100 + $i,
+            'payment_date' => '2026-10-0'.$i,
+            'payment_type' => $i % 2 === 0 ? 'expense' : 'income',
+            'payment_method' => $i % 2 === 0 ? 'bank' : 'cash',
+            'description' => "N+1 payment {$i}",
+        ]);
+    }
+
+    DB::connection('tenant')->flushQueryLog();
+    DB::connection('tenant')->enableQueryLog();
+
+    $this->get(route('accounting.payments'))->assertOk();
+
+    $queries = DB::connection('tenant')->getQueryLog();
+    $relationHits = collect($queries)->filter(function ($q) {
+        $sql = strtolower($q['query']);
+
+        return str_contains($sql, 'journal_entry_lines')
+            || str_contains($sql, 'from `accounts`')
+            || str_contains($sql, 'from "accounts"');
+    });
+
+    expect($relationHits)->toHaveCount(0);
 });
