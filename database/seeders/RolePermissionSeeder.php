@@ -148,6 +148,7 @@ class RolePermissionSeeder extends Seeder
         'create journal entries',
         'edit journal entries',
         'delete journal entries',
+        'view accounting payments',
         'view deposits',
         'create deposits',
         'view transfers',
@@ -344,6 +345,7 @@ class RolePermissionSeeder extends Seeder
             'view accounting', // DEPRECATED: backward compatibility
             'view chart of accounts', 'create chart of accounts', 'edit chart of accounts',
             'view journal entries', 'create journal entries', 'edit journal entries',
+            'view accounting payments',
             'view deposits', 'create deposits',
             'view transfers', 'create transfers',
             'view general ledger',

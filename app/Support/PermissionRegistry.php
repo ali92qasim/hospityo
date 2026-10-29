@@ -252,6 +252,9 @@ class PermissionRegistry
                     'edit journal entries',
                     'delete journal entries',
                 ],
+                'payments' => [
+                    'view accounting payments',
+                ],
                 'deposits' => [
                     'view deposits',
                     'create deposits',
