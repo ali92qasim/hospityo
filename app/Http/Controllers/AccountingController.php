@@ -581,6 +581,8 @@ class AccountingController extends Controller
             $entry->lines()->create(['account_id' => $equityAccount->id, 'debit' => $amount, 'credit' => 0, 'narration' => 'Opening balance contra']);
             $entry->lines()->create(['account_id' => $account->id, 'debit' => 0, 'credit' => $amount, 'narration' => 'Opening balance']);
         }
+
+        AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
     }
 
     // ── Fiscal Year Close ──────────────────────────

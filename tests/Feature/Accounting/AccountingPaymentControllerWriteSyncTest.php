@@ -49,6 +49,24 @@ function apWriteSyncUser(array $permissions): User
     return $user;
 }
 
+it('records an accounting payment when setting a cash opening balance', function () {
+    apWriteSyncTenant();
+
+    $this->actingAs(apWriteSyncUser(['create chart of accounts', 'view chart of accounts']));
+
+    $this->post(route('accounting.store-account'), [
+        'code' => '1100',
+        'name' => 'Cash in Hand',
+        'type' => 'asset',
+        'opening_balance' => 2500,
+    ])->assertRedirect();
+
+    $row = AccountingPayment::query()->sole();
+    expect($row->payment_type)->toBe('income')
+        ->and($row->payment_method)->toBe('cash')
+        ->and((float) $row->amount)->toBe(2500.0);
+});
+
 it('records an accounting payment when depositing into cash', function () {
     apWriteSyncTenant();
 

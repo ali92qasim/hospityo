@@ -65,6 +65,50 @@ it('posts a bill payment and creates an accounting payment row', function () {
     expect((float) $row->amount)->toBe(5000.0);
 });
 
+it('heals missing accounting_payments when postPaymentEntry finds an existing JE', function () {
+    $payment = Payment::create([
+        'bill_id' => $this->bill->id,
+        'payment_date' => now(),
+        'amount' => 3000,
+        'payment_method' => 'cash',
+        'received_by' => $this->user->id,
+    ]);
+
+    $cash = Account::where('code', '1100')->firstOrFail();
+    $receivable = Account::where('code', '1200')->firstOrFail();
+
+    $entry = JournalEntry::create([
+        'entry_date' => $payment->payment_date,
+        'reference_type' => 'Payment',
+        'reference_id' => $payment->id,
+        'description' => 'Pre-feature payment JE without accounting_payments',
+        'created_by' => $this->user->id,
+        'is_auto' => true,
+        'entry_type' => 'original',
+    ]);
+    $entry->lines()->create([
+        'account_id' => $cash->id,
+        'debit' => 3000,
+        'credit' => 0,
+        'narration' => 'Payment via cash',
+    ]);
+    $entry->lines()->create([
+        'account_id' => $receivable->id,
+        'debit' => 0,
+        'credit' => 3000,
+        'narration' => 'Payment against bill',
+    ]);
+
+    expect(AccountingPayment::where('journal_entry_id', $entry->id)->count())->toBe(0);
+
+    AccountingService::postPaymentEntry($payment);
+
+    $row = AccountingPayment::where('journal_entry_id', $entry->id)->sole();
+    expect($row->payment_type)->toBe('income')
+        ->and($row->payment_method)->toBe('cash')
+        ->and((float) $row->amount)->toBe(3000.0);
+});
+
 it('clears original and syncs reversal when reversing a cash payment entry', function () {
     $payment = Payment::create([
         'bill_id' => $this->bill->id,

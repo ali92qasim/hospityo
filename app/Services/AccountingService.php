@@ -242,6 +242,7 @@ class AccountingService
                     'bill_id'  => $bill->id,
                     'entry_id' => $existing->id,
                 ]);
+                AccountingPaymentSync::syncEntry($existing->fresh(['lines.account']));
                 return $existing;
             }
 
@@ -283,6 +284,7 @@ class AccountingService
                     'payment_id' => $payment->id,
                     'entry_id'   => $existing->id,
                 ]);
+                AccountingPaymentSync::syncEntry($existing->fresh(['lines.account']));
                 return $existing;
             }
 
@@ -353,6 +355,7 @@ class AccountingService
                 ->first();
 
             if ($existing) {
+                AccountingPaymentSync::syncEntry($existing->fresh(['lines.account']));
                 return $existing;
             }
 
@@ -443,6 +446,7 @@ class AccountingService
                 ->first();
 
             if ($existing) {
+                AccountingPaymentSync::syncEntry($existing->fresh(['lines.account']));
                 return $existing;
             }
 
@@ -525,6 +529,7 @@ class AccountingService
                 ->first();
 
             if ($existing) {
+                AccountingPaymentSync::syncEntry($existing->fresh(['lines.account']));
                 return $existing;
             }
 
