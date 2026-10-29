@@ -459,6 +459,10 @@ Route::middleware('auth')->group(function () {
             ->name('update-journal-entry')
             ->middleware('permission:edit journal entries');
 
+        Route::get('payments', [AccountingController::class, 'payments'])
+            ->name('payments')
+            ->middleware('permission:view accounting payments|view accounting');
+
         Route::get('patient-ledger', [AccountingController::class, 'patientLedger'])
             ->name('patient-ledger')
             ->middleware('permission:view patient ledgers|view accounting');

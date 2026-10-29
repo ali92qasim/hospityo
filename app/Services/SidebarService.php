@@ -256,6 +256,9 @@ class SidebarService
             if ($user->can('view journal entries') || $user->can('view accounting')) {
                 $items[] = $this->item('Journal Entries', 'fa-book', 'accounting.journal-entries', ['accounting.journal-entries']);
             }
+            if ($user->can('view accounting payments') || $user->can('view accounting')) {
+                $items[] = $this->item('Payments', 'fa-money-bill-wave', 'accounting.payments', ['accounting.payments']);
+            }
             if ($this->hasModule($tenant, 'accounting.general-ledger') && ($user->can('view general ledger') || $user->can('view accounting'))) {
                 $items[] = $this->item('General Ledger', 'fa-file-alt', 'accounting.general-ledger', ['accounting.general-ledger']);
             }

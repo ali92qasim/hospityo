@@ -48,7 +48,7 @@ it('hides statement sidebar items when the child slug is missing', function () {
     $group = collect(app(\App\Services\SidebarService::class)->build($user, $tenant))->firstWhere('id', 'accounting');
 
     expect($group)->not->toBeNull()
-        ->and(collect($group['items'])->pluck('label')->all())->toBe(['Chart of Accounts', 'Journal Entries']);
+        ->and(collect($group['items'])->pluck('label')->all())->toBe(['Chart of Accounts', 'Journal Entries', 'Payments']);
 });
 
 it('shows employee ledger when the child slug and permission are present', function () {
@@ -65,7 +65,7 @@ it('shows profit and loss for the view accounting alias when the child slug is p
     $user = accountingCatalogUser(['view accounting']);
     $group = collect(app(\App\Services\SidebarService::class)->build($user, $tenant))->firstWhere('id', 'accounting');
 
-    expect(collect($group['items'])->pluck('label')->all())->toBe(['Chart of Accounts', 'Journal Entries', 'Profit & Loss']);
+    expect(collect($group['items'])->pluck('label')->all())->toBe(['Chart of Accounts', 'Journal Entries', 'Payments', 'Profit & Loss']);
 });
 
 it('forbids profit and loss when the child slug is missing from the plan', function () {

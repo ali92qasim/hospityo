@@ -139,6 +139,25 @@ class AccountingController extends Controller
         return view('admin.accounting.journal-entries', compact('entries'));
     }
 
+    public function payments(Request $request)
+    {
+        $query = \App\Models\AccountingPayment::query()
+            ->orderByDesc('payment_date')
+            ->orderByDesc('id');
+
+        if ($request->filled('payment_type') && in_array($request->payment_type, ['income', 'expense'], true)) {
+            $query->where('payment_type', $request->payment_type);
+        }
+
+        if ($request->filled('payment_method') && in_array($request->payment_method, ['cash', 'bank'], true)) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        $payments = $query->paginate(20)->withQueryString();
+
+        return view('admin.accounting.payments', compact('payments'));
+    }
+
     public function createJournalEntry()
     {
         $accounts = Account::active()->orderBy('code')->get();
