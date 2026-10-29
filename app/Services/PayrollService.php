@@ -244,6 +244,8 @@ class PayrollService
                 ]);
             }
 
+            AccountingPaymentSync::syncEntry($entry->fresh(['lines.account']));
+
             Log::info('[Payroll] Journal entry posted', ['entry' => $entry->entry_number]);
         } catch (\Throwable $e) {
             Log::error('[Payroll] Accounting post failed', ['error' => $e->getMessage()]);

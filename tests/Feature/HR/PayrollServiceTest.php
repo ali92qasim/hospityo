@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Account;
+use App\Models\AccountingPayment;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Department;
@@ -187,6 +188,13 @@ it('posts payroll to accounting using employee expense accounts', function () {
 
     expect($expenseLine)->not->toBeNull()
         ->and((float) $expenseLine->debit)->toBe(92000.0);
+
+    $row = AccountingPayment::where('payment_type', 'expense')
+        ->where('payment_method', 'cash')
+        ->where('amount', $run->total_net)
+        ->first();
+
+    expect($row)->not->toBeNull();
 });
 
 it('recalculates payroll run totals', function () {
