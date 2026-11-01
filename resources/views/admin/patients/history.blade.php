@@ -203,10 +203,17 @@
                         <h5 class="font-medium text-indigo-800 mb-2">Lab Tests</h5>
                         <div class="space-y-1">
                             @foreach($latestVisit->labOrders as $labOrder)
-                                <div class="text-sm text-indigo-600">
-                                    • {{ $labOrder->investigation->name }} 
-                                    <span class="text-xs">({{ ucfirst($labOrder->status) }})</span>
-                                </div>
+                                @forelse($labOrder->items as $item)
+                                    <div class="text-sm text-indigo-600">
+                                        • {{ $item->labTest?->name ?? 'Unknown Test' }}
+                                        <span class="text-xs">({{ ucfirst($labOrder->status) }})</span>
+                                    </div>
+                                @empty
+                                    <div class="text-sm text-indigo-600">
+                                        • Unknown Test
+                                        <span class="text-xs">({{ ucfirst($labOrder->status) }})</span>
+                                    </div>
+                                @endforelse
                             @endforeach
                         </div>
                     </div>

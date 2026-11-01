@@ -175,7 +175,7 @@ class PatientController extends Controller
     {
         $visits = $patient->visits()->with(['doctor', 'consultation'])->latest()->get();
         $prescriptions = $patient->prescriptions()->with(['items.medicine'])->latest()->get();
-        $labOrders = $patient->labOrders()->with(['investigation', 'result'])->latest()->get();
+        $labOrders = $patient->labOrders()->with(['items.labTest', 'result'])->latest()->get();
         $admissions = $patient->admissions()->with(['bed.ward'])->latest()->get();
         
         // Get latest visit with all related data
@@ -185,7 +185,7 @@ class PatientController extends Controller
                 'consultation', 
                 'vitalSigns', 
                 'prescriptions.items.medicine',
-                'labOrders.investigation'
+                'labOrders.items.labTest',
             ])
             ->latest()
             ->first();
