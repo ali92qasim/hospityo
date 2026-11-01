@@ -23,7 +23,7 @@ return new class extends Migration
             $table->index('payment_date');
             $table->index('payment_type');
             $table->index('payment_method');
-            $table->index(['payment_type', 'payment_method', 'payment_date']);
+            $table->index(['payment_type', 'payment_method', 'payment_date'], 'ap_type_method_date_idx');
         });
     }
 
