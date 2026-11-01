@@ -126,8 +126,8 @@ class Tenant extends BaseTenant
             return database_path('tenants/tenant_' . $slug . '.sqlite');
         }
 
-        // MySQL/PgSQL: just a database name
-        return 'tenant_' . $slug;
+        // MySQL/PgSQL: prefixed database name (TENANT_DB_PREFIX, default tenant_)
+        return config('database.tenant_db_prefix', 'tenant_').$slug;
     }
 
     public static function domainFor(string $slug): string

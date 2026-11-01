@@ -209,4 +209,13 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Tenant database name prefix (MySQL / MariaDB / PgSQL)
+    |--------------------------------------------------------------------------
+    | Shared hosting often requires an account prefix (e.g. codushco_).
+    | Local/default remains tenant_.
+    */
+    'tenant_db_prefix' => env('TENANT_DB_PREFIX', 'tenant_'),
+
 ];

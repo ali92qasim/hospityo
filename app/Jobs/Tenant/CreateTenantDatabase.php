@@ -3,6 +3,8 @@
 namespace App\Jobs\Tenant;
 
 use App\Models\Tenant;
+use App\Services\SharedHosting\CpanelMysqlProvisioner;
+use App\Services\SharedHosting\SharedHosting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,6 +35,8 @@ class CreateTenantDatabase implements ShouldQueue, NotTenantAware
         try {
             if ($driver === 'sqlite') {
                 $this->createSqliteDatabase($database);
+            } elseif (SharedHosting::enabled()) {
+                app(CpanelMysqlProvisioner::class)->create($database);
             } else {
                 $this->createMysqlDatabase($database);
             }
