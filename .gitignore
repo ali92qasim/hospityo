@@ -71,3 +71,6 @@ Thumbs.db
 *())
 *.psysh
 .psysh_history
+
+# Local agent brainstorm artifacts
+.superpowers/
