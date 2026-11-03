@@ -37,6 +37,7 @@ function hospitalInfoPayload(array $overrides = []): array
         'timezone' => 'Asia/Karachi',
         'date_format' => 'd/m/Y',
         'time_format' => 'h:i A',
+        'session_idle_timeout_minutes' => 30,
     ], $overrides);
 }
 
@@ -55,6 +56,7 @@ it('renders hospital information fields inside the settings shell', function () 
         ->assertSee('name="timezone"', false)
         ->assertSee('name="date_format"', false)
         ->assertSee('name="time_format"', false)
+        ->assertSee('name="session_idle_timeout_minutes"', false)
         ->assertSee('name="hospital_logo"', false);
 });
 

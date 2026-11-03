@@ -164,6 +164,33 @@
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+
+            <div>
+                @php
+                    $idleDefault = (int) config('security.idle_timeout_minutes', 30);
+                    $idleMin = (int) config('security.idle_timeout_min', 5);
+                    $idleMax = (int) config('security.idle_timeout_max', 60);
+                    $idleValue = old('session_idle_timeout_minutes', setting('session_idle_timeout_minutes', $idleDefault));
+                @endphp
+                <label for="session_idle_timeout_minutes" class="block text-sm font-medium text-gray-700 mb-2">
+                    Auto sign-out after inactivity (minutes)
+                </label>
+                <input type="number"
+                       id="session_idle_timeout_minutes"
+                       name="session_idle_timeout_minutes"
+                       value="{{ $idleValue }}"
+                       min="{{ $idleMin }}"
+                       max="{{ $idleMax }}"
+                       step="1"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"
+                       required>
+                <p class="mt-1 text-xs text-gray-500">
+                    If nobody uses the system for this many minutes, they will be signed out automatically. Allowed range: {{ $idleMin }}–{{ $idleMax }} minutes. Default: {{ $idleDefault }}.
+                </p>
+                @error('session_idle_timeout_minutes')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
         </div>
 
         <div class="flex justify-end mt-8">

@@ -24,7 +24,13 @@ class UpdateSettingsRequest extends FormRequest
             'currency' => 'required|string|max:10',
             'timezone' => 'required|timezone',
             'date_format' => 'required|string',
-            'time_format' => 'required|string'
+            'time_format' => 'required|string',
+            'session_idle_timeout_minutes' => [
+                'nullable',
+                'integer',
+                'min:'.(int) config('security.idle_timeout_min', 5),
+                'max:'.(int) config('security.idle_timeout_max', 60),
+            ],
         ];
     }
 }

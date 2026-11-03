@@ -57,6 +57,7 @@
     </div>
 
     @include('partials.confirm-dialog')
+    @include('partials.session-idle')
 
     @stack('scripts')
 

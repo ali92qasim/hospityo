@@ -45,7 +45,7 @@ class SettingsController extends Controller
         $settingKeys = [
             'hospital_name', 'hospital_address', 'hospital_phone',
             'hospital_email', 'hospital_website', 'phc_registration_number', 'currency', 'timezone',
-            'date_format', 'time_format',
+            'date_format', 'time_format', 'session_idle_timeout_minutes',
         ];
 
         foreach ($settingKeys as $key) {

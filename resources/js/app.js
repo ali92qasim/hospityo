@@ -1,6 +1,7 @@
 import './bootstrap';
 import './toast';
 import './confirm-dialog';
+import './session-idle';
 import './import-poller';
 import './file-input';
 import './datetime-config';
