@@ -20,9 +20,15 @@
                         <p class="text-xs sm:text-sm text-gray-500">{{ $patient->phone }}</p>
                     </div>
                 </div>
-                <a href="{{ route('patients.index') }}" class="text-gray-600 hover:text-gray-800 text-sm flex-shrink-0">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to Patients
-                </a>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0">
+                    <a href="{{ route('patients.clinical-history.pdf', $patient) }}"
+                       class="inline-flex items-center justify-center bg-medical-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                        <i class="fas fa-file-pdf mr-2"></i>Download Clinical History PDF
+                    </a>
+                    <a href="{{ route('patients.index') }}" class="text-gray-600 hover:text-gray-800 text-sm text-center sm:text-left py-2 sm:py-0">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Patients
+                    </a>
+                </div>
             </div>
         </div>
         

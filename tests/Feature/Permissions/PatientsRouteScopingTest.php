@@ -95,7 +95,7 @@ function patScopeNeedsPatient(string $route): bool
 {
     return in_array($route, [
         'patients.show', 'patients.edit', 'patients.update', 'patients.destroy',
-        'patients.history', 'patients.restore',
+        'patients.history', 'patients.clinical-history.pdf', 'patients.restore',
     ], true);
 }
 
@@ -140,6 +140,7 @@ dataset('patients escalations', [
     'data via create only' => ['get', 'patients.data', ['create patients']],
     'show via create only' => ['get', 'patients.show', ['create patients']],
     'history via create only' => ['get', 'patients.history', ['create patients']],
+    'clinical history pdf via create only' => ['get', 'patients.clinical-history.pdf', ['create patients']],
     'search via create only' => ['get', 'api.patients.search', ['create patients']],
     'search via edit only' => ['get', 'api.patients.search', ['edit patients']],
     'create via view only' => ['get', 'patients.create', ['view patients']],
@@ -176,6 +177,7 @@ dataset('patients positive controls', [
     'data' => ['get', 'patients.data', 'view patients'],
     'show' => ['get', 'patients.show', 'view patients'],
     'history' => ['get', 'patients.history', 'view patients'],
+    'clinical history pdf' => ['get', 'patients.clinical-history.pdf', 'view patients'],
     'search' => ['get', 'api.patients.search', 'view patients'],
     'create' => ['get', 'patients.create', 'create patients'],
     'store' => ['post', 'patients.store', 'create patients'],

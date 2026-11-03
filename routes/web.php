@@ -311,6 +311,9 @@ Route::middleware('auth')->group(function () {
         ->middlewareFor(['edit', 'update'], 'permission:edit patients')
         ->middlewareFor('destroy', 'permission:delete patients');
     Route::get('patients/{patient}/history', [PatientController::class, 'history'])->name('patients.history')->middleware('permission:view patients');
+    Route::get('patients/{patient}/clinical-history/pdf', [PatientController::class, 'downloadClinicalHistoryPdf'])
+        ->name('patients.clinical-history.pdf')
+        ->middleware('permission:view patients');
     Route::get('/doctors/data', [DoctorController::class, 'data'])
         ->name('doctors.data')
         ->middleware('permission:view doctors');

@@ -6,10 +6,12 @@ use App\Http\Controllers\Concerns\RedirectsAfterWrite;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
+use App\Services\PatientClinicalHistoryPdfService;
 use App\Traits\HandlesErrors;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -177,20 +179,55 @@ class PatientController extends Controller
         $prescriptions = $patient->prescriptions()->with(['items.medicine'])->latest()->get();
         $labOrders = $patient->labOrders()->with(['items.labTest', 'result'])->latest()->get();
         $admissions = $patient->admissions()->with(['bed.ward'])->latest()->get();
-        
+
         // Get latest visit with all related data
         $latestVisit = $patient->visits()
             ->with([
-                'doctor', 
-                'consultation', 
-                'vitalSigns', 
+                'doctor',
+                'consultation',
+                'vitalSigns',
                 'prescriptions.items.medicine',
                 'labOrders.items.labTest',
             ])
             ->latest()
             ->first();
-        
+
         return view('admin.patients.history', compact('patient', 'visits', 'prescriptions', 'labOrders', 'admissions', 'latestVisit'));
+    }
+
+    public function downloadClinicalHistoryPdf(
+        Patient $patient,
+        PatientClinicalHistoryPdfService $pdfService,
+    ): Response|RedirectResponse {
+        try {
+            $pdf = $pdfService->render($patient, auth()->user());
+
+            if (! is_string($pdf) || $pdf === '') {
+                return redirect()
+                    ->route('patients.history', $patient)
+                    ->with('error', 'Unable to generate clinical history PDF. Please try again.');
+            }
+
+            $filename = sprintf(
+                '%s-clinical-history-%s.pdf',
+                $patient->patient_no ?: ('patient-'.$patient->id),
+                now()->format('YmdHis')
+            );
+
+            return response($pdf, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to download patient clinical history PDF', [
+                'patient_id' => $patient->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('patients.history', $patient)
+                ->with('error', 'Unable to generate clinical history PDF. Please try again.');
+        }
     }
 
     public function search(Request $request): JsonResponse
