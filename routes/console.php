@@ -26,9 +26,11 @@ Schedule::command('pharmacy:alert-near-expiry')
 
 // Shared hosting fallback: short-lived worker. Exits when empty or after ~50s.
 // Requires only: * * * * * cd /path/to/app && php artisan schedule:run
+// withoutOverlapping(1): expire the mutex after 1 minute. Default is 1440 (24h);
+// if the host kills the worker mid-run the lock never releases and drains stop forever.
 Schedule::command('queue:work database --stop-when-empty --max-time=50 --tries=3')
     ->everyMinute()
-    ->withoutOverlapping()
+    ->withoutOverlapping(1)
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('[Schedule] queue:work drain failed.');
     });
