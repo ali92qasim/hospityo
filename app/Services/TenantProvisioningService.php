@@ -7,7 +7,6 @@ use App\Models\Tenant;
 use App\Jobs\Tenant\CreateTenantDatabase;
 use App\Jobs\Tenant\MigrateTenantDatabase;
 use App\Jobs\Tenant\SeedTenantData;
-use App\Support\BackgroundQueue;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 
@@ -74,9 +73,11 @@ class TenantProvisioningService
         ];
 
         if ($async) {
-            Bus::chain($jobs)->dispatch();
-            // Shared hosting / no Supervisor: drain the chain without a persistent worker.
-            BackgroundQueue::drain();
+            // 'deferred' runs the chain after the HTTP response is sent (same PHP
+            // process). Signup returns instantly; provisioning starts in ~0s instead
+            // of waiting up to 60s for the next cron tick. Cron queue:work remains
+            // as backup for database-queued jobs (imports, etc.).
+            Bus::chain($jobs)->onConnection('deferred')->dispatch();
         } else {
             foreach ($jobs as $job) {
                 dispatch_sync($job);

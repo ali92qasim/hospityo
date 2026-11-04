@@ -1,11 +1,13 @@
 <?php
 
+use App\Jobs\Tenant\CreateTenantDatabase;
+use App\Jobs\Tenant\MigrateTenantDatabase;
+use App\Jobs\Tenant\SeedTenantData;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Services\TenantProvisioningService;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Schema;
 
 uses(Tests\TestCase::class);
@@ -90,9 +92,8 @@ afterEach(function () {
     }
 });
 
-it('dispatches provisioning jobs and kicks a queue drain worker', function () {
+it('dispatches provisioning on the deferred connection so signup does not wait for cron', function () {
     Bus::fake();
-    Process::fake();
 
     app(TenantProvisioningService::class)->provision([
         'name' => 'Queue Kick Clinic',
@@ -106,15 +107,12 @@ it('dispatches provisioning jobs and kicks a queue drain worker', function () {
     expect(Tenant::where('slug', 'queue-kick-clinic')->value('status'))->toBe('provisioning');
 
     Bus::assertChained([
-        \App\Jobs\Tenant\CreateTenantDatabase::class,
-        \App\Jobs\Tenant\MigrateTenantDatabase::class,
-        \App\Jobs\Tenant\SeedTenantData::class,
+        CreateTenantDatabase::class,
+        MigrateTenantDatabase::class,
+        SeedTenantData::class,
     ]);
 
-    Process::assertRan(function ($process) {
-        $command = is_array($process->command) ? implode(' ', $process->command) : $process->command;
-
-        return str_contains($command, 'queue:work')
-            && str_contains($command, '--stop-when-empty');
+    Bus::assertDispatched(CreateTenantDatabase::class, function ($job) {
+        return $job->connection === 'deferred';
     });
 });

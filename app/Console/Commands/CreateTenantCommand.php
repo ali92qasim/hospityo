@@ -54,7 +54,7 @@ class CreateTenantCommand extends Command
             $this->info("✓ Provisioning complete. Tenant is {$tenant->status}.");
             $this->info("  URL: http://{$tenant->domain}");
         } else {
-            $this->info('Provisioning jobs dispatched to queue. Run `php artisan queue:work` to process.');
+            $this->info('Provisioning jobs deferred to after this command finishes (or use --sync).');
         }
 
         return self::SUCCESS;
