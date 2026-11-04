@@ -23,3 +23,12 @@ Schedule::command('pharmacy:alert-near-expiry')
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('[Schedule] pharmacy:alert-near-expiry failed.');
     });
+
+// Shared hosting fallback: short-lived worker. Exits when empty or after ~50s.
+// Requires only: * * * * * cd /path/to/app && php artisan schedule:run
+Schedule::command('queue:work database --stop-when-empty --max-time=50 --tries=3')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('[Schedule] queue:work drain failed.');
+    });

@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Jobs\Tenant\CreateTenantDatabase;
 use App\Jobs\Tenant\MigrateTenantDatabase;
 use App\Jobs\Tenant\SeedTenantData;
+use App\Support\BackgroundQueue;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 
@@ -74,6 +75,8 @@ class TenantProvisioningService
 
         if ($async) {
             Bus::chain($jobs)->dispatch();
+            // Shared hosting / no Supervisor: drain the chain without a persistent worker.
+            BackgroundQueue::drain();
         } else {
             foreach ($jobs as $job) {
                 dispatch_sync($job);
