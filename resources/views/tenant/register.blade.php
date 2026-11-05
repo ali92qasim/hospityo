@@ -62,6 +62,7 @@
         </div>
     </div>
 
+    <div id="register-shell" class="relative">
     <form method="POST" action="{{ route('tenant.register.store') }}" id="wizard-form">
         @csrf
 
@@ -242,6 +243,23 @@
         </div>
     </form>
 
+    {{-- Shown while the server runs create → migrate → seed (can take 15–30s) --}}
+    <div id="register-progress"
+         class="hidden absolute inset-0 z-20 rounded-2xl bg-white/95 backdrop-blur-sm border border-gray-100 shadow-sm flex items-center justify-center p-6"
+         aria-live="polite"
+         aria-busy="true"
+         role="status">
+        <div class="text-center max-w-sm">
+            <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <i class="fas fa-cog fa-spin text-medical-blue text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Setting up your hospital…</h2>
+            <p class="text-sm text-gray-500 mb-4">Registration is in progress. This usually takes under a minute.</p>
+            <p class="text-xs text-gray-400">Please keep this tab open. Do not refresh or go back.</p>
+        </div>
+    </div>
+    </div>
+
     {{-- Summary preview (shown on steps 2 & 3) --}}
     <div id="step-summary" class="hidden mt-4 text-center">
         <p class="text-xs text-gray-400">
@@ -336,6 +354,31 @@ function shake(id) {
     setTimeout(function() { el.classList.remove('border-red-400', 'ring-2', 'ring-red-200'); }, 2000);
 }
 
+function showRegisterProgress() {
+    var overlay = document.getElementById('register-progress');
+    var btn = document.getElementById('submit-btn');
+    var shell = document.getElementById('register-shell');
+
+    if (overlay) {
+        overlay.classList.remove('hidden');
+    }
+    if (shell) {
+        // Ensure the overlay has height even if the form collapses visually.
+        shell.style.minHeight = Math.max(shell.offsetHeight, 280) + 'px';
+    }
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-70', 'cursor-not-allowed');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Setting up…';
+    }
+
+    document.querySelectorAll('#wizard-form button, #wizard-form input, #wizard-form select, #wizard-form textarea')
+        .forEach(function (el) {
+            if (el.id === 'submit-btn') return;
+            el.style.pointerEvents = 'none';
+        });
+}
+
 // If server-side validation failed, jump to the right step
 document.addEventListener('DOMContentLoaded', function() {
     @if($errors->has('admin_name') || $errors->has('admin_email') || $errors->has('admin_password'))
@@ -345,6 +388,31 @@ document.addEventListener('DOMContentLoaded', function() {
     @elseif($errors->has('plan') || $errors->has('g-recaptcha-response'))
         goToStep(3);
     @endif
+
+    var form = document.getElementById('wizard-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+        if (form.dataset.submitting === '1') {
+            e.preventDefault();
+            return;
+        }
+
+        if (!validateStep(3)) {
+            e.preventDefault();
+            return;
+        }
+
+        var terms = document.getElementById('terms');
+        if (terms && !terms.checked) {
+            e.preventDefault();
+            shake('terms');
+            return;
+        }
+
+        form.dataset.submitting = '1';
+        showRegisterProgress();
+    });
 });
 </script>
 
