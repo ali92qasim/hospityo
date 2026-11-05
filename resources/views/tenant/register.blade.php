@@ -174,21 +174,27 @@
                     </div>
                     <h2 class="text-xl font-bold text-gray-900">Choose your plan</h2>
                     <p class="text-sm text-gray-500 mt-1">Start with a free trial, upgrade anytime</p>
+                    @if(!empty($persona))
+                    <p class="mt-2 text-sm text-medical-blue bg-blue-50 rounded-lg px-3 py-2">
+                        Suggested for {{ $persona['label'] }}: {{ $persona['reason'] }}
+                    </p>
+                    @endif
                 </div>
 
+                @php $defaultPlanSlug = old('plan', $selectedPlanSlug ?? 'starter'); @endphp
                 <div class="space-y-3 mb-6">
                     @foreach($plans as $plan)
                     @php $isCustom = $plan->isCustomPricing(); @endphp
                     <label class="group flex items-center p-4 border-2 rounded-xl transition-all duration-200
                         {{ $isCustom
                             ? 'border-gray-200 opacity-50 cursor-not-allowed'
-                            : (old('plan', 'starter') === $plan->slug
+                            : ($defaultPlanSlug === $plan->slug
                                 ? 'border-medical-blue bg-blue-50/50'
                                 : 'border-gray-200 hover:border-gray-300 cursor-pointer') }}"
                         id="plan-label-{{ $plan->slug }}">
                         <input type="radio" name="plan" value="{{ $plan->slug }}"
                                class="text-medical-blue focus:ring-medical-blue h-4 w-4 flex-shrink-0"
-                               {{ old('plan', 'starter') === $plan->slug && !$isCustom ? 'checked' : '' }}
+                               {{ $defaultPlanSlug === $plan->slug && !$isCustom ? 'checked' : '' }}
                                {{ $isCustom ? 'disabled' : '' }}
                                @if(!$isCustom)
                                onchange="document.querySelectorAll('[id^=plan-label-]').forEach(l=>{l.classList.remove('border-medical-blue','bg-blue-50/50');l.classList.add('border-gray-200')});this.closest('label').classList.remove('border-gray-200');this.closest('label').classList.add('border-medical-blue','bg-blue-50/50');"

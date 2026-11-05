@@ -57,6 +57,16 @@
         </label>
         <p class="ml-3 text-xs text-gray-400">Hides price and shows "Contact Sales" on public pages</p>
     </div>
+    <div class="flex items-end md:col-span-2">
+        <label class="flex items-center">
+            <input type="hidden" name="is_popular" value="0">
+            <input type="checkbox" name="is_popular" value="1"
+                   {{ old('is_popular', $plan->is_popular ?? false) ? 'checked' : '' }}
+                   class="rounded border-gray-300 text-medical-blue focus:ring-medical-blue">
+            <span class="ml-2 text-sm text-gray-700">Most Popular on landing page</span>
+        </label>
+        <p class="ml-3 text-xs text-gray-400">Only one plan should be popular; saving this clears the flag on others</p>
+    </div>
 </div>
 
 <hr class="my-6 border-gray-200">

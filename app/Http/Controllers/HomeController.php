@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Plan;
 use App\Models\SiteSetting;
 use App\Models\Tenant;
+use App\Support\PricingPersona;
 
 class HomeController extends Controller
 {
@@ -41,7 +42,8 @@ class HomeController extends Controller
         }
 
         $salesEmail = SiteSetting::get('sales_contact_email');
+        $pricingPersonas = PricingPersona::definitions();
 
-        return view('landing', compact('landingPlans', 'salesEmail'));
+        return view('landing', compact('landingPlans', 'salesEmail', 'pricingPersonas'));
     }
 }

@@ -20,9 +20,14 @@
                     <h3 class="text-lg font-semibold text-gray-900">{{ $plan->name }}</h3>
                     <p class="text-xs text-gray-400">{{ $plan->slug }}</p>
                 </div>
-                <span class="text-xs px-2 py-0.5 rounded-full {{ $plan->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
-                    {{ $plan->is_active ? 'Active' : 'Inactive' }}
-                </span>
+                <div class="flex flex-col items-end gap-1">
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ $plan->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        {{ $plan->is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                    @if($plan->is_popular)
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-medical-blue">Most Popular</span>
+                    @endif
+                </div>
             </div>
 
             <div class="flex items-baseline mb-3">

@@ -216,7 +216,7 @@
 {{-- Pricing Section --}}
 <section id="pricing" class="py-20 bg-white">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
+        <div class="text-center mb-10">
             <h2 class="text-3xl sm:text-4xl font-bold text-gray-900">Simple, transparent pricing</h2>
             <p class="mt-4 text-lg text-gray-600">Start free. Upgrade when you're ready.</p>
         </div>
@@ -225,18 +225,38 @@
         @elseif($landingPlans->isEmpty())
             <p class="text-center text-gray-500">No plans are currently available.</p>
         @else
-            @php $popularPlan = $landingPlans->count() >= 2 ? $landingPlans->get(1) : null; @endphp
-            <div class="grid md:grid-cols-3 gap-8">
-                @foreach($landingPlans as $landingPlan)
-                @php $isPopular = $popularPlan && $landingPlan->id === $popularPlan->id; @endphp
-                <div class="rounded-2xl p-8 relative
-                    {{ $isPopular ? 'border-2 border-medical-blue shadow-lg shadow-blue-100' : 'border border-gray-200' }}">
+            @php
+                $pricingPersonas = $pricingPersonas ?? [];
+            @endphp
 
-                    @if($isPopular)
-                    <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-medical-blue text-white text-xs font-medium rounded-full whitespace-nowrap">
-                        Most Popular
-                    </span>
-                    @endif
+            @if(!empty($pricingPersonas))
+            <div class="mb-10" id="pricing-personas">
+                <p class="text-center text-sm font-medium text-gray-700 mb-3">What do you run?</p>
+                <div class="flex flex-wrap justify-center gap-2">
+                    @foreach($pricingPersonas as $personaKey => $persona)
+                    <button type="button"
+                            class="persona-btn px-3.5 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:border-medical-blue hover:text-medical-blue transition-colors"
+                            data-persona="{{ $personaKey }}"
+                            data-plan="{{ $persona['plan'] }}"
+                            data-label="{{ $persona['label'] }}"
+                            data-reason="{{ $persona['reason'] }}">
+                        {{ $persona['label'] }}
+                    </button>
+                    @endforeach
+                </div>
+                <p id="persona-reason" class="mt-3 text-center text-sm text-gray-500 min-h-[1.25rem]"></p>
+            </div>
+            @endif
+
+            <div class="grid md:grid-cols-3 gap-8" id="pricing-cards">
+                @foreach($landingPlans as $landingPlan)
+                @php $isPopular = (bool) $landingPlan->is_popular; @endphp
+                <div class="plan-card rounded-2xl p-8 relative border transition-shadow
+                    {{ $isPopular ? 'border-2 border-medical-blue shadow-lg shadow-blue-100' : 'border-gray-200' }}"
+                     data-plan-slug="{{ $landingPlan->slug }}"
+                     data-popular="{{ $isPopular ? '1' : '0' }}">
+
+                    <span class="plan-badge absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-medical-blue text-white text-xs font-medium rounded-full whitespace-nowrap {{ $isPopular ? '' : 'hidden' }}">{{ $isPopular ? 'Most Popular' : '' }}</span>
 
                     <h3 class="text-lg font-semibold text-gray-900">{{ $landingPlan->name }}</h3>
 
@@ -281,10 +301,10 @@
                                 </button>
                             @endif
                         @else
-                            <a href="{{ route('tenant.register') }}"
-                               class="block w-full text-center px-4 py-2.5 text-sm font-medium
-                               {{ $isPopular ? 'text-white bg-medical-blue hover:bg-blue-700' : 'text-medical-blue border border-medical-blue hover:bg-blue-50' }}
-                               rounded-lg transition-colors">
+                            <a href="{{ route('tenant.register', ['plan' => $landingPlan->slug]) }}"
+                               class="plan-cta block w-full text-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors
+                               {{ $isPopular ? 'text-white bg-medical-blue hover:bg-blue-700' : 'text-medical-blue border border-medical-blue hover:bg-blue-50' }}"
+                               data-base-href="{{ route('tenant.register', ['plan' => $landingPlan->slug]) }}">
                                 Get Started
                             </a>
                         @endif
@@ -299,6 +319,93 @@
                 </div>
                 @endforeach
             </div>
+            <script>
+            (function () {
+                var buttons = document.querySelectorAll('.persona-btn');
+                var cards = document.querySelectorAll('.plan-card');
+                var reasonEl = document.getElementById('persona-reason');
+                if (!buttons.length || !cards.length) return;
+
+                function resetCards() {
+                    cards.forEach(function (card) {
+                        var popular = card.getAttribute('data-popular') === '1';
+                        var badge = card.querySelector('.plan-badge');
+                        var cta = card.querySelector('.plan-cta');
+                        card.classList.toggle('border-2', popular);
+                        card.classList.toggle('border-medical-blue', popular);
+                        card.classList.toggle('shadow-lg', popular);
+                        card.classList.toggle('shadow-blue-100', popular);
+                        card.classList.toggle('border-gray-200', !popular);
+                        if (badge) {
+                            badge.textContent = 'Most Popular';
+                            badge.classList.toggle('hidden', !popular);
+                        }
+                        if (cta) {
+                            cta.href = cta.getAttribute('data-base-href');
+                            cta.className = 'plan-cta block w-full text-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ' +
+                                (popular
+                                    ? 'text-white bg-medical-blue hover:bg-blue-700'
+                                    : 'text-medical-blue border border-medical-blue hover:bg-blue-50');
+                        }
+                    });
+                    buttons.forEach(function (btn) {
+                        btn.classList.remove('border-medical-blue', 'bg-blue-50', 'text-medical-blue');
+                        btn.classList.add('border-gray-200', 'text-gray-700');
+                    });
+                    if (reasonEl) reasonEl.textContent = '';
+                }
+
+                function selectPersona(btn) {
+                    var planSlug = btn.getAttribute('data-plan');
+                    var persona = btn.getAttribute('data-persona');
+                    var label = btn.getAttribute('data-label');
+                    var reason = btn.getAttribute('data-reason');
+
+                    resetCards();
+                    btn.classList.remove('border-gray-200', 'text-gray-700');
+                    btn.classList.add('border-medical-blue', 'bg-blue-50', 'text-medical-blue');
+                    if (reasonEl) reasonEl.textContent = reason || '';
+
+                    cards.forEach(function (card) {
+                        var match = card.getAttribute('data-plan-slug') === planSlug;
+                        var badge = card.querySelector('.plan-badge');
+                        var cta = card.querySelector('.plan-cta');
+                        card.classList.toggle('border-2', match);
+                        card.classList.toggle('border-medical-blue', match);
+                        card.classList.toggle('shadow-lg', match);
+                        card.classList.toggle('shadow-blue-100', match);
+                        card.classList.toggle('border-gray-200', !match);
+                        if (badge) {
+                            if (match) {
+                                badge.textContent = 'Recommended for ' + label;
+                                badge.classList.remove('hidden');
+                            } else {
+                                badge.classList.add('hidden');
+                            }
+                        }
+                        if (cta) {
+                            var url = new URL(cta.getAttribute('data-base-href'), window.location.origin);
+                            url.searchParams.set('persona', persona);
+                            cta.href = url.pathname + url.search;
+                            cta.className = 'plan-cta block w-full text-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ' +
+                                (match
+                                    ? 'text-white bg-medical-blue hover:bg-blue-700'
+                                    : 'text-medical-blue border border-medical-blue hover:bg-blue-50');
+                        }
+                    });
+                }
+
+                buttons.forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        if (btn.classList.contains('bg-blue-50')) {
+                            resetCards();
+                            return;
+                        }
+                        selectPersona(btn);
+                    });
+                });
+            })();
+            </script>
         @endif
     </div>
 </section>

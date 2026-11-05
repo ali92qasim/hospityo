@@ -23,6 +23,7 @@ class Plan extends Model
         'is_active',
         'sort_order',
         'is_custom_pricing',
+        'is_popular',
     ];
 
     protected function casts(): array
@@ -33,7 +34,23 @@ class Plan extends Model
             'price'             => 'decimal:2',
             'is_active'         => 'boolean',
             'is_custom_pricing' => 'boolean',
+            'is_popular'        => 'boolean',
         ];
+    }
+
+    /**
+     * Ensure only one plan is marked popular. Call after setting is_popular true.
+     */
+    public function makeSolePopular(): void
+    {
+        if (! $this->is_popular) {
+            return;
+        }
+
+        static::query()
+            ->whereKeyNot($this->getKey())
+            ->where('is_popular', true)
+            ->update(['is_popular' => false]);
     }
 
     /**

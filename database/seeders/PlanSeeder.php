@@ -47,6 +47,7 @@ class PlanSeeder extends Seeder
                     'max_doctors'  => 10,
                 ],
                 'sort_order'    => 2,
+                'is_popular'    => true,
             ],
             [
                 'slug'          => 'enterprise',

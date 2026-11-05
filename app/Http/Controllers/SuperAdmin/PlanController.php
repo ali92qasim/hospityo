@@ -48,10 +48,11 @@ class PlanController extends Controller
             'is_active'          => 'boolean',
             'mdr_note'           => 'nullable|string|max:1000',
             'is_custom_pricing'  => 'boolean',
+            'is_popular'         => 'boolean',
         ]);
 
         try {
-            Plan::create([
+            $plan = Plan::create([
                 'name'          => $validated['name'],
                 'slug'          => $validated['slug'] ?: Str::slug($validated['name']),
                 'description'   => $validated['description'],
@@ -68,7 +69,9 @@ class PlanController extends Controller
                 'sort_order'        => $validated['sort_order'] ?? 0,
                 'is_active'         => $request->boolean('is_active', true),
                 'is_custom_pricing' => $request->boolean('is_custom_pricing', false),
+                'is_popular'        => $request->boolean('is_popular', false),
             ]);
+            $plan->makeSolePopular();
 
             return redirect()->route('super-admin.plans.index')->with('success', 'Plan created.');
         } catch (\Throwable $e) {
@@ -101,6 +104,7 @@ class PlanController extends Controller
             'is_active'          => 'boolean',
             'mdr_note'           => 'nullable|string|max:1000',
             'is_custom_pricing'  => 'boolean',
+            'is_popular'         => 'boolean',
         ]);
 
         try {
@@ -122,7 +126,9 @@ class PlanController extends Controller
                 'sort_order'        => $validated['sort_order'] ?? 0,
                 'is_active'         => $request->boolean('is_active', true),
                 'is_custom_pricing' => $request->boolean('is_custom_pricing', false),
+                'is_popular'        => $request->boolean('is_popular', false),
             ]);
+            $plan->makeSolePopular();
 
             $added = array_values(array_diff($plan->fresh()->modules ?? [], $previousModules));
             $redirect = redirect()->route('super-admin.plans.index')->with('success', 'Plan updated.');

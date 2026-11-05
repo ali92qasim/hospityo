@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RegisterTenantRequest;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Services\TenantProvisioningService;
+use App\Support\PricingPersona;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -17,10 +20,23 @@ class TenantRegistrationController extends Controller
         protected TenantProvisioningService $provisioning,
     ) {}
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        $plans = \App\Models\Plan::active()->orderBy('sort_order')->get();
-        return view('tenant.register', compact('plans'));
+        $plans = Plan::active()->orderBy('sort_order')->get();
+
+        $personaKey = $request->query('persona');
+        $persona = is_string($personaKey) ? PricingPersona::find($personaKey) : null;
+
+        $requestedPlan = $request->query('plan');
+        $selectedPlanSlug = is_string($requestedPlan) && $plans->contains('slug', $requestedPlan)
+            ? $requestedPlan
+            : ($persona['plan'] ?? 'starter');
+
+        if (! $plans->contains('slug', $selectedPlanSlug)) {
+            $selectedPlanSlug = $plans->firstWhere('is_custom_pricing', false)?->slug ?? 'starter';
+        }
+
+        return view('tenant.register', compact('plans', 'selectedPlanSlug', 'persona', 'personaKey'));
     }
 
     public function store(RegisterTenantRequest $request): RedirectResponse|JsonResponse
