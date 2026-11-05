@@ -96,7 +96,9 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
                         <input type="password" name="admin_password" id="f-admin_password"
                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-medical-blue focus:border-transparent text-sm"
-                               placeholder="Min 8 characters" required>
+                               placeholder="e.g. Abcd1234!" required>
+                        <p id="password-hint" class="text-gray-500 text-xs mt-1">Use at least 8 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character.</p>
+                        <p id="password-client-error" class="text-red-500 text-xs mt-1 hidden"></p>
                         @error('admin_password')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
                     <div>
@@ -343,9 +345,19 @@ function validateStep(step) {
         var pass = document.getElementById('f-admin_password').value;
         var confirm = document.getElementById('f-admin_password_confirmation').value;
 
+        var passwordError = document.getElementById('password-client-error');
+        passwordError.classList.add('hidden');
+        passwordError.textContent = '';
+
         if (!name) { shake('f-admin_name'); return false; }
         if (!email || !email.includes('@')) { shake('f-admin_email'); return false; }
-        if (pass.length < 8) { shake('f-admin_password'); return false; }
+        var strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+        if (!strongPassword.test(pass)) {
+            passwordError.textContent = 'Please use a stronger password with 1 uppercase, 1 lowercase, 1 number, and 1 special character.';
+            passwordError.classList.remove('hidden');
+            shake('f-admin_password');
+            return false;
+        }
         if (pass !== confirm) { shake('f-admin_password_confirmation'); return false; }
         return true;
     }

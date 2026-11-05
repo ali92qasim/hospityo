@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\Recaptcha;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Password;
 
 class RegisterTenantRequest extends FormRequest
 {
@@ -21,7 +22,14 @@ class RegisterTenantRequest extends FormRequest
             'phone'          => ['nullable', 'string', 'max:20'],
             'admin_name'     => ['required', 'string', 'max:255'],
             'admin_email'    => ['required', 'email', 'max:255'],
-            'admin_password' => ['required', 'confirmed', 'min:8'],
+            'admin_password' => [
+                'required',
+                'confirmed',
+                Password::min(8)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
             'g-recaptcha-response' => ['required', new Recaptcha],
             'plan'           => [
                 'nullable',
@@ -44,6 +52,11 @@ class RegisterTenantRequest extends FormRequest
             'slug.regex'  => 'Subdomain must contain only lowercase letters, numbers, and hyphens.',
             'slug.unique' => 'This subdomain is already taken.',
             'g-recaptcha-response.required' => 'Please confirm you are not a robot.',
+            'admin_password.password.mixed' => 'Please use a stronger password with 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.',
+            'admin_password.password.numbers' => 'Please use a stronger password with 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.',
+            'admin_password.password.symbols' => 'Please use a stronger password with 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.',
+            'admin_password.password.letters' => 'Please use a stronger password with 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.',
+            'admin_password.min' => 'Please use a stronger password with at least 8 characters, including 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.',
         ];
     }
 }
