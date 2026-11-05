@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RegisterTenantRequest;
 use App\Models\Tenant;
 use App\Services\TenantProvisioningService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -22,14 +23,14 @@ class TenantRegistrationController extends Controller
         return view('tenant.register', compact('plans'));
     }
 
-    public function store(RegisterTenantRequest $request): RedirectResponse
+    public function store(RegisterTenantRequest $request): RedirectResponse|JsonResponse
     {
         $slug = $request->slug ?: Str::slug($request->hospital_name);
         $existing = Tenant::where('slug', $slug)->first();
 
         if ($existing) {
             if (in_array($existing->status, ['provisioning', 'active'])) {
-                return redirect()->route('tenant.provisioning', $existing);
+                return $this->registrationSuccess($request, $existing);
             }
             if ($existing->status === 'failed') {
                 try { $existing->delete(); } catch (\Throwable $e) {
@@ -56,13 +57,18 @@ class TenantRegistrationController extends Controller
                 async: false,
             );
 
-            return redirect()->route('tenant.provisioning', $tenant);
+            return $this->registrationSuccess($request, $tenant);
 
         } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['slug' => $e->getMessage()])->withInput();
+            return $this->registrationFailure($request, ['slug' => $e->getMessage()]);
         } catch (\Throwable $e) {
             Log::error('[Registration] Provisioning failed', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Something went wrong. Please try again.')->withInput();
+
+            return $this->registrationFailure(
+                $request,
+                [],
+                'Something went wrong. Please try again.'
+            );
         }
     }
 
@@ -78,5 +84,45 @@ class TenantRegistrationController extends Controller
             'domain' => $tenant->domain,
             'url'    => 'http://' . $tenant->domain . '/login',
         ]);
+    }
+
+    /**
+     * Browser fetch submits expect JSON so the page can show a custom progress
+     * UI without triggering the browser tab loading spinner (full-page POST).
+     */
+    protected function registrationSuccess(RegisterTenantRequest $request, Tenant $tenant): RedirectResponse|JsonResponse
+    {
+        $url = route('tenant.provisioning', $tenant);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'redirect' => $url,
+                'status' => $tenant->status,
+            ]);
+        }
+
+        return redirect()->to($url);
+    }
+
+    /**
+     * @param  array<string, string>  $errors
+     */
+    protected function registrationFailure(
+        RegisterTenantRequest $request,
+        array $errors = [],
+        ?string $message = null,
+    ): RedirectResponse|JsonResponse {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message ?? ($errors['slug'] ?? 'Registration failed.'),
+                'errors' => $errors,
+            ], 422);
+        }
+
+        if ($message) {
+            return back()->with('error', $message)->withInput();
+        }
+
+        return back()->withErrors($errors)->withInput();
     }
 }

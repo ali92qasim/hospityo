@@ -243,21 +243,33 @@
         </div>
     </form>
 
-    {{-- Shown while the server runs create → migrate → seed (can take 15–30s) --}}
+    </div>
+
+    {{-- Full-viewport overlay: visible progress without a full-page navigation (no browser tab spinner) --}}
     <div id="register-progress"
-         class="hidden absolute inset-0 z-20 rounded-2xl bg-white/95 backdrop-blur-sm border border-gray-100 shadow-sm flex items-center justify-center p-6"
+         class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
          aria-live="polite"
          aria-busy="true"
-         role="status">
-        <div class="text-center max-w-sm">
-            <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                <i class="fas fa-cog fa-spin text-medical-blue text-2xl"></i>
+         role="alertdialog"
+         aria-modal="true"
+         aria-labelledby="register-progress-title">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-white/20 p-8 text-center">
+            <div class="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 ring-4 ring-blue-100">
+                <i class="fas fa-hospital fa-spin text-medical-blue text-3xl"></i>
             </div>
-            <h2 class="text-xl font-bold text-gray-900 mb-2">Setting up your hospital…</h2>
-            <p class="text-sm text-gray-500 mb-4">Registration is in progress. This usually takes under a minute.</p>
-            <p class="text-xs text-gray-400">Please keep this tab open. Do not refresh or go back.</p>
+            <h2 id="register-progress-title" class="text-2xl font-bold text-gray-900 mb-2">Setting up your hospital…</h2>
+            <p class="text-base text-gray-600 mb-3">Registration is in progress. Please wait.</p>
+            <p class="text-sm text-gray-500 mb-6">This usually takes under a minute. Keep this tab open.</p>
+            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-3">
+                <div class="h-full bg-medical-blue rounded-full animate-pulse" style="width: 70%"></div>
+            </div>
+            <p id="register-progress-detail" class="text-xs font-medium text-medical-blue">Creating your workspace…</p>
+            <p id="register-progress-error" class="hidden mt-4 text-sm text-red-600"></p>
+            <button type="button" id="register-progress-dismiss"
+                    class="hidden mt-4 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50">
+                Try again
+            </button>
         </div>
-    </div>
     </div>
 
     {{-- Summary preview (shown on steps 2 & 3) --}}
@@ -354,17 +366,29 @@ function shake(id) {
     setTimeout(function() { el.classList.remove('border-red-400', 'ring-2', 'ring-red-200'); }, 2000);
 }
 
+var registerProgressTimer = null;
+var registerProgressMessages = [
+    'Creating your workspace…',
+    'Preparing your database…',
+    'Configuring your hospital…',
+    'Almost done…'
+];
+
 function showRegisterProgress() {
     var overlay = document.getElementById('register-progress');
     var btn = document.getElementById('submit-btn');
-    var shell = document.getElementById('register-shell');
+    var err = document.getElementById('register-progress-error');
+    var dismiss = document.getElementById('register-progress-dismiss');
+    var detail = document.getElementById('register-progress-detail');
 
+    if (err) {
+        err.classList.add('hidden');
+        err.textContent = '';
+    }
+    if (dismiss) dismiss.classList.add('hidden');
     if (overlay) {
         overlay.classList.remove('hidden');
-    }
-    if (shell) {
-        // Ensure the overlay has height even if the form collapses visually.
-        shell.style.minHeight = Math.max(shell.offsetHeight, 280) + 'px';
+        document.body.style.overflow = 'hidden';
     }
     if (btn) {
         btn.disabled = true;
@@ -372,11 +396,41 @@ function showRegisterProgress() {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Setting up…';
     }
 
-    document.querySelectorAll('#wizard-form button, #wizard-form input, #wizard-form select, #wizard-form textarea')
-        .forEach(function (el) {
-            if (el.id === 'submit-btn') return;
-            el.style.pointerEvents = 'none';
-        });
+    var msgIndex = 0;
+    if (detail) detail.textContent = registerProgressMessages[0];
+    clearInterval(registerProgressTimer);
+    registerProgressTimer = setInterval(function () {
+        msgIndex = Math.min(msgIndex + 1, registerProgressMessages.length - 1);
+        if (detail) detail.textContent = registerProgressMessages[msgIndex];
+    }, 8000);
+}
+
+function hideRegisterProgress(message) {
+    clearInterval(registerProgressTimer);
+    var overlay = document.getElementById('register-progress');
+    var btn = document.getElementById('submit-btn');
+    var form = document.getElementById('wizard-form');
+    var err = document.getElementById('register-progress-error');
+    var dismiss = document.getElementById('register-progress-dismiss');
+
+    if (form) form.dataset.submitting = '0';
+    if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+        btn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Create My Hospital';
+    }
+
+    if (message) {
+        if (err) {
+            err.textContent = message;
+            err.classList.remove('hidden');
+        }
+        if (dismiss) dismiss.classList.remove('hidden');
+        return;
+    }
+
+    if (overlay) overlay.classList.add('hidden');
+    document.body.style.overflow = '';
 }
 
 // If server-side validation failed, jump to the right step
@@ -390,28 +444,73 @@ document.addEventListener('DOMContentLoaded', function() {
     @endif
 
     var form = document.getElementById('wizard-form');
+    var dismiss = document.getElementById('register-progress-dismiss');
+    if (dismiss) {
+        dismiss.addEventListener('click', function () {
+            hideRegisterProgress();
+        });
+    }
     if (!form) return;
 
     form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
         if (form.dataset.submitting === '1') {
-            e.preventDefault();
             return;
         }
 
         if (!validateStep(3)) {
-            e.preventDefault();
             return;
         }
 
         var terms = document.getElementById('terms');
         if (terms && !terms.checked) {
-            e.preventDefault();
             shake('terms');
             return;
         }
 
         form.dataset.submitting = '1';
         showRegisterProgress();
+
+        var token = document.querySelector('meta[name="csrf-token"]');
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': token ? token.content : ''
+            },
+            credentials: 'same-origin'
+        })
+        .then(function (response) {
+            return response.json().then(function (data) {
+                return { ok: response.ok, status: response.status, data: data };
+            }).catch(function () {
+                return { ok: response.ok, status: response.status, data: null };
+            });
+        })
+        .then(function (result) {
+            if (result.ok && result.data && result.data.redirect) {
+                window.location.href = result.data.redirect;
+                return;
+            }
+
+            var message = 'Something went wrong. Please try again.';
+            if (result.data) {
+                if (result.data.message) {
+                    message = result.data.message;
+                } else if (result.data.errors) {
+                    var firstKey = Object.keys(result.data.errors)[0];
+                    var first = result.data.errors[firstKey];
+                    message = Array.isArray(first) ? first[0] : first;
+                }
+            }
+            hideRegisterProgress(message);
+        })
+        .catch(function () {
+            hideRegisterProgress('Network error. Please check your connection and try again.');
+        });
     });
 });
 </script>
