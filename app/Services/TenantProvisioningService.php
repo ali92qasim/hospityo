@@ -73,11 +73,9 @@ class TenantProvisioningService
         ];
 
         if ($async) {
-            // 'deferred' runs the chain after the HTTP response is sent (same PHP
-            // process). Signup returns instantly; provisioning starts in ~0s instead
-            // of waiting up to 60s for the next cron tick. Cron queue:work remains
-            // as backup for database-queued jobs (imports, etc.).
-            Bus::chain($jobs)->onConnection('deferred')->dispatch();
+            // CLI / environments with a real worker. Web signup uses async:false —
+            // shared hosting typically kills deferred work after the response.
+            Bus::chain($jobs)->onConnection('database')->dispatch();
         } else {
             foreach ($jobs as $job) {
                 dispatch_sync($job);

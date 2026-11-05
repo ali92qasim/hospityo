@@ -92,7 +92,7 @@ afterEach(function () {
     }
 });
 
-it('dispatches provisioning on the deferred connection so signup does not wait for cron', function () {
+it('dispatches async provisioning to the database queue for CLI/worker environments', function () {
     Bus::fake();
 
     app(TenantProvisioningService::class)->provision([
@@ -113,6 +113,6 @@ it('dispatches provisioning on the deferred connection so signup does not wait f
     ]);
 
     Bus::assertDispatched(CreateTenantDatabase::class, function ($job) {
-        return $job->connection === 'deferred';
+        return $job->connection === 'database';
     });
 });

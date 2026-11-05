@@ -50,7 +50,10 @@ class TenantRegistrationController extends Controller
                     'admin_password' => $request->admin_password,
                     'plan'           => $request->plan ?? 'starter',
                 ],
-                async: true, // Background queue — returns instantly
+                // Shared hosts often kill PHP right after the HTTP response is sent,
+                // so deferred/queue workers never finish and signup stays on "Finalizing".
+                // Run create → migrate → seed inline (~15–30s), then redirect.
+                async: false,
             );
 
             return redirect()->route('tenant.provisioning', $tenant);
