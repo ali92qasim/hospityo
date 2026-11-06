@@ -29,9 +29,11 @@
                     Sign Up Free
                 </a>
                 <a href="{{ url('/signin') }}"
-                        class="inline-flex items-center px-3 sm:px-4 py-2 text-sm font-medium text-white bg-medical-blue rounded-lg hover:bg-blue-700 transition-colors">
-                    <span class="hidden xs:inline">Sign In</span>
-                    <i class="fas fa-sign-in-alt xs:hidden"></i>
+                        class="inline-flex items-center justify-center px-3 sm:px-4 py-2 text-sm font-medium text-white bg-medical-blue rounded-lg hover:bg-blue-700 transition-colors"
+                        aria-label="Sign In">
+                    {{-- Icon only below sm; wrap <i> so Font Awesome display rules cannot override sm:hidden --}}
+                    <span class="sm:hidden" aria-hidden="true"><i class="fas fa-sign-in-alt"></i></span>
+                    <span class="hidden sm:inline">Sign In</span>
                 </a>
                 {{-- Mobile menu button --}}
                 <button id="mobile-nav-btn" class="md:hidden inline-flex items-center justify-center p-2 text-gray-500 hover:text-gray-700" aria-label="Toggle menu">
@@ -442,7 +444,15 @@
                     @if(!empty($site['facebook_url']))<a href="{{ $site['facebook_url'] }}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-facebook-f"></i></a>@endif
                     @if(!empty($site['twitter_url']))<a href="{{ $site['twitter_url'] }}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-x-twitter"></i></a>@endif
                     @if(!empty($site['linkedin_url']))<a href="{{ $site['linkedin_url'] }}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-linkedin-in"></i></a>@endif
-                    @if(!empty($site['whatsapp_number']))<a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $site['whatsapp_number']) }}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-whatsapp"></i></a>@endif
+                    @if(!empty($site['whatsapp_number']))
+                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $site['whatsapp_number']) }}"
+                           target="_blank"
+                           class="inline-flex items-center text-gray-400 hover:text-white transition-colors"
+                           aria-label="WhatsApp">
+                            {{-- Slightly larger than sibling brand icons; FA glyph reads small at 1em --}}
+                            <i class="fab fa-whatsapp leading-none" style="font-size: 1.5rem;"></i>
+                        </a>
+                    @endif
                 </div>
                 @endif
             </div>
